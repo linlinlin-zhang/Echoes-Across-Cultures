@@ -1,0 +1,192 @@
+from __future__ import annotations
+
+import json
+import random
+from dataclasses import asdict
+from pathlib import Path
+
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+
+from dcas.data.batch import collate_batch
+from dcas.data.interactions import Interaction, load_interactions
+from dcas.data.npz_tracks import Tracks, load_tracks
+from dcas.data.torch_dataset import CultureVocab, TrackDataset
+from dcas.models.dcas_vae import DCASConfig, DCASModel
+from dcas.pal.constraints import PairwiseConstraint, load_constraints
+from dcas.pal.uncertainty import rank_by_uncertainty
+from dcas.recommender import Recommendation, recommend_ot
+from dcas.scripts.make_toy_data import generate_toy_data
+from dcas.serialization import load_checkpoint, save_checkpoint
+from dcas.utils import get_device, set_seed
+
+
+def generate_toy(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128, seed: int = 7) -> dict[str, str]:
+    out_dir = generate_toy_data(out_dir=out_dir, n_tracks=n_tracks, dim=dim, seed=seed)
+    return {
+        "dir": str(out_dir),
+        "tracks": str(out_dir / "tracks.npz"),
+        "interactions": str(out_dir / "interactions.csv"),
+        "meta": str(out_dir / "meta.txt"),
+    }
+
+
+def train_model(
+    tracks_path: str | Path,
+    out_path: str | Path,
+    constraints_path: str | Path | None = None,
+    epochs: int = 10,
+    batch_size: int = 256,
+    lr: float = 2e-3,
+    seed: int = 42,
+    prefer_cuda: bool = False,
+    lambda_constraints: float = 0.1,
+    constraint_margin: float = 1.0,
+) -> dict:
+    set_seed(int(seed))
+    device = get_device(bool(prefer_cuda))
+
+    tracks = load_tracks(str(tracks_path))
+    vocab = CultureVocab.from_tracks(tracks)
+    ds = TrackDataset(tracks, vocab)
+    dl = DataLoader(ds, batch_size=int(batch_size), shuffle=True, num_workers=0, collate_fn=collate_batch, drop_last=True)
+
+    lambda_affect = 0.0
+    affect_classes = 8
+    if tracks.affect_label is not None:
+        lambda_affect = 0.2
+        affect_classes = int(np.max(tracks.affect_label) + 1)
+
+    cfg = DCASConfig(
+        in_dim=tracks.dim,
+        n_cultures=len(vocab.id_to_culture),
+        lambda_affect=lambda_affect,
+        affect_classes=affect_classes,
+    )
+    model = DCASModel(cfg).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=float(lr))
+
+    constraints: list[PairwiseConstraint] | None = None
+    if constraints_path is not None:
+        constraints = load_constraints(str(constraints_path))
+    track_id_to_idx = {str(tid): i for i, tid in enumerate(tracks.track_id.tolist())}
+    x_all = torch.from_numpy(tracks.embedding.astype(np.float32)).to(device)
+
+    def constraint_loss(sample: list[PairwiseConstraint]) -> torch.Tensor:
+        pairs = [c for c in sample if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx]
+        if not pairs:
+            return torch.zeros((), device=device)
+        idx_a = torch.tensor([track_id_to_idx[c.track_id_a] for c in pairs], device=device)
+        idx_b = torch.tensor([track_id_to_idx[c.track_id_b] for c in pairs], device=device)
+        similar = torch.tensor([1.0 if c.similar else 0.0 for c in pairs], device=device, dtype=torch.float32)
+        emb_a = x_all[idx_a]
+        emb_b = x_all[idx_b]
+        _, _, za_a = model.encode(emb_a)
+        _, _, za_b = model.encode(emb_b)
+        dist = torch.norm(za_a - za_b, dim=-1)
+        pos = (dist**2) * similar
+        neg = (torch.relu(torch.tensor(float(constraint_margin), device=dist.device) - dist) ** 2) * (1.0 - similar)
+        return (pos + neg).mean()
+
+    history: list[dict[str, float]] = []
+    for epoch in range(int(epochs)):
+        model.train()
+        losses: list[float] = []
+        for batch in dl:
+            batch = type(batch)(
+                x=batch.x.to(device),
+                culture=batch.culture.to(device),
+                track_index=batch.track_index.to(device),
+                affect_label=batch.affect_label.to(device) if batch.affect_label is not None else None,
+            )
+            out = model(batch)
+            loss = out["loss"]
+            if constraints is not None and float(lambda_constraints) > 0:
+                sample = random.sample(constraints, k=min(64, len(constraints)))
+                loss = loss + float(lambda_constraints) * constraint_loss(sample)
+
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            opt.step()
+            losses.append(float(loss.detach().cpu().item()))
+
+        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    save_checkpoint(str(out_path), model, vocab)
+    return {"checkpoint": str(out_path), "history": history, "cfg": asdict(cfg), "cultures": vocab.id_to_culture}
+
+
+def recommend(
+    model_path: str | Path,
+    tracks_path: str | Path,
+    interactions_path: str | Path,
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    prefer_cuda: bool = False,
+    epsilon: float = 0.1,
+    iters: int = 200,
+) -> dict:
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    model, _ = load_checkpoint(str(model_path), map_location=str(device))
+    tracks = load_tracks(str(tracks_path))
+    interactions: list[Interaction] = load_interactions(str(interactions_path))
+    recs, metrics = recommend_ot(
+        model=model,
+        tracks=tracks,
+        interactions=interactions,
+        user_id=user_id,
+        target_culture=target_culture,
+        k=int(k),
+        device=device,
+        epsilon=float(epsilon),
+        iters=int(iters),
+    )
+    return {
+        "metrics": metrics,
+        "recommendations": [asdict(r) for r in recs],
+    }
+
+
+def pal_tasks(
+    model_path: str | Path,
+    tracks_path: str | Path,
+    out_path: str | Path,
+    n: int = 100,
+    prefer_cuda: bool = False,
+) -> dict:
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    model, _ = load_checkpoint(str(model_path), map_location=str(device))
+    tracks: Tracks = load_tracks(str(tracks_path))
+    ranked = rank_by_uncertainty(model=model, tracks=tracks, device=device)
+    top = ranked[: int(n)]
+
+    track_id_to_idx = {str(tid): i for i, tid in enumerate(tracks.track_id.tolist())}
+    x_all = torch.from_numpy(tracks.embedding.astype(np.float32)).to(device)
+    model.eval()
+    model.to(device)
+    with torch.no_grad():
+        _, _, za_mu = model.encode(x_all)
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        for tid, score in top:
+            idx = track_id_to_idx[tid]
+            z = za_mu[idx : idx + 1]
+            d = torch.cdist(z, za_mu).squeeze(0)
+            nn = int(torch.topk(d, k=6, largest=False).indices[1].item())
+            obj = {
+                "track_id": tid,
+                "culture": str(tracks.culture[idx]),
+                "uncertainty": float(score),
+                "compare_to": str(tracks.track_id[nn]),
+                "question": "它们在情感/功能上是否相似？如果相似/不相似，请给出理由（rationale）。",
+            }
+            f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+    return {"tasks": str(out_path), "count": int(len(top))}
+
