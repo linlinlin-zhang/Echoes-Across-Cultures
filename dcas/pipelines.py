@@ -17,8 +17,10 @@ from dcas.models.dcas_vae import DCASConfig, DCASModel
 from dcas.pal.constraints import PairwiseConstraint, load_constraints
 from dcas.pal.uncertainty import rank_by_uncertainty
 from dcas.recommender import Recommendation, recommend_ot
+from dcas.scripts.build_tracks_from_audio import build_tracks_from_audio
 from dcas.scripts.make_toy_data import generate_toy_data
 from dcas.serialization import load_checkpoint, save_checkpoint
+from dcas.style_transfer import generate_counterfactual_embedding
 from dcas.utils import get_device, set_seed
 
 
@@ -30,6 +32,26 @@ def generate_toy(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128, seed
         "interactions": str(out_dir / "interactions.csv"),
         "meta": str(out_dir / "meta.txt"),
     }
+
+
+def build_tracks_with_culturemert(
+    metadata_csv: str | Path,
+    out_tracks_path: str | Path,
+    model_id: str = "ntua-slp/CultureMERT-95M",
+    device: str | None = None,
+    max_seconds: float | None = 30.0,
+    limit: int | None = None,
+    skip_errors: bool = False,
+) -> dict[str, object]:
+    return build_tracks_from_audio(
+        metadata_csv=metadata_csv,
+        out_npz=out_tracks_path,
+        model_id=model_id,
+        device=device,
+        max_seconds=max_seconds,
+        limit=limit,
+        skip_errors=skip_errors,
+    )
 
 
 def train_model(
@@ -151,6 +173,50 @@ def recommend(
     }
 
 
+def style_transfer(
+    model_path: str | Path,
+    tracks_path: str | Path,
+    source_track_id: str,
+    style_track_id: str,
+    out_path: str | Path,
+    target_culture: str | None = None,
+    alpha: float = 1.0,
+    k: int = 10,
+    prefer_cuda: bool = False,
+) -> dict:
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    model, _ = load_checkpoint(str(model_path), map_location=str(device))
+    tracks = load_tracks(str(tracks_path))
+    emb, neighbors, meta = generate_counterfactual_embedding(
+        model=model,
+        tracks=tracks,
+        source_track_id=source_track_id,
+        style_track_id=style_track_id,
+        target_culture=target_culture,
+        alpha=float(alpha),
+        k=int(k),
+        device=device,
+    )
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        str(out_path),
+        generated_embedding=emb,
+        source_track_id=np.array([source_track_id], dtype="<U128"),
+        style_track_id=np.array([style_track_id], dtype="<U128"),
+        target_culture=np.array([target_culture or ""], dtype="<U128"),
+        alpha=np.array([float(alpha)], dtype=np.float32),
+    )
+
+    return {
+        "artifact": str(out_path),
+        "neighbors": [asdict(n) for n in neighbors],
+        "meta": meta,
+        "dim": int(emb.shape[0]),
+    }
+
+
 def pal_tasks(
     model_path: str | Path,
     tracks_path: str | Path,
@@ -189,4 +255,3 @@ def pal_tasks(
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
     return {"tasks": str(out_path), "count": int(len(top))}
-

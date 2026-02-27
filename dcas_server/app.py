@@ -8,10 +8,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from dcas.pipelines import generate_toy, pal_tasks, recommend, train_model
+from dcas.ontology import OntologyStore
+from dcas.pipelines import build_tracks_with_culturemert, generate_toy, pal_tasks, recommend, style_transfer, train_model
 
 from .paths import Storage
-from .schemas import PalRequest, RecommendRequest, ToyGenerateRequest, TrainRequest
+from .schemas import (
+    DatasetBuildRequest,
+    OntologyAnnotationCreateRequest,
+    OntologyConceptCreateRequest,
+    OntologyRelationCreateRequest,
+    OntologySuggestRequest,
+    PalRequest,
+    RecommendRequest,
+    StyleTransferRequest,
+    ToyGenerateRequest,
+    TrainRequest,
+)
 
 
 def create_app() -> FastAPI:
@@ -30,6 +42,9 @@ def create_app() -> FastAPI:
     storage.ensure_dir("models")
     storage.ensure_dir("uploads")
     storage.ensure_dir("pal")
+    storage.ensure_dir("style")
+    storage.ensure_dir("ontology")
+    ontology = OntologyStore(storage.resolve_rel("ontology/state.json"))
 
     @app.get("/api/health")
     def health():
@@ -79,6 +94,27 @@ def create_app() -> FastAPI:
             "interactions": storage.relpath(Path(out["interactions"])),
             "meta": storage.relpath(Path(out["meta"])),
         }
+
+    @app.post("/api/dataset/build_from_audio")
+    def api_build_dataset(req: DatasetBuildRequest):
+        try:
+            metadata_path = storage.resolve_rel(req.metadata_path)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid path")
+        if not metadata_path.exists():
+            raise HTTPException(status_code=404, detail="metadata not found")
+        out_path = storage.resolve_rel(f"datasets/{Path(req.out_name).name}")
+        result = build_tracks_with_culturemert(
+            metadata_csv=str(metadata_path),
+            out_tracks_path=str(out_path),
+            model_id=req.model_id,
+            device=req.device,
+            max_seconds=req.max_seconds,
+            limit=req.limit,
+            skip_errors=req.skip_errors,
+        )
+        result["out"] = storage.relpath(Path(str(result["out"])))
+        return result
 
     @app.post("/api/train")
     def api_train(req: TrainRequest):
@@ -135,6 +171,33 @@ def create_app() -> FastAPI:
             iters=req.iters,
         )
 
+    @app.post("/api/style/transfer")
+    def api_style_transfer(req: StyleTransferRequest):
+        try:
+            model_path = storage.resolve_rel(req.model_path)
+            tracks_path = storage.resolve_rel(req.tracks_path)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid path")
+        if not model_path.exists():
+            raise HTTPException(status_code=404, detail="model not found")
+        if not tracks_path.exists():
+            raise HTTPException(status_code=404, detail="tracks not found")
+
+        out_path = storage.resolve_rel(f"style/{Path(req.out_name).name}")
+        out = style_transfer(
+            model_path=str(model_path),
+            tracks_path=str(tracks_path),
+            source_track_id=req.source_track_id,
+            style_track_id=req.style_track_id,
+            out_path=str(out_path),
+            target_culture=req.target_culture,
+            alpha=req.alpha,
+            k=req.k,
+            prefer_cuda=req.prefer_cuda,
+        )
+        out["artifact"] = storage.relpath(Path(str(out["artifact"])))
+        return out
+
     @app.post("/api/pal")
     def api_pal(req: PalRequest):
         try:
@@ -156,6 +219,54 @@ def create_app() -> FastAPI:
         )
         result["tasks"] = storage.relpath(Path(result["tasks"]))
         return result
+
+    @app.get("/api/ontology/state")
+    def api_ontology_state():
+        return ontology.state()
+
+    @app.post("/api/ontology/concepts")
+    def api_ontology_add_concept(req: OntologyConceptCreateRequest):
+        try:
+            obj = ontology.add_concept(
+                name=req.name,
+                description=req.description,
+                parent_id=req.parent_id,
+                aliases=req.aliases,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return obj
+
+    @app.post("/api/ontology/relations")
+    def api_ontology_add_relation(req: OntologyRelationCreateRequest):
+        try:
+            obj = ontology.add_relation(
+                source_id=req.source_id,
+                target_id=req.target_id,
+                relation_type=req.relation_type,
+                weight=req.weight,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return obj
+
+    @app.post("/api/ontology/annotations")
+    def api_ontology_add_annotation(req: OntologyAnnotationCreateRequest):
+        try:
+            obj = ontology.add_annotation(
+                track_id=req.track_id,
+                concept_id=req.concept_id,
+                confidence=req.confidence,
+                source=req.source,
+                rationale=req.rationale,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return obj
+
+    @app.post("/api/ontology/suggest")
+    def api_ontology_suggest(req: OntologySuggestRequest):
+        return {"items": ontology.suggest_concepts(query=req.query, top_k=req.top_k)}
 
     dist = Path("web/dist")
     dist.mkdir(parents=True, exist_ok=True)

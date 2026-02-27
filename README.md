@@ -92,6 +92,51 @@ interactions.csv：
 
 - user_id,track_id,weight
 
+## 新增能力（2026-02-27）
+
+1) CultureMERT 接入（真实音频 -> tracks.npz）
+
+```bash
+python -m dcas.scripts.build_tracks_from_audio \
+  --metadata ./storage/uploads/metadata.csv \
+  --out ./storage/datasets/tracks.npz \
+  --model_id ntua-slp/CultureMERT-95M
+```
+
+说明：
+- `metadata.csv` 必需列：`track_id,culture,audio_path`，可选列：`affect_label`
+- `audio_path` 可为绝对路径，或相对 `metadata.csv` 的路径
+
+2) 生成式风格迁移（embedding 级反事实）
+
+```bash
+python -m dcas.cli.style_transfer \
+  --model ./toy/model.pt \
+  --tracks ./toy/tracks.npz \
+  --source_track t00001 \
+  --style_track t00002 \
+  --out ./toy/style_transfer.npz \
+  --k 10
+```
+
+说明：
+- 机制：`zc(source) + zs(style) + za(source)` 解码生成 embedding
+- 输出包含最近邻候选，可用于解释推荐
+
+3) 动态本体（概念/关系/标注）
+
+```bash
+python -m dcas.cli.ontology --state ./storage/ontology/state.json add-concept --name Han --description "Korean culturally grounded sorrow"
+python -m dcas.cli.ontology --state ./storage/ontology/state.json suggest --query "sorrow grief"
+```
+
+API 同步提供：
+- `GET /api/ontology/state`
+- `POST /api/ontology/concepts`
+- `POST /api/ontology/relations`
+- `POST /api/ontology/annotations`
+- `POST /api/ontology/suggest`
+
 ## 路线图（接入真实音频）
 
 - 把 embedding 替换为 CultureMERT 的帧级/段级表示

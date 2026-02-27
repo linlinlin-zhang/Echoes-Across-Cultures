@@ -10,6 +10,16 @@ class ToyGenerateRequest(BaseModel):
     seed: int = Field(default=7)
 
 
+class DatasetBuildRequest(BaseModel):
+    metadata_path: str
+    out_name: str = Field(default="tracks.npz")
+    model_id: str = Field(default="ntua-slp/CultureMERT-95M")
+    device: str | None = None
+    max_seconds: float = Field(default=30.0, gt=0)
+    limit: int | None = Field(default=None, ge=1)
+    skip_errors: bool = Field(default=False)
+
+
 class TrainRequest(BaseModel):
     tracks_path: str
     out_name: str = Field(default="model.pt")
@@ -35,10 +45,48 @@ class RecommendRequest(BaseModel):
     iters: int = Field(default=200, ge=10, le=2000)
 
 
+class StyleTransferRequest(BaseModel):
+    model_path: str
+    tracks_path: str
+    source_track_id: str
+    style_track_id: str
+    out_name: str = Field(default="style_transfer.npz")
+    target_culture: str | None = None
+    alpha: float = Field(default=1.0, ge=0.0, le=2.0)
+    k: int = Field(default=10, ge=1, le=200)
+    prefer_cuda: bool = Field(default=False)
+
+
+class OntologyConceptCreateRequest(BaseModel):
+    name: str
+    description: str = ""
+    parent_id: str | None = None
+    aliases: list[str] = Field(default_factory=list)
+
+
+class OntologyRelationCreateRequest(BaseModel):
+    source_id: str
+    target_id: str
+    relation_type: str
+    weight: float = Field(default=1.0)
+
+
+class OntologyAnnotationCreateRequest(BaseModel):
+    track_id: str
+    concept_id: str
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    source: str = Field(default="expert")
+    rationale: str = ""
+
+
+class OntologySuggestRequest(BaseModel):
+    query: str
+    top_k: int = Field(default=5, ge=1, le=50)
+
+
 class PalRequest(BaseModel):
     model_path: str
     tracks_path: str
     out_name: str = Field(default="pal_tasks.jsonl")
     n: int = Field(default=100, ge=1, le=2000)
     prefer_cuda: bool = Field(default=False)
-
