@@ -118,6 +118,19 @@ python -m dcas.scripts.validate_dataset \
   --out_md ./reports/dataset_profile.md
 ```
 
+数据集切分（分层 + 防泄漏检查）：
+
+```bash
+python -m dcas.scripts.make_splits \
+  --tracks ./storage/datasets/tracks.npz \
+  --interactions ./storage/datasets/interactions.csv \
+  --out_dir ./reports/splits \
+  --seed 42 \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --test_ratio 0.1
+```
+
 2) 生成式风格迁移（embedding 级反事实）
 
 ```bash
