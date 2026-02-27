@@ -1,0 +1,122 @@
+{
+  "base_eval_path": "reports/routeA_phase3_pal_cn/eval_round0_baseline.json",
+  "candidate_eval_path": "reports/routeA_phase3_pal_cn/eval_round2.json",
+  "config": {
+    "metrics": [
+      "serendipity",
+      "cultural_calibration_kl"
+    ],
+    "bootstrap_samples": 2000,
+    "permutation_samples": 2000,
+    "seed": 42
+  },
+  "metrics": {
+    "serendipity": {
+      "n_pairs": 320,
+      "base_mean": 0.8109801431030641,
+      "candidate_mean": 0.7985860643327216,
+      "delta_mean": -0.012394078770342426,
+      "delta_std": 0.10173440671459649,
+      "delta_ci95_low": -0.023391530516488717,
+      "delta_ci95_high": -0.001334081656910898,
+      "p_value_two_sided": 0.031484257871064465,
+      "cohen_d_paired": -0.12182779819134845,
+      "per_target_culture": {
+        "china": {
+          "n_pairs": 80,
+          "base_mean": 0.7914917587588397,
+          "candidate_mean": 0.7369805584112549,
+          "delta_mean": -0.0545112003475847,
+          "delta_ci95_low": -0.0778686234011934,
+          "delta_ci95_high": -0.03293516878654753,
+          "p_value_two_sided": 0.0004997501249375312,
+          "cohen_d_paired": -0.528276965334418
+        },
+        "india": {
+          "n_pairs": 80,
+          "base_mean": 0.7903582628257603,
+          "candidate_mean": 0.8196260408126446,
+          "delta_mean": 0.029267777986884173,
+          "delta_ci95_low": 0.006511160676668205,
+          "delta_ci95_high": 0.05267385357924233,
+          "p_value_two_sided": 0.020989505247376312,
+          "cohen_d_paired": 0.2833668534595454
+        },
+        "turkey": {
+          "n_pairs": 80,
+          "base_mean": 0.8226207708537505,
+          "candidate_mean": 0.8169916801486986,
+          "delta_mean": -0.005629090705051765,
+          "delta_ci95_low": -0.029583447979741065,
+          "delta_ci95_high": 0.0167282083886559,
+          "p_value_two_sided": 0.6491754122938531,
+          "cohen_d_paired": -0.053667003101705524
+        },
+        "west": {
+          "n_pairs": 80,
+          "base_mean": 0.8394497799739062,
+          "candidate_mean": 0.8207459779582887,
+          "delta_mean": -0.01870380201561742,
+          "delta_ci95_low": -0.034498853049995316,
+          "delta_ci95_high": -0.0015232240061791187,
+          "p_value_two_sided": 0.0384807596201899,
+          "cohen_d_paired": -0.24486114854813515
+        }
+      }
+    },
+    "cultural_calibration_kl": {
+      "n_pairs": 320,
+      "base_mean": 1.3862943611168907,
+      "candidate_mean": 1.3862943611168907,
+      "delta_mean": 0.0,
+      "delta_std": 0.0,
+      "delta_ci95_low": 0.0,
+      "delta_ci95_high": 0.0,
+      "p_value_two_sided": 1.0,
+      "cohen_d_paired": 0.0,
+      "per_target_culture": {
+        "china": {
+          "n_pairs": 80,
+          "base_mean": 1.3862943611168907,
+          "candidate_mean": 1.3862943611168907,
+          "delta_mean": 0.0,
+          "delta_ci95_low": 0.0,
+          "delta_ci95_high": 0.0,
+          "p_value_two_sided": 1.0,
+          "cohen_d_paired": 0.0
+        },
+        "india": {
+          "n_pairs": 80,
+          "base_mean": 1.3862943611168907,
+          "candidate_mean": 1.3862943611168907,
+          "delta_mean": 0.0,
+          "delta_ci95_low": 0.0,
+          "delta_ci95_high": 0.0,
+          "p_value_two_sided": 1.0,
+          "cohen_d_paired": 0.0
+        },
+        "turkey": {
+          "n_pairs": 80,
+          "base_mean": 1.3862943611168907,
+          "candidate_mean": 1.3862943611168907,
+          "delta_mean": 0.0,
+          "delta_ci95_low": 0.0,
+          "delta_ci95_high": 0.0,
+          "p_value_two_sided": 1.0,
+          "cohen_d_paired": 0.0
+        },
+        "west": {
+          "n_pairs": 80,
+          "base_mean": 1.3862943611168907,
+          "candidate_mean": 1.3862943611168907,
+          "delta_mean": 0.0,
+          "delta_ci95_low": 0.0,
+          "delta_ci95_high": 0.0,
+          "p_value_two_sided": 1.0,
+          "cohen_d_paired": 0.0
+        }
+      }
+    }
+  },
+  "n_pairs": 320
+}

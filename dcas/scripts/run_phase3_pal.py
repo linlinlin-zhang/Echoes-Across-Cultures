@@ -7,6 +7,7 @@ from typing import Any
 
 from dcas.pipelines import pal_tasks, train_model
 from dcas.scripts.build_pal_feedback_constraints import build_constraints
+from dcas.scripts.compare_recommender_runs import compare_recommender_runs
 from dcas.scripts.evaluate_recommender import evaluate_recommender
 
 
@@ -60,21 +61,33 @@ def _summary_row(tag: str, ev: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _write_markdown(path: str | Path, rows: list[dict[str, Any]]) -> None:
+def _write_markdown(path: str | Path, rows: list[dict[str, Any]], comparisons: dict[str, dict[str, Any]]) -> None:
     if not rows:
         return
     base = rows[0]
     lines: list[str] = []
     lines.append("# Phase 3 PAL Two-Round Gain Report")
     lines.append("")
-    lines.append("| run | serendipity_mean | delta_vs_baseline | cultural_calibration_kl_mean | delta_vs_baseline | evals |")
-    lines.append("|---|---:|---:|---:|---:|---:|")
+    lines.append("| run | serendipity_mean | delta_vs_baseline | delta_ci95 | p_value | cultural_calibration_kl_mean | evals |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|")
     for r in rows:
         d_ser = float(r["serendipity_mean"]) - float(base["serendipity_mean"])
-        d_kl = float(r["cultural_calibration_kl_mean"]) - float(base["cultural_calibration_kl_mean"])
+        tag = str(r["tag"])
+        if tag == "baseline":
+            ci_text = "-"
+            p_text = "-"
+        else:
+            comp = comparisons.get(tag, {})
+            ser = comp.get("metrics", {}).get("serendipity", {})
+            if ser:
+                ci_text = f"[{float(ser['delta_ci95_low']):.6f}, {float(ser['delta_ci95_high']):.6f}]"
+                p_text = f"{float(ser['p_value_two_sided']):.6f}"
+            else:
+                ci_text = "-"
+                p_text = "-"
         lines.append(
             f"| {r['tag']} | {r['serendipity_mean']:.10f} | {d_ser:+.10f} | "
-            f"{r['cultural_calibration_kl_mean']:.10f} | {d_kl:+.10f} | {int(r['n_user_culture_evals'])} |"
+            f"{ci_text} | {p_text} | {r['cultural_calibration_kl_mean']:.10f} | {int(r['n_user_culture_evals'])} |"
         )
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -104,6 +117,8 @@ def run_phase3_pal(
     k: int = 10,
     epsilon: float = 0.1,
     iters: int = 200,
+    bootstrap_samples: int = 5000,
+    permutation_samples: int = 5000,
     prefer_cuda: bool = False,
 ) -> dict[str, Any]:
     out_dir_p = Path(out_dir)
@@ -128,6 +143,7 @@ def run_phase3_pal(
 
     rows: list[dict[str, Any]] = [_summary_row(tag="baseline", ev=baseline_eval)]
     rounds_info: list[dict[str, Any]] = []
+    comparisons: dict[str, dict[str, Any]] = {}
     all_constraints: list[dict[str, Any]] = []
     current_model_path = str(baseline_model_path)
 
@@ -186,7 +202,23 @@ def run_phase3_pal(
             prefer_cuda=bool(prefer_cuda),
         )
 
-        rows.append(_summary_row(tag=f"round{ridx}", ev=eval_info))
+        tag = f"round{ridx}"
+        rows.append(_summary_row(tag=tag, ev=eval_info))
+
+        cmp_json = out_dir_p / f"compare_baseline_vs_{tag}.json"
+        cmp_md = out_dir_p / f"compare_baseline_vs_{tag}.md"
+        cmp = compare_recommender_runs(
+            base_eval_path=baseline_eval_path,
+            candidate_eval_path=eval_path,
+            metrics=["serendipity", "cultural_calibration_kl"],
+            bootstrap_samples=int(bootstrap_samples),
+            permutation_samples=int(permutation_samples),
+            seed=int(seed) + ridx,
+            out_json=cmp_json,
+            out_md=cmp_md,
+        )
+        comparisons[tag] = cmp
+
         rounds_info.append(
             {
                 "round": int(ridx),
@@ -196,6 +228,7 @@ def run_phase3_pal(
                 "train_history_tail": train_info["history"][-3:],
                 "model_path": str(model_out),
                 "eval_path": str(eval_path),
+                "compare_path": str(cmp_json),
             }
         )
         current_model_path = str(model_out)
@@ -221,16 +254,19 @@ def run_phase3_pal(
             "k": int(k),
             "epsilon": float(epsilon),
             "iters": int(iters),
+            "bootstrap_samples": int(bootstrap_samples),
+            "permutation_samples": int(permutation_samples),
             "prefer_cuda": bool(prefer_cuda),
         },
         "rows": rows,
         "rounds": rounds_info,
+        "comparisons": comparisons,
     }
 
     out_json = out_dir_p / "phase3_pal_summary.json"
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
-    _write_markdown(out_dir_p / "phase3_pal_summary.md", rows)
+    _write_markdown(out_dir_p / "phase3_pal_summary.md", rows, comparisons=comparisons)
     return summary
 
 
@@ -258,6 +294,8 @@ def main() -> None:
     ap.add_argument("--k", type=int, default=10)
     ap.add_argument("--epsilon", type=float, default=0.1)
     ap.add_argument("--iters", type=int, default=200)
+    ap.add_argument("--bootstrap_samples", type=int, default=5000)
+    ap.add_argument("--permutation_samples", type=int, default=5000)
     ap.add_argument("--prefer_cuda", action="store_true")
     args = ap.parse_args()
 
@@ -284,6 +322,8 @@ def main() -> None:
         k=int(args.k),
         epsilon=float(args.epsilon),
         iters=int(args.iters),
+        bootstrap_samples=int(args.bootstrap_samples),
+        permutation_samples=int(args.permutation_samples),
         prefer_cuda=bool(args.prefer_cuda),
     )
     print(json.dumps({"rows": out["rows"]}, ensure_ascii=False))
@@ -291,4 +331,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

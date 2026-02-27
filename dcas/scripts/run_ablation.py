@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from dcas.pipelines import train_model
+from dcas.scripts.compare_recommender_runs import compare_recommender_runs
 from dcas.scripts.evaluate_recommender import evaluate_recommender
 
 
@@ -19,22 +20,34 @@ def _row(name: str, ev: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _write_markdown(path: str | Path, rows: list[dict[str, Any]]) -> None:
+def _write_markdown(path: str | Path, rows: list[dict[str, Any]], comparisons: dict[str, dict[str, Any]]) -> None:
     if not rows:
         return
     base = rows[0]
     lines = [
         "# Ablation Draft Table",
         "",
-        "| setting | serendipity_mean | delta_vs_full | cultural_calibration_kl_mean | delta_vs_full | evals |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| setting | serendipity_mean | delta_vs_full | delta_ci95 | p_value | cultural_calibration_kl_mean | evals |",
+        "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for r in rows:
         d_ser = float(r["serendipity_mean"]) - float(base["serendipity_mean"])
-        d_kl = float(r["cultural_calibration_kl_mean"]) - float(base["cultural_calibration_kl_mean"])
+        name = str(r["name"])
+        if name == "full":
+            ci_text = "-"
+            p_text = "-"
+        else:
+            comp = comparisons.get(name, {})
+            ser = comp.get("metrics", {}).get("serendipity", {})
+            if ser:
+                ci_text = f"[{float(ser['delta_ci95_low']):.6f}, {float(ser['delta_ci95_high']):.6f}]"
+                p_text = f"{float(ser['p_value_two_sided']):.6f}"
+            else:
+                ci_text = "-"
+                p_text = "-"
         lines.append(
             f"| {r['name']} | {r['serendipity_mean']:.10f} | {d_ser:+.10f} | "
-            f"{r['cultural_calibration_kl_mean']:.10f} | {d_kl:+.10f} | {int(r['n_user_culture_evals'])} |"
+            f"{ci_text} | {p_text} | {r['cultural_calibration_kl_mean']:.10f} | {int(r['n_user_culture_evals'])} |"
         )
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +72,8 @@ def run_ablation(
     k: int = 10,
     epsilon: float = 0.1,
     iters: int = 200,
+    bootstrap_samples: int = 5000,
+    permutation_samples: int = 5000,
     prefer_cuda: bool = False,
 ) -> dict[str, Any]:
     out_dir_p = Path(out_dir)
@@ -91,6 +106,7 @@ def run_ablation(
     ]
 
     train_outputs: dict[str, str] = {}
+    eval_outputs: dict[str, str] = {}
     rows: list[dict[str, Any]] = []
 
     for i, cfg in enumerate(settings):
@@ -124,6 +140,7 @@ def run_ablation(
             iters=int(iters),
             prefer_cuda=bool(prefer_cuda),
         )
+        eval_outputs[str(cfg["name"])] = str(ev_out)
         rows.append(_row(name=str(cfg["name"]), ev=ev))
 
     # OT ablation: keep full-trained model and disable OT at inference.
@@ -139,7 +156,24 @@ def run_ablation(
         iters=int(iters),
         prefer_cuda=bool(prefer_cuda),
     )
+    eval_outputs["no_ot"] = str(no_ot_out)
     rows.append(_row(name="no_ot", ev=no_ot_ev))
+
+    comparisons: dict[str, dict[str, Any]] = {}
+    for name in ["no_domain", "no_constraints", "no_ot"]:
+        cmp_json = out_dir_p / f"compare_full_vs_{name}.json"
+        cmp_md = out_dir_p / f"compare_full_vs_{name}.md"
+        cmp = compare_recommender_runs(
+            base_eval_path=eval_outputs["full"],
+            candidate_eval_path=eval_outputs[name],
+            metrics=["serendipity", "cultural_calibration_kl"],
+            bootstrap_samples=int(bootstrap_samples),
+            permutation_samples=int(permutation_samples),
+            seed=int(seed) + 100 + len(comparisons),
+            out_json=cmp_json,
+            out_md=cmp_md,
+        )
+        comparisons[name] = cmp
 
     summary = {
         "config": {
@@ -158,16 +192,20 @@ def run_ablation(
             "k": int(k),
             "epsilon": float(epsilon),
             "iters": int(iters),
+            "bootstrap_samples": int(bootstrap_samples),
+            "permutation_samples": int(permutation_samples),
             "prefer_cuda": bool(prefer_cuda),
         },
         "rows": rows,
         "models": train_outputs,
+        "evals": eval_outputs,
+        "comparisons": comparisons,
     }
 
     out_json = out_dir_p / "ablation_summary.json"
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
-    _write_markdown(out_dir_p / "ablation_table_draft.md", rows)
+    _write_markdown(out_dir_p / "ablation_table_draft.md", rows, comparisons=comparisons)
     return summary
 
 
@@ -190,6 +228,8 @@ def main() -> None:
     ap.add_argument("--k", type=int, default=10)
     ap.add_argument("--epsilon", type=float, default=0.1)
     ap.add_argument("--iters", type=int, default=200)
+    ap.add_argument("--bootstrap_samples", type=int, default=5000)
+    ap.add_argument("--permutation_samples", type=int, default=5000)
     ap.add_argument("--prefer_cuda", action="store_true")
     args = ap.parse_args()
 
@@ -211,6 +251,8 @@ def main() -> None:
         k=int(args.k),
         epsilon=float(args.epsilon),
         iters=int(args.iters),
+        bootstrap_samples=int(args.bootstrap_samples),
+        permutation_samples=int(args.permutation_samples),
         prefer_cuda=bool(args.prefer_cuda),
     )
     print(json.dumps({"rows": out["rows"]}, ensure_ascii=False))
@@ -218,4 +260,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
