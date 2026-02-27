@@ -71,6 +71,9 @@ def train_model(
     lambda_domain: float = 0.5,
     lambda_contrast: float = 0.2,
     lambda_cov: float = 0.05,
+    lambda_tc: float = 0.05,
+    lambda_hsic: float = 0.02,
+    regularizer_warmup_epochs: int = 0,
 ) -> dict:
     set_seed(int(seed))
     device = get_device(bool(prefer_cuda))
@@ -104,6 +107,8 @@ def train_model(
         lambda_domain=float(lambda_domain),
         lambda_contrast=float(lambda_contrast),
         lambda_cov=float(lambda_cov),
+        lambda_tc=float(lambda_tc),
+        lambda_hsic=float(lambda_hsic),
     )
     model = DCASModel(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=float(lr))
@@ -134,6 +139,11 @@ def train_model(
     for epoch in range(int(epochs)):
         model.train()
         losses: list[float] = []
+        warmup = int(regularizer_warmup_epochs)
+        if warmup > 0:
+            reg_scale = min(1.0, float(epoch + 1) / float(warmup))
+        else:
+            reg_scale = 1.0
         for batch in dl:
             batch = type(batch)(
                 x=batch.x.to(device),
@@ -141,7 +151,17 @@ def train_model(
                 track_index=batch.track_index.to(device),
                 affect_label=batch.affect_label.to(device) if batch.affect_label is not None else None,
             )
-            out = model(batch)
+            out = model(
+                batch,
+                reg_scales={
+                    "domain": reg_scale,
+                    "contrast": reg_scale,
+                    "cov": reg_scale,
+                    "tc": reg_scale,
+                    "hsic": reg_scale,
+                    "affect": reg_scale,
+                },
+            )
             loss = out["loss"]
             if constraints is not None and float(lambda_constraints) > 0:
                 sample = random.sample(constraints, k=min(64, len(constraints)))

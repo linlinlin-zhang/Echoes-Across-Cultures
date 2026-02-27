@@ -46,6 +46,9 @@ def main() -> None:
     ap.add_argument("--lambda_domain", type=float, default=0.5)
     ap.add_argument("--lambda_contrast", type=float, default=0.2)
     ap.add_argument("--lambda_cov", type=float, default=0.05)
+    ap.add_argument("--lambda_tc", type=float, default=0.05)
+    ap.add_argument("--lambda_hsic", type=float, default=0.02)
+    ap.add_argument("--regularizer_warmup_epochs", type=int, default=0)
     args = ap.parse_args()
 
     set_seed(int(args.seed))
@@ -80,6 +83,8 @@ def main() -> None:
         lambda_domain=float(args.lambda_domain),
         lambda_contrast=float(args.lambda_contrast),
         lambda_cov=float(args.lambda_cov),
+        lambda_tc=float(args.lambda_tc),
+        lambda_hsic=float(args.lambda_hsic),
     )
     model = DCASModel(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=float(args.lr))
@@ -94,6 +99,11 @@ def main() -> None:
     for epoch in range(int(args.epochs)):
         model.train()
         losses: list[float] = []
+        warmup = int(args.regularizer_warmup_epochs)
+        if warmup > 0:
+            reg_scale = min(1.0, float(epoch + 1) / float(warmup))
+        else:
+            reg_scale = 1.0
         for batch in dl:
             batch = type(batch)(
                 x=batch.x.to(device),
@@ -102,7 +112,17 @@ def main() -> None:
                 affect_label=batch.affect_label.to(device) if batch.affect_label is not None else None,
             )
 
-            out = model(batch)
+            out = model(
+                batch,
+                reg_scales={
+                    "domain": reg_scale,
+                    "contrast": reg_scale,
+                    "cov": reg_scale,
+                    "tc": reg_scale,
+                    "hsic": reg_scale,
+                    "affect": reg_scale,
+                },
+            )
             loss = out["loss"]
 
             if constraints and float(args.lambda_constraints) > 0:

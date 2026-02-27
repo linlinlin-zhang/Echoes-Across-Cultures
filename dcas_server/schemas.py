@@ -32,6 +32,12 @@ class TrainRequest(BaseModel):
     prefer_cuda: bool = Field(default=False)
     lambda_constraints: float = Field(default=0.1, ge=0)
     constraint_margin: float = Field(default=1.0, gt=0)
+    lambda_domain: float = Field(default=0.5, ge=0)
+    lambda_contrast: float = Field(default=0.2, ge=0)
+    lambda_cov: float = Field(default=0.05, ge=0)
+    lambda_tc: float = Field(default=0.05, ge=0)
+    lambda_hsic: float = Field(default=0.02, ge=0)
+    regularizer_warmup_epochs: int = Field(default=0, ge=0, le=500)
 
 
 class RecommendRequest(BaseModel):

@@ -153,6 +153,12 @@ def create_app() -> FastAPI:
             prefer_cuda=req.prefer_cuda,
             lambda_constraints=req.lambda_constraints,
             constraint_margin=req.constraint_margin,
+            lambda_domain=req.lambda_domain,
+            lambda_contrast=req.lambda_contrast,
+            lambda_cov=req.lambda_cov,
+            lambda_tc=req.lambda_tc,
+            lambda_hsic=req.lambda_hsic,
+            regularizer_warmup_epochs=req.regularizer_warmup_epochs,
         )
         result["checkpoint"] = storage.relpath(Path(result["checkpoint"]))
         return result

@@ -273,3 +273,33 @@ python -m dcas.scripts.evaluate_disentanglement \
   --out_json ./reports/routeA_disentanglement_phase2_cn_sharedfactors.json \
   --out_md ./reports/routeA_disentanglement_phase2_cn_sharedfactors.md
 ```
+
+## Disentanglement Model Upgrade (TC + HSIC)
+
+Train upgraded model:
+```bash
+python -m dcas.cli.train \
+  --data ./storage/public/routeA_phase2_cn/tracks.npz \
+  --out ./storage/public/routeA_phase4_disentangle_cn/model_tc_hsic.pt \
+  --epochs 10 \
+  --batch_size 64 \
+  --lr 2e-3 \
+  --lambda_domain 0.5 \
+  --lambda_contrast 0.2 \
+  --lambda_cov 0.05 \
+  --lambda_tc 0.1 \
+  --lambda_hsic 0.05 \
+  --regularizer_warmup_epochs 3
+```
+
+Evaluate (shared factors):
+```bash
+python -m dcas.scripts.evaluate_disentanglement \
+  --model ./storage/public/routeA_phase4_disentangle_cn/model_tc_hsic.pt \
+  --tracks ./storage/public/routeA_phase2_cn/tracks.npz \
+  --metadata ./reports/routeA_shared_factors_cn.csv \
+  --factors factor_energy,factor_brightness,factor_texture,factor_dynamics,factor_percussiveness \
+  --seeds 42,43,44,45,46 \
+  --out_json ./reports/routeA_disentanglement_phase4_tc_hsic_cn_sharedfactors.json \
+  --out_md ./reports/routeA_disentanglement_phase4_tc_hsic_cn_sharedfactors.md
+```

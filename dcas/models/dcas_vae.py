@@ -11,6 +11,8 @@ from dcas.utils import Batch
 from .layers import GradientReversal
 from .losses import (
     cov_offdiag_loss,
+    gaussian_total_correlation,
+    hsic_rbf,
     info_nce,
     kl_standard_normal,
     reparameterize,
@@ -32,6 +34,8 @@ class DCASConfig:
     lambda_domain: float = 0.5
     lambda_contrast: float = 0.2
     lambda_cov: float = 0.05
+    lambda_tc: float = 0.05
+    lambda_hsic: float = 0.02
     lambda_affect: float = 0.0
     affect_classes: int = 8
     grl_scale: float = 1.0
@@ -94,9 +98,16 @@ class DCASModel(nn.Module):
         za_mu, _ = self.za_head(h)
         return zc_mu, zs_mu, za_mu
 
-    def forward(self, batch: Batch) -> dict[str, torch.Tensor]:
+    def forward(self, batch: Batch, reg_scales: dict[str, float] | None = None) -> dict[str, torch.Tensor]:
         x = batch.x
         h = self.encoder(x)
+        scales = reg_scales or {}
+        s_domain = float(scales.get("domain", 1.0))
+        s_contrast = float(scales.get("contrast", 1.0))
+        s_cov = float(scales.get("cov", 1.0))
+        s_tc = float(scales.get("tc", 1.0))
+        s_hsic = float(scales.get("hsic", 1.0))
+        s_affect = float(scales.get("affect", 1.0))
 
         zc_mu, zc_logvar = self.zc_head(h)
         zs_mu, zs_logvar = self.zs_head(h)
@@ -121,6 +132,8 @@ class DCASModel(nn.Module):
         contrast = info_nce(zc_mu, zc_mu_aug, temperature=self.cfg.contrast_temperature)
 
         cov = cov_offdiag_loss(torch.cat([zc_mu, zs_mu, za_mu], dim=-1))
+        tc = gaussian_total_correlation(torch.cat([zc_mu, zs_mu, za_mu], dim=-1))
+        hsic = hsic_rbf(zc_mu, zs_mu) + hsic_rbf(zc_mu, za_mu) + hsic_rbf(zs_mu, za_mu)
 
         affect = torch.zeros((), device=x.device)
         affect_acc = torch.zeros((), device=x.device)
@@ -132,10 +145,12 @@ class DCASModel(nn.Module):
         loss = (
             recon
             + self.cfg.beta_kl * kl
-            + self.cfg.lambda_domain * domain
-            + self.cfg.lambda_contrast * contrast
-            + self.cfg.lambda_cov * cov
-            + self.cfg.lambda_affect * affect
+            + self.cfg.lambda_domain * s_domain * domain
+            + self.cfg.lambda_contrast * s_contrast * contrast
+            + self.cfg.lambda_cov * s_cov * cov
+            + self.cfg.lambda_tc * s_tc * tc
+            + self.cfg.lambda_hsic * s_hsic * hsic
+            + self.cfg.lambda_affect * s_affect * affect
         )
 
         return {
@@ -145,6 +160,8 @@ class DCASModel(nn.Module):
             "domain": domain.detach(),
             "contrast": contrast.detach(),
             "cov": cov.detach(),
+            "tc": tc.detach(),
+            "hsic": hsic.detach(),
             "affect": affect.detach(),
             "affect_acc": affect_acc.detach(),
         }
