@@ -1,0 +1,125 @@
+{
+  "config": {
+    "model_path": "./storage/public/routeA_phase2_cn/model.pt",
+    "tracks_path": "./storage/public/routeA_phase2_cn/tracks.npz",
+    "metadata_csv": "./storage/public/routeA_phase2_cn/metadata_merged.csv",
+    "factors": [
+      "culture",
+      "label"
+    ],
+    "seed": 42,
+    "n_bins": 20,
+    "device": "cpu"
+  },
+  "class_names": {
+    "culture": [
+      "china",
+      "india",
+      "turkey",
+      "west"
+    ],
+    "label": [
+      "AheerBhairav",
+      "AlhaiyaBilawal",
+      "Bageshree",
+      "Bahar",
+      "Bairagi",
+      "Basant",
+      "Bhairav",
+      "angry",
+      "blues",
+      "classical",
+      "detache",
+      "diangong",
+      "happy",
+      "harmonic",
+      "legato_slide_glissando",
+      "percussive",
+      "pizzicato",
+      "ricochet",
+      "staccato",
+      "tremolo",
+      "trill",
+      "vibrato"
+    ]
+  },
+  "n_samples_total": 640,
+  "n_samples_used": 640,
+  "spaces": {
+    "zc": {
+      "n_samples": 640,
+      "dim": 32,
+      "factors": [
+        "culture",
+        "label"
+      ],
+      "MIG": 0.026648616681813512,
+      "MIG_per_factor": {
+        "culture": 0.031006579310629407,
+        "label": 0.022290654052997617
+      },
+      "DCI_disentanglement": 0.2744160647148215,
+      "DCI_completeness": 0.004437386923080736,
+      "DCI_informativeness": 0.62890625,
+      "DCI_informativeness_per_factor": {
+        "culture": 0.8046875,
+        "label": 0.453125
+      },
+      "SAP": 0.00390625,
+      "SAP_per_factor": {
+        "culture": 0.0078125,
+        "label": 0.0
+      }
+    },
+    "zs": {
+      "n_samples": 640,
+      "dim": 32,
+      "factors": [
+        "culture",
+        "label"
+      ],
+      "MIG": 0.021152659376304492,
+      "MIG_per_factor": {
+        "culture": 0.02506466890913167,
+        "label": 0.017240649843477313
+      },
+      "DCI_disentanglement": 0.27776178821367126,
+      "DCI_completeness": 0.004408807121046007,
+      "DCI_informativeness": 0.5390625,
+      "DCI_informativeness_per_factor": {
+        "culture": 0.65625,
+        "label": 0.421875
+      },
+      "SAP": 0.02734375,
+      "SAP_per_factor": {
+        "culture": 0.046875,
+        "label": 0.0078125
+      }
+    },
+    "za": {
+      "n_samples": 640,
+      "dim": 16,
+      "factors": [
+        "culture",
+        "label"
+      ],
+      "MIG": 0.016425586585015414,
+      "MIG_per_factor": {
+        "culture": 0.029661569871558414,
+        "label": 0.0031896032984724118
+      },
+      "DCI_disentanglement": 0.06663776953750128,
+      "DCI_completeness": 0.013387474117043744,
+      "DCI_informativeness": 0.6484375,
+      "DCI_informativeness_per_factor": {
+        "culture": 0.8359375,
+        "label": 0.4609375
+      },
+      "SAP": 0.03515625,
+      "SAP_per_factor": {
+        "culture": 0.0625,
+        "label": 0.0078125
+      }
+    }
+  }
+}

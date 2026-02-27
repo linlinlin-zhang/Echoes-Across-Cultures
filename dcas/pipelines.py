@@ -67,6 +67,9 @@ def train_model(
     prefer_cuda: bool = False,
     lambda_constraints: float = 0.1,
     constraint_margin: float = 1.0,
+    lambda_domain: float = 0.5,
+    lambda_contrast: float = 0.2,
+    lambda_cov: float = 0.05,
 ) -> dict:
     set_seed(int(seed))
     device = get_device(bool(prefer_cuda))
@@ -97,6 +100,9 @@ def train_model(
         n_cultures=len(vocab.id_to_culture),
         lambda_affect=lambda_affect,
         affect_classes=affect_classes,
+        lambda_domain=float(lambda_domain),
+        lambda_contrast=float(lambda_contrast),
+        lambda_cov=float(lambda_cov),
     )
     model = DCASModel(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=float(lr))

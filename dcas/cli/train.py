@@ -43,6 +43,9 @@ def main() -> None:
     ap.add_argument("--prefer_cuda", action="store_true")
     ap.add_argument("--lambda_constraints", type=float, default=0.1)
     ap.add_argument("--constraint_margin", type=float, default=1.0)
+    ap.add_argument("--lambda_domain", type=float, default=0.5)
+    ap.add_argument("--lambda_contrast", type=float, default=0.2)
+    ap.add_argument("--lambda_cov", type=float, default=0.05)
     args = ap.parse_args()
 
     set_seed(int(args.seed))
@@ -74,6 +77,9 @@ def main() -> None:
         n_cultures=len(vocab.id_to_culture),
         lambda_affect=lambda_affect,
         affect_classes=affect_classes,
+        lambda_domain=float(args.lambda_domain),
+        lambda_contrast=float(args.lambda_contrast),
+        lambda_cov=float(args.lambda_cov),
     )
     model = DCASModel(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=float(args.lr))

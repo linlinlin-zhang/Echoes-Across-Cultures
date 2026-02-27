@@ -1,0 +1,51 @@
+{
+  "config": {
+    "tracks_path": "./storage/public/routeA_phase2_cn/tracks.npz",
+    "interactions_path": "./storage/public/routeA_phase2_cn/interactions.csv",
+    "constraints_path": "./storage/pal/routeA_phase3_cn/constraints_upto_round2.jsonl",
+    "epochs": 10,
+    "batch_size": 64,
+    "lr": 0.002,
+    "seed": 42,
+    "lambda_constraints": 0.2,
+    "constraint_margin": 1.0,
+    "lambda_domain": 0.5,
+    "lambda_contrast": 0.2,
+    "lambda_cov": 0.05,
+    "k": 10,
+    "epsilon": 0.1,
+    "iters": 200,
+    "prefer_cuda": false
+  },
+  "rows": [
+    {
+      "name": "full",
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.7929157051379389,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    },
+    {
+      "name": "no_domain",
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.7839433542252463,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    },
+    {
+      "name": "no_constraints",
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.8074084540014653,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    },
+    {
+      "name": "no_ot",
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.8056271890589178,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    }
+  ],
+  "models": {
+    "full": "storage\\public\\routeA_phase3_ablation_cn\\full.pt",
+    "no_domain": "storage\\public\\routeA_phase3_ablation_cn\\no_domain.pt",
+    "no_constraints": "storage\\public\\routeA_phase3_ablation_cn\\no_constraints.pt"
+  }
+}

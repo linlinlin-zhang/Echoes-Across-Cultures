@@ -1,0 +1,124 @@
+{
+  "config": {
+    "tracks_path": "./storage/public/routeA_phase2_cn/tracks.npz",
+    "interactions_path": "./storage/public/routeA_phase2_cn/interactions.csv",
+    "metadata_csv": "./storage/public/routeA_phase2_cn/metadata_merged.csv",
+    "baseline_model_path": "./storage/public/routeA_phase2_cn/model.pt",
+    "rounds": 2,
+    "tasks_per_round": 120,
+    "label_col": "label",
+    "epochs": 10,
+    "batch_size": 64,
+    "lr": 0.002,
+    "seed": 42,
+    "lambda_constraints": 0.2,
+    "constraint_margin": 1.0,
+    "lambda_domain": 0.5,
+    "lambda_contrast": 0.2,
+    "lambda_cov": 0.05,
+    "k": 10,
+    "epsilon": 0.1,
+    "iters": 200,
+    "prefer_cuda": false
+  },
+  "rows": [
+    {
+      "tag": "baseline",
+      "n_users": 80,
+      "n_cultures": 4,
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.8109801431030641,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    },
+    {
+      "tag": "round1",
+      "n_users": 80,
+      "n_cultures": 4,
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.7974228684445409,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    },
+    {
+      "tag": "round2",
+      "n_users": 80,
+      "n_cultures": 4,
+      "n_user_culture_evals": 320,
+      "serendipity_mean": 0.7985860643327216,
+      "cultural_calibration_kl_mean": 1.3862943611168907
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "task_info": {
+        "tasks": "storage\\pal\\routeA_phase3_cn\\round1_pal_tasks.jsonl",
+        "count": 120
+      },
+      "round_constraints_report": {
+        "tasks_path": "storage\\pal\\routeA_phase3_cn\\round1_pal_tasks.jsonl",
+        "metadata_csv": "./storage/public/routeA_phase2_cn/metadata_merged.csv",
+        "out_path": "storage\\pal\\routeA_phase3_cn\\round1_constraints.jsonl",
+        "n_constraints": 105,
+        "n_positive": 43,
+        "n_negative": 62,
+        "n_skipped": 0,
+        "track_id_col": "track_id",
+        "label_col": "label",
+        "mode": "simulated_expert_same_label"
+      },
+      "n_merged_constraints": 105,
+      "train_history_tail": [
+        {
+          "epoch": 7.0,
+          "loss": 0.9792144179344178
+        },
+        {
+          "epoch": 8.0,
+          "loss": 0.968625545501709
+        },
+        {
+          "epoch": 9.0,
+          "loss": 0.9718858420848846
+        }
+      ],
+      "model_path": "storage\\public\\routeA_phase3_cn\\round1_model.pt",
+      "eval_path": "reports\\routeA_phase3_pal_cn\\eval_round1.json"
+    },
+    {
+      "round": 2,
+      "task_info": {
+        "tasks": "storage\\pal\\routeA_phase3_cn\\round2_pal_tasks.jsonl",
+        "count": 120
+      },
+      "round_constraints_report": {
+        "tasks_path": "storage\\pal\\routeA_phase3_cn\\round2_pal_tasks.jsonl",
+        "metadata_csv": "./storage/public/routeA_phase2_cn/metadata_merged.csv",
+        "out_path": "storage\\pal\\routeA_phase3_cn\\round2_constraints.jsonl",
+        "n_constraints": 104,
+        "n_positive": 30,
+        "n_negative": 74,
+        "n_skipped": 0,
+        "track_id_col": "track_id",
+        "label_col": "label",
+        "mode": "simulated_expert_same_label"
+      },
+      "n_merged_constraints": 206,
+      "train_history_tail": [
+        {
+          "epoch": 7.0,
+          "loss": 1.001471471786499
+        },
+        {
+          "epoch": 8.0,
+          "loss": 1.0035330295562743
+        },
+        {
+          "epoch": 9.0,
+          "loss": 0.9976076900959014
+        }
+      ],
+      "model_path": "storage\\public\\routeA_phase3_cn\\round2_model.pt",
+      "eval_path": "reports\\routeA_phase3_pal_cn\\eval_round2.json"
+    }
+  ]
+}

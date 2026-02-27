@@ -12,7 +12,7 @@ import torch
 
 from dcas.data.interactions import load_interactions
 from dcas.data.npz_tracks import load_tracks
-from dcas.recommender import recommend_ot
+from dcas.recommender import recommend_knn, recommend_ot
 from dcas.serialization import load_checkpoint
 
 
@@ -27,6 +27,7 @@ def evaluate_recommender(
     tracks_path: str | Path,
     interactions_path: str | Path,
     out_json: str | Path | None = None,
+    method: str = "ot",
     k: int = 20,
     epsilon: float = 0.1,
     iters: int = 200,
@@ -42,20 +43,34 @@ def evaluate_recommender(
 
     rows: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
+    method = str(method).strip().lower()
+    if method not in {"ot", "knn"}:
+        raise ValueError("method must be one of: ot, knn")
     for u in users:
         for c in cultures:
             try:
-                _, metrics = recommend_ot(
-                    model=model,
-                    tracks=tracks,
-                    interactions=interactions,
-                    user_id=u,
-                    target_culture=c,
-                    k=int(k),
-                    device=device,
-                    epsilon=float(epsilon),
-                    iters=int(iters),
-                )
+                if method == "ot":
+                    _, metrics = recommend_ot(
+                        model=model,
+                        tracks=tracks,
+                        interactions=interactions,
+                        user_id=u,
+                        target_culture=c,
+                        k=int(k),
+                        device=device,
+                        epsilon=float(epsilon),
+                        iters=int(iters),
+                    )
+                else:
+                    _, metrics = recommend_knn(
+                        model=model,
+                        tracks=tracks,
+                        interactions=interactions,
+                        user_id=u,
+                        target_culture=c,
+                        k=int(k),
+                        device=device,
+                    )
                 rows.append(
                     {
                         "user_id": u,
@@ -98,6 +113,7 @@ def evaluate_recommender(
         "rows": rows,
         "skipped": skipped[:200],
         "config": {
+            "method": method,
             "k": int(k),
             "epsilon": float(epsilon),
             "iters": int(iters),
@@ -115,11 +131,12 @@ def evaluate_recommender(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Evaluate OT recommender over all users x target cultures.")
+    ap = argparse.ArgumentParser(description="Evaluate recommender over all users x target cultures.")
     ap.add_argument("--model", required=True)
     ap.add_argument("--tracks", required=True)
     ap.add_argument("--interactions", required=True)
     ap.add_argument("--out_json", default=None)
+    ap.add_argument("--method", default="ot", choices=["ot", "knn"])
     ap.add_argument("--k", type=int, default=20)
     ap.add_argument("--epsilon", type=float, default=0.1)
     ap.add_argument("--iters", type=int, default=200)
@@ -131,6 +148,7 @@ def main() -> None:
         tracks_path=args.tracks,
         interactions_path=args.interactions,
         out_json=args.out_json,
+        method=str(args.method),
         k=int(args.k),
         epsilon=float(args.epsilon),
         iters=int(args.iters),

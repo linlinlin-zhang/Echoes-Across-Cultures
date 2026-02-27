@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -28,22 +28,12 @@ def _safe_kl(p: np.ndarray, q: np.ndarray, eps: float = 1e-12) -> float:
     return float(np.sum(p * (np.log(p + eps) - np.log(q + eps))))
 
 
-def recommend_ot(
-    model: DCASModel,
+def _prepare_user_and_candidates(
     tracks: Tracks,
     interactions: list[Interaction],
     user_id: str,
     target_culture: str,
-    k: int = 20,
-    device: torch.device | None = None,
-    epsilon: float = 0.1,
-    iters: int = 200,
-) -> tuple[list[Recommendation], dict[str, float]]:
-    if device is None:
-        device = torch.device("cpu")
-    model.eval()
-    model.to(device)
-
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     track_id_to_idx = {str(tid): i for i, tid in enumerate(tracks.track_id.tolist())}
     user_hist = [it for it in interactions if it.user_id == user_id and it.track_id in track_id_to_idx]
     if not user_hist:
@@ -56,26 +46,19 @@ def recommend_ot(
     cand_idx = tracks.indices_of_cultures([target_culture])
     if cand_idx.size == 0:
         raise ValueError(f"no tracks for target_culture={target_culture}")
+    return hist_idx, hist_w, cand_idx
 
-    x_all = torch.from_numpy(tracks.embedding).to(device)
-    with torch.no_grad():
-        _, zs_mu_all, za_mu_all = model.encode(x_all)
 
-    za_hist = za_mu_all[torch.from_numpy(hist_idx).to(device)]
-    zs_hist = zs_mu_all[torch.from_numpy(hist_idx).to(device)]
-    za_cand = za_mu_all[torch.from_numpy(cand_idx).to(device)]
-    zs_cand = zs_mu_all[torch.from_numpy(cand_idx).to(device)]
-
-    a = torch.from_numpy(hist_w.astype(np.float32)).to(device)
-    b = torch.full((cand_idx.shape[0],), 1.0 / cand_idx.shape[0], device=device)
-    cost = squared_euclidean_cost(za_hist, za_cand)
-    plan = sinkhorn_plan(a=a, b=b, cost=cost, epsilon=epsilon, iters=iters)
-
-    # In balanced OT with fixed target marginal b, column mass is near-constant.
-    # Rank candidates by OT-conditioned transport cost instead of marginal mass.
-    col_mass = plan.sum(dim=0).clamp_min(1e-12)
-    col_avg_cost = (plan * cost).sum(dim=0) / col_mass
-    cand_scores = torch.softmax(-col_avg_cost, dim=0).detach().cpu().numpy()
+def _finalize_recommendations(
+    tracks: Tracks,
+    cand_idx: np.ndarray,
+    cand_scores: np.ndarray,
+    za_hist: torch.Tensor,
+    zs_hist: torch.Tensor,
+    za_cand: torch.Tensor,
+    zs_cand: torch.Tensor,
+    k: int,
+) -> tuple[list[Recommendation], dict[str, float]]:
     top_local = np.argsort(-cand_scores)[: int(k)]
 
     za_hist_cpu = za_hist.detach().cpu()
@@ -116,3 +99,104 @@ def recommend_ot(
     }
     return recs, metrics
 
+
+def recommend_ot(
+    model: DCASModel,
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    device: torch.device | None = None,
+    epsilon: float = 0.1,
+    iters: int = 200,
+) -> tuple[list[Recommendation], dict[str, float]]:
+    if device is None:
+        device = torch.device("cpu")
+    model.eval()
+    model.to(device)
+
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(
+        tracks=tracks,
+        interactions=interactions,
+        user_id=user_id,
+        target_culture=target_culture,
+    )
+
+    x_all = torch.from_numpy(tracks.embedding).to(device)
+    with torch.no_grad():
+        _, zs_mu_all, za_mu_all = model.encode(x_all)
+
+    za_hist = za_mu_all[torch.from_numpy(hist_idx).to(device)]
+    zs_hist = zs_mu_all[torch.from_numpy(hist_idx).to(device)]
+    za_cand = za_mu_all[torch.from_numpy(cand_idx).to(device)]
+    zs_cand = zs_mu_all[torch.from_numpy(cand_idx).to(device)]
+
+    a = torch.from_numpy(hist_w.astype(np.float32)).to(device)
+    b = torch.full((cand_idx.shape[0],), 1.0 / cand_idx.shape[0], device=device)
+    cost = squared_euclidean_cost(za_hist, za_cand)
+    plan = sinkhorn_plan(a=a, b=b, cost=cost, epsilon=epsilon, iters=iters)
+
+    # In balanced OT with fixed target marginal b, column mass is near-constant.
+    # Rank candidates by OT-conditioned transport cost instead of marginal mass.
+    col_mass = plan.sum(dim=0).clamp_min(1e-12)
+    col_avg_cost = (plan * cost).sum(dim=0) / col_mass
+    cand_scores = torch.softmax(-col_avg_cost, dim=0).detach().cpu().numpy()
+
+    return _finalize_recommendations(
+        tracks=tracks,
+        cand_idx=cand_idx,
+        cand_scores=cand_scores,
+        za_hist=za_hist,
+        zs_hist=zs_hist,
+        za_cand=za_cand,
+        zs_cand=zs_cand,
+        k=int(k),
+    )
+
+
+def recommend_knn(
+    model: DCASModel,
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    device: torch.device | None = None,
+) -> tuple[list[Recommendation], dict[str, float]]:
+    if device is None:
+        device = torch.device("cpu")
+    model.eval()
+    model.to(device)
+
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(
+        tracks=tracks,
+        interactions=interactions,
+        user_id=user_id,
+        target_culture=target_culture,
+    )
+
+    x_all = torch.from_numpy(tracks.embedding).to(device)
+    with torch.no_grad():
+        _, zs_mu_all, za_mu_all = model.encode(x_all)
+
+    za_hist = za_mu_all[torch.from_numpy(hist_idx).to(device)]
+    zs_hist = zs_mu_all[torch.from_numpy(hist_idx).to(device)]
+    za_cand = za_mu_all[torch.from_numpy(cand_idx).to(device)]
+    zs_cand = zs_mu_all[torch.from_numpy(cand_idx).to(device)]
+
+    hist_w_t = torch.from_numpy(hist_w.astype(np.float32)).to(device)
+    dist = torch.cdist(za_hist, za_cand)
+    avg_dist = (hist_w_t.unsqueeze(1) * dist).sum(dim=0)
+    cand_scores = torch.softmax(-avg_dist, dim=0).detach().cpu().numpy()
+
+    return _finalize_recommendations(
+        tracks=tracks,
+        cand_idx=cand_idx,
+        cand_scores=cand_scores,
+        za_hist=za_hist,
+        zs_hist=zs_hist,
+        za_cand=za_cand,
+        zs_cand=zs_cand,
+        k=int(k),
+    )
