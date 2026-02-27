@@ -18,9 +18,9 @@
 | 全栈交互流程（数据/训练/推荐/PAL） | 已实现 | `dcas_server/app.py`, `web/src/App.tsx` | 可表述为“提供实验原型系统，不等同生产部署”。 |
 | CultureMERT 特征提取接入 | 已实现（embedding 级） | `dcas/embeddings/culturemert.py`, `dcas/scripts/build_tracks_from_audio.py`, `dcas_server/app.py` | 可写“已支持 CultureMERT embedding 构建数据集”；不可写“已完成持续预训练(CPT)”。 |
 | 分层 VAE + TC（严格 FactorVAE 级别） | 部分实现 | `dcas/models/dcas_vae.py`, `dcas/models/losses.py` | 当前为 KL + 协方差去相关近似，不应宣称“完整 TC 实现”。 |
-| 风格迁移生成模块 | 部分实现（embedding 级） | `dcas/style_transfer.py`, `dcas/cli/style_transfer.py`, `dcas_server/app.py` | 已实现反事实 embedding 迁移；不可写成“已实现波形级生成”。 |
+| 风格迁移生成模块 | 部分实现（embedding + 波形基线） | `dcas/style_transfer.py`, `dcas/cli/style_transfer.py`, `dcas/waveform_style_transfer.py`, `dcas/cli/style_transfer_wave.py`, `dcas_server/app.py` | 已实现 embedding 反事实与波形基线（频谱统计迁移）；不可写成“高保真可训练生成器已完成”。 |
 | 动态本体（concept/relation/annotation） | 已实现（工程 v1） | `dcas/ontology.py`, `dcas/cli/ontology.py`, `dcas_server/app.py` | 可写“实现了动态本体管理服务，并支持导出训练约束”；建议保留“轻量建议算法”表述。 |
-| 标准解纠缠指标（MIG/DCI/SAP）评测 | 未实现（计划中） | 无 | 当前不可做强主张；需补评测脚本后再写实验结论。 |
+| 标准解纠缠指标（MIG/DCI/SAP）评测 | 已实现（工程 v1） | `dcas/scripts/evaluate_disentanglement.py`, `reports/routeA_disentanglement_*.json` | 可写“已提供可复现评测脚本与初步结果”；避免直接宣称“SOTA 解纠缠”。 |
 | 大规模真实跨文化基准全面实验 | 未实现（计划中） | 无 | 当前结果以 toy + 原型验证为主。 |
 
 ## 可主张与不可主张边界
@@ -34,8 +34,8 @@
 不可主张（当前证据不足）：
 - “已达到 SOTA” 或 “在公开大基准上全面领先”。
 - “已完整实现 CultureMERT 持续预训练并验证泛化优势”。
-- “已完成严格解纠缠定量评测（MIG/DCI/SAP）并显著领先”。
-- “已实现波形级高保真跨文化风格生成并通过听测验证”。
+- “已在 MIG/DCI/SAP 上显著领先公开强基线”。
+- “已实现波形级高保真跨文化风格生成并通过严格听测验证”。
 
 ## 投稿文本建议（降风险）
 

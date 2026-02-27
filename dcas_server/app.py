@@ -9,7 +9,15 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from dcas.ontology import OntologyStore
-from dcas.pipelines import build_tracks_with_culturemert, generate_toy, pal_tasks, recommend, style_transfer, train_model
+from dcas.pipelines import (
+    build_tracks_with_culturemert,
+    generate_toy,
+    pal_tasks,
+    recommend,
+    style_transfer,
+    style_transfer_waveform,
+    train_model,
+)
 
 from .paths import Storage
 from .schemas import (
@@ -24,6 +32,7 @@ from .schemas import (
     StyleTransferRequest,
     ToyGenerateRequest,
     TrainRequest,
+    WaveStyleTransferRequest,
 )
 
 
@@ -200,6 +209,36 @@ def create_app() -> FastAPI:
             prefer_cuda=req.prefer_cuda,
         )
         out["artifact"] = storage.relpath(Path(str(out["artifact"])))
+        return out
+
+    @app.post("/api/style/transfer_waveform")
+    def api_style_transfer_waveform(req: WaveStyleTransferRequest):
+        try:
+            source_audio = storage.resolve_rel(req.source_audio_path)
+            style_audio = storage.resolve_rel(req.style_audio_path)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid path")
+        if not source_audio.exists():
+            raise HTTPException(status_code=404, detail="source audio not found")
+        if not style_audio.exists():
+            raise HTTPException(status_code=404, detail="style audio not found")
+
+        out_path = storage.resolve_rel(f"style/{Path(req.out_name).name}")
+        out = style_transfer_waveform(
+            source_audio_path=str(source_audio),
+            style_audio_path=str(style_audio),
+            out_wav_path=str(out_path),
+            alpha=req.alpha,
+            target_sr=req.target_sr,
+            n_fft=req.n_fft,
+            hop_length=req.hop_length,
+            win_length=req.win_length,
+            max_seconds=req.max_seconds,
+            peak_norm=req.peak_norm,
+        )
+        out["artifact"] = storage.relpath(Path(str(out["artifact"])))
+        out["source_audio_path"] = storage.relpath(source_audio)
+        out["style_audio_path"] = storage.relpath(style_audio)
         return out
 
     @app.post("/api/pal")

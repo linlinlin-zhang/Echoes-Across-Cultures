@@ -58,6 +58,19 @@ class StyleTransferRequest(BaseModel):
     prefer_cuda: bool = Field(default=False)
 
 
+class WaveStyleTransferRequest(BaseModel):
+    source_audio_path: str
+    style_audio_path: str
+    out_name: str = Field(default="style_transfer_wave.wav")
+    alpha: float = Field(default=0.7, ge=0.0, le=1.5)
+    target_sr: int = Field(default=24000, ge=8000, le=96000)
+    n_fft: int = Field(default=1024, ge=128, le=8192)
+    hop_length: int = Field(default=256, ge=32, le=4096)
+    win_length: int = Field(default=1024, ge=128, le=8192)
+    max_seconds: float | None = Field(default=12.0, gt=0)
+    peak_norm: float = Field(default=0.98, gt=0.1, le=1.0)
+
+
 class OntologyConceptCreateRequest(BaseModel):
     name: str
     description: str = ""

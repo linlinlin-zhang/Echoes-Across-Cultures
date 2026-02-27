@@ -223,3 +223,28 @@ New scripts:
 
 - [docs/ROUTE_A_PHASE2_RUNBOOK.md](docs/ROUTE_A_PHASE2_RUNBOOK.md)
 - [docs/technical_notes/routeA_phase2_end.md](docs/technical_notes/routeA_phase2_end.md)
+## Waveform Style Transfer (Baseline)
+
+Prereq check:
+```bash
+python -m dcas.scripts.check_waveform_generation_prereqs \
+  --metadata ./storage/public/routeA_phase2_cn/metadata_merged.csv \
+  --out_json ./reports/waveform_prereq_check_cn.json
+```
+
+Generate waveform from metadata track ids:
+```bash
+python -m dcas.cli.style_transfer_wave \
+  --metadata ./storage/public/routeA_phase2_cn/metadata_merged.csv \
+  --source_track sanchit-gandhi_gtzan_00000000 \
+  --style_track ccmusic-database_erhu_playing_tech_00000000 \
+  --out_wav ./storage/style/wave_transfer_demo_from_metadata.wav \
+  --alpha 0.7 \
+  --target_sr 24000 \
+  --max_seconds 12 \
+  --report_json ./reports/wave_transfer_demo_from_metadata.json
+```
+
+Notes:
+- This is a waveform-level spectral statistics transfer baseline.
+- It is not yet a diffusion/codec-trained high-fidelity generator.

@@ -22,6 +22,7 @@ from dcas.scripts.make_toy_data import generate_toy_data
 from dcas.serialization import load_checkpoint, save_checkpoint
 from dcas.style_transfer import generate_counterfactual_embedding
 from dcas.utils import get_device, set_seed
+from dcas.waveform_style_transfer import transfer_waveform_style
 
 
 def generate_toy(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128, seed: int = 7) -> dict[str, str]:
@@ -234,6 +235,40 @@ def style_transfer(
         "neighbors": [asdict(n) for n in neighbors],
         "meta": meta,
         "dim": int(emb.shape[0]),
+    }
+
+
+def style_transfer_waveform(
+    source_audio_path: str | Path,
+    style_audio_path: str | Path,
+    out_wav_path: str | Path,
+    alpha: float = 0.7,
+    target_sr: int = 24000,
+    n_fft: int = 1024,
+    hop_length: int = 256,
+    win_length: int = 1024,
+    max_seconds: float | None = 12.0,
+    peak_norm: float = 0.98,
+) -> dict:
+    out = transfer_waveform_style(
+        source_audio_path=source_audio_path,
+        style_audio_path=style_audio_path,
+        output_wav_path=out_wav_path,
+        alpha=float(alpha),
+        target_sr=int(target_sr),
+        n_fft=int(n_fft),
+        hop_length=int(hop_length),
+        win_length=int(win_length),
+        max_seconds=float(max_seconds) if max_seconds is not None else None,
+        peak_norm=float(peak_norm),
+    )
+    return {
+        "artifact": out.output_path,
+        "sample_rate": int(out.sample_rate),
+        "n_samples": int(out.n_samples),
+        "source_audio_path": out.source_audio_path,
+        "style_audio_path": out.style_audio_path,
+        "metrics": out.metrics,
     }
 
 
