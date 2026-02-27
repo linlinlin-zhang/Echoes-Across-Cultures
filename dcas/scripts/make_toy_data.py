@@ -7,6 +7,24 @@ from pathlib import Path
 import numpy as np
 
 
+def _pick_user_tracks(
+    rng: np.random.Generator,
+    preferred_idx: np.ndarray,
+    fallback_idx: np.ndarray,
+    desired_n: int,
+) -> np.ndarray:
+    if preferred_idx.size > 0:
+        pool = preferred_idx
+    elif fallback_idx.size > 0:
+        pool = fallback_idx
+    else:
+        return np.array([], dtype=np.int64)
+    n = min(int(desired_n), int(pool.shape[0]))
+    if n <= 0:
+        return np.array([], dtype=np.int64)
+    return rng.choice(pool, size=n, replace=False).astype(np.int64)
+
+
 def generate_toy_data(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128, seed: int = 7) -> Path:
     rng = np.random.default_rng(int(seed))
     out_dir = Path(out_dir)
@@ -57,14 +75,21 @@ def generate_toy_data(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128,
         "u4": ("africa", [2, 4]),
         "u5": ("africa", [3, 5]),
     }
+    desired_per_user = 80
 
     with open(out_dir / "interactions.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["user_id", "track_id", "weight"])
         w.writeheader()
         for u in users:
             cul, affects = user_pref[u]
-            idx = np.nonzero((culture == cul) & np.isin(affect_label, np.array(affects, dtype=np.int64)))[0]
-            pick = rng.choice(idx, size=80, replace=False)
+            idx_pref = np.nonzero((culture == cul) & np.isin(affect_label, np.array(affects, dtype=np.int64)))[0]
+            idx_fallback = np.nonzero(culture == cul)[0]
+            pick = _pick_user_tracks(
+                rng=rng,
+                preferred_idx=idx_pref,
+                fallback_idx=idx_fallback,
+                desired_n=desired_per_user,
+            )
             for j in pick.tolist():
                 w.writerow({"user_id": u, "track_id": str(track_id[j]), "weight": float(rng.uniform(0.5, 2.0))})
 
@@ -72,6 +97,7 @@ def generate_toy_data(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128,
         f.write(f"cultures={cultures}\n")
         f.write(f"n_affect={n_affect}\n")
         f.write(f"dim={int(dim)}\n")
+        f.write(f"desired_interactions_per_user={desired_per_user}\n")
 
     return out_dir
 

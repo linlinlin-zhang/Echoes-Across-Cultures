@@ -74,7 +74,17 @@ def train_model(
     tracks = load_tracks(str(tracks_path))
     vocab = CultureVocab.from_tracks(tracks)
     ds = TrackDataset(tracks, vocab)
-    dl = DataLoader(ds, batch_size=int(batch_size), shuffle=True, num_workers=0, collate_fn=collate_batch, drop_last=True)
+    if len(ds) == 0:
+        raise RuntimeError("empty dataset: no tracks to train on")
+    effective_batch_size = min(int(batch_size), len(ds))
+    dl = DataLoader(
+        ds,
+        batch_size=effective_batch_size,
+        shuffle=True,
+        num_workers=0,
+        collate_fn=collate_batch,
+        drop_last=False,
+    )
 
     lambda_affect = 0.0
     affect_classes = 8
@@ -135,6 +145,8 @@ def train_model(
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
 
+        if not losses:
+            raise RuntimeError("no training batches were produced; check dataset size and batch_size")
         history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
 
     out_path = Path(out_path)

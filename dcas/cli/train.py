@@ -51,7 +51,17 @@ def main() -> None:
     tracks = load_tracks(args.data)
     vocab = CultureVocab.from_tracks(tracks)
     ds = TrackDataset(tracks, vocab)
-    dl = DataLoader(ds, batch_size=int(args.batch_size), shuffle=True, num_workers=0, collate_fn=collate_batch, drop_last=True)
+    if len(ds) == 0:
+        raise RuntimeError("empty dataset: no tracks to train on")
+    effective_batch_size = min(int(args.batch_size), len(ds))
+    dl = DataLoader(
+        ds,
+        batch_size=effective_batch_size,
+        shuffle=True,
+        num_workers=0,
+        collate_fn=collate_batch,
+        drop_last=False,
+    )
 
     lambda_affect = 0.0
     affect_classes = 8
@@ -79,7 +89,6 @@ def main() -> None:
         model.train()
         losses: list[float] = []
         for batch in dl:
-            batch = batch
             batch = type(batch)(
                 x=batch.x.to(device),
                 culture=batch.culture.to(device),
@@ -108,6 +117,8 @@ def main() -> None:
 
             losses.append(float(loss.detach().cpu().item()))
 
+        if not losses:
+            raise RuntimeError("no training batches were produced; check dataset size and batch_size")
         avg = float(np.mean(losses)) if losses else float("nan")
         print(f"epoch={epoch} loss={avg:.4f}")
 
