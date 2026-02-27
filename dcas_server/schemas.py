@@ -15,6 +15,7 @@ class DatasetBuildRequest(BaseModel):
     out_name: str = Field(default="tracks.npz")
     model_id: str = Field(default="ntua-slp/CultureMERT-95M")
     device: str | None = None
+    pooling: str = Field(default="mean")
     max_seconds: float = Field(default=30.0, gt=0)
     limit: int | None = Field(default=None, ge=1)
     skip_errors: bool = Field(default=False)
@@ -82,6 +83,12 @@ class OntologyAnnotationCreateRequest(BaseModel):
 class OntologySuggestRequest(BaseModel):
     query: str
     top_k: int = Field(default=5, ge=1, le=50)
+
+
+class OntologyExportConstraintsRequest(BaseModel):
+    out_name: str = Field(default="ontology_constraints.jsonl")
+    min_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    max_pairs_per_concept: int = Field(default=200, ge=1, le=100000)
 
 
 class PalRequest(BaseModel):

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from dcas.data.npz_tracks import Tracks
 from dcas.models.dcas_vae import DCASModel
@@ -78,14 +79,20 @@ def generate_counterfactual_embedding(
         )
 
     with torch.no_grad():
+        zc_cf, zs_cf, za_cf = model.encode(x_cf.unsqueeze(0))
         d_zs_shift = torch.norm((zs_new - zs_src), dim=-1).mean().item()
-        d_zc_drift = torch.norm((zc_src - zc_all[src_idx : src_idx + 1]), dim=-1).mean().item()
-        d_za_drift = torch.norm((za_src - za_all[src_idx : src_idx + 1]), dim=-1).mean().item()
+        d_zc_drift = torch.norm((zc_cf - zc_src), dim=-1).mean().item()
+        d_za_drift = torch.norm((za_cf - za_src), dim=-1).mean().item()
+        style_alignment = F.cosine_similarity(zs_cf, zs_sty, dim=-1).mean().item()
+        content_preservation = F.cosine_similarity(zc_cf, zc_src, dim=-1).mean().item()
+        affect_preservation = F.cosine_similarity(za_cf, za_src, dim=-1).mean().item()
 
     meta = {
         "zs_shift": float(d_zs_shift),
         "zc_drift": float(d_zc_drift),
         "za_drift": float(d_za_drift),
+        "style_alignment": float(style_alignment),
+        "content_preservation": float(content_preservation),
+        "affect_preservation": float(affect_preservation),
     }
     return x_cf.detach().cpu().numpy().astype(np.float32), neighbors, meta
-

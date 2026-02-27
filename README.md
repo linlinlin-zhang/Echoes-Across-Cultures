@@ -106,6 +106,7 @@ python -m dcas.scripts.build_tracks_from_audio \
 说明：
 - `metadata.csv` 必需列：`track_id,culture,audio_path`，可选列：`affect_label`
 - `audio_path` 可为绝对路径，或相对 `metadata.csv` 的路径
+- 同目录会生成 `tracks.npz.manifest.json`，记录模型、参数和错误清单，便于复现实验
 
 2) 生成式风格迁移（embedding 级反事实）
 
@@ -128,6 +129,7 @@ python -m dcas.cli.style_transfer \
 ```bash
 python -m dcas.cli.ontology --state ./storage/ontology/state.json add-concept --name Han --description "Korean culturally grounded sorrow"
 python -m dcas.cli.ontology --state ./storage/ontology/state.json suggest --query "sorrow grief"
+python -m dcas.cli.ontology --state ./storage/ontology/state.json export-constraints --out ./storage/ontology/constraints.jsonl
 ```
 
 API 同步提供：
@@ -136,6 +138,7 @@ API 同步提供：
 - `POST /api/ontology/relations`
 - `POST /api/ontology/annotations`
 - `POST /api/ontology/suggest`
+- `POST /api/ontology/export_constraints`
 
 ## 路线图（接入真实音频）
 

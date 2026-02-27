@@ -16,6 +16,7 @@ from .schemas import (
     DatasetBuildRequest,
     OntologyAnnotationCreateRequest,
     OntologyConceptCreateRequest,
+    OntologyExportConstraintsRequest,
     OntologyRelationCreateRequest,
     OntologySuggestRequest,
     PalRequest,
@@ -109,11 +110,14 @@ def create_app() -> FastAPI:
             out_tracks_path=str(out_path),
             model_id=req.model_id,
             device=req.device,
+            pooling=req.pooling,
             max_seconds=req.max_seconds,
             limit=req.limit,
             skip_errors=req.skip_errors,
         )
         result["out"] = storage.relpath(Path(str(result["out"])))
+        if "manifest" in result:
+            result["manifest"] = storage.relpath(Path(str(result["manifest"])))
         return result
 
     @app.post("/api/train")
@@ -267,6 +271,17 @@ def create_app() -> FastAPI:
     @app.post("/api/ontology/suggest")
     def api_ontology_suggest(req: OntologySuggestRequest):
         return {"items": ontology.suggest_concepts(query=req.query, top_k=req.top_k)}
+
+    @app.post("/api/ontology/export_constraints")
+    def api_ontology_export_constraints(req: OntologyExportConstraintsRequest):
+        out_path = storage.resolve_rel(f"ontology/{Path(req.out_name).name}")
+        result = ontology.save_pairwise_constraints(
+            path=out_path,
+            min_confidence=req.min_confidence,
+            max_pairs_per_concept=req.max_pairs_per_concept,
+        )
+        result["path"] = storage.relpath(Path(str(result["path"])))
+        return result
 
     dist = Path("web/dist")
     dist.mkdir(parents=True, exist_ok=True)

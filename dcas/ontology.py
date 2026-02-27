@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import itertools
 import re
 import threading
 import uuid
@@ -168,3 +170,64 @@ class OntologyStore:
             out.append(item)
         return out
 
+    def export_pairwise_constraints(
+        self,
+        min_confidence: float = 0.5,
+        max_pairs_per_concept: int = 200,
+    ) -> list[dict[str, Any]]:
+        with self._lock:
+            state = self._load()
+        concept_by_id = {c["id"]: c for c in state["concepts"]}
+        by_concept: dict[str, dict[str, float]] = {}
+        for a in state["annotations"]:
+            conf = float(a.get("confidence", 0.0))
+            if conf < float(min_confidence):
+                continue
+            cid = str(a.get("concept_id", "")).strip()
+            tid = str(a.get("track_id", "")).strip()
+            if not cid or not tid:
+                continue
+            by_concept.setdefault(cid, {})
+            prev = by_concept[cid].get(tid, 0.0)
+            by_concept[cid][tid] = max(prev, conf)
+
+        out: list[dict[str, Any]] = []
+        for cid, tracks_conf in by_concept.items():
+            track_ids = sorted(tracks_conf.keys())
+            pairs = itertools.combinations(track_ids, 2)
+            count = 0
+            for a, b in pairs:
+                if count >= int(max_pairs_per_concept):
+                    break
+                c = concept_by_id.get(cid, {})
+                rationale = f"shared ontology concept: {c.get('name', cid)}"
+                out.append(
+                    {
+                        "track_id_a": a,
+                        "track_id_b": b,
+                        "similar": True,
+                        "rationale": rationale,
+                    }
+                )
+                count += 1
+        return out
+
+    def save_pairwise_constraints(
+        self,
+        path: str | Path,
+        min_confidence: float = 0.5,
+        max_pairs_per_concept: int = 200,
+    ) -> dict[str, Any]:
+        pairs = self.export_pairwise_constraints(
+            min_confidence=min_confidence,
+            max_pairs_per_concept=max_pairs_per_concept,
+        )
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "w", encoding="utf-8") as f:
+            for obj in pairs:
+                f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+        return {
+            "path": str(p),
+            "count": int(len(pairs)),
+        }

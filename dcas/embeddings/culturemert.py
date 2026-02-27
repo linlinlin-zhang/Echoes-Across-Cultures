@@ -43,6 +43,8 @@ class CultureMERTEmbedder:
             raise ImportError("torchaudio is required for CultureMERT embedding extraction")
 
         self.cfg = cfg
+        if cfg.pooling not in {"mean", "cls"}:
+            raise ValueError("pooling must be one of: mean, cls")
         self.device = torch.device(cfg.device or ("cuda" if torch.cuda.is_available() else "cpu"))
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(
             cfg.model_id,
@@ -98,4 +100,3 @@ class CultureMERTEmbedder:
     def embed_file(self, path: str | Path) -> np.ndarray:
         wav = self._load_audio(path)
         return self.embed_waveform(wav=wav, sampling_rate=self.sampling_rate)
-

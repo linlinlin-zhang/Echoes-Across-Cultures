@@ -36,6 +36,11 @@ def main() -> None:
     ap_sug.add_argument("--query", required=True)
     ap_sug.add_argument("--top_k", type=int, default=5)
 
+    ap_exp = sub.add_parser("export-constraints")
+    ap_exp.add_argument("--out", required=True, help="jsonl output path")
+    ap_exp.add_argument("--min_confidence", type=float, default=0.5)
+    ap_exp.add_argument("--max_pairs_per_concept", type=int, default=200)
+
     args = ap.parse_args()
     store = OntologyStore(args.state)
 
@@ -75,10 +80,17 @@ def main() -> None:
         out = {"items": store.suggest_concepts(query=args.query, top_k=args.top_k)}
         print(json.dumps(out, ensure_ascii=False))
         return
+    if args.cmd == "export-constraints":
+        out = store.save_pairwise_constraints(
+            path=args.out,
+            min_confidence=args.min_confidence,
+            max_pairs_per_concept=args.max_pairs_per_concept,
+        )
+        print(json.dumps(out, ensure_ascii=False))
+        return
 
     raise RuntimeError(f"unknown cmd: {args.cmd}")
 
 
 if __name__ == "__main__":
     main()
-

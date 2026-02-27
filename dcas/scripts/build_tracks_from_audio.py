@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from dcas.embeddings import CultureMERTConfig, CultureMERTEmbedder
+from dcas.serialization_json import write_json
 
 
 def _require(row: dict[str, str], key: str) -> str:
@@ -21,6 +22,7 @@ def build_tracks_from_audio(
     out_npz: str | Path,
     model_id: str = "ntua-slp/CultureMERT-95M",
     device: str | None = None,
+    pooling: str = "mean",
     max_seconds: float | None = 30.0,
     limit: int | None = None,
     skip_errors: bool = False,
@@ -29,7 +31,12 @@ def build_tracks_from_audio(
     out_path = Path(out_npz)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    cfg = CultureMERTConfig(model_id=model_id, device=device, max_seconds=max_seconds)
+    cfg = CultureMERTConfig(
+        model_id=model_id,
+        device=device,
+        pooling=pooling,
+        max_seconds=max_seconds,
+    )
     embedder = CultureMERTEmbedder(cfg)
 
     track_ids: list[str] = []
@@ -42,14 +49,34 @@ def build_tracks_from_audio(
     with open(metadata_path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
+    if not rows:
+        raise RuntimeError("metadata is empty")
+
+    required = {"track_id", "culture", "audio_path"}
+    missing = [k for k in required if (reader.fieldnames is None or k not in reader.fieldnames)]
+    if missing:
+        raise RuntimeError(f"metadata missing required columns: {missing}")
+
+    rows = sorted(
+        rows,
+        key=lambda r: (
+            str(r.get("track_id", "")),
+            str(r.get("audio_path", "")),
+        ),
+    )
 
     if limit is not None and int(limit) > 0:
         rows = rows[: int(limit)]
 
     total = len(rows)
+    seen_track_ids: set[str] = set()
+    duplicate_track_ids: list[str] = []
     for i, row in enumerate(rows, start=1):
         try:
             tid = _require(row, "track_id")
+            if tid in seen_track_ids:
+                duplicate_track_ids.append(tid)
+            seen_track_ids.add(tid)
             cul = _require(row, "culture")
             rel_audio = _require(row, "audio_path")
             audio_path = Path(rel_audio)
@@ -73,6 +100,10 @@ def build_tracks_from_audio(
             errors.append(msg)
             print(f"[{i}/{total}] skipped: {msg}")
 
+    if duplicate_track_ids:
+        dup = sorted(set(duplicate_track_ids))
+        raise RuntimeError(f"duplicate track_id found: {dup[:20]}")
+
     if not embeds:
         raise RuntimeError("no embeddings generated")
 
@@ -86,8 +117,26 @@ def build_tracks_from_audio(
         obj["affect_label"] = np.array(affects, dtype=np.int64)
 
     np.savez_compressed(str(out_path), **obj)
+    manifest_path = out_path.with_suffix(out_path.suffix + ".manifest.json")
+    manifest = {
+        "metadata": str(metadata_path.resolve()),
+        "out_tracks": str(out_path.resolve()),
+        "model_id": model_id,
+        "pooling": pooling,
+        "device": device or "auto",
+        "max_seconds": max_seconds,
+        "limit": limit,
+        "skip_errors": bool(skip_errors),
+        "n_tracks": int(emb_arr.shape[0]),
+        "dim": int(emb_arr.shape[1]),
+        "has_affect_label": bool(has_affect),
+        "n_errors": int(len(errors)),
+        "errors": errors,
+    }
+    write_json(manifest_path, manifest)
     return {
         "out": str(out_path),
+        "manifest": str(manifest_path),
         "n_tracks": int(emb_arr.shape[0]),
         "dim": int(emb_arr.shape[1]),
         "errors": errors,
@@ -102,6 +151,7 @@ def main() -> None:
     ap.add_argument("--out", required=True, help="Output tracks.npz path")
     ap.add_argument("--model_id", default="ntua-slp/CultureMERT-95M")
     ap.add_argument("--device", default=None, help="cpu/cuda, default auto")
+    ap.add_argument("--pooling", default="mean", choices=["mean", "cls"], help="Embedding pooling strategy")
     ap.add_argument("--max_seconds", type=float, default=30.0, help="Trim each track to this duration before embedding")
     ap.add_argument("--limit", type=int, default=None, help="Optional max number of rows")
     ap.add_argument("--skip_errors", action="store_true")
@@ -112,6 +162,7 @@ def main() -> None:
         out_npz=args.out,
         model_id=args.model_id,
         device=args.device,
+        pooling=args.pooling,
         max_seconds=args.max_seconds,
         limit=args.limit,
         skip_errors=args.skip_errors,
@@ -121,4 +172,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
