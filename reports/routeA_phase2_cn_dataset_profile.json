@@ -1,0 +1,96 @@
+{
+  "status": "warn",
+  "summary": {
+    "n_tracks": 640,
+    "embedding_dim": 768,
+    "n_cultures": 4,
+    "has_interactions": true,
+    "n_interactions": 2682,
+    "n_users": 80,
+    "n_issues": 2,
+    "n_errors": 0,
+    "n_warnings": 1
+  },
+  "tracks": {
+    "path": "storage\\public\\routeA_phase2_cn\\tracks.npz",
+    "n_tracks": 640,
+    "embedding_dim": 768,
+    "duplicate_track_ids": 0,
+    "finite_embedding_ratio": 1.0,
+    "zero_norm_ratio": 0.0,
+    "embedding_norm_stats": {
+      "min": 5.958263,
+      "p25": 6.929113,
+      "p50": 7.245113,
+      "p75": 7.916677,
+      "max": 11.950226,
+      "mean": 7.699465,
+      "std": 1.225076
+    },
+    "culture_distribution": [
+      {
+        "culture": "china",
+        "count": 160,
+        "ratio": 0.25
+      },
+      {
+        "culture": "india",
+        "count": 160,
+        "ratio": 0.25
+      },
+      {
+        "culture": "turkey",
+        "count": 160,
+        "ratio": 0.25
+      },
+      {
+        "culture": "west",
+        "count": 160,
+        "ratio": 0.25
+      }
+    ],
+    "culture_imbalance_ratio": 1.0,
+    "affect": {
+      "present": false
+    }
+  },
+  "interactions": {
+    "path": "storage\\public\\routeA_phase2_cn\\interactions.csv",
+    "n_interactions": 2682,
+    "n_users": 80,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "duplicate_user_track_count": 0,
+    "duplicate_user_track_ratio": 0.0,
+    "invalid_weight_count": 0,
+    "non_positive_weight_count": 0,
+    "non_positive_weight_ratio": 0.0,
+    "track_coverage_ratio": 1.0,
+    "user_activity_stats": {
+      "min": 3,
+      "max": 50,
+      "mean": 33.525,
+      "median": 41.5
+    }
+  },
+  "thresholds": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "tracks.affect_missing",
+      "message": "affect_label is absent (allowed, but limits affect-related evaluation)"
+    },
+    {
+      "severity": "warn",
+      "code": "interactions.low_user_activity",
+      "message": "some users have fewer than 5 interactions"
+    }
+  ]
+}
