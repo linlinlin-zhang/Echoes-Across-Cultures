@@ -108,6 +108,16 @@ python -m dcas.scripts.build_tracks_from_audio \
 - `audio_path` 可为绝对路径，或相对 `metadata.csv` 的路径
 - 同目录会生成 `tracks.npz.manifest.json`，记录模型、参数和错误清单，便于复现实验
 
+数据集质量门禁（推荐在训练前执行）：
+
+```bash
+python -m dcas.scripts.validate_dataset \
+  --tracks ./storage/datasets/tracks.npz \
+  --interactions ./storage/datasets/interactions.csv \
+  --out_json ./reports/dataset_profile.json \
+  --out_md ./reports/dataset_profile.md
+```
+
 2) 生成式风格迁移（embedding 级反事实）
 
 ```bash
