@@ -181,3 +181,33 @@ API 同步提供：
 - 部分实现：解纠缠正则（当前是 KL + 协方差去相关近似，尚非完整 TC/FactorVAE 级别）
 - 计划中：CultureMERT 持续预训练接入、风格迁移生成模块、MIG/DCI/SAP 等标准解纠缠评测
 
+
+## Public Dataset Bootstrap (2026-02-27)
+
+Detailed guide:
+- [docs/PUBLIC_DATASET_TRAINING_GUIDE.md](docs/PUBLIC_DATASET_TRAINING_GUIDE.md)
+
+Import public audio dataset from HuggingFace to local metadata/audio:
+```bash
+python -m dcas.scripts.import_hf_audio_dataset \
+  --dataset sanchit-gandhi/gtzan \
+  --split train \
+  --streaming \
+  --limit 200 \
+  --out_dir ./storage/public/gtzan_raw \
+  --culture_mode constant \
+  --culture_value west \
+  --label_column genre
+```
+
+Build weak interactions when user logs are not available:
+```bash
+python -m dcas.scripts.synthesize_interactions \
+  --metadata ./storage/public/gtzan_raw/metadata.csv \
+  --out ./storage/public/gtzan_raw/interactions.csv
+```
+
+Training paradigm note:
+- Current default pipeline is **not full backbone fine-tuning**.
+- It is `foundation embedding extraction + DCAS downstream training`.
+- If backbone fine-tuning is required, select a base model first (recommended: `ntua-slp/CultureMERT-95M`).

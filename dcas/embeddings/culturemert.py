@@ -94,7 +94,12 @@ class CultureMERTEmbedder:
             if self.cfg.pooling == "cls":
                 emb = hidden[:, 0, :]
             else:
-                emb = _masked_mean(hidden=hidden, mask=inputs.get("attention_mask"))
+                # Some models provide sample-level masks that do not match hidden sequence length.
+                # In that case, fall back to unmasked mean pooling for compatibility.
+                mask = inputs.get("attention_mask")
+                if mask is not None and (mask.ndim != 2 or mask.shape[1] != hidden.shape[1]):
+                    mask = None
+                emb = _masked_mean(hidden=hidden, mask=mask)
         return emb.squeeze(0).detach().cpu().numpy().astype(np.float32)
 
     def embed_file(self, path: str | Path) -> np.ndarray:
