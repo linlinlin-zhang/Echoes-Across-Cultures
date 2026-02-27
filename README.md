@@ -248,3 +248,28 @@ python -m dcas.cli.style_transfer_wave \
 Notes:
 - This is a waveform-level spectral statistics transfer baseline.
 - It is not yet a diffusion/codec-trained high-fidelity generator.
+
+## Disentanglement Upgrade (Shared Factors + Multi-Seed)
+
+Build cross-cultural shared acoustic factors (reduce culture-label leakage):
+```bash
+python -m dcas.scripts.build_shared_acoustic_factors \
+  --metadata ./storage/public/routeA_phase2_cn/metadata_merged.csv \
+  --out_csv ./reports/routeA_shared_factors_cn.csv \
+  --report_json ./reports/routeA_shared_factors_cn_report.json \
+  --target_sr 16000 \
+  --max_seconds 10 \
+  --n_bins 3
+```
+
+Evaluate MIG/DCI/SAP with multi-seed protocol:
+```bash
+python -m dcas.scripts.evaluate_disentanglement \
+  --model ./storage/public/routeA_phase2_cn/model.pt \
+  --tracks ./storage/public/routeA_phase2_cn/tracks.npz \
+  --metadata ./reports/routeA_shared_factors_cn.csv \
+  --factors factor_energy,factor_brightness,factor_texture,factor_dynamics,factor_percussiveness \
+  --seeds 42,43,44,45,46 \
+  --out_json ./reports/routeA_disentanglement_phase2_cn_sharedfactors.json \
+  --out_md ./reports/routeA_disentanglement_phase2_cn_sharedfactors.md
+```

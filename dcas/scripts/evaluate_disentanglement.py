@@ -3,28 +3,45 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
+from torch import nn
 
 from dcas.data.npz_tracks import load_tracks
 from dcas.serialization import load_checkpoint
 
 
+def _parse_seeds(raw: str) -> list[int]:
+    out = [int(x.strip()) for x in str(raw).split(",") if x.strip()]
+    if not out:
+        raise ValueError("at least one seed is required")
+    return out
+
+
+def _mean_std_ci(values: list[float]) -> dict[str, float]:
+    arr = np.array(values, dtype=np.float64)
+    if arr.size == 0:
+        return {"mean": float("nan"), "std": float("nan"), "ci95": float("nan")}
+    mean = float(arr.mean())
+    std = float(arr.std(ddof=1)) if arr.size > 1 else 0.0
+    ci95 = float(1.96 * std / math.sqrt(float(arr.size))) if arr.size > 1 else 0.0
+    return {"mean": mean, "std": std, "ci95": ci95}
+
+
 def _entropy_discrete(y: np.ndarray) -> float:
     if y.size == 0:
         return 0.0
-    vals, counts = np.unique(y, return_counts=True)
-    _ = vals
+    _, counts = np.unique(y, return_counts=True)
     p = counts.astype(np.float64)
     p = p / max(1e-12, float(p.sum()))
     return float(-np.sum(p * np.log(p + 1e-12)))
 
 
 def _mutual_info_discrete(x: np.ndarray, y: np.ndarray) -> float:
-    # x and y are integer-coded vectors.
     if x.size == 0 or y.size == 0 or x.shape[0] != y.shape[0]:
         return 0.0
     n = int(x.shape[0])
@@ -45,8 +62,7 @@ def _mutual_info_discrete(x: np.ndarray, y: np.ndarray) -> float:
     px = joint.sum(axis=1, keepdims=True)
     py = joint.sum(axis=0, keepdims=True)
     ratio = joint / np.maximum(1e-12, px @ py)
-    mi = float(np.sum(joint * np.log(np.maximum(1e-12, ratio))))
-    return mi
+    return float(np.sum(joint * np.log(np.maximum(1e-12, ratio))))
 
 
 def _discretize_quantile(x: np.ndarray, n_bins: int = 20) -> np.ndarray:
@@ -58,19 +74,46 @@ def _discretize_quantile(x: np.ndarray, n_bins: int = 20) -> np.ndarray:
     edges = np.unique(edges)
     if edges.shape[0] <= 2:
         return np.zeros_like(x, dtype=np.int64)
-    bins = np.digitize(x, edges[1:-1], right=False).astype(np.int64)
-    return bins
+    return np.digitize(x, edges[1:-1], right=False).astype(np.int64)
+
+
+def _anova_f_score(x: np.ndarray, y: np.ndarray) -> float:
+    if x.ndim != 1 or y.ndim != 1 or x.shape[0] != y.shape[0]:
+        return 0.0
+    classes = np.unique(y)
+    n = int(x.shape[0])
+    k = int(classes.shape[0])
+    if n <= k or k <= 1:
+        return 0.0
+
+    mu = float(np.mean(x))
+    ss_between = 0.0
+    ss_within = 0.0
+    for c in classes.tolist():
+        mask = y == c
+        if not np.any(mask):
+            continue
+        xc = x[mask]
+        mu_c = float(np.mean(xc))
+        ss_between += float(xc.shape[0]) * (mu_c - mu) ** 2
+        ss_within += float(np.sum((xc - mu_c) ** 2))
+
+    df_between = max(1, k - 1)
+    df_within = max(1, n - k)
+    ms_between = ss_between / float(df_between)
+    ms_within = ss_within / float(df_within)
+    if ms_within <= 1e-12:
+        return 0.0
+    return float(ms_between / ms_within)
 
 
 def _dci_from_importance(importance: np.ndarray) -> tuple[float, float]:
-    # importance shape: [dims, factors]
     imp = np.maximum(importance.astype(np.float64), 0.0)
     total = float(imp.sum())
     if total <= 0:
         return 0.0, 0.0
     dims, factors = imp.shape
 
-    # disentanglement
     dim_weights = imp.sum(axis=1) / total
     dis_scores: list[float] = []
     for d in range(dims):
@@ -84,7 +127,6 @@ def _dci_from_importance(importance: np.ndarray) -> tuple[float, float]:
         dis_scores.append(1.0 - h / np.log(max(2, factors)))
     disentanglement = float(np.sum(dim_weights * np.array(dis_scores, dtype=np.float64)))
 
-    # completeness
     fac_weights = imp.sum(axis=0) / total
     comp_scores: list[float] = []
     for f in range(factors):
@@ -97,107 +139,68 @@ def _dci_from_importance(importance: np.ndarray) -> tuple[float, float]:
         h = float(-np.sum(p * np.log(p + 1e-12)))
         comp_scores.append(1.0 - h / np.log(max(2, dims)))
     completeness = float(np.sum(fac_weights * np.array(comp_scores, dtype=np.float64)))
+
     return disentanglement, completeness
 
 
-def _centroid_accuracy(z: np.ndarray, y: np.ndarray, seed: int = 42, train_ratio: float = 0.8) -> float:
-    n = int(z.shape[0])
-    if n <= 2:
-        return float("nan")
-    idx = np.arange(n)
+def _split_indices(n: int, seed: int, test_ratio: float) -> tuple[np.ndarray, np.ndarray]:
+    idx = np.arange(int(n))
     rng = np.random.default_rng(int(seed))
     rng.shuffle(idx)
-    n_train = max(1, min(n - 1, int(round(n * float(train_ratio)))))
-    tr = idx[:n_train]
-    te = idx[n_train:]
-    if te.size == 0:
+    n_test = max(1, min(n - 1, int(round(float(n) * float(test_ratio)))))
+    test_idx = idx[:n_test]
+    train_idx = idx[n_test:]
+    return train_idx, test_idx
+
+
+def _linear_probe_accuracy(
+    z: np.ndarray,
+    y: np.ndarray,
+    train_idx: np.ndarray,
+    test_idx: np.ndarray,
+    seed: int,
+    epochs: int,
+    lr: float,
+    weight_decay: float,
+) -> float:
+    y_train = y[train_idx]
+    classes = np.unique(y_train)
+    if classes.shape[0] <= 1:
         return float("nan")
 
-    labels = np.unique(y[tr])
-    if labels.size <= 1:
-        return float("nan")
+    class_to_new = {int(c): i for i, c in enumerate(classes.tolist())}
+    y_mapped = np.array([class_to_new[int(c)] for c in y.tolist()], dtype=np.int64)
 
-    centroids: dict[int, np.ndarray] = {}
-    for c in labels.tolist():
-        mask = y[tr] == c
-        if not np.any(mask):
-            continue
-        centroids[int(c)] = z[tr][mask].mean(axis=0)
-    if len(centroids) <= 1:
-        return float("nan")
+    x_train = z[train_idx].astype(np.float32)
+    x_test = z[test_idx].astype(np.float32)
+    y_train_t = torch.tensor(y_mapped[train_idx], dtype=torch.long)
+    y_test_t = torch.tensor(y_mapped[test_idx], dtype=torch.long)
 
-    pred: list[int] = []
-    for i in te.tolist():
-        x = z[i]
-        best_c = None
-        best_d = None
-        for c, mu in centroids.items():
-            d = float(np.sum((x - mu) ** 2))
-            if best_d is None or d < best_d:
-                best_d = d
-                best_c = c
-        pred.append(int(best_c))
-    y_true = y[te].astype(np.int64)
-    y_pred = np.array(pred, dtype=np.int64)
-    return float((y_true == y_pred).mean())
+    mu = x_train.mean(axis=0, keepdims=True)
+    sd = x_train.std(axis=0, keepdims=True)
+    sd = np.where(sd < 1e-6, 1.0, sd)
+    x_train = (x_train - mu) / sd
+    x_test = (x_test - mu) / sd
 
+    torch.manual_seed(int(seed))
+    model = nn.Linear(int(x_train.shape[1]), int(classes.shape[0]))
+    opt = torch.optim.AdamW(model.parameters(), lr=float(lr), weight_decay=float(weight_decay))
 
-def _sap_score(z: np.ndarray, ys: np.ndarray, seed: int = 42, train_ratio: float = 0.8) -> tuple[float, dict[str, float]]:
-    # ys shape: [N, F], each integer-coded factor label.
-    n, d = z.shape
-    f = ys.shape[1]
-    if n <= 2 or d == 0 or f == 0:
-        return 0.0, {}
+    x_train_t = torch.tensor(x_train, dtype=torch.float32)
+    x_test_t = torch.tensor(x_test, dtype=torch.float32)
 
-    idx = np.arange(n)
-    rng = np.random.default_rng(int(seed))
-    rng.shuffle(idx)
-    n_train = max(1, min(n - 1, int(round(n * float(train_ratio)))))
-    tr = idx[:n_train]
-    te = idx[n_train:]
-    if te.size == 0:
-        return 0.0, {}
+    model.train()
+    for _ in range(int(epochs)):
+        logits = model(x_train_t)
+        loss = nn.functional.cross_entropy(logits, y_train_t)
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        opt.step()
 
-    factor_gaps: dict[str, float] = {}
-    for fi in range(f):
-        y_tr = ys[tr, fi]
-        y_te = ys[te, fi]
-        classes = np.unique(y_tr)
-        if classes.size <= 1:
-            factor_gaps[str(fi)] = 0.0
-            continue
-        scores: list[float] = []
-        for di in range(d):
-            x_tr = z[tr, di]
-            x_te = z[te, di]
-            means: dict[int, float] = {}
-            for c in classes.tolist():
-                mask = y_tr == c
-                if np.any(mask):
-                    means[int(c)] = float(np.mean(x_tr[mask]))
-            if len(means) <= 1:
-                scores.append(0.0)
-                continue
-            pred: list[int] = []
-            for val in x_te.tolist():
-                best_c = None
-                best_d = None
-                for c, mu in means.items():
-                    dist = abs(float(val) - float(mu))
-                    if best_d is None or dist < best_d:
-                        best_d = dist
-                        best_c = c
-                pred.append(int(best_c))
-            acc = float((np.array(pred, dtype=np.int64) == y_te).mean())
-            scores.append(acc)
-        scores_sorted = sorted(scores, reverse=True)
-        if len(scores_sorted) < 2:
-            gap = float(scores_sorted[0]) if scores_sorted else 0.0
-        else:
-            gap = float(scores_sorted[0] - scores_sorted[1])
-        factor_gaps[str(fi)] = gap
-    sap = float(np.mean(np.array(list(factor_gaps.values()), dtype=np.float64))) if factor_gaps else 0.0
-    return sap, factor_gaps
+    model.eval()
+    with torch.no_grad():
+        pred = model(x_test_t).argmax(dim=-1)
+    return float((pred == y_test_t).float().mean().item())
 
 
 def _load_metadata_map(path: str, key_col: str = "track_id") -> dict[str, dict[str, str]]:
@@ -255,12 +258,16 @@ def _encode_factors(
     return mask, y, factor_order, class_names
 
 
-def _evaluate_one_space(
+def _evaluate_one_seed(
     z: np.ndarray,
     y: np.ndarray,
     factor_names: list[str],
     seed: int,
     n_bins: int,
+    test_ratio: float,
+    probe_epochs: int,
+    probe_lr: float,
+    probe_weight_decay: float,
 ) -> dict[str, Any]:
     n, d = z.shape
     f = y.shape[1]
@@ -271,44 +278,93 @@ def _evaluate_one_space(
     ent = np.zeros((f,), dtype=np.float64)
     for fi in range(f):
         ent[fi] = _entropy_discrete(y[:, fi])
-
     for di in range(d):
         z_disc = _discretize_quantile(z[:, di], n_bins=n_bins)
         for fi in range(f):
             mi[di, fi] = _mutual_info_discrete(z_disc, y[:, fi])
 
-    mig_factors: dict[str, float] = {}
+    mig_per_factor: dict[str, float] = {}
     for fi, name in enumerate(factor_names):
         col = np.sort(mi[:, fi])[::-1]
         top1 = float(col[0]) if col.size >= 1 else 0.0
         top2 = float(col[1]) if col.size >= 2 else 0.0
         denom = max(1e-12, float(ent[fi]))
-        mig_factors[name] = float((top1 - top2) / denom)
-    mig = float(np.mean(np.array(list(mig_factors.values()), dtype=np.float64))) if mig_factors else 0.0
+        mig_per_factor[name] = float((top1 - top2) / denom)
+    mig = float(np.mean(np.array(list(mig_per_factor.values()), dtype=np.float64))) if mig_per_factor else 0.0
 
-    dci_dis, dci_comp = _dci_from_importance(mi)
-    info_scores: dict[str, float] = {}
+    importance = np.zeros((d, f), dtype=np.float64)
+    for di in range(d):
+        x = z[:, di]
+        for fi in range(f):
+            importance[di, fi] = _anova_f_score(x, y[:, fi])
+    dci_dis, dci_comp = _dci_from_importance(importance)
+
+    train_idx, test_idx = _split_indices(n=n, seed=int(seed), test_ratio=float(test_ratio))
+    dci_info_per_factor: dict[str, float] = {}
     for fi, name in enumerate(factor_names):
-        info_scores[name] = _centroid_accuracy(z, y[:, fi], seed=seed + fi, train_ratio=0.8)
-    valid_info = [v for v in info_scores.values() if not np.isnan(v)]
-    dci_info = float(np.mean(np.array(valid_info, dtype=np.float64))) if valid_info else float("nan")
+        acc = _linear_probe_accuracy(
+            z=z,
+            y=y[:, fi],
+            train_idx=train_idx,
+            test_idx=test_idx,
+            seed=int(seed) + fi,
+            epochs=int(probe_epochs),
+            lr=float(probe_lr),
+            weight_decay=float(probe_weight_decay),
+        )
+        dci_info_per_factor[name] = float(acc)
+    valid = [v for v in dci_info_per_factor.values() if not np.isnan(v)]
+    dci_info = float(np.mean(np.array(valid, dtype=np.float64))) if valid else float("nan")
 
-    sap, sap_by_idx = _sap_score(z, y, seed=seed, train_ratio=0.8)
-    sap_factors = {factor_names[int(k)]: float(v) for k, v in sap_by_idx.items()}
+    sap_per_factor: dict[str, float] = {}
+    for fi, name in enumerate(factor_names):
+        s = np.sort(importance[:, fi])[::-1]
+        if s.size <= 1:
+            sap_per_factor[name] = float(s[0]) if s.size == 1 else 0.0
+        else:
+            sap_per_factor[name] = float(s[0] - s[1])
+    sap = float(np.mean(np.array(list(sap_per_factor.values()), dtype=np.float64))) if sap_per_factor else 0.0
 
     return {
-        "n_samples": int(n),
-        "dim": int(d),
-        "factors": factor_names,
+        "seed": int(seed),
         "MIG": float(mig),
-        "MIG_per_factor": mig_factors,
+        "MIG_per_factor": mig_per_factor,
         "DCI_disentanglement": float(dci_dis),
         "DCI_completeness": float(dci_comp),
         "DCI_informativeness": float(dci_info),
-        "DCI_informativeness_per_factor": info_scores,
+        "DCI_informativeness_per_factor": dci_info_per_factor,
         "SAP": float(sap),
-        "SAP_per_factor": sap_factors,
+        "SAP_per_factor": sap_per_factor,
     }
+
+
+def _aggregate_space(records: list[dict[str, Any]], factors: list[str]) -> dict[str, Any]:
+    scalar_keys = [
+        "MIG",
+        "DCI_disentanglement",
+        "DCI_completeness",
+        "DCI_informativeness",
+        "SAP",
+    ]
+    summary: dict[str, Any] = {}
+    for k in scalar_keys:
+        vals = [float(r[k]) for r in records]
+        stat = _mean_std_ci(vals)
+        summary[f"{k}_mean"] = stat["mean"]
+        summary[f"{k}_std"] = stat["std"]
+        summary[f"{k}_ci95"] = stat["ci95"]
+
+    def _per_factor_stats(key: str) -> dict[str, dict[str, float]]:
+        out: dict[str, dict[str, float]] = {}
+        for f in factors:
+            vals = [float(r[key][f]) for r in records if f in r[key]]
+            out[f] = _mean_std_ci(vals)
+        return out
+
+    summary["MIG_per_factor"] = _per_factor_stats("MIG_per_factor")
+    summary["DCI_informativeness_per_factor"] = _per_factor_stats("DCI_informativeness_per_factor")
+    summary["SAP_per_factor"] = _per_factor_stats("SAP_per_factor")
+    return summary
 
 
 def evaluate_disentanglement(
@@ -318,8 +374,12 @@ def evaluate_disentanglement(
     factor_cols: list[str],
     out_json: str | None = None,
     out_md: str | None = None,
-    seed: int = 42,
+    seeds: list[int] | None = None,
     n_bins: int = 20,
+    test_ratio: float = 0.2,
+    probe_epochs: int = 200,
+    probe_lr: float = 1e-2,
+    probe_weight_decay: float = 1e-4,
     prefer_cuda: bool = False,
 ) -> dict[str, Any]:
     device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
@@ -327,6 +387,7 @@ def evaluate_disentanglement(
     model.to(device)
     model.eval()
 
+    seed_list = list(seeds or [42])
     tracks = load_tracks(tracks_path)
     metadata_map = _load_metadata_map(metadata_csv)
     mask, y, factors, class_names = _encode_factors(
@@ -343,11 +404,42 @@ def evaluate_disentanglement(
     zs_np = zs.detach().cpu().numpy()[mask]
     za_np = za.detach().cpu().numpy()[mask]
 
-    spaces = {
-        "zc": _evaluate_one_space(z=zc_np, y=y, factor_names=factors, seed=seed, n_bins=n_bins),
-        "zs": _evaluate_one_space(z=zs_np, y=y, factor_names=factors, seed=seed, n_bins=n_bins),
-        "za": _evaluate_one_space(z=za_np, y=y, factor_names=factors, seed=seed, n_bins=n_bins),
-    }
+    spaces_raw = {"zc": zc_np, "zs": zs_np, "za": za_np}
+    spaces: dict[str, Any] = {}
+    for name, z in spaces_raw.items():
+        per_seed = [
+            _evaluate_one_seed(
+                z=z,
+                y=y,
+                factor_names=factors,
+                seed=int(s),
+                n_bins=int(n_bins),
+                test_ratio=float(test_ratio),
+                probe_epochs=int(probe_epochs),
+                probe_lr=float(probe_lr),
+                probe_weight_decay=float(probe_weight_decay),
+            )
+            for s in seed_list
+        ]
+        summary = _aggregate_space(per_seed, factors=factors)
+        first = per_seed[0]
+        spaces[name] = {
+            "n_samples": int(z.shape[0]),
+            "dim": int(z.shape[1]),
+            "factors": factors,
+            "seeds": seed_list,
+            "per_seed": per_seed,
+            "summary": summary,
+            # backward-compatible single-value fields (first seed)
+            "MIG": float(first["MIG"]),
+            "MIG_per_factor": first["MIG_per_factor"],
+            "DCI_disentanglement": float(first["DCI_disentanglement"]),
+            "DCI_completeness": float(first["DCI_completeness"]),
+            "DCI_informativeness": float(first["DCI_informativeness"]),
+            "DCI_informativeness_per_factor": first["DCI_informativeness_per_factor"],
+            "SAP": float(first["SAP"]),
+            "SAP_per_factor": first["SAP_per_factor"],
+        }
 
     out: dict[str, Any] = {
         "config": {
@@ -355,8 +447,12 @@ def evaluate_disentanglement(
             "tracks_path": str(tracks_path),
             "metadata_csv": str(metadata_csv),
             "factors": factors,
-            "seed": int(seed),
+            "seeds": seed_list,
             "n_bins": int(n_bins),
+            "test_ratio": float(test_ratio),
+            "probe_epochs": int(probe_epochs),
+            "probe_lr": float(probe_lr),
+            "probe_weight_decay": float(probe_weight_decay),
             "device": str(device),
         },
         "class_names": class_names,
@@ -373,19 +469,23 @@ def evaluate_disentanglement(
 
     if out_md:
         lines = [
-            "# Disentanglement Report (MIG / DCI / SAP)",
+            "# Disentanglement Report (MIG / DCI / SAP, Multi-Seed)",
             "",
             f"- samples used: `{int(mask.sum())}` / total `{int(tracks.track_id.shape[0])}`",
             f"- factors: `{', '.join(factors)}`",
+            f"- seeds: `{', '.join(str(s) for s in seed_list)}`",
             "",
-            "| space | MIG | DCI_dis | DCI_comp | DCI_info | SAP |",
+            "| space | MIG(mean+/-std) | DCI_dis(mean+/-std) | DCI_comp(mean+/-std) | DCI_info(mean+/-std) | SAP(mean+/-std) |",
             "|---|---:|---:|---:|---:|---:|",
         ]
         for name in ["zc", "zs", "za"]:
-            r = spaces[name]
+            s = spaces[name]["summary"]
             lines.append(
-                f"| {name} | {r['MIG']:.6f} | {r['DCI_disentanglement']:.6f} | "
-                f"{r['DCI_completeness']:.6f} | {r['DCI_informativeness']:.6f} | {r['SAP']:.6f} |"
+                f"| {name} | {s['MIG_mean']:.6f}+/-{s['MIG_std']:.6f} | "
+                f"{s['DCI_disentanglement_mean']:.6f}+/-{s['DCI_disentanglement_std']:.6f} | "
+                f"{s['DCI_completeness_mean']:.6f}+/-{s['DCI_completeness_std']:.6f} | "
+                f"{s['DCI_informativeness_mean']:.6f}+/-{s['DCI_informativeness_std']:.6f} | "
+                f"{s['SAP_mean']:.6f}+/-{s['SAP_std']:.6f} |"
             )
         lines.append("")
         p = Path(out_md)
@@ -403,12 +503,18 @@ def main() -> None:
     ap.add_argument("--factors", default="culture,label", help="comma-separated factor columns")
     ap.add_argument("--out_json", default=None)
     ap.add_argument("--out_md", default=None)
-    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--seeds", default="42", help="comma-separated seeds, e.g. 42,43,44")
     ap.add_argument("--n_bins", type=int, default=20)
+    ap.add_argument("--test_ratio", type=float, default=0.2)
+    ap.add_argument("--probe_epochs", type=int, default=200)
+    ap.add_argument("--probe_lr", type=float, default=1e-2)
+    ap.add_argument("--probe_weight_decay", type=float, default=1e-4)
     ap.add_argument("--prefer_cuda", action="store_true")
     args = ap.parse_args()
 
     factor_cols = [x.strip() for x in str(args.factors).split(",") if x.strip()]
+    seed_list = _parse_seeds(str(args.seeds))
+
     out = evaluate_disentanglement(
         model_path=str(args.model),
         tracks_path=str(args.tracks),
@@ -416,19 +522,25 @@ def main() -> None:
         factor_cols=factor_cols,
         out_json=str(args.out_json) if args.out_json else None,
         out_md=str(args.out_md) if args.out_md else None,
-        seed=int(args.seed),
+        seeds=seed_list,
         n_bins=int(args.n_bins),
+        test_ratio=float(args.test_ratio),
+        probe_epochs=int(args.probe_epochs),
+        probe_lr=float(args.probe_lr),
+        probe_weight_decay=float(args.probe_weight_decay),
         prefer_cuda=bool(args.prefer_cuda),
     )
+
     tiny = {
         "n_samples_used": out["n_samples_used"],
         "spaces": {
             k: {
-                "MIG": v["MIG"],
-                "DCI_disentanglement": v["DCI_disentanglement"],
-                "DCI_completeness": v["DCI_completeness"],
-                "DCI_informativeness": v["DCI_informativeness"],
-                "SAP": v["SAP"],
+                "MIG_mean": v["summary"]["MIG_mean"],
+                "MIG_ci95": v["summary"]["MIG_ci95"],
+                "DCI_disentanglement_mean": v["summary"]["DCI_disentanglement_mean"],
+                "DCI_completeness_mean": v["summary"]["DCI_completeness_mean"],
+                "DCI_informativeness_mean": v["summary"]["DCI_informativeness_mean"],
+                "SAP_mean": v["summary"]["SAP_mean"],
             }
             for k, v in out["spaces"].items()
         },
@@ -438,4 +550,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

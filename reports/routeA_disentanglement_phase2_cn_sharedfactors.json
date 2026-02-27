@@ -1,0 +1,925 @@
+{
+  "config": {
+    "model_path": "./storage/public/routeA_phase2_cn/model.pt",
+    "tracks_path": "./storage/public/routeA_phase2_cn/tracks.npz",
+    "metadata_csv": "./reports/routeA_shared_factors_cn.csv",
+    "factors": [
+      "factor_energy",
+      "factor_brightness",
+      "factor_texture",
+      "factor_dynamics",
+      "factor_percussiveness"
+    ],
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "n_bins": 20,
+    "test_ratio": 0.2,
+    "probe_epochs": 200,
+    "probe_lr": 0.01,
+    "probe_weight_decay": 0.0001,
+    "device": "cpu"
+  },
+  "class_names": {
+    "factor_energy": [
+      "high",
+      "low",
+      "mid"
+    ],
+    "factor_brightness": [
+      "bright",
+      "dark",
+      "mid"
+    ],
+    "factor_texture": [
+      "mixed",
+      "noisy",
+      "tonal"
+    ],
+    "factor_dynamics": [
+      "dynamic",
+      "mixed",
+      "stable"
+    ],
+    "factor_percussiveness": [
+      "mixed",
+      "percussive",
+      "smooth"
+    ]
+  },
+  "n_samples_total": 640,
+  "n_samples_used": 640,
+  "spaces": {
+    "zc": {
+      "n_samples": 640,
+      "dim": 32,
+      "factors": [
+        "factor_energy",
+        "factor_brightness",
+        "factor_texture",
+        "factor_dynamics",
+        "factor_percussiveness"
+      ],
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "MIG": 0.015657086810467645,
+          "MIG_per_factor": {
+            "factor_energy": 0.002409101991311977,
+            "factor_brightness": 0.026121665215772676,
+            "factor_texture": 0.0303744753475772,
+            "factor_dynamics": 0.015191892910389873,
+            "factor_percussiveness": 0.004188298587286504
+          },
+          "DCI_disentanglement": 0.20694036537297894,
+          "DCI_completeness": 0.14241159840434137,
+          "DCI_informativeness": 0.6078125,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.65625,
+            "factor_brightness": 0.5859375,
+            "factor_texture": 0.6328125,
+            "factor_dynamics": 0.5859375,
+            "factor_percussiveness": 0.578125
+          },
+          "SAP": 7.4963373866132645,
+          "SAP_per_factor": {
+            "factor_energy": 6.211204046399494,
+            "factor_brightness": 13.1420629071688,
+            "factor_texture": 12.756753394758036,
+            "factor_dynamics": 0.276909299601229,
+            "factor_percussiveness": 5.094757285138762
+          }
+        },
+        {
+          "seed": 43,
+          "MIG": 0.015657086810467645,
+          "MIG_per_factor": {
+            "factor_energy": 0.002409101991311977,
+            "factor_brightness": 0.026121665215772676,
+            "factor_texture": 0.0303744753475772,
+            "factor_dynamics": 0.015191892910389873,
+            "factor_percussiveness": 0.004188298587286504
+          },
+          "DCI_disentanglement": 0.20694036537297894,
+          "DCI_completeness": 0.14241159840434137,
+          "DCI_informativeness": 0.6171875,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.6640625,
+            "factor_brightness": 0.53125,
+            "factor_texture": 0.6171875,
+            "factor_dynamics": 0.6015625,
+            "factor_percussiveness": 0.671875
+          },
+          "SAP": 7.4963373866132645,
+          "SAP_per_factor": {
+            "factor_energy": 6.211204046399494,
+            "factor_brightness": 13.1420629071688,
+            "factor_texture": 12.756753394758036,
+            "factor_dynamics": 0.276909299601229,
+            "factor_percussiveness": 5.094757285138762
+          }
+        },
+        {
+          "seed": 44,
+          "MIG": 0.015657086810467645,
+          "MIG_per_factor": {
+            "factor_energy": 0.002409101991311977,
+            "factor_brightness": 0.026121665215772676,
+            "factor_texture": 0.0303744753475772,
+            "factor_dynamics": 0.015191892910389873,
+            "factor_percussiveness": 0.004188298587286504
+          },
+          "DCI_disentanglement": 0.20694036537297894,
+          "DCI_completeness": 0.14241159840434137,
+          "DCI_informativeness": 0.596875,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.6640625,
+            "factor_brightness": 0.609375,
+            "factor_texture": 0.65625,
+            "factor_dynamics": 0.5078125,
+            "factor_percussiveness": 0.546875
+          },
+          "SAP": 7.4963373866132645,
+          "SAP_per_factor": {
+            "factor_energy": 6.211204046399494,
+            "factor_brightness": 13.1420629071688,
+            "factor_texture": 12.756753394758036,
+            "factor_dynamics": 0.276909299601229,
+            "factor_percussiveness": 5.094757285138762
+          }
+        },
+        {
+          "seed": 45,
+          "MIG": 0.015657086810467645,
+          "MIG_per_factor": {
+            "factor_energy": 0.002409101991311977,
+            "factor_brightness": 0.026121665215772676,
+            "factor_texture": 0.0303744753475772,
+            "factor_dynamics": 0.015191892910389873,
+            "factor_percussiveness": 0.004188298587286504
+          },
+          "DCI_disentanglement": 0.20694036537297894,
+          "DCI_completeness": 0.14241159840434137,
+          "DCI_informativeness": 0.5875,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.6953125,
+            "factor_brightness": 0.5625,
+            "factor_texture": 0.5703125,
+            "factor_dynamics": 0.5625,
+            "factor_percussiveness": 0.546875
+          },
+          "SAP": 7.4963373866132645,
+          "SAP_per_factor": {
+            "factor_energy": 6.211204046399494,
+            "factor_brightness": 13.1420629071688,
+            "factor_texture": 12.756753394758036,
+            "factor_dynamics": 0.276909299601229,
+            "factor_percussiveness": 5.094757285138762
+          }
+        },
+        {
+          "seed": 46,
+          "MIG": 0.015657086810467645,
+          "MIG_per_factor": {
+            "factor_energy": 0.002409101991311977,
+            "factor_brightness": 0.026121665215772676,
+            "factor_texture": 0.0303744753475772,
+            "factor_dynamics": 0.015191892910389873,
+            "factor_percussiveness": 0.004188298587286504
+          },
+          "DCI_disentanglement": 0.20694036537297894,
+          "DCI_completeness": 0.14241159840434137,
+          "DCI_informativeness": 0.59375,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.6171875,
+            "factor_brightness": 0.6015625,
+            "factor_texture": 0.6328125,
+            "factor_dynamics": 0.4921875,
+            "factor_percussiveness": 0.625
+          },
+          "SAP": 7.4963373866132645,
+          "SAP_per_factor": {
+            "factor_energy": 6.211204046399494,
+            "factor_brightness": 13.1420629071688,
+            "factor_texture": 12.756753394758036,
+            "factor_dynamics": 0.276909299601229,
+            "factor_percussiveness": 5.094757285138762
+          }
+        }
+      ],
+      "summary": {
+        "MIG_mean": 0.015657086810467645,
+        "MIG_std": 0.0,
+        "MIG_ci95": 0.0,
+        "DCI_disentanglement_mean": 0.20694036537297894,
+        "DCI_disentanglement_std": 0.0,
+        "DCI_disentanglement_ci95": 0.0,
+        "DCI_completeness_mean": 0.14241159840434137,
+        "DCI_completeness_std": 0.0,
+        "DCI_completeness_ci95": 0.0,
+        "DCI_informativeness_mean": 0.6006250000000001,
+        "DCI_informativeness_std": 0.011827619292359714,
+        "DCI_informativeness_ci95": 0.010367365413884078,
+        "SAP_mean": 7.4963373866132645,
+        "SAP_std": 0.0,
+        "SAP_ci95": 0.0,
+        "MIG_per_factor": {
+          "factor_energy": {
+            "mean": 0.002409101991311977,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_brightness": {
+            "mean": 0.026121665215772676,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_texture": {
+            "mean": 0.0303744753475772,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_dynamics": {
+            "mean": 0.015191892910389873,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_percussiveness": {
+            "mean": 0.004188298587286504,
+            "std": 0.0,
+            "ci95": 0.0
+          }
+        },
+        "DCI_informativeness_per_factor": {
+          "factor_energy": {
+            "mean": 0.659375,
+            "std": 0.02795084971874737,
+            "ci95": 0.024499999999999997
+          },
+          "factor_brightness": {
+            "mean": 0.578125,
+            "std": 0.03173452501810922,
+            "ci95": 0.027816537628270705
+          },
+          "factor_texture": {
+            "mean": 0.621875,
+            "std": 0.03202172114362375,
+            "ci95": 0.028068276131604522
+          },
+          "factor_dynamics": {
+            "mean": 0.55,
+            "std": 0.04803258171543562,
+            "ci95": 0.042102414197406776
+          },
+          "factor_percussiveness": {
+            "mean": 0.59375,
+            "std": 0.05412658773652741,
+            "ci95": 0.04744404599104085
+          }
+        },
+        "SAP_per_factor": {
+          "factor_energy": {
+            "mean": 6.211204046399494,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_brightness": {
+            "mean": 13.142062907168798,
+            "std": 1.9860273225978185e-15,
+            "ci95": 1.7408297026122452e-15
+          },
+          "factor_texture": {
+            "mean": 12.756753394758036,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_dynamics": {
+            "mean": 0.276909299601229,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_percussiveness": {
+            "mean": 5.094757285138762,
+            "std": 0.0,
+            "ci95": 0.0
+          }
+        }
+      },
+      "MIG": 0.015657086810467645,
+      "MIG_per_factor": {
+        "factor_energy": 0.002409101991311977,
+        "factor_brightness": 0.026121665215772676,
+        "factor_texture": 0.0303744753475772,
+        "factor_dynamics": 0.015191892910389873,
+        "factor_percussiveness": 0.004188298587286504
+      },
+      "DCI_disentanglement": 0.20694036537297894,
+      "DCI_completeness": 0.14241159840434137,
+      "DCI_informativeness": 0.6078125,
+      "DCI_informativeness_per_factor": {
+        "factor_energy": 0.65625,
+        "factor_brightness": 0.5859375,
+        "factor_texture": 0.6328125,
+        "factor_dynamics": 0.5859375,
+        "factor_percussiveness": 0.578125
+      },
+      "SAP": 7.4963373866132645,
+      "SAP_per_factor": {
+        "factor_energy": 6.211204046399494,
+        "factor_brightness": 13.1420629071688,
+        "factor_texture": 12.756753394758036,
+        "factor_dynamics": 0.276909299601229,
+        "factor_percussiveness": 5.094757285138762
+      }
+    },
+    "zs": {
+      "n_samples": 640,
+      "dim": 32,
+      "factors": [
+        "factor_energy",
+        "factor_brightness",
+        "factor_texture",
+        "factor_dynamics",
+        "factor_percussiveness"
+      ],
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "MIG": 0.009395136778490238,
+          "MIG_per_factor": {
+            "factor_energy": 0.005842108646170616,
+            "factor_brightness": 0.004931534875261728,
+            "factor_texture": 0.02557538076380051,
+            "factor_dynamics": 0.0010416667307017943,
+            "factor_percussiveness": 0.00958499287651653
+          },
+          "DCI_disentanglement": 0.21128388975323587,
+          "DCI_completeness": 0.12561716504565312,
+          "DCI_informativeness": 0.5359375,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.5625,
+            "factor_brightness": 0.5,
+            "factor_texture": 0.546875,
+            "factor_dynamics": 0.515625,
+            "factor_percussiveness": 0.5546875
+          },
+          "SAP": 3.218605816270191,
+          "SAP_per_factor": {
+            "factor_energy": 2.9037119655466697,
+            "factor_brightness": 3.17675445153208,
+            "factor_texture": 6.02160323419259,
+            "factor_dynamics": 0.3651202897649011,
+            "factor_percussiveness": 3.625839140314717
+          }
+        },
+        {
+          "seed": 43,
+          "MIG": 0.009395136778490238,
+          "MIG_per_factor": {
+            "factor_energy": 0.005842108646170616,
+            "factor_brightness": 0.004931534875261728,
+            "factor_texture": 0.02557538076380051,
+            "factor_dynamics": 0.0010416667307017943,
+            "factor_percussiveness": 0.00958499287651653
+          },
+          "DCI_disentanglement": 0.21128388975323587,
+          "DCI_completeness": 0.12561716504565312,
+          "DCI_informativeness": 0.525,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.609375,
+            "factor_brightness": 0.5,
+            "factor_texture": 0.5,
+            "factor_dynamics": 0.4921875,
+            "factor_percussiveness": 0.5234375
+          },
+          "SAP": 3.218605816270191,
+          "SAP_per_factor": {
+            "factor_energy": 2.9037119655466697,
+            "factor_brightness": 3.17675445153208,
+            "factor_texture": 6.02160323419259,
+            "factor_dynamics": 0.3651202897649011,
+            "factor_percussiveness": 3.625839140314717
+          }
+        },
+        {
+          "seed": 44,
+          "MIG": 0.009395136778490238,
+          "MIG_per_factor": {
+            "factor_energy": 0.005842108646170616,
+            "factor_brightness": 0.004931534875261728,
+            "factor_texture": 0.02557538076380051,
+            "factor_dynamics": 0.0010416667307017943,
+            "factor_percussiveness": 0.00958499287651653
+          },
+          "DCI_disentanglement": 0.21128388975323587,
+          "DCI_completeness": 0.12561716504565312,
+          "DCI_informativeness": 0.5296875,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.6328125,
+            "factor_brightness": 0.53125,
+            "factor_texture": 0.6015625,
+            "factor_dynamics": 0.4453125,
+            "factor_percussiveness": 0.4375
+          },
+          "SAP": 3.218605816270191,
+          "SAP_per_factor": {
+            "factor_energy": 2.9037119655466697,
+            "factor_brightness": 3.17675445153208,
+            "factor_texture": 6.02160323419259,
+            "factor_dynamics": 0.3651202897649011,
+            "factor_percussiveness": 3.625839140314717
+          }
+        },
+        {
+          "seed": 45,
+          "MIG": 0.009395136778490238,
+          "MIG_per_factor": {
+            "factor_energy": 0.005842108646170616,
+            "factor_brightness": 0.004931534875261728,
+            "factor_texture": 0.02557538076380051,
+            "factor_dynamics": 0.0010416667307017943,
+            "factor_percussiveness": 0.00958499287651653
+          },
+          "DCI_disentanglement": 0.21128388975323587,
+          "DCI_completeness": 0.12561716504565312,
+          "DCI_informativeness": 0.5390625,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.625,
+            "factor_brightness": 0.546875,
+            "factor_texture": 0.5234375,
+            "factor_dynamics": 0.5234375,
+            "factor_percussiveness": 0.4765625
+          },
+          "SAP": 3.218605816270191,
+          "SAP_per_factor": {
+            "factor_energy": 2.9037119655466697,
+            "factor_brightness": 3.17675445153208,
+            "factor_texture": 6.02160323419259,
+            "factor_dynamics": 0.3651202897649011,
+            "factor_percussiveness": 3.625839140314717
+          }
+        },
+        {
+          "seed": 46,
+          "MIG": 0.009395136778490238,
+          "MIG_per_factor": {
+            "factor_energy": 0.005842108646170616,
+            "factor_brightness": 0.004931534875261728,
+            "factor_texture": 0.02557538076380051,
+            "factor_dynamics": 0.0010416667307017943,
+            "factor_percussiveness": 0.00958499287651653
+          },
+          "DCI_disentanglement": 0.21128388975323587,
+          "DCI_completeness": 0.12561716504565312,
+          "DCI_informativeness": 0.5375,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.59375,
+            "factor_brightness": 0.53125,
+            "factor_texture": 0.5859375,
+            "factor_dynamics": 0.4921875,
+            "factor_percussiveness": 0.484375
+          },
+          "SAP": 3.218605816270191,
+          "SAP_per_factor": {
+            "factor_energy": 2.9037119655466697,
+            "factor_brightness": 3.17675445153208,
+            "factor_texture": 6.02160323419259,
+            "factor_dynamics": 0.3651202897649011,
+            "factor_percussiveness": 3.625839140314717
+          }
+        }
+      ],
+      "summary": {
+        "MIG_mean": 0.009395136778490238,
+        "MIG_std": 0.0,
+        "MIG_ci95": 0.0,
+        "DCI_disentanglement_mean": 0.21128388975323587,
+        "DCI_disentanglement_std": 0.0,
+        "DCI_disentanglement_ci95": 0.0,
+        "DCI_completeness_mean": 0.12561716504565312,
+        "DCI_completeness_std": 0.0,
+        "DCI_completeness_ci95": 0.0,
+        "DCI_informativeness_mean": 0.5334375,
+        "DCI_informativeness_std": 0.005908647000371561,
+        "DCI_informativeness_ci95": 0.005179157448369365,
+        "SAP_mean": 3.218605816270191,
+        "SAP_std": 0.0,
+        "SAP_ci95": 0.0,
+        "MIG_per_factor": {
+          "factor_energy": {
+            "mean": 0.005842108646170616,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_brightness": {
+            "mean": 0.004931534875261728,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_texture": {
+            "mean": 0.02557538076380051,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_dynamics": {
+            "mean": 0.0010416667307017943,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_percussiveness": {
+            "mean": 0.00958499287651653,
+            "std": 0.0,
+            "ci95": 0.0
+          }
+        },
+        "DCI_informativeness_per_factor": {
+          "factor_energy": {
+            "mean": 0.6046875,
+            "std": 0.02795084971874737,
+            "ci95": 0.024499999999999997
+          },
+          "factor_brightness": {
+            "mean": 0.521875,
+            "std": 0.02096313728906053,
+            "ci95": 0.018375
+          },
+          "factor_texture": {
+            "mean": 0.5515625,
+            "std": 0.04228865188351362,
+            "ci95": 0.0370676377130375
+          },
+          "factor_dynamics": {
+            "mean": 0.49375,
+            "std": 0.03045873232752801,
+            "ci95": 0.026698256029186622
+          },
+          "factor_percussiveness": {
+            "mean": 0.4953125,
+            "std": 0.04508293139454222,
+            "ci95": 0.03951693169547707
+          }
+        },
+        "SAP_per_factor": {
+          "factor_energy": {
+            "mean": 2.9037119655466697,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_brightness": {
+            "mean": 3.17675445153208,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_texture": {
+            "mean": 6.02160323419259,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_dynamics": {
+            "mean": 0.3651202897649011,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_percussiveness": {
+            "mean": 3.625839140314717,
+            "std": 0.0,
+            "ci95": 0.0
+          }
+        }
+      },
+      "MIG": 0.009395136778490238,
+      "MIG_per_factor": {
+        "factor_energy": 0.005842108646170616,
+        "factor_brightness": 0.004931534875261728,
+        "factor_texture": 0.02557538076380051,
+        "factor_dynamics": 0.0010416667307017943,
+        "factor_percussiveness": 0.00958499287651653
+      },
+      "DCI_disentanglement": 0.21128388975323587,
+      "DCI_completeness": 0.12561716504565312,
+      "DCI_informativeness": 0.5359375,
+      "DCI_informativeness_per_factor": {
+        "factor_energy": 0.5625,
+        "factor_brightness": 0.5,
+        "factor_texture": 0.546875,
+        "factor_dynamics": 0.515625,
+        "factor_percussiveness": 0.5546875
+      },
+      "SAP": 3.218605816270191,
+      "SAP_per_factor": {
+        "factor_energy": 2.9037119655466697,
+        "factor_brightness": 3.17675445153208,
+        "factor_texture": 6.02160323419259,
+        "factor_dynamics": 0.3651202897649011,
+        "factor_percussiveness": 3.625839140314717
+      }
+    },
+    "za": {
+      "n_samples": 640,
+      "dim": 16,
+      "factors": [
+        "factor_energy",
+        "factor_brightness",
+        "factor_texture",
+        "factor_dynamics",
+        "factor_percussiveness"
+      ],
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "MIG": 0.006284033569813616,
+          "MIG_per_factor": {
+            "factor_energy": 0.004014205002745997,
+            "factor_brightness": 0.0024915135553696052,
+            "factor_texture": 0.007544379667321786,
+            "factor_dynamics": 0.012586011920462381,
+            "factor_percussiveness": 0.004784057703168307
+          },
+          "DCI_disentanglement": 0.20358756746216872,
+          "DCI_completeness": 0.12381533964655608,
+          "DCI_informativeness": 0.5578125,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.53125,
+            "factor_brightness": 0.53125,
+            "factor_texture": 0.625,
+            "factor_dynamics": 0.546875,
+            "factor_percussiveness": 0.5546875
+          },
+          "SAP": 9.531060491976252,
+          "SAP_per_factor": {
+            "factor_energy": 0.3867437348624385,
+            "factor_brightness": 3.838827654924163,
+            "factor_texture": 19.539044061839505,
+            "factor_dynamics": 6.967217939962204,
+            "factor_percussiveness": 16.923469068292952
+          }
+        },
+        {
+          "seed": 43,
+          "MIG": 0.006284033569813616,
+          "MIG_per_factor": {
+            "factor_energy": 0.004014205002745997,
+            "factor_brightness": 0.0024915135553696052,
+            "factor_texture": 0.007544379667321786,
+            "factor_dynamics": 0.012586011920462381,
+            "factor_percussiveness": 0.004784057703168307
+          },
+          "DCI_disentanglement": 0.20358756746216872,
+          "DCI_completeness": 0.12381533964655608,
+          "DCI_informativeness": 0.546875,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.515625,
+            "factor_brightness": 0.5,
+            "factor_texture": 0.5859375,
+            "factor_dynamics": 0.5234375,
+            "factor_percussiveness": 0.609375
+          },
+          "SAP": 9.531060491976252,
+          "SAP_per_factor": {
+            "factor_energy": 0.3867437348624385,
+            "factor_brightness": 3.838827654924163,
+            "factor_texture": 19.539044061839505,
+            "factor_dynamics": 6.967217939962204,
+            "factor_percussiveness": 16.923469068292952
+          }
+        },
+        {
+          "seed": 44,
+          "MIG": 0.006284033569813616,
+          "MIG_per_factor": {
+            "factor_energy": 0.004014205002745997,
+            "factor_brightness": 0.0024915135553696052,
+            "factor_texture": 0.007544379667321786,
+            "factor_dynamics": 0.012586011920462381,
+            "factor_percussiveness": 0.004784057703168307
+          },
+          "DCI_disentanglement": 0.20358756746216872,
+          "DCI_completeness": 0.12381533964655608,
+          "DCI_informativeness": 0.56875,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.453125,
+            "factor_brightness": 0.6015625,
+            "factor_texture": 0.6796875,
+            "factor_dynamics": 0.59375,
+            "factor_percussiveness": 0.515625
+          },
+          "SAP": 9.531060491976252,
+          "SAP_per_factor": {
+            "factor_energy": 0.3867437348624385,
+            "factor_brightness": 3.838827654924163,
+            "factor_texture": 19.539044061839505,
+            "factor_dynamics": 6.967217939962204,
+            "factor_percussiveness": 16.923469068292952
+          }
+        },
+        {
+          "seed": 45,
+          "MIG": 0.006284033569813616,
+          "MIG_per_factor": {
+            "factor_energy": 0.004014205002745997,
+            "factor_brightness": 0.0024915135553696052,
+            "factor_texture": 0.007544379667321786,
+            "factor_dynamics": 0.012586011920462381,
+            "factor_percussiveness": 0.004784057703168307
+          },
+          "DCI_disentanglement": 0.20358756746216872,
+          "DCI_completeness": 0.12381533964655608,
+          "DCI_informativeness": 0.553125,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.5546875,
+            "factor_brightness": 0.53125,
+            "factor_texture": 0.6171875,
+            "factor_dynamics": 0.5078125,
+            "factor_percussiveness": 0.5546875
+          },
+          "SAP": 9.531060491976252,
+          "SAP_per_factor": {
+            "factor_energy": 0.3867437348624385,
+            "factor_brightness": 3.838827654924163,
+            "factor_texture": 19.539044061839505,
+            "factor_dynamics": 6.967217939962204,
+            "factor_percussiveness": 16.923469068292952
+          }
+        },
+        {
+          "seed": 46,
+          "MIG": 0.006284033569813616,
+          "MIG_per_factor": {
+            "factor_energy": 0.004014205002745997,
+            "factor_brightness": 0.0024915135553696052,
+            "factor_texture": 0.007544379667321786,
+            "factor_dynamics": 0.012586011920462381,
+            "factor_percussiveness": 0.004784057703168307
+          },
+          "DCI_disentanglement": 0.20358756746216872,
+          "DCI_completeness": 0.12381533964655608,
+          "DCI_informativeness": 0.553125,
+          "DCI_informativeness_per_factor": {
+            "factor_energy": 0.5,
+            "factor_brightness": 0.5703125,
+            "factor_texture": 0.625,
+            "factor_dynamics": 0.5078125,
+            "factor_percussiveness": 0.5625
+          },
+          "SAP": 9.531060491976252,
+          "SAP_per_factor": {
+            "factor_energy": 0.3867437348624385,
+            "factor_brightness": 3.838827654924163,
+            "factor_texture": 19.539044061839505,
+            "factor_dynamics": 6.967217939962204,
+            "factor_percussiveness": 16.923469068292952
+          }
+        }
+      ],
+      "summary": {
+        "MIG_mean": 0.006284033569813616,
+        "MIG_std": 0.0,
+        "MIG_ci95": 0.0,
+        "DCI_disentanglement_mean": 0.20358756746216872,
+        "DCI_disentanglement_std": 0.0,
+        "DCI_disentanglement_ci95": 0.0,
+        "DCI_completeness_mean": 0.12381533964655608,
+        "DCI_completeness_std": 0.0,
+        "DCI_completeness_ci95": 0.0,
+        "DCI_informativeness_mean": 0.5559375,
+        "DCI_informativeness_std": 0.00814900300650331,
+        "DCI_informativeness_ci95": 0.007142916071185492,
+        "SAP_mean": 9.531060491976252,
+        "SAP_std": 0.0,
+        "SAP_ci95": 0.0,
+        "MIG_per_factor": {
+          "factor_energy": {
+            "mean": 0.004014205002745997,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_brightness": {
+            "mean": 0.0024915135553696052,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_texture": {
+            "mean": 0.007544379667321787,
+            "std": 9.69739903612216e-19,
+            "ci95": 8.500145032286354e-19
+          },
+          "factor_dynamics": {
+            "mean": 0.012586011920462381,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_percussiveness": {
+            "mean": 0.004784057703168307,
+            "std": 0.0,
+            "ci95": 0.0
+          }
+        },
+        "DCI_informativeness_per_factor": {
+          "factor_energy": {
+            "mean": 0.5109375,
+            "std": 0.03811347161765771,
+            "ci95": 0.033407930851071875
+          },
+          "factor_brightness": {
+            "mean": 0.546875,
+            "std": 0.039451191165476865,
+            "ci95": 0.0345804937338234
+          },
+          "factor_texture": {
+            "mean": 0.6265625,
+            "std": 0.03378398173506196,
+            "ci95": 0.029612965646402253
+          },
+          "factor_dynamics": {
+            "mean": 0.5359375,
+            "std": 0.03605618987254477,
+            "ci95": 0.03160464389334264
+          },
+          "factor_percussiveness": {
+            "mean": 0.559375,
+            "std": 0.033420702556574124,
+            "ci95": 0.029294537406741896
+          }
+        },
+        "SAP_per_factor": {
+          "factor_energy": {
+            "mean": 0.3867437348624385,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_brightness": {
+            "mean": 3.838827654924163,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_texture": {
+            "mean": 19.539044061839505,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_dynamics": {
+            "mean": 6.967217939962204,
+            "std": 0.0,
+            "ci95": 0.0
+          },
+          "factor_percussiveness": {
+            "mean": 16.923469068292952,
+            "std": 0.0,
+            "ci95": 0.0
+          }
+        }
+      },
+      "MIG": 0.006284033569813616,
+      "MIG_per_factor": {
+        "factor_energy": 0.004014205002745997,
+        "factor_brightness": 0.0024915135553696052,
+        "factor_texture": 0.007544379667321786,
+        "factor_dynamics": 0.012586011920462381,
+        "factor_percussiveness": 0.004784057703168307
+      },
+      "DCI_disentanglement": 0.20358756746216872,
+      "DCI_completeness": 0.12381533964655608,
+      "DCI_informativeness": 0.5578125,
+      "DCI_informativeness_per_factor": {
+        "factor_energy": 0.53125,
+        "factor_brightness": 0.53125,
+        "factor_texture": 0.625,
+        "factor_dynamics": 0.546875,
+        "factor_percussiveness": 0.5546875
+      },
+      "SAP": 9.531060491976252,
+      "SAP_per_factor": {
+        "factor_energy": 0.3867437348624385,
+        "factor_brightness": 3.838827654924163,
+        "factor_texture": 19.539044061839505,
+        "factor_dynamics": 6.967217939962204,
+        "factor_percussiveness": 16.923469068292952
+      }
+    }
+  }
+}
