@@ -1,0 +1,148 @@
+{
+  "status": "pass",
+  "summary": {
+    "tracks_path": "toy_small\\tracks.npz",
+    "n_tracks": 100,
+    "seed": 42,
+    "train_ratio": 0.8,
+    "val_ratio": 0.1,
+    "test_ratio": 0.1,
+    "n_errors": 0,
+    "n_warnings": 0
+  },
+  "splits": {
+    "counts": {
+      "train": 80,
+      "val": 10,
+      "test": 10
+    },
+    "outputs": {
+      "split_track_ids_json": "reports\\splits_toy_small\\split_track_ids.json",
+      "split_assignments_csv": "reports\\splits_toy_small\\split_assignments.csv"
+    }
+  },
+  "leakage": {
+    "has_leakage": false,
+    "overlap_count": 0,
+    "overlap_samples": {
+      "train_val": [],
+      "train_test": [],
+      "val_test": []
+    }
+  },
+  "distribution": {
+    "global_distribution": [
+      {
+        "culture": "africa",
+        "count": 32,
+        "ratio": 0.32
+      },
+      {
+        "culture": "india",
+        "count": 28,
+        "ratio": 0.28
+      },
+      {
+        "culture": "west",
+        "count": 40,
+        "ratio": 0.4
+      }
+    ],
+    "per_split": {
+      "train": {
+        "n_tracks": 80,
+        "culture_distribution": [
+          {
+            "culture": "africa",
+            "count": 26,
+            "ratio": 0.325,
+            "delta_from_global": 0.005
+          },
+          {
+            "culture": "india",
+            "count": 22,
+            "ratio": 0.275,
+            "delta_from_global": 0.005
+          },
+          {
+            "culture": "west",
+            "count": 32,
+            "ratio": 0.4,
+            "delta_from_global": 0.0
+          }
+        ]
+      },
+      "val": {
+        "n_tracks": 10,
+        "culture_distribution": [
+          {
+            "culture": "africa",
+            "count": 3,
+            "ratio": 0.3,
+            "delta_from_global": 0.02
+          },
+          {
+            "culture": "india",
+            "count": 3,
+            "ratio": 0.3,
+            "delta_from_global": 0.02
+          },
+          {
+            "culture": "west",
+            "count": 4,
+            "ratio": 0.4,
+            "delta_from_global": 0.0
+          }
+        ]
+      },
+      "test": {
+        "n_tracks": 10,
+        "culture_distribution": [
+          {
+            "culture": "africa",
+            "count": 3,
+            "ratio": 0.3,
+            "delta_from_global": 0.02
+          },
+          {
+            "culture": "india",
+            "count": 3,
+            "ratio": 0.3,
+            "delta_from_global": 0.02
+          },
+          {
+            "culture": "west",
+            "count": 4,
+            "ratio": 0.4,
+            "delta_from_global": 0.0
+          }
+        ]
+      }
+    },
+    "max_abs_delta_from_global": 0.02
+  },
+  "interactions": {
+    "path": "toy_small\\interactions.csv",
+    "n_rows": 75,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "per_split_rows": {
+      "train": {
+        "count": 59,
+        "ratio": 0.786667,
+        "n_users": 6
+      },
+      "val": {
+        "count": 8,
+        "ratio": 0.106667,
+        "n_users": 5
+      },
+      "test": {
+        "count": 8,
+        "ratio": 0.106667,
+        "n_users": 5
+      }
+    }
+  },
+  "issues": []
+}

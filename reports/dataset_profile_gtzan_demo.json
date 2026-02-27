@@ -1,0 +1,81 @@
+{
+  "status": "warn",
+  "summary": {
+    "n_tracks": 12,
+    "embedding_dim": 768,
+    "n_cultures": 1,
+    "has_interactions": true,
+    "n_interactions": 20,
+    "n_users": 4,
+    "n_issues": 2,
+    "n_errors": 0,
+    "n_warnings": 1
+  },
+  "tracks": {
+    "path": "storage\\public\\gtzan_demo\\tracks.npz",
+    "n_tracks": 12,
+    "embedding_dim": 768,
+    "duplicate_track_ids": 0,
+    "finite_embedding_ratio": 1.0,
+    "zero_norm_ratio": 0.0,
+    "embedding_norm_stats": {
+      "min": 6.086462,
+      "p25": 6.396545,
+      "p50": 6.6625,
+      "p75": 7.117316,
+      "max": 7.852695,
+      "mean": 6.785319,
+      "std": 0.511366
+    },
+    "culture_distribution": [
+      {
+        "culture": "west",
+        "count": 12,
+        "ratio": 1.0
+      }
+    ],
+    "culture_imbalance_ratio": 1.0,
+    "affect": {
+      "present": false
+    }
+  },
+  "interactions": {
+    "path": "storage\\public\\gtzan_demo\\interactions.csv",
+    "n_interactions": 20,
+    "n_users": 4,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "duplicate_user_track_count": 0,
+    "duplicate_user_track_ratio": 0.0,
+    "invalid_weight_count": 0,
+    "non_positive_weight_count": 0,
+    "non_positive_weight_ratio": 0.0,
+    "track_coverage_ratio": 1.0,
+    "user_activity_stats": {
+      "min": 5,
+      "max": 5,
+      "mean": 5.0,
+      "median": 5.0
+    }
+  },
+  "thresholds": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "code": "tracks.culture_low_count",
+      "message": "culture 'west' has only 12 tracks (< 30)"
+    },
+    {
+      "severity": "info",
+      "code": "tracks.affect_missing",
+      "message": "affect_label is absent (allowed, but limits affect-related evaluation)"
+    }
+  ]
+}

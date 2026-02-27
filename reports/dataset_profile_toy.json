@@ -1,0 +1,107 @@
+{
+  "status": "pass",
+  "summary": {
+    "n_tracks": 1200,
+    "embedding_dim": 96,
+    "n_cultures": 3,
+    "has_interactions": true,
+    "n_interactions": 480,
+    "n_users": 6,
+    "n_issues": 0,
+    "n_errors": 0,
+    "n_warnings": 0
+  },
+  "tracks": {
+    "path": "toy\\tracks.npz",
+    "n_tracks": 1200,
+    "embedding_dim": 96,
+    "duplicate_track_ids": 0,
+    "finite_embedding_ratio": 1.0,
+    "zero_norm_ratio": 0.0,
+    "embedding_norm_stats": {
+      "min": 25.868584,
+      "p25": 33.833039,
+      "p50": 36.39163,
+      "p75": 39.165852,
+      "max": 50.372616,
+      "mean": 36.631535,
+      "std": 3.913425
+    },
+    "culture_distribution": [
+      {
+        "culture": "west",
+        "count": 431,
+        "ratio": 0.359167
+      },
+      {
+        "culture": "india",
+        "count": 397,
+        "ratio": 0.330833
+      },
+      {
+        "culture": "africa",
+        "count": 372,
+        "ratio": 0.31
+      }
+    ],
+    "culture_imbalance_ratio": 1.158602,
+    "affect": {
+      "present": true,
+      "n_classes": 6,
+      "distribution": [
+        {
+          "label": 0,
+          "count": 197
+        },
+        {
+          "label": 1,
+          "count": 206
+        },
+        {
+          "label": 2,
+          "count": 205
+        },
+        {
+          "label": 3,
+          "count": 180
+        },
+        {
+          "label": 4,
+          "count": 198
+        },
+        {
+          "label": 5,
+          "count": 214
+        }
+      ]
+    }
+  },
+  "interactions": {
+    "path": "toy\\interactions.csv",
+    "n_interactions": 480,
+    "n_users": 6,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "duplicate_user_track_count": 0,
+    "duplicate_user_track_ratio": 0.0,
+    "invalid_weight_count": 0,
+    "non_positive_weight_count": 0,
+    "non_positive_weight_ratio": 0.0,
+    "track_coverage_ratio": 0.4,
+    "user_activity_stats": {
+      "min": 80,
+      "max": 80,
+      "mean": 80.0,
+      "median": 80.0
+    }
+  },
+  "thresholds": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  },
+  "issues": []
+}

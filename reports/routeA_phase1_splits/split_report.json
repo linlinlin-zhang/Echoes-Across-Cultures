@@ -1,0 +1,150 @@
+{
+  "status": "pass",
+  "summary": {
+    "tracks_path": "storage\\public\\routeA_phase1\\tracks.npz",
+    "n_tracks": 72,
+    "seed": 42,
+    "train_ratio": 0.8,
+    "val_ratio": 0.1,
+    "test_ratio": 0.1,
+    "n_errors": 0,
+    "n_warnings": 0
+  },
+  "splits": {
+    "counts": {
+      "train": 57,
+      "val": 9,
+      "test": 6
+    },
+    "outputs": {
+      "split_track_ids_json": "reports\\routeA_phase1_splits\\split_track_ids.json",
+      "split_assignments_csv": "reports\\routeA_phase1_splits\\split_assignments.csv",
+      "split_report_json": "reports\\routeA_phase1_splits\\split_report.json",
+      "split_report_md": "reports\\routeA_phase1_splits\\split_report.md"
+    }
+  },
+  "leakage": {
+    "has_leakage": false,
+    "overlap_count": 0,
+    "overlap_samples": {
+      "train_val": [],
+      "train_test": [],
+      "val_test": []
+    }
+  },
+  "distribution": {
+    "global_distribution": [
+      {
+        "culture": "india",
+        "count": 24,
+        "ratio": 0.333333
+      },
+      {
+        "culture": "turkey",
+        "count": 24,
+        "ratio": 0.333333
+      },
+      {
+        "culture": "west",
+        "count": 24,
+        "ratio": 0.333333
+      }
+    ],
+    "per_split": {
+      "train": {
+        "n_tracks": 57,
+        "culture_distribution": [
+          {
+            "culture": "india",
+            "count": 19,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          },
+          {
+            "culture": "turkey",
+            "count": 19,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          },
+          {
+            "culture": "west",
+            "count": 19,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          }
+        ]
+      },
+      "val": {
+        "n_tracks": 9,
+        "culture_distribution": [
+          {
+            "culture": "india",
+            "count": 3,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          },
+          {
+            "culture": "turkey",
+            "count": 3,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          },
+          {
+            "culture": "west",
+            "count": 3,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          }
+        ]
+      },
+      "test": {
+        "n_tracks": 6,
+        "culture_distribution": [
+          {
+            "culture": "india",
+            "count": 2,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          },
+          {
+            "culture": "turkey",
+            "count": 2,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          },
+          {
+            "culture": "west",
+            "count": 2,
+            "ratio": 0.333333,
+            "delta_from_global": 0.0
+          }
+        ]
+      }
+    },
+    "max_abs_delta_from_global": 0.0
+  },
+  "interactions": {
+    "path": "storage\\public\\routeA_phase1\\interactions.csv",
+    "n_rows": 288,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "per_split_rows": {
+      "train": {
+        "count": 231,
+        "ratio": 0.802083,
+        "n_users": 24
+      },
+      "val": {
+        "count": 41,
+        "ratio": 0.142361,
+        "n_users": 23
+      },
+      "test": {
+        "count": 16,
+        "ratio": 0.055556,
+        "n_users": 14
+      }
+    }
+  },
+  "issues": []
+}

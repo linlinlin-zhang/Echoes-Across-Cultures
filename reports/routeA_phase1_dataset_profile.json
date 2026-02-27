@@ -1,0 +1,101 @@
+{
+  "status": "warn",
+  "summary": {
+    "n_tracks": 72,
+    "embedding_dim": 768,
+    "n_cultures": 3,
+    "has_interactions": true,
+    "n_interactions": 288,
+    "n_users": 24,
+    "n_issues": 4,
+    "n_errors": 0,
+    "n_warnings": 3
+  },
+  "tracks": {
+    "path": "storage\\public\\routeA_phase1\\tracks.npz",
+    "n_tracks": 72,
+    "embedding_dim": 768,
+    "duplicate_track_ids": 0,
+    "finite_embedding_ratio": 1.0,
+    "zero_norm_ratio": 0.0,
+    "embedding_norm_stats": {
+      "min": 6.184178,
+      "p25": 6.94249,
+      "p50": 7.222248,
+      "p75": 7.45789,
+      "max": 9.948188,
+      "mean": 7.222849,
+      "std": 0.53852
+    },
+    "culture_distribution": [
+      {
+        "culture": "india",
+        "count": 24,
+        "ratio": 0.333333
+      },
+      {
+        "culture": "turkey",
+        "count": 24,
+        "ratio": 0.333333
+      },
+      {
+        "culture": "west",
+        "count": 24,
+        "ratio": 0.333333
+      }
+    ],
+    "culture_imbalance_ratio": 1.0,
+    "affect": {
+      "present": false
+    }
+  },
+  "interactions": {
+    "path": "storage\\public\\routeA_phase1\\interactions.csv",
+    "n_interactions": 288,
+    "n_users": 24,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "duplicate_user_track_count": 0,
+    "duplicate_user_track_ratio": 0.0,
+    "invalid_weight_count": 0,
+    "non_positive_weight_count": 0,
+    "non_positive_weight_ratio": 0.0,
+    "track_coverage_ratio": 1.0,
+    "user_activity_stats": {
+      "min": 12,
+      "max": 12,
+      "mean": 12.0,
+      "median": 12.0
+    }
+  },
+  "thresholds": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "code": "tracks.culture_low_count",
+      "message": "culture 'india' has only 24 tracks (< 30)"
+    },
+    {
+      "severity": "warn",
+      "code": "tracks.culture_low_count",
+      "message": "culture 'turkey' has only 24 tracks (< 30)"
+    },
+    {
+      "severity": "warn",
+      "code": "tracks.culture_low_count",
+      "message": "culture 'west' has only 24 tracks (< 30)"
+    },
+    {
+      "severity": "info",
+      "code": "tracks.affect_missing",
+      "message": "affect_label is absent (allowed, but limits affect-related evaluation)"
+    }
+  ]
+}

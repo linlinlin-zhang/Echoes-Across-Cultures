@@ -1,0 +1,113 @@
+{
+  "status": "warn",
+  "summary": {
+    "n_tracks": 100,
+    "embedding_dim": 64,
+    "n_cultures": 3,
+    "has_interactions": true,
+    "n_interactions": 75,
+    "n_users": 6,
+    "n_issues": 1,
+    "n_errors": 0,
+    "n_warnings": 1
+  },
+  "tracks": {
+    "path": "toy_small\\tracks.npz",
+    "n_tracks": 100,
+    "embedding_dim": 64,
+    "duplicate_track_ids": 0,
+    "finite_embedding_ratio": 1.0,
+    "zero_norm_ratio": 0.0,
+    "embedding_norm_stats": {
+      "min": 24.028326,
+      "p25": 27.273004,
+      "p50": 29.425686,
+      "p75": 31.661033,
+      "max": 38.833447,
+      "mean": 29.567566,
+      "std": 3.267062
+    },
+    "culture_distribution": [
+      {
+        "culture": "west",
+        "count": 40,
+        "ratio": 0.4
+      },
+      {
+        "culture": "africa",
+        "count": 32,
+        "ratio": 0.32
+      },
+      {
+        "culture": "india",
+        "count": 28,
+        "ratio": 0.28
+      }
+    ],
+    "culture_imbalance_ratio": 1.428571,
+    "affect": {
+      "present": true,
+      "n_classes": 6,
+      "distribution": [
+        {
+          "label": 0,
+          "count": 22
+        },
+        {
+          "label": 1,
+          "count": 17
+        },
+        {
+          "label": 2,
+          "count": 17
+        },
+        {
+          "label": 3,
+          "count": 17
+        },
+        {
+          "label": 4,
+          "count": 11
+        },
+        {
+          "label": 5,
+          "count": 16
+        }
+      ]
+    }
+  },
+  "interactions": {
+    "path": "toy_small\\interactions.csv",
+    "n_interactions": 75,
+    "n_users": 6,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "duplicate_user_track_count": 0,
+    "duplicate_user_track_ratio": 0.0,
+    "invalid_weight_count": 0,
+    "non_positive_weight_count": 0,
+    "non_positive_weight_ratio": 0.0,
+    "track_coverage_ratio": 0.75,
+    "user_activity_stats": {
+      "min": 9,
+      "max": 19,
+      "mean": 12.5,
+      "median": 11.5
+    }
+  },
+  "thresholds": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "code": "tracks.culture_low_count",
+      "message": "culture 'india' has only 28 tracks (< 30)"
+    }
+  ]
+}

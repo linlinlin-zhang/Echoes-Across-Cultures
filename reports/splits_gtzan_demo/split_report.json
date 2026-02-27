@@ -1,0 +1,104 @@
+{
+  "status": "pass",
+  "summary": {
+    "tracks_path": "storage\\public\\gtzan_demo\\tracks.npz",
+    "n_tracks": 12,
+    "seed": 42,
+    "train_ratio": 0.8,
+    "val_ratio": 0.1,
+    "test_ratio": 0.1,
+    "n_errors": 0,
+    "n_warnings": 0
+  },
+  "splits": {
+    "counts": {
+      "train": 10,
+      "val": 1,
+      "test": 1
+    },
+    "outputs": {
+      "split_track_ids_json": "reports\\splits_gtzan_demo\\split_track_ids.json",
+      "split_assignments_csv": "reports\\splits_gtzan_demo\\split_assignments.csv",
+      "split_report_json": "reports\\splits_gtzan_demo\\split_report.json",
+      "split_report_md": "reports\\splits_gtzan_demo\\split_report.md"
+    }
+  },
+  "leakage": {
+    "has_leakage": false,
+    "overlap_count": 0,
+    "overlap_samples": {
+      "train_val": [],
+      "train_test": [],
+      "val_test": []
+    }
+  },
+  "distribution": {
+    "global_distribution": [
+      {
+        "culture": "west",
+        "count": 12,
+        "ratio": 1.0
+      }
+    ],
+    "per_split": {
+      "train": {
+        "n_tracks": 10,
+        "culture_distribution": [
+          {
+            "culture": "west",
+            "count": 10,
+            "ratio": 1.0,
+            "delta_from_global": 0.0
+          }
+        ]
+      },
+      "val": {
+        "n_tracks": 1,
+        "culture_distribution": [
+          {
+            "culture": "west",
+            "count": 1,
+            "ratio": 1.0,
+            "delta_from_global": 0.0
+          }
+        ]
+      },
+      "test": {
+        "n_tracks": 1,
+        "culture_distribution": [
+          {
+            "culture": "west",
+            "count": 1,
+            "ratio": 1.0,
+            "delta_from_global": 0.0
+          }
+        ]
+      }
+    },
+    "max_abs_delta_from_global": 0.0
+  },
+  "interactions": {
+    "path": "storage\\public\\gtzan_demo\\interactions.csv",
+    "n_rows": 20,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "per_split_rows": {
+      "train": {
+        "count": 17,
+        "ratio": 0.85,
+        "n_users": 4
+      },
+      "val": {
+        "count": 1,
+        "ratio": 0.05,
+        "n_users": 1
+      },
+      "test": {
+        "count": 2,
+        "ratio": 0.1,
+        "n_users": 2
+      }
+    }
+  },
+  "issues": []
+}
