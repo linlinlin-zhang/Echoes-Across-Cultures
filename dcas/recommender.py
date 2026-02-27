@@ -28,6 +28,36 @@ def _safe_kl(p: np.ndarray, q: np.ndarray, eps: float = 1e-12) -> float:
     return float(np.sum(p * (np.log(p + eps) - np.log(q + eps))))
 
 
+def _culture_centroids(
+    zs_all: torch.Tensor,
+    culture_all: np.ndarray,
+    culture_names: list[str],
+) -> torch.Tensor:
+    centroids: list[torch.Tensor] = []
+    for c in culture_names:
+        idx = np.nonzero(culture_all == c)[0]
+        if idx.size == 0:
+            continue
+        zc = zs_all[torch.from_numpy(idx).long()]
+        centroids.append(zc.mean(dim=0, keepdim=True))
+    if not centroids:
+        raise ValueError("cannot build culture centroids: empty cultures")
+    return torch.cat(centroids, dim=0)
+
+
+def _soft_culture_distribution(
+    zs_points: torch.Tensor,
+    centroids: torch.Tensor,
+    temperature: float = 1.0,
+) -> np.ndarray:
+    n_c = int(centroids.shape[0])
+    if int(zs_points.shape[0]) == 0:
+        return np.full((n_c,), 1.0 / max(1, n_c), dtype=np.float64)
+    d = torch.cdist(zs_points, centroids)
+    p = torch.softmax(-d / max(1e-6, float(temperature)), dim=1)
+    return p.mean(dim=0).detach().cpu().numpy().astype(np.float64)
+
+
 def _prepare_user_and_candidates(
     tracks: Tracks,
     interactions: list[Interaction],
@@ -57,6 +87,8 @@ def _finalize_recommendations(
     zs_hist: torch.Tensor,
     za_cand: torch.Tensor,
     zs_cand: torch.Tensor,
+    zs_all: torch.Tensor,
+    target_culture: str,
     k: int,
 ) -> tuple[list[Recommendation], dict[str, float]]:
     top_local = np.argsort(-cand_scores)[: int(k)]
@@ -87,15 +119,48 @@ def _finalize_recommendations(
     relevant = relevant / max(1e-12, float(relevant.max()))
     serendipity = float(np.mean(unexpected * relevant))
 
-    cultures = [r.culture for r in recs]
     all_cultures = tracks.cultures()
-    rec_dist = np.array([cultures.count(c) for c in all_cultures], dtype=np.float64)
+    culture_arr = tracks.culture.astype(str)
+
+    centroids = _culture_centroids(
+        zs_all=zs_all.detach().cpu(),
+        culture_all=culture_arr,
+        culture_names=all_cultures,
+    )
+    rec_zs = zs_cand_cpu[torch.from_numpy(top_local).long()]
+    rec_soft_dist = _soft_culture_distribution(rec_zs, centroids, temperature=1.0)
+    hist_soft_dist = _soft_culture_distribution(zs_hist_cpu, centroids, temperature=1.0)
+
+    target_dist = np.full((len(all_cultures),), 0.0, dtype=np.float64)
+    if str(target_culture) in all_cultures:
+        # Smooth the target prior to avoid infinite/near-infinite KL while
+        # preserving "target culture should dominate" semantics.
+        smoothing = 0.05
+        n_c = max(1, len(all_cultures))
+        target_idx = all_cultures.index(str(target_culture))
+        off = smoothing / float(max(1, n_c - 1))
+        target_dist[:] = off
+        target_dist[target_idx] = 1.0 - smoothing
+    else:
+        target_dist[:] = 1.0 / max(1, len(all_cultures))
+    target_prob = float(rec_soft_dist[all_cultures.index(str(target_culture))]) if str(target_culture) in all_cultures else float("nan")
+
+    # Legacy calibration kept for backward compatibility of older reports.
+    cultures = [r.culture for r in recs]
+    rec_dist_hard = np.array([cultures.count(c) for c in all_cultures], dtype=np.float64)
     pool_dist = np.array([(tracks.culture == c).sum() for c in all_cultures], dtype=np.float64)
-    calibration_kl = _safe_kl(rec_dist, pool_dist)
+    calibration_kl_legacy = _safe_kl(rec_dist_hard, pool_dist)
+
+    # New calibration: how close recommendation style-distribution is to target culture.
+    calibration_kl = _safe_kl(rec_soft_dist, target_dist)
+    user_alignment_kl = _safe_kl(rec_soft_dist, hist_soft_dist)
 
     metrics = {
         "serendipity": serendipity,
         "cultural_calibration_kl": calibration_kl,
+        "cultural_calibration_kl_legacy": calibration_kl_legacy,
+        "target_culture_prob_mean": target_prob,
+        "user_culture_alignment_kl": user_alignment_kl,
     }
     return recs, metrics
 
@@ -151,6 +216,8 @@ def recommend_ot(
         zs_hist=zs_hist,
         za_cand=za_cand,
         zs_cand=zs_cand,
+        zs_all=zs_mu_all,
+        target_culture=str(target_culture),
         k=int(k),
     )
 
@@ -198,5 +265,7 @@ def recommend_knn(
         zs_hist=zs_hist,
         za_cand=za_cand,
         zs_cand=zs_cand,
+        zs_all=zs_mu_all,
+        target_culture=str(target_culture),
         k=int(k),
     )

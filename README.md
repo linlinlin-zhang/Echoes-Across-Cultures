@@ -303,3 +303,30 @@ python -m dcas.scripts.evaluate_disentanglement \
   --out_json ./reports/routeA_disentanglement_phase4_tc_hsic_cn_sharedfactors.json \
   --out_md ./reports/routeA_disentanglement_phase4_tc_hsic_cn_sharedfactors.md
 ```
+
+## Unified Eval Suite
+
+Run recommender/disentanglement/significance in one command:
+```bash
+python -m dcas.cli.eval \
+  --model ./storage/public/routeA_phase4_disentangle_cn/model_tc_hsic.pt \
+  --baseline_model ./storage/public/routeA_phase2_cn/model.pt \
+  --tracks ./storage/public/routeA_phase2_cn/tracks.npz \
+  --interactions ./storage/public/routeA_phase2_cn/interactions.csv \
+  --metadata ./reports/routeA_shared_factors_cn.csv \
+  --factors factor_energy,factor_brightness,factor_texture,factor_dynamics,factor_percussiveness \
+  --seeds 42,43,44,45,46 \
+  --out_dir ./reports/eval_suite_phase4_v2 \
+  --method ot \
+  --k 10 \
+  --epsilon 0.1 \
+  --iters 200 \
+  --bootstrap_samples 5000 \
+  --permutation_samples 5000
+```
+
+See detailed guide: `docs/EVAL_SUITE_GUIDE.md`.
+
+Calibration metric note:
+- `cultural_calibration_kl` now uses a smoothed target-culture prior in style latent (`zs`) space, avoiding the previous fixed-value degeneration under single-target recommendation.
+- `cultural_calibration_kl_legacy` is kept for backward compatibility with historical reports.

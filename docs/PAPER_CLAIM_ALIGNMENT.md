@@ -21,6 +21,7 @@
 | 风格迁移生成模块 | 部分实现（embedding + 波形基线） | `dcas/style_transfer.py`, `dcas/cli/style_transfer.py`, `dcas/waveform_style_transfer.py`, `dcas/cli/style_transfer_wave.py`, `dcas_server/app.py` | 已实现 embedding 反事实与波形基线（频谱统计迁移）；不可写成“高保真可训练生成器已完成”。 |
 | 动态本体（concept/relation/annotation） | 已实现（工程 v1） | `dcas/ontology.py`, `dcas/cli/ontology.py`, `dcas_server/app.py` | 可写“实现了动态本体管理服务，并支持导出训练约束”；建议保留“轻量建议算法”表述。 |
 | 标准解纠缠指标（MIG/DCI/SAP）评测 | 已实现（工程 v2） | `dcas/scripts/evaluate_disentanglement.py`, `dcas/scripts/build_shared_acoustic_factors.py`, `reports/routeA_disentanglement_*_sharedfactors.json` | 已支持多 seed 与统计量；可写“提供可复现评测协议与初步证据”，避免 SOTA 主张。 |
+| 统一评测与显著性检验（推荐） | 已实现（工程 v1） | `dcas/cli/eval.py`, `dcas/scripts/compare_recommender_runs.py`, `dcas/scripts/evaluate_recommender.py` | 支持 paired bootstrap + permutation test；可写“提供统计显著性证据”，避免“已充分完成大规模公平性评测”主张。 |
 | 大规模真实跨文化基准全面实验 | 未实现（计划中） | 无 | 当前结果以 toy + 原型验证为主。 |
 
 ## 可主张与不可主张边界

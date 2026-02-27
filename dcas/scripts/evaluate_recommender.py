@@ -62,6 +62,11 @@ def evaluate_recommender(
     method = str(method).strip().lower()
     if method not in {"ot", "knn"}:
         raise ValueError("method must be one of: ot, knn")
+    optional_metric_keys = [
+        "cultural_calibration_kl_legacy",
+        "target_culture_prob_mean",
+        "user_culture_alignment_kl",
+    ]
     for u in users:
         for c in cultures:
             try:
@@ -87,26 +92,39 @@ def evaluate_recommender(
                         k=int(k),
                         device=device,
                     )
-                rows.append(
-                    {
-                        "user_id": u,
-                        "target_culture": c,
-                        "serendipity": float(metrics["serendipity"]),
-                        "cultural_calibration_kl": float(metrics["cultural_calibration_kl"]),
-                    }
-                )
+                row = {
+                    "user_id": u,
+                    "target_culture": c,
+                    "serendipity": float(metrics["serendipity"]),
+                    "cultural_calibration_kl": float(metrics["cultural_calibration_kl"]),
+                }
+                for mk in optional_metric_keys:
+                    if mk in metrics:
+                        row[mk] = float(metrics[mk])
+                rows.append(row)
             except Exception as e:
                 skipped.append({"user_id": u, "target_culture": c, "reason": str(e)})
 
     ser = [float(r["serendipity"]) for r in rows]
     ckl = [float(r["cultural_calibration_kl"]) for r in rows]
+    legacy = [float(r["cultural_calibration_kl_legacy"]) for r in rows if "cultural_calibration_kl_legacy" in r]
+    target_prob = [float(r["target_culture_prob_mean"]) for r in rows if "target_culture_prob_mean" in r]
+    user_align_kl = [float(r["user_culture_alignment_kl"]) for r in rows if "user_culture_alignment_kl" in r]
 
     per_culture: dict[str, dict[str, float]] = {}
-    tmp: dict[str, dict[str, list[float]]] = defaultdict(lambda: {"ser": [], "ckl": []})
+    tmp: dict[str, dict[str, list[float]]] = defaultdict(
+        lambda: {"ser": [], "ckl": [], "legacy": [], "target_prob": [], "user_align_kl": []}
+    )
     for r in rows:
         c = str(r["target_culture"])
         tmp[c]["ser"].append(float(r["serendipity"]))
         tmp[c]["ckl"].append(float(r["cultural_calibration_kl"]))
+        if "cultural_calibration_kl_legacy" in r:
+            tmp[c]["legacy"].append(float(r["cultural_calibration_kl_legacy"]))
+        if "target_culture_prob_mean" in r:
+            tmp[c]["target_prob"].append(float(r["target_culture_prob_mean"]))
+        if "user_culture_alignment_kl" in r:
+            tmp[c]["user_align_kl"].append(float(r["user_culture_alignment_kl"]))
     for c in sorted(tmp.keys()):
         ser_c = tmp[c]["ser"]
         ckl_c = tmp[c]["ckl"]
@@ -123,6 +141,12 @@ def evaluate_recommender(
             "cultural_calibration_kl_ci95_low": float(ckl_ci_l),
             "cultural_calibration_kl_ci95_high": float(ckl_ci_h),
         }
+        if tmp[c]["legacy"]:
+            per_culture[c]["cultural_calibration_kl_legacy_mean"] = _safe_mean(tmp[c]["legacy"])
+        if tmp[c]["target_prob"]:
+            per_culture[c]["target_culture_prob_mean"] = _safe_mean(tmp[c]["target_prob"])
+        if tmp[c]["user_align_kl"]:
+            per_culture[c]["user_culture_alignment_kl_mean"] = _safe_mean(tmp[c]["user_align_kl"])
 
     ser_ci_l, ser_ci_h = _ci95_bootstrap(ser, samples=int(bootstrap_samples), seed=int(bootstrap_seed))
     ckl_ci_l, ckl_ci_h = _ci95_bootstrap(ckl, samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 1)
@@ -155,6 +179,21 @@ def evaluate_recommender(
             "bootstrap_seed": int(bootstrap_seed),
         },
     }
+    if legacy:
+        result["summary"]["cultural_calibration_kl_legacy_mean"] = _safe_mean(legacy)
+        result["summary"]["cultural_calibration_kl_legacy_std"] = (
+            float(np.std(np.array(legacy, dtype=np.float64))) if legacy else float("nan")
+        )
+    if target_prob:
+        result["summary"]["target_culture_prob_mean"] = _safe_mean(target_prob)
+        result["summary"]["target_culture_prob_std"] = (
+            float(np.std(np.array(target_prob, dtype=np.float64))) if target_prob else float("nan")
+        )
+    if user_align_kl:
+        result["summary"]["user_culture_alignment_kl_mean"] = _safe_mean(user_align_kl)
+        result["summary"]["user_culture_alignment_kl_std"] = (
+            float(np.std(np.array(user_align_kl, dtype=np.float64))) if user_align_kl else float("nan")
+        )
 
     if out_json is not None:
         out = Path(out_json)
