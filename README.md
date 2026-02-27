@@ -211,3 +211,11 @@ Training paradigm note:
 - Current default pipeline is **not full backbone fine-tuning**.
 - It is `foundation embedding extraction + DCAS downstream training`.
 - If backbone fine-tuning is required, select a base model first (recommended: `ntua-slp/CultureMERT-95M`).
+## Route A Pilot (Phase 1)
+
+Runbook:
+- [docs/ROUTE_A_PHASE1_RUNBOOK.md](docs/ROUTE_A_PHASE1_RUNBOOK.md)
+
+New scripts:
+- `python -m dcas.scripts.merge_metadata --help`
+- `python -m dcas.scripts.evaluate_recommender --help`

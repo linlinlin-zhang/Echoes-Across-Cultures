@@ -4,8 +4,11 @@ import argparse
 import csv
 import json
 import re
+import shutil
 from pathlib import Path
 from typing import Any
+
+from huggingface_hub import hf_hub_download
 
 try:
     from datasets import Audio, load_dataset
@@ -35,6 +38,38 @@ def _load_json(path: str | Path | None) -> dict[str, Any]:
         return json.load(f)
 
 
+def _parse_hf_dataset_uri(uri: str) -> tuple[str, str | None, str]:
+    prefix = "hf://datasets/"
+    if not str(uri).startswith(prefix):
+        raise ValueError(f"unsupported hf uri: {uri}")
+    rest = str(uri)[len(prefix) :]
+    parts = rest.split("/")
+    if len(parts) < 3:
+        raise ValueError(f"invalid hf uri (missing filename): {uri}")
+    namespace = parts[0]
+    repo_rev = parts[1]
+    if "@" in repo_rev:
+        repo_name, revision = repo_rev.split("@", 1)
+    else:
+        repo_name, revision = repo_rev, None
+    repo_id = f"{namespace}/{repo_name}"
+    filename = "/".join(parts[2:])
+    if repo_id.strip() == "" or filename.strip() == "":
+        raise ValueError(f"invalid hf uri: {uri}")
+    return repo_id, revision, filename
+
+
+def _download_from_hf_dataset_uri(uri: str) -> Path:
+    repo_id, revision, filename = _parse_hf_dataset_uri(uri)
+    local = hf_hub_download(
+        repo_id=repo_id,
+        repo_type="dataset",
+        filename=filename,
+        revision=revision,
+    )
+    return Path(local)
+
+
 def _resolve_culture(
     row: dict[str, Any],
     mode: str,
@@ -60,6 +95,23 @@ def _resolve_culture(
             return str(culture_map[key_lower])
         return str(default_value)
     raise ValueError(f"unknown culture mode: {mode}")
+
+
+def _normalize_class_labels(row: dict[str, Any], names_map: dict[str, list[str]]) -> dict[str, Any]:
+    out = dict(row)
+    for col, names in names_map.items():
+        if col not in out:
+            continue
+        raw = out.get(col)
+        if raw is None:
+            continue
+        try:
+            idx = int(raw)
+        except Exception:
+            continue
+        if 0 <= idx < len(names):
+            out[col] = names[idx]
+    return out
 
 
 def import_hf_audio_dataset(
@@ -96,6 +148,13 @@ def import_hf_audio_dataset(
 
     ds = load_dataset(path=dataset, name=config, split=split, streaming=bool(streaming))
     ds = ds.cast_column(audio_column, Audio(decode=False))
+    features = getattr(ds, "features", None)
+    class_label_names: dict[str, list[str]] = {}
+    if features is not None:
+        for col, feat in features.items():
+            names = getattr(feat, "names", None)
+            if isinstance(names, list) and names:
+                class_label_names[str(col)] = [str(x) for x in names]
 
     required_cols = ["track_id", "culture", "audio_path"]
     optional_cols = ["source_dataset", "source_split", "source_index"]
@@ -113,9 +172,10 @@ def import_hf_audio_dataset(
     skipped = 0
 
     for idx, row in enumerate(ds):
-        if limit is not None and imported >= int(limit):
+        if limit is not None and int(idx) >= int(limit):
             break
         try:
+            row = _normalize_class_labels(row=row, names_map=class_label_names)
             if track_id_column:
                 raw_tid = _to_text(row.get(track_id_column, "")).strip()
                 if raw_tid == "":
@@ -148,10 +208,13 @@ def import_hf_audio_dataset(
                 with open(abs_path, "wb") as f:
                     f.write(bytes(audio_bytes))
             else:
-                src = Path(source_path)
+                if source_path.startswith("hf://datasets/"):
+                    src = _download_from_hf_dataset_uri(source_path)
+                else:
+                    src = Path(source_path)
                 if not src.exists():
                     raise RuntimeError(f"audio bytes/path unavailable for row {idx}")
-                abs_path.write_bytes(src.read_bytes())
+                shutil.copyfile(src, abs_path)
 
             culture = _resolve_culture(
                 row=row,
