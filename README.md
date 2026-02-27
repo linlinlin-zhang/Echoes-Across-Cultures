@@ -219,3 +219,7 @@ Runbook:
 New scripts:
 - `python -m dcas.scripts.merge_metadata --help`
 - `python -m dcas.scripts.evaluate_recommender --help`
+## Route A Phase 2
+
+- [docs/ROUTE_A_PHASE2_RUNBOOK.md](docs/ROUTE_A_PHASE2_RUNBOOK.md)
+- [docs/technical_notes/routeA_phase2_end.md](docs/technical_notes/routeA_phase2_end.md)
