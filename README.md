@@ -98,3 +98,15 @@ interactions.csv：
 - 增加内容一致性：同曲目增广（pitch shift/EQ）后 z_c 对比学习
 - 生成模块：用 z_c/z_s 做风格迁移（此原型仅保留接口，便于后续接入扩散/编解码器）
 
+## 论文主张边界（重要）
+
+为避免“论文主张超出实现证据”的风险，本仓库提供主张对齐矩阵：
+
+- [docs/PAPER_CLAIM_ALIGNMENT.md](docs/PAPER_CLAIM_ALIGNMENT.md)
+
+当前状态摘要：
+
+- 已实现：解纠缠三因子、领域对抗、OT 推荐、PAL 选样、pairwise constraints 回灌、全栈原型闭环
+- 部分实现：解纠缠正则（当前是 KL + 协方差去相关近似，尚非完整 TC/FactorVAE 级别）
+- 计划中：CultureMERT 持续预训练接入、风格迁移生成模块、MIG/DCI/SAP 等标准解纠缠评测
+

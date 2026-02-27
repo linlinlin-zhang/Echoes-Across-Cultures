@@ -71,8 +71,11 @@ def recommend_ot(
     cost = squared_euclidean_cost(za_hist, za_cand)
     plan = sinkhorn_plan(a=a, b=b, cost=cost, epsilon=epsilon, iters=iters)
 
-    mass = plan.sum(dim=0)
-    cand_scores = mass.detach().cpu().numpy()
+    # In balanced OT with fixed target marginal b, column mass is near-constant.
+    # Rank candidates by OT-conditioned transport cost instead of marginal mass.
+    col_mass = plan.sum(dim=0).clamp_min(1e-12)
+    col_avg_cost = (plan * cost).sum(dim=0) / col_mass
+    cand_scores = torch.softmax(-col_avg_cost, dim=0).detach().cpu().numpy()
     top_local = np.argsort(-cand_scores)[: int(k)]
 
     za_hist_cpu = za_hist.detach().cpu()
