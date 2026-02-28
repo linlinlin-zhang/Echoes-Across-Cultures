@@ -36,6 +36,51 @@ def _ci95_bootstrap(values: list[float], samples: int, seed: int) -> tuple[float
     return float(lo), float(hi)
 
 
+def _track_popularity_by_id(interactions) -> dict[str, float]:
+    pop: dict[str, float] = {}
+    for it in interactions:
+        tid = str(it.track_id)
+        pop[tid] = float(pop.get(tid, 0.0) + float(it.weight))
+    return pop
+
+
+def _minority_track_set(
+    track_ids: np.ndarray,
+    pop_by_id: dict[str, float],
+    quantile: float,
+) -> tuple[set[str], float, float]:
+    q = float(np.clip(float(quantile), 0.0, 1.0))
+    ids = [str(tid) for tid in track_ids.tolist()]
+    if not ids:
+        return set(), float("nan"), float("nan")
+    pop = np.array([float(pop_by_id.get(tid, 0.0)) for tid in ids], dtype=np.float64)
+    if float(np.max(pop) - np.min(pop)) <= 1e-12:
+        n = int(len(ids))
+        n_minority = max(1, min(n, int(round(float(n) * max(0.0, q)))))
+        order = np.argsort(np.array(ids, dtype=object))
+        minority = {ids[int(i)] for i in order[:n_minority].tolist()}
+        ratio = float(len(minority) / max(1, len(ids)))
+        return minority, float(pop[0]), ratio
+    threshold = float(np.quantile(pop, q))
+    mask = pop <= threshold
+    if int(mask.sum()) <= 0:
+        # keep at least one minority item to avoid undefined exposure.
+        mask[np.argmin(pop)] = True
+    minority = {tid for tid, m in zip(ids, mask.tolist()) if bool(m)}
+    ratio = float(len(minority) / max(1, len(ids)))
+    return minority, threshold, ratio
+
+
+def _minority_exposure(recs, minority_tracks: set[str]) -> float:
+    if not recs:
+        return float("nan")
+    hit = 0
+    for r in recs:
+        if str(r.track_id) in minority_tracks:
+            hit += 1
+    return float(hit / len(recs))
+
+
 def evaluate_recommender(
     model_path: str | Path,
     tracks_path: str | Path,
@@ -48,6 +93,7 @@ def evaluate_recommender(
     prefer_cuda: bool = False,
     bootstrap_samples: int = 2000,
     bootstrap_seed: int = 42,
+    minority_quantile: float = 0.25,
 ) -> dict[str, Any]:
     device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
     model, _ = load_checkpoint(str(model_path), map_location=str(device))
@@ -56,6 +102,12 @@ def evaluate_recommender(
 
     users = sorted({str(i.user_id) for i in interactions})
     cultures = tracks.cultures()
+    pop_by_id = _track_popularity_by_id(interactions)
+    minority_tracks, minority_threshold, minority_ratio = _minority_track_set(
+        track_ids=tracks.track_id,
+        pop_by_id=pop_by_id,
+        quantile=float(minority_quantile),
+    )
 
     rows: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
@@ -71,7 +123,7 @@ def evaluate_recommender(
         for c in cultures:
             try:
                 if method == "ot":
-                    _, metrics = recommend_ot(
+                    recs, metrics = recommend_ot(
                         model=model,
                         tracks=tracks,
                         interactions=interactions,
@@ -83,7 +135,7 @@ def evaluate_recommender(
                         iters=int(iters),
                     )
                 else:
-                    _, metrics = recommend_knn(
+                    recs, metrics = recommend_knn(
                         model=model,
                         tracks=tracks,
                         interactions=interactions,
@@ -97,6 +149,7 @@ def evaluate_recommender(
                     "target_culture": c,
                     "serendipity": float(metrics["serendipity"]),
                     "cultural_calibration_kl": float(metrics["cultural_calibration_kl"]),
+                    "minority_exposure_at_k": float(_minority_exposure(recs=recs, minority_tracks=minority_tracks)),
                 }
                 for mk in optional_metric_keys:
                     if mk in metrics:
@@ -110,10 +163,11 @@ def evaluate_recommender(
     legacy = [float(r["cultural_calibration_kl_legacy"]) for r in rows if "cultural_calibration_kl_legacy" in r]
     target_prob = [float(r["target_culture_prob_mean"]) for r in rows if "target_culture_prob_mean" in r]
     user_align_kl = [float(r["user_culture_alignment_kl"]) for r in rows if "user_culture_alignment_kl" in r]
+    minority = [float(r["minority_exposure_at_k"]) for r in rows if "minority_exposure_at_k" in r]
 
     per_culture: dict[str, dict[str, float]] = {}
     tmp: dict[str, dict[str, list[float]]] = defaultdict(
-        lambda: {"ser": [], "ckl": [], "legacy": [], "target_prob": [], "user_align_kl": []}
+        lambda: {"ser": [], "ckl": [], "legacy": [], "target_prob": [], "user_align_kl": [], "minority": []}
     )
     for r in rows:
         c = str(r["target_culture"])
@@ -125,11 +179,19 @@ def evaluate_recommender(
             tmp[c]["target_prob"].append(float(r["target_culture_prob_mean"]))
         if "user_culture_alignment_kl" in r:
             tmp[c]["user_align_kl"].append(float(r["user_culture_alignment_kl"]))
+        if "minority_exposure_at_k" in r:
+            tmp[c]["minority"].append(float(r["minority_exposure_at_k"]))
     for c in sorted(tmp.keys()):
         ser_c = tmp[c]["ser"]
         ckl_c = tmp[c]["ckl"]
+        minority_c = tmp[c]["minority"]
         ser_ci_l, ser_ci_h = _ci95_bootstrap(ser_c, samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 13)
         ckl_ci_l, ckl_ci_h = _ci95_bootstrap(ckl_c, samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 29)
+        min_ci_l, min_ci_h = _ci95_bootstrap(
+            minority_c,
+            samples=int(bootstrap_samples),
+            seed=int(bootstrap_seed) + 41,
+        )
         per_culture[c] = {
             "n": int(len(ser_c)),
             "serendipity_mean": _safe_mean(ser_c),
@@ -140,6 +202,12 @@ def evaluate_recommender(
             "cultural_calibration_kl_std": float(np.std(np.array(ckl_c, dtype=np.float64))) if ckl_c else float("nan"),
             "cultural_calibration_kl_ci95_low": float(ckl_ci_l),
             "cultural_calibration_kl_ci95_high": float(ckl_ci_h),
+            "minority_exposure_at_k_mean": _safe_mean(minority_c),
+            "minority_exposure_at_k_std": (
+                float(np.std(np.array(minority_c, dtype=np.float64))) if minority_c else float("nan")
+            ),
+            "minority_exposure_at_k_ci95_low": float(min_ci_l),
+            "minority_exposure_at_k_ci95_high": float(min_ci_h),
         }
         if tmp[c]["legacy"]:
             per_culture[c]["cultural_calibration_kl_legacy_mean"] = _safe_mean(tmp[c]["legacy"])
@@ -150,6 +218,7 @@ def evaluate_recommender(
 
     ser_ci_l, ser_ci_h = _ci95_bootstrap(ser, samples=int(bootstrap_samples), seed=int(bootstrap_seed))
     ckl_ci_l, ckl_ci_h = _ci95_bootstrap(ckl, samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 1)
+    min_ci_l, min_ci_h = _ci95_bootstrap(minority, samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 2)
 
     result: dict[str, Any] = {
         "summary": {
@@ -165,6 +234,10 @@ def evaluate_recommender(
             "cultural_calibration_kl_std": float(np.std(np.array(ckl, dtype=np.float64))) if ckl else float("nan"),
             "cultural_calibration_kl_ci95_low": float(ckl_ci_l),
             "cultural_calibration_kl_ci95_high": float(ckl_ci_h),
+            "minority_exposure_at_k_mean": _safe_mean(minority),
+            "minority_exposure_at_k_std": float(np.std(np.array(minority, dtype=np.float64))) if minority else float("nan"),
+            "minority_exposure_at_k_ci95_low": float(min_ci_l),
+            "minority_exposure_at_k_ci95_high": float(min_ci_h),
         },
         "per_target_culture": per_culture,
         "rows": rows,
@@ -177,6 +250,9 @@ def evaluate_recommender(
             "device": str(device),
             "bootstrap_samples": int(bootstrap_samples),
             "bootstrap_seed": int(bootstrap_seed),
+            "minority_quantile": float(minority_quantile),
+            "minority_popularity_threshold": float(minority_threshold),
+            "minority_catalog_ratio": float(minority_ratio),
         },
     }
     if legacy:
@@ -216,6 +292,7 @@ def main() -> None:
     ap.add_argument("--iters", type=int, default=200)
     ap.add_argument("--bootstrap_samples", type=int, default=2000)
     ap.add_argument("--bootstrap_seed", type=int, default=42)
+    ap.add_argument("--minority_quantile", type=float, default=0.25)
     ap.add_argument("--prefer_cuda", action="store_true")
     args = ap.parse_args()
 
@@ -230,6 +307,7 @@ def main() -> None:
         iters=int(args.iters),
         bootstrap_samples=int(args.bootstrap_samples),
         bootstrap_seed=int(args.bootstrap_seed),
+        minority_quantile=float(args.minority_quantile),
         prefer_cuda=bool(args.prefer_cuda),
     )
     print(json.dumps(out["summary"], ensure_ascii=False))

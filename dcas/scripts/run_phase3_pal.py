@@ -58,6 +58,7 @@ def _summary_row(tag: str, ev: dict[str, Any]) -> dict[str, Any]:
         "n_user_culture_evals": int(s["n_user_culture_evals"]),
         "serendipity_mean": float(s["serendipity_mean"]),
         "cultural_calibration_kl_mean": float(s["cultural_calibration_kl_mean"]),
+        "minority_exposure_at_k_mean": float(s.get("minority_exposure_at_k_mean", float("nan"))),
     }
 
 
@@ -68,8 +69,11 @@ def _write_markdown(path: str | Path, rows: list[dict[str, Any]], comparisons: d
     lines: list[str] = []
     lines.append("# Phase 3 PAL Two-Round Gain Report")
     lines.append("")
-    lines.append("| run | serendipity_mean | delta_vs_baseline | delta_ci95 | p_value | cultural_calibration_kl_mean | evals |")
-    lines.append("|---|---:|---:|---:|---:|---:|---:|")
+    lines.append(
+        "| run | serendipity_mean | delta_vs_baseline | delta_ci95 | p_value | "
+        "cultural_calibration_kl_mean | minority_exposure_at_k_mean | evals |"
+    )
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
     for r in rows:
         d_ser = float(r["serendipity_mean"]) - float(base["serendipity_mean"])
         tag = str(r["tag"])
@@ -87,7 +91,8 @@ def _write_markdown(path: str | Path, rows: list[dict[str, Any]], comparisons: d
                 p_text = "-"
         lines.append(
             f"| {r['tag']} | {r['serendipity_mean']:.10f} | {d_ser:+.10f} | "
-            f"{ci_text} | {p_text} | {r['cultural_calibration_kl_mean']:.10f} | {int(r['n_user_culture_evals'])} |"
+            f"{ci_text} | {p_text} | {r['cultural_calibration_kl_mean']:.10f} | "
+            f"{r['minority_exposure_at_k_mean']:.10f} | {int(r['n_user_culture_evals'])} |"
         )
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -210,7 +215,7 @@ def run_phase3_pal(
         cmp = compare_recommender_runs(
             base_eval_path=baseline_eval_path,
             candidate_eval_path=eval_path,
-            metrics=["serendipity", "cultural_calibration_kl"],
+            metrics=["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"],
             bootstrap_samples=int(bootstrap_samples),
             permutation_samples=int(permutation_samples),
             seed=int(seed) + ridx,

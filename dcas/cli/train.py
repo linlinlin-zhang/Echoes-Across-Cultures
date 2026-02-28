@@ -48,6 +48,8 @@ def main() -> None:
     ap.add_argument("--lambda_cov", type=float, default=0.05)
     ap.add_argument("--lambda_tc", type=float, default=0.05)
     ap.add_argument("--lambda_hsic", type=float, default=0.02)
+    ap.add_argument("--beta_kl", type=float, default=1.0)
+    ap.add_argument("--shared_encoder", action="store_true")
     ap.add_argument("--regularizer_warmup_epochs", type=int, default=0)
     args = ap.parse_args()
 
@@ -85,6 +87,8 @@ def main() -> None:
         lambda_cov=float(args.lambda_cov),
         lambda_tc=float(args.lambda_tc),
         lambda_hsic=float(args.lambda_hsic),
+        beta_kl=float(args.beta_kl),
+        shared_encoder=bool(args.shared_encoder),
     )
     model = DCASModel(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=float(args.lr))

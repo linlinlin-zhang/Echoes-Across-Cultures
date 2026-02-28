@@ -109,7 +109,7 @@ def run_eval_suite(
             cmp = compare_recommender_runs(
                 base_eval_path=base_json,
                 candidate_eval_path=rec_json,
-                metrics=["serendipity", "cultural_calibration_kl", "target_culture_prob_mean"],
+                metrics=["serendipity", "cultural_calibration_kl", "minority_exposure_at_k", "target_culture_prob_mean"],
                 bootstrap_samples=int(bootstrap_samples),
                 permutation_samples=int(permutation_samples),
                 seed=44,

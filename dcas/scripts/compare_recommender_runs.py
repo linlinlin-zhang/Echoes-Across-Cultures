@@ -33,11 +33,31 @@ def _paired_arrays(
     cand_map: dict[tuple[str, str], dict[str, Any]],
     metric: str,
 ) -> tuple[list[tuple[str, str]], np.ndarray, np.ndarray]:
-    keys = sorted(set(base_map.keys()) & set(cand_map.keys()))
-    if not keys:
+    keys_all = sorted(set(base_map.keys()) & set(cand_map.keys()))
+    if not keys_all:
         raise ValueError(f"no overlapping (user_id,target_culture) for metric={metric}")
-    base = np.array([float(base_map[k][metric]) for k in keys], dtype=np.float64)
-    cand = np.array([float(cand_map[k][metric]) for k in keys], dtype=np.float64)
+    keys: list[tuple[str, str]] = []
+    bvals: list[float] = []
+    cvals: list[float] = []
+    for k in keys_all:
+        br = base_map[k]
+        cr = cand_map[k]
+        if metric not in br or metric not in cr:
+            continue
+        try:
+            b = float(br[metric])
+            c = float(cr[metric])
+        except Exception:
+            continue
+        if np.isnan(b) or np.isnan(c):
+            continue
+        keys.append(k)
+        bvals.append(b)
+        cvals.append(c)
+    if not keys:
+        raise ValueError(f"no valid overlapping rows contain metric={metric}")
+    base = np.array(bvals, dtype=np.float64)
+    cand = np.array(cvals, dtype=np.float64)
     return keys, base, cand
 
 
@@ -144,8 +164,14 @@ def compare_recommender_runs(
     }
 
     n_pairs_ref: int | None = None
+    skipped_metrics: dict[str, str] = {}
+    used_metrics: list[str] = []
     for i, metric in enumerate(metric_list):
-        keys, base, cand = _paired_arrays(base_map=base_map, cand_map=cand_map, metric=metric)
+        try:
+            keys, base, cand = _paired_arrays(base_map=base_map, cand_map=cand_map, metric=metric)
+        except ValueError as e:
+            skipped_metrics[metric] = str(e)
+            continue
         delta = cand - base
         ci_lo, ci_hi = _bootstrap_ci(delta, samples=int(bootstrap_samples), seed=int(seed) + i * 101)
         p_value = _permutation_pvalue(delta, samples=int(permutation_samples), seed=int(seed) + i * 101 + 1)
@@ -169,10 +195,14 @@ def compare_recommender_runs(
             "cohen_d_paired": float(_cohen_d_paired(delta)),
             "per_target_culture": by_culture,
         }
+        used_metrics.append(metric)
         if n_pairs_ref is None:
             n_pairs_ref = int(len(keys))
 
     result["n_pairs"] = int(n_pairs_ref or 0)
+    result["config"]["used_metrics"] = used_metrics
+    if skipped_metrics:
+        result["config"]["skipped_metrics"] = skipped_metrics
 
     if out_json is not None:
         p = Path(out_json)
@@ -191,13 +221,21 @@ def compare_recommender_runs(
             "| metric | base_mean | candidate_mean | delta_mean | 95% CI (delta) | p_value(two-sided) | cohen_d(paired) |",
             "|---|---:|---:|---:|---:|---:|---:|",
         ]
-        for metric in metric_list:
-            r = result["metrics"][metric]
+        for metric in used_metrics:
+            r = result["metrics"].get(metric, {})
+            if not r:
+                continue
             ci = f"[{r['delta_ci95_low']:.6f}, {r['delta_ci95_high']:.6f}]"
             lines.append(
                 f"| {metric} | {r['base_mean']:.10f} | {r['candidate_mean']:.10f} | "
                 f"{r['delta_mean']:+.10f} | {ci} | {r['p_value_two_sided']:.6f} | {r['cohen_d_paired']:.6f} |"
             )
+        if skipped_metrics:
+            lines.append("")
+            lines.append("Skipped metrics:")
+            for m in metric_list:
+                if m in skipped_metrics:
+                    lines.append(f"- `{m}`: {skipped_metrics[m]}")
         lines.append("")
         p = Path(out_md)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -240,8 +278,11 @@ def main() -> None:
                 "p_value_two_sided": out["metrics"][m]["p_value_two_sided"],
             }
             for m in metrics
+            if m in out["metrics"]
         },
     }
+    if "skipped_metrics" in out["config"]:
+        tiny["skipped_metrics"] = out["config"]["skipped_metrics"]
     print(json.dumps(tiny, ensure_ascii=False))
 
 

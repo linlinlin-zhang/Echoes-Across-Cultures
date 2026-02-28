@@ -31,6 +31,7 @@ class DCASConfig:
     depth: int = 3
     dropout: float = 0.1
     beta_kl: float = 1.0
+    shared_encoder: bool = False
     lambda_domain: float = 0.5
     lambda_contrast: float = 0.2
     lambda_cov: float = 0.05
@@ -47,6 +48,9 @@ class DCASModel(nn.Module):
     def __init__(self, cfg: DCASConfig):
         super().__init__()
         self.cfg = cfg
+        self.total_z_dim = int(cfg.zc_dim + cfg.zs_dim + cfg.za_dim)
+        if self.total_z_dim <= 0:
+            raise ValueError("sum of zc_dim + zs_dim + za_dim must be > 0")
 
         self.encoder = make_mlp(
             MLPConfig(
@@ -57,9 +61,16 @@ class DCASModel(nn.Module):
                 dropout=cfg.dropout,
             )
         )
-        self.zc_head = GaussianHead(cfg.hidden_dim, cfg.zc_dim)
-        self.zs_head = GaussianHead(cfg.hidden_dim, cfg.zs_dim)
-        self.za_head = GaussianHead(cfg.hidden_dim, cfg.za_dim)
+        if bool(cfg.shared_encoder):
+            self.z_shared_head = GaussianHead(cfg.hidden_dim, self.total_z_dim)
+            self.zc_head = None
+            self.zs_head = None
+            self.za_head = None
+        else:
+            self.z_shared_head = None
+            self.zc_head = GaussianHead(cfg.hidden_dim, cfg.zc_dim)
+            self.zs_head = GaussianHead(cfg.hidden_dim, cfg.zs_dim)
+            self.za_head = GaussianHead(cfg.hidden_dim, cfg.za_dim)
 
         self.decoder = make_mlp(
             MLPConfig(
@@ -91,11 +102,30 @@ class DCASModel(nn.Module):
             )
         )
 
+    def _split_latent(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        i = int(self.cfg.zc_dim)
+        j = i + int(self.cfg.zs_dim)
+        zc = z[:, :i]
+        zs = z[:, i:j]
+        za = z[:, j:]
+        return zc, zs, za
+
+    def _heads_from_hidden(
+        self, h: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        if self.z_shared_head is not None:
+            z_mu, z_logvar = self.z_shared_head(h)
+            zc_mu, zs_mu, za_mu = self._split_latent(z_mu)
+            zc_logvar, zs_logvar, za_logvar = self._split_latent(z_logvar)
+            return zc_mu, zc_logvar, zs_mu, zs_logvar, za_mu, za_logvar
+        zc_mu, zc_logvar = self.zc_head(h)
+        zs_mu, zs_logvar = self.zs_head(h)
+        za_mu, za_logvar = self.za_head(h)
+        return zc_mu, zc_logvar, zs_mu, zs_logvar, za_mu, za_logvar
+
     def encode(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         h = self.encoder(x)
-        zc_mu, _ = self.zc_head(h)
-        zs_mu, _ = self.zs_head(h)
-        za_mu, _ = self.za_head(h)
+        zc_mu, _, zs_mu, _, za_mu, _ = self._heads_from_hidden(h)
         return zc_mu, zs_mu, za_mu
 
     def forward(self, batch: Batch, reg_scales: dict[str, float] | None = None) -> dict[str, torch.Tensor]:
@@ -109,14 +139,10 @@ class DCASModel(nn.Module):
         s_hsic = float(scales.get("hsic", 1.0))
         s_affect = float(scales.get("affect", 1.0))
 
-        zc_mu, zc_logvar = self.zc_head(h)
-        zs_mu, zs_logvar = self.zs_head(h)
-        za_mu, za_logvar = self.za_head(h)
-
+        zc_mu, zc_logvar, zs_mu, zs_logvar, za_mu, za_logvar = self._heads_from_hidden(h)
         zc = reparameterize(zc_mu, zc_logvar)
         zs = reparameterize(zs_mu, zs_logvar)
         za = reparameterize(za_mu, za_logvar)
-
         z = torch.cat([zc, zs, za], dim=-1)
         x_hat = self.decoder(z)
 
@@ -128,7 +154,7 @@ class DCASModel(nn.Module):
 
         x_aug = x + torch.randn_like(x) * float(self.cfg.aug_noise_std)
         h_aug = self.encoder(x_aug)
-        zc_mu_aug, _ = self.zc_head(h_aug)
+        zc_mu_aug, _, _, _, _, _ = self._heads_from_hidden(h_aug)
         contrast = info_nce(zc_mu, zc_mu_aug, temperature=self.cfg.contrast_temperature)
 
         cov = cov_offdiag_loss(torch.cat([zc_mu, zs_mu, za_mu], dim=-1))

@@ -37,6 +37,8 @@ class TrainRequest(BaseModel):
     lambda_cov: float = Field(default=0.05, ge=0)
     lambda_tc: float = Field(default=0.05, ge=0)
     lambda_hsic: float = Field(default=0.02, ge=0)
+    beta_kl: float = Field(default=1.0, ge=0)
+    shared_encoder: bool = Field(default=False)
     regularizer_warmup_epochs: int = Field(default=0, ge=0, le=500)
 
 

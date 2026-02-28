@@ -73,6 +73,8 @@ def train_model(
     lambda_cov: float = 0.05,
     lambda_tc: float = 0.05,
     lambda_hsic: float = 0.02,
+    beta_kl: float = 1.0,
+    shared_encoder: bool = False,
     regularizer_warmup_epochs: int = 0,
 ) -> dict:
     set_seed(int(seed))
@@ -109,6 +111,8 @@ def train_model(
         lambda_cov=float(lambda_cov),
         lambda_tc=float(lambda_tc),
         lambda_hsic=float(lambda_hsic),
+        beta_kl=float(beta_kl),
+        shared_encoder=bool(shared_encoder),
     )
     model = DCASModel(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=float(lr))

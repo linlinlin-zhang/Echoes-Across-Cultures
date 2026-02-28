@@ -158,6 +158,8 @@ def create_app() -> FastAPI:
             lambda_cov=req.lambda_cov,
             lambda_tc=req.lambda_tc,
             lambda_hsic=req.lambda_hsic,
+            beta_kl=req.beta_kl,
+            shared_encoder=req.shared_encoder,
             regularizer_warmup_epochs=req.regularizer_warmup_epochs,
         )
         result["checkpoint"] = storage.relpath(Path(result["checkpoint"]))

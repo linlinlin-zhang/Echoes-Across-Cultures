@@ -112,3 +112,50 @@ python -m dcas.scripts.compare_recommender_runs \
 ## Notes
 - Current PAL feedback is simulated by metadata label agreement (`same label => similar`).
 - Replace with real expert annotation jsonl before final paper claims.
+
+## 5) Phase-2: TC/HSIC Sensitivity (Grid + Stability)
+
+```bash
+python -m dcas.scripts.run_tc_hsic_sensitivity \
+  --tracks ./storage/public/routeA_phase2_cn/tracks.npz \
+  --interactions ./storage/public/routeA_phase2_cn/interactions.csv \
+  --out_dir ./reports/routeA_phase2_tc_hsic_sensitivity \
+  --model_dir ./storage/public/routeA_phase2_tc_hsic_sensitivity \
+  --tc_values 0.0,0.02,0.05,0.1 \
+  --hsic_values 0.0,0.01,0.02,0.05 \
+  --seeds 42,43,44 \
+  --epochs 10 \
+  --batch_size 64 \
+  --lr 2e-3 \
+  --k 10 \
+  --bootstrap_samples 2000
+```
+
+Outputs:
+- `reports/routeA_phase2_tc_hsic_sensitivity/tc_hsic_sensitivity_summary.json`
+- `reports/routeA_phase2_tc_hsic_sensitivity/tc_hsic_sensitivity_summary.md`
+
+## 6) Phase-3: Baseline Comparison (VAE/beta-VAE/FactorVAE)
+
+```bash
+python -m dcas.scripts.run_baseline_comparison \
+  --tracks ./storage/public/routeA_phase2_cn/tracks.npz \
+  --interactions ./storage/public/routeA_phase2_cn/interactions.csv \
+  --out_dir ./reports/routeA_phase3_baselines \
+  --model_dir ./storage/public/routeA_phase3_baselines \
+  --seeds 42,43,44 \
+  --epochs 10 \
+  --batch_size 64 \
+  --lr 2e-3 \
+  --lambda_tc 0.05 \
+  --lambda_hsic 0.02 \
+  --beta_vae_beta 4.0 \
+  --factorvae_lambda_tc 0.1 \
+  --k 10 \
+  --bootstrap_samples 2000 \
+  --permutation_samples 2000
+```
+
+Outputs:
+- `reports/routeA_phase3_baselines/baseline_comparison_summary.json`
+- `reports/routeA_phase3_baselines/baseline_comparison_table_draft.md`
