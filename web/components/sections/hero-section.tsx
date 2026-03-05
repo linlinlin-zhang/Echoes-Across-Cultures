@@ -348,9 +348,9 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
 
           {viewMode === 'immersive' ? (
-            <OrganicLatentNebula className="h-[580px] w-full" />
+            <OrganicLatentNebula className="h-[520px] w-full" />
           ) : (
-            <div className="relative h-[580px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
+            <div className="relative h-[520px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
               <div className="flex h-full items-center justify-center text-textSub">
                 {isZh ? '经典模式开发中' : 'Classic mode coming soon'}
               </div>
@@ -374,21 +374,21 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
         </motion.div>
 
-        {/* Right panel - Explorer & controls */}
+        {/* Right panel - Explorer & controls - 与中间等高，内部滚动 */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-3 h-[520px]"
         >
-          {/* Latent Explorer - 增加高度避免截断 */}
-          <LatentExplorer className="h-[240px]" />
+          {/* Latent Explorer */}
+          <LatentExplorer className="flex-[1.3] min-h-0" />
 
           {/* Audio Garden */}
-          <OrganicAudioGarden className="h-[170px]" />
+          <OrganicAudioGarden className="flex-1 min-h-0" />
 
-          {/* Factor Pads - 增加高度并改为自适应布局 */}
-          <OrganicFactorPads className="h-[220px]" />
+          {/* Factor Pads */}
+          <OrganicFactorPads className="flex-1 min-h-0" />
         </motion.div>
       </div>
 

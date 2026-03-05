@@ -323,12 +323,12 @@ export function OrganicFactorPads({ className }: { className?: string }) {
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="border-t border-ink/15 px-4 py-2">
-        <p className="text-[10px] text-textSub">
+      {/* Instructions - 更紧凑 */}
+      <div className="border-t border-ink/15 px-3 py-1.5 flex-shrink-0">
+        <p className="text-[9px] text-textSub truncate">
           {isZh
-            ? '按键: A S D F (内容) · J K L ; (文化) · Q W E R (情感)'
-            : 'Keys: A S D F (Content) · J K L ; (Culture) · Q W E R (Affect)'}
+            ? 'A S D F (内容) · J K L ; (文化) · Q W E R (情感)'
+            : 'A S D F (Content) · J K L ; (Culture) · Q W E R (Affect)'}
         </p>
       </div>
     </div>

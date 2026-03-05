@@ -308,15 +308,15 @@ export function LatentExplorer({ className }: { className?: string }) {
         )}
       </div>
 
-      {/* Stats footer */}
-      <div className="grid grid-cols-3 gap-px border-t border-ink/15 bg-ink/5">
+      {/* Stats footer - 更紧凑 */}
+      <div className="grid grid-cols-3 gap-px border-t border-ink/15 bg-ink/5 flex-shrink-0">
         {[
           { label: isZh ? '样本' : 'Samples', value: filteredSongs.length },
           { label: isZh ? '文化' : 'Cultures', value: new Set(filteredSongs.map(s => s.culture)).size },
           { label: isZh ? '维度' : 'Dimensions', value: '3D' }
         ].map(stat => (
-          <div key={stat.label} className="px-3 py-2 text-center">
-            <p className="text-[10px] text-textSub">{stat.label}</p>
+          <div key={stat.label} className="px-2 py-1.5 text-center">
+            <p className="text-[9px] text-textSub">{stat.label}</p>
             <p className="font-mono text-sm font-semibold text-textMain">{stat.value}</p>
           </div>
         ))}
