@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import * as Tone from 'tone'
 
 import { useAccessibility } from '@/components/providers/accessibility-provider'
 
@@ -17,30 +16,62 @@ type Pad = {
   keyLabel: string
   note: string
   color: string
-  hint: {
-    zh: string
-    en: string
-  }
 }
 
 const pads: Pad[] = [
-  { keyLabel: 'A', note: 'C4', color: '#ea4335', hint: { zh: '内容火花（Content Spark）', en: 'content spark' } },
-  { keyLabel: 'S', note: 'D4', color: '#fbbc04', hint: { zh: '动机上扬（Motif Rise）', en: 'motif rise' } },
-  { keyLabel: 'D', note: 'E4', color: '#188038', hint: { zh: '文化漂移（Culture Drift）', en: 'culture drift' } },
-  { keyLabel: 'F', note: 'G4', color: '#4285f4', hint: { zh: '流动脉冲（Flow Pulse）', en: 'flow pulse' } },
-  { keyLabel: 'J', note: 'A4', color: '#1a73e8', hint: { zh: '情感抬升（Affect Lift）', en: 'affect lift' } },
-  { keyLabel: 'K', note: 'B4', color: '#a142f4', hint: { zh: '记忆阴影（Memory Shade）', en: 'memory shade' } },
-  { keyLabel: 'L', note: 'D5', color: '#e52592', hint: { zh: '桥接跳跃（Bridge Jump）', en: 'bridge jump' } },
-  { keyLabel: ';', note: 'E5', color: '#34a853', hint: { zh: '机缘巧合（Serendipity）', en: 'serendipity' } }
+  { keyLabel: 'A', note: 'C4', color: '#ea4335' },
+  { keyLabel: 'S', note: 'D4', color: '#fbbc04' },
+  { keyLabel: 'D', note: 'E4', color: '#188038' },
+  { keyLabel: 'F', note: 'G4', color: '#4285f4' },
+  { keyLabel: 'J', note: 'A4', color: '#1a73e8' },
+  { keyLabel: 'K', note: 'B4', color: '#a142f4' },
+  { keyLabel: 'L', note: 'D5', color: '#e52592' },
+  { keyLabel: ';', note: 'E5', color: '#34a853' }
 ]
+
+const semitoneMap: Record<string, number> = {
+  C: 0,
+  'C#': 1,
+  Db: 1,
+  D: 2,
+  'D#': 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  'F#': 6,
+  Gb: 6,
+  G: 7,
+  'G#': 8,
+  Ab: 8,
+  A: 9,
+  'A#': 10,
+  Bb: 10,
+  B: 11
+}
+
+function noteToFrequency(note: string) {
+  const match = note.match(/^([A-G])([#b]?)([0-8])$/)
+  if (!match) return 261.63
+
+  const key = `${match[1]}${match[2]}`
+  const semitone = semitoneMap[key]
+  if (semitone == null) return 261.63
+
+  const octave = Number(match[3])
+  const midi = (octave + 1) * 12 + semitone
+  return 440 * Math.pow(2, (midi - 69) / 12)
+}
 
 export function PulseConsole() {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const synthRef = useRef<Tone.PolySynth | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const masterGainRef = useRef<GainNode | null>(null)
+
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const [audioReady, setAudioReady] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
   const [ripples, setRipples] = useState<Pulse[]>([])
+
   const idRef = useRef(0)
   const { locale } = useAccessibility()
   const isZh = locale === 'zh'
@@ -48,18 +79,36 @@ export function PulseConsole() {
   const keyMap = useMemo(() => new Map(pads.map((pad) => [pad.keyLabel, pad])), [])
 
   const ensureAudio = useCallback(async () => {
-    if (audioReady && synthRef.current) return true
     try {
-      await Tone.start()
-      if (!synthRef.current) {
-        const synth = new Tone.PolySynth(Tone.Synth).toDestination()
-        synth.set({
-          oscillator: { type: 'triangle' },
-          envelope: { attack: 0.02, decay: 0.2, sustain: 0.12, release: 0.35 }
-        })
-        synth.volume.value = -12
-        synthRef.current = synth
+      const AudioContextCtor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (!AudioContextCtor) {
+        setAudioError(isZh ? '浏览器不支持 AudioContext。' : 'AudioContext is not supported in this browser.')
+        return false
       }
+
+      if (!audioContextRef.current) {
+        const context = new AudioContextCtor()
+        const masterGain = context.createGain()
+        const compressor = context.createDynamicsCompressor()
+
+        masterGain.gain.value = 0.2
+        compressor.threshold.value = -20
+        compressor.knee.value = 20
+        compressor.ratio.value = 8
+        compressor.attack.value = 0.003
+        compressor.release.value = 0.2
+
+        masterGain.connect(compressor)
+        compressor.connect(context.destination)
+
+        audioContextRef.current = context
+        masterGainRef.current = masterGain
+      }
+
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume()
+      }
+
       setAudioReady(true)
       setAudioError(null)
       return true
@@ -69,7 +118,7 @@ export function PulseConsole() {
       setAudioError(message)
       return false
     }
-  }, [audioReady])
+  }, [isZh])
 
   const spawnRipple = useCallback((x: number, y: number, color: string) => {
     const id = ++idRef.current
@@ -81,10 +130,26 @@ export function PulseConsole() {
     async (pad: Pad, point?: { x: number; y: number }) => {
       try {
         const ready = await ensureAudio()
-        if (!ready) return
+        if (!ready || !audioContextRef.current || !masterGainRef.current) return
 
-        const safeNote = /^([A-G])(#{0,1}|b{0,1})([0-8])$/.test(pad.note) ? pad.note : 'C4'
-        synthRef.current?.triggerAttackRelease(safeNote, '8n')
+        const context = audioContextRef.current
+        const now = context.currentTime
+
+        const oscillator = context.createOscillator()
+        const gain = context.createGain()
+
+        oscillator.type = 'triangle'
+        oscillator.frequency.setValueAtTime(noteToFrequency(pad.note), now)
+
+        gain.gain.setValueAtTime(0.0001, now)
+        gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34)
+
+        oscillator.connect(gain)
+        gain.connect(masterGainRef.current)
+
+        oscillator.start(now)
+        oscillator.stop(now + 0.35)
 
         setActiveKey(pad.keyLabel)
         window.setTimeout(() => setActiveKey((prev) => (prev === pad.keyLabel ? null : prev)), 130)
@@ -115,18 +180,19 @@ export function PulseConsole() {
     window.addEventListener('keydown', onKeyDown)
     return () => {
       window.removeEventListener('keydown', onKeyDown)
-      synthRef.current?.dispose()
+      if (audioContextRef.current) {
+        void audioContextRef.current.close()
+        audioContextRef.current = null
+        masterGainRef.current = null
+      }
     }
   }, [keyMap, triggerPad])
 
   return (
-    <div ref={wrapRef} className="relative overflow-hidden rounded-3xl paper-card p-4 scanline">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <span className="chapter-chip">{isZh ? '交互潜变量乐器（Interactive Latent Instrument）' : 'interactive latent instrument'}</span>
-          <p className="mt-2 font-display text-lg text-textMain">{isZh ? '点击音垫或按键盘触发（Tap Pads or Press Keyboard Keys）' : 'Tap pads or press keyboard keys'}</p>
-        </div>
-        <span className="sticker">{audioReady ? (isZh ? '音频已激活（Audio Live）' : 'audio live') : isZh ? '点击任意音垫（Click Any Pad）' : 'click any pad'}</span>
+    <div ref={wrapRef} className="relative overflow-hidden rounded-3xl paper-card p-4">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="chapter-chip">{isZh ? '交互潜变量乐器' : 'interactive latent instrument'}</span>
+        <span className="sticker">{audioReady ? (isZh ? 'Audio Live' : 'audio live') : isZh ? 'Click Any Pad' : 'click any pad'}</span>
       </div>
 
       <div className="grid grid-cols-4 gap-2 md:gap-3">
@@ -142,7 +208,7 @@ export function PulseConsole() {
                   y: rect.top + rect.height / 2 - (wrapRef.current?.getBoundingClientRect().top ?? 0)
                 })
               }}
-              aria-label={isZh ? `音垫 ${pad.keyLabel}，提示：${pad.hint.zh}` : `Pad ${pad.keyLabel}, ${pad.hint.en}`}
+              aria-label={`Pad ${pad.keyLabel}`}
               className="group relative overflow-hidden rounded-2xl border border-ink/20 bg-white p-3 text-left transition duration-150 hover:border-ink/45"
               style={{ boxShadow: active ? `0 0 0 1px ${pad.color}, 0 0 20px ${pad.color}77` : undefined }}
             >
@@ -152,7 +218,6 @@ export function PulseConsole() {
                   {pad.keyLabel}
                 </div>
                 <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-textSub">{pad.note}</div>
-                <div className="mt-2 text-xs text-textSub">{isZh ? pad.hint.zh : pad.hint.en}</div>
               </div>
             </button>
           )
@@ -173,7 +238,7 @@ export function PulseConsole() {
         ))}
       </AnimatePresence>
 
-      {audioError ? <div className="mt-3 rounded-xl border border-zc/35 bg-zc/10 px-3 py-2 text-xs text-zc">{isZh ? `音频触发异常（Audio Trigger Warning）：${audioError}` : `Audio trigger warning: ${audioError}`}</div> : null}
+      {audioError ? <div className="mt-3 rounded-xl border border-zc/35 bg-zc/10 px-3 py-2 text-xs text-zc">{audioError}</div> : null}
     </div>
   )
 }
