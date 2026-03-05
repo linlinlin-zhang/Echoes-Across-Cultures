@@ -296,8 +296,8 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
             </button>
           </div>
 
-          {/* Audio Garden - 移到左侧 */}
-          <OrganicAudioGarden className="h-[200px]" />
+          {/* Audio Garden - 移到左侧，增加高度 */}
+          <OrganicAudioGarden className="h-[280px]" />
         </motion.div>
 
         {/* Center - Main visualization */}
@@ -351,9 +351,9 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
 
           {viewMode === 'immersive' ? (
-            <OrganicLatentNebula className="h-[600px] w-full" />
+            <OrganicLatentNebula className="h-[736px] w-full" />
           ) : (
-            <div className="relative h-[600px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
+            <div className="relative h-[736px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
               <div className="flex h-full items-center justify-center text-textSub">
                 {isZh ? '经典模式开发中' : 'Classic mode coming soon'}
               </div>
@@ -384,11 +384,11 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           transition={{ duration: 0.6, delay: 0.4 }}
           className="flex flex-col gap-4"
         >
-          {/* Latent Explorer - 足够高度完整展示 */}
-          <LatentExplorer className="h-[340px]" />
+          {/* Latent Explorer - 增加高度确保完整展示 */}
+          <LatentExplorer className="h-[420px]" />
 
-          {/* Factor Pads - 足够高度完整展示 */}
-          <OrganicFactorPads className="h-[240px]" />
+          {/* Factor Pads - 增加高度确保完整展示 */}
+          <OrganicFactorPads className="h-[300px]" />
         </motion.div>
       </div>
 
