@@ -1,33 +1,144 @@
-﻿'use client'
+'use client'
 
-import dynamic from 'next/dynamic'
-import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDownRight, Layers3, Workflow } from 'lucide-react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { motion, useMotionValueEvent, useScroll, AnimatePresence } from 'framer-motion'
+import { ArrowDownRight, Sparkles, Play, Pause, Info } from 'lucide-react'
 
-import { cultureNodes, otDemoRoutes, songPoints } from '@/data/mock-data'
+import { songPoints } from '@/data/mock-data'
 import { useSceneStore } from '@/components/state/scene-store'
-import { SongRadar } from '@/components/visuals/song-radar'
-import { PulseConsole } from '@/components/visuals/pulse-console'
 import { useAccessibility } from '@/components/providers/accessibility-provider'
 import { buildFactorMetrics } from '@/lib/factor-mapping'
-import { clamp, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { SectionShell } from '@/components/layout/section-shell'
 
-type GalleryMode = 'observe' | 'disentangle' | 'transport'
-type FactorState = Record<'zc' | 'zs' | 'za', boolean>
+// Direct imports for organic components
+import { OrganicLatentNebula } from '@/components/visuals/organic-latent-nebula'
+import { OrganicAudioGarden } from '@/components/visuals/organic-audio-garden'
+import { LatentExplorer } from '@/components/visuals/latent-explorer'
+import { OrganicFactorPads } from '@/components/visuals/organic-factor-pads'
 
-const LatentCinemaStage = dynamic(() => import('@/components/visuals/latent-cinema-stage').then((mod) => mod.LatentCinemaStage), {
-  ssr: false,
-  loading: () => <div className="h-[58vh] animate-pulse rounded-3xl bg-white/80" />
-})
+type ViewMode = 'immersive' | 'classic'
 
-type HeroSectionProps = {
+interface HeroSectionProps {
   title: string
   lead: string
   hint: string
   ctaPrimary: string
   ctaSecondary: string
   onNavigate: (id: 'galaxy' | 'lab') => void
+}
+
+// Factor card with organic styling - unified with site style
+function FactorCard({
+  factor,
+  title,
+  subtitle,
+  value,
+  color,
+  description,
+  isActive,
+  onClick
+}: {
+  factor: 'zc' | 'zs' | 'za'
+  title: string
+  subtitle: string
+  value: number
+  color: string
+  description: string
+  isActive: boolean
+  onClick: () => void
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      className={cn(
+        'group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300',
+        isActive
+          ? 'border-za/40 bg-white shadow-[0_10px_26px_rgba(26,115,232,0.14)]'
+          : 'paper-card hover:border-ink/35'
+      )}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Progress bar background */}
+      <div
+        className="absolute bottom-0 left-0 top-0 opacity-10 transition-all group-hover:opacity-15"
+        style={{ width: `${value * 100}%`, backgroundColor: color }}
+      />
+
+      {/* Content */}
+      <div className="relative">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium" style={{ color }}>{factor}</span>
+            <h3 className="mt-1 font-display text-lg font-semibold text-textMain">{title}</h3>
+          </div>
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${color}15`, border: `1px solid ${color}30` }}
+          >
+            <span className="font-mono text-sm font-bold" style={{ color }}>
+              {Math.round(value * 100)}%
+            </span>
+          </div>
+        </div>
+
+        <p className="mt-2 text-xs text-textSub">{subtitle}</p>
+
+        {/* Expandable description */}
+        <AnimatePresence>
+          {isActive && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 text-[11px] leading-relaxed text-textSub"
+            >
+              {description}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Active indicator */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-0.5"
+          style={{ backgroundColor: color }}
+          initial={{ width: '0%' }}
+          animate={{ width: isActive ? '100%' : '0%' }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
+    </motion.button>
+  )
+}
+
+// Organic stat bar - unified style
+function OrganicStatBar({ label, value, color, icon: Icon }: { label: string; value: number; color: string; icon: React.ComponentType<{ size?: number | string; style?: React.CSSProperties }> }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className="flex h-8 w-8 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${color}15` }}
+      >
+        <Icon size={14} style={{ color }} />
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center justify-between text-[10px]">
+          <span className="text-textSub">{label}</span>
+          <span className="font-mono" style={{ color }}>{Math.round(value * 100)}%</span>
+        </div>
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10">
+          <motion.div
+            className="h-full rounded-full"
+            style={{ backgroundColor: color }}
+            initial={{ width: 0 }}
+            animate={{ width: `${value * 100}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNavigate }: HeroSectionProps) {
@@ -37,17 +148,15 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
 
   const hoveredSongId = useSceneStore((state) => state.hoveredSongId)
   const selectedSongId = useSceneStore((state) => state.selectedSongId)
-  const auditionTrace = useSceneStore((state) => state.auditionTrace)
-  const setSelectedSongId = useSceneStore((state) => state.setSelectedSongId)
   const setSeparation = useSceneStore((state) => state.setSeparation)
 
-  const [galleryMode, setGalleryMode] = useState<GalleryMode>('observe')
-  const [cultureFilter, setCultureFilter] = useState('All')
-  const [routeIndex, setRouteIndex] = useState(0)
-  const energy = 0.64
+  const [viewMode, setViewMode] = useState<ViewMode>('immersive')
+  const [activeFactor, setActiveFactor] = useState<'zc' | 'zs' | 'za' | null>(null)
+  const [showInfo, setShowInfo] = useState(false)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false)
+
+  const [cultureFilter] = useState('All')
   const [sceneStep, setSceneStep] = useState(0)
-  const [autoScene, setAutoScene] = useState(false)
-  const [factorState, setFactorState] = useState<FactorState>({ zc: true, zs: true, za: true })
 
   const filteredSongs = useMemo(() => {
     const pool = cultureFilter === 'All' ? songPoints : songPoints.filter((song) => song.culture === cultureFilter)
@@ -60,44 +169,11 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
   const scenes = useMemo(
     () =>
       isZh
-        ? [
-            { name: '内容', mode: 'observe' as const, factors: { zc: true, zs: false, za: false } },
-            { name: '文化', mode: 'observe' as const, factors: { zc: false, zs: true, za: false } },
-            { name: '情感', mode: 'observe' as const, factors: { zc: false, zs: false, za: true } },
-            { name: '迁移', mode: 'transport' as const, factors: { zc: true, zs: true, za: true } },
-            { name: '混合', mode: 'disentangle' as const, factors: { zc: true, zs: true, za: true } }
-          ]
-        : [
-            { name: 'Content', mode: 'observe' as const, factors: { zc: true, zs: false, za: false } },
-            { name: 'Culture', mode: 'observe' as const, factors: { zc: false, zs: true, za: false } },
-            { name: 'Affect', mode: 'observe' as const, factors: { zc: false, zs: false, za: true } },
-            { name: 'Transfer', mode: 'transport' as const, factors: { zc: true, zs: true, za: true } },
-            { name: 'Blend', mode: 'disentangle' as const, factors: { zc: true, zs: true, za: true } }
-          ],
+        ? [{ name: '内容' }, { name: '文化' }, { name: '情感' }, { name: '迁移' }, { name: '混合' }]
+        : [{ name: 'Content' }, { name: 'Culture' }, { name: 'Affect' }, { name: 'Transfer' }, { name: 'Blend' }],
     [isZh]
   )
 
-  useEffect(() => {
-    const scene = scenes[sceneStep] ?? scenes[0]
-    setGalleryMode(scene.mode)
-    setFactorState(scene.factors)
-  }, [sceneStep, scenes])
-
-  useEffect(() => {
-    if (!autoScene) return
-    const timer = window.setInterval(() => {
-      setSceneStep((prev) => (prev + 1) % scenes.length)
-    }, 2800)
-    return () => window.clearInterval(timer)
-  }, [autoScene, scenes.length])
-
-  useEffect(() => {
-    if (galleryMode !== 'transport') return
-    const timer = window.setInterval(() => {
-      setRouteIndex((prev) => (prev + 1) % otDemoRoutes.length)
-    }, 3200)
-    return () => window.clearInterval(timer)
-  }, [galleryMode])
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -105,218 +181,273 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
   })
 
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setSeparation(clamp(value * 1.25, 0, 1))
+    setSeparation(Math.min(1, value * 1.25))
   })
 
-  const routeCultureNames = useMemo(() => {
-    const idToName = new Map(cultureNodes.map((node) => [node.id, node.name]))
-    const route = otDemoRoutes[routeIndex] ?? otDemoRoutes[0]
-    return route.map((id) => idToName.get(id) ?? id)
-  }, [routeIndex])
-
-  const toggleFactor = (factor: keyof FactorState) => {
-    setFactorState((prev) => {
-      const next = { ...prev, [factor]: !prev[factor] }
-      if (Object.values(next).some(Boolean)) return next
-      return prev
-    })
-  }
-
-  const progressRows = isZh
-    ? [
-        {
-          key: 'zc',
-          label: 'zc 内容（旋律/节奏）',
-          value: focusedMetrics.zcStrength,
-          tone: 'bg-zc',
-          explain: '声音：脉冲密度  画面：顶层节奏块'
-        },
-        {
-          key: 'zs',
-          label: 'zs 文化（音色/乐器）',
-          value: focusedMetrics.zsStrength,
-          tone: 'bg-zs',
-          explain: '声音：文化音色  画面：中层音色谱'
-        },
-        {
-          key: 'za',
-          label: 'za 情感（能量/包络）',
-          value: (focusedMetrics.zaArousal + 1) / 2,
-          tone: 'bg-za',
-          explain: '声音：包络+颤音  画面：底层情绪坐标'
-        }
-      ]
-    : [
-        {
-          key: 'zc',
-          label: 'zc content (melody/rhythm)',
-          value: focusedMetrics.zcStrength,
-          tone: 'bg-zc',
-          explain: 'Audio: pulse density  Visual: top rhythm blocks'
-        },
-        {
-          key: 'zs',
-          label: 'zs culture (timbre/instrument)',
-          value: focusedMetrics.zsStrength,
-          tone: 'bg-zs',
-          explain: 'Audio: cultural timbre  Visual: middle spectrum lane'
-        },
-        {
-          key: 'za',
-          label: 'za affect (energy/envelope)',
-          value: (focusedMetrics.zaArousal + 1) / 2,
-          tone: 'bg-za',
-          explain: 'Audio: envelope + vibrato  Visual: bottom affect plane'
-        }
-      ]
+  // Auto-play demo
+  useEffect(() => {
+    if (!isAutoPlaying) return
+    const interval = setInterval(() => {
+      setSceneStep(prev => (prev + 1) % scenes.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [isAutoPlaying, scenes.length])
 
   return (
-    <section id="hero" ref={sectionRef} data-section-id="hero" className="relative min-h-screen overflow-hidden px-4 pb-10 pt-28 md:px-10" aria-labelledby="hero-title">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-wrap items-center gap-2 reveal-item">
-          <span className="sticker">{isZh ? '策展实验（Curated Experiment）' : 'curated experiment'}</span>
-          <span className="sticker">{isZh ? '交互叙事（Interactive Narrative）' : 'interactive narrative'}</span>
-          <span className="sticker">{isZh ? '跨文化推荐（Cross-Cultural Recsys）' : 'cross-cultural recsys'}</span>
-        </div>
+    <SectionShell
+      id="hero"
+      title={title}
+      subtitle={lead}
+      className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.35),transparent_35%)]"
+    >
+      <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px] xl:items-start" style={{ minHeight: '600px' }}>
+        {/* Left panel - Factor controls & info */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-3"
+        >
+          {/* Factor cards */}
+          <div className="space-y-2.5">
+            <FactorCard
+              factor="zc"
+              title={isZh ? '内容' : 'Content'}
+              subtitle={isZh ? '旋律与节奏维度' : 'Melody & Rhythm'}
+              value={focusedMetrics.zcStrength}
+              color="#ea4335"
+              description={isZh
+                ? 'zc 编码音乐的旋律轮廓、节奏密度和和声进行。这是音乐最本质的叙事层。'
+                : 'zc encodes melodic contour, rhythmic density, and harmonic progression—the narrative core of music.'}
+              isActive={activeFactor === 'zc'}
+              onClick={() => setActiveFactor(activeFactor === 'zc' ? null : 'zc')}
+            />
+            <FactorCard
+              factor="zs"
+              title={isZh ? '文化' : 'Culture'}
+              subtitle={isZh ? '文化与音色维度' : 'Culture & Timbre'}
+              value={focusedMetrics.zsStrength}
+              color="#188038"
+              description={isZh
+                ? 'zs 捕捉文化风格、乐器音色和表演语境。这是音乐的"指纹"。'
+                : 'zs captures cultural style, instrumental timbre, and performance context—the fingerprint of music.'}
+              isActive={activeFactor === 'zs'}
+              onClick={() => setActiveFactor(activeFactor === 'zs' ? null : 'zs')}
+            />
+            <FactorCard
+              factor="za"
+              title={isZh ? '情感' : 'Affect'}
+              subtitle={isZh ? '效价与唤醒维度' : 'Valence & Arousal'}
+              value={(focusedMetrics.zaArousal + 1) / 2}
+              color="#1a73e8"
+              description={isZh
+                ? 'za 表征情感效价(正负)和唤醒度(强弱)。这是音乐的情感引力。'
+                : 'za represents emotional valence and arousal—the gravitational pull of music.'}
+              isActive={activeFactor === 'za'}
+              onClick={() => setActiveFactor(activeFactor === 'za' ? null : 'za')}
+            />
+          </div>
 
-        <div className="grid gap-6 xl:grid-cols-[0.84fr_1.16fr]">
-          <motion.div className="reveal-item space-y-5" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
-            <h1 id="hero-title" className="hero-title-glow font-display text-5xl font-semibold leading-[0.9] text-textMain md:text-7xl xl:text-8xl">
-              {title}
-            </h1>
-            <p className="max-w-xl text-base leading-relaxed text-textSub md:text-lg">{lead}</p>
-
-            <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-zc/30 bg-zc/10 px-3 py-1 text-zc">zc</span>
-              <span className="rounded-full border border-zs/30 bg-zs/10 px-3 py-1 text-zs">zs</span>
-              <span className="rounded-full border border-za/30 bg-za/10 px-3 py-1 text-za">za</span>
+          {/* Current song stats */}
+          <div className="paper-card rounded-2xl p-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-wider text-textSub">
+                {isZh ? '当前样本' : 'Current Specimen'}
+              </span>
+              <span className="sticker truncate max-w-[120px]">{focusedSong.title}</span>
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-1">
-              <button onClick={() => onNavigate('galaxy')} className="group rounded-full bg-za px-5 py-2.5 font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-glow">
-                {ctaPrimary}
-                <ArrowDownRight size={16} className="ml-2 inline transition group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
+            <div className="mt-2.5 space-y-2.5">
+              <OrganicStatBar
+                label={isZh ? '内容密度' : 'Content Density'}
+                value={focusedMetrics.rhythmDensity}
+                color="#ea4335"
+                icon={Sparkles}
+              />
+              <OrganicStatBar
+                label={isZh ? '文化强度' : 'Cultural Intensity'}
+                value={focusedMetrics.zsStrength}
+                color="#188038"
+                icon={Sparkles}
+              />
+              <OrganicStatBar
+                label={isZh ? '情感唤醒' : 'Emotional Arousal'}
+                value={(focusedMetrics.zaArousal + 1) / 2}
+                color="#1a73e8"
+                icon={Sparkles}
+              />
+            </div>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onNavigate('galaxy')}
+              className="group flex items-center gap-1.5 rounded-full bg-za px-4 py-2 text-xs font-medium text-white transition hover:bg-za/90"
+            >
+              {ctaPrimary}
+              <ArrowDownRight size={12} className="transition group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
+            </button>
+            <button
+              onClick={() => onNavigate('lab')}
+              className="rounded-full border border-ink/20 bg-white px-4 py-2 text-xs font-medium text-textMain transition hover:border-za/40 hover:bg-za/5"
+            >
+              {ctaSecondary}
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Center - Main visualization */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative"
+        >
+          {/* View mode toggle */}
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex gap-1 rounded-full border border-ink/20 bg-white p-1">
+              <button
+                onClick={() => setViewMode('immersive')}
+                className={cn(
+                  'rounded-full px-3 py-1.5 text-xs transition',
+                  viewMode === 'immersive'
+                    ? 'bg-za/10 text-za'
+                    : 'text-textSub hover:text-textMain'
+                )}
+              >
+                {isZh ? '沉浸' : 'Immersive'}
               </button>
-              <button onClick={() => onNavigate('lab')} className="rounded-full border border-ink/20 bg-white px-5 py-2.5 font-semibold text-textMain transition hover:border-za/45 hover:bg-za/5">
-                {ctaSecondary}
+              <button
+                onClick={() => setViewMode('classic')}
+                className={cn(
+                  'rounded-full px-3 py-1.5 text-xs transition',
+                  viewMode === 'classic'
+                    ? 'bg-za/10 text-za'
+                    : 'text-textSub hover:text-textMain'
+                )}
+              >
+                {isZh ? '经典' : 'Classic'}
               </button>
             </div>
 
-            <div className="rounded-2xl border border-ink/15 bg-white/88 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-display text-xl text-textMain">{isZh ? '当前解剖样本（Current Specimen）' : 'current specimen'}</p>
-                <span className="sticker">{focusedSong.title}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/20 bg-white text-textSub transition hover:bg-za/5 hover:text-za"
+              >
+                <Info size={14} />
+              </button>
+              <button
+                onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/20 bg-white text-textSub transition hover:bg-za/5 hover:text-za"
+              >
+                {isAutoPlaying ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {viewMode === 'immersive' ? (
+            <OrganicLatentNebula className="h-[540px] w-full" />
+          ) : (
+            <div className="relative h-[540px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
+              <div className="flex h-full items-center justify-center text-textSub">
+                {isZh ? '经典模式开发中' : 'Classic mode coming soon'}
               </div>
-              <p className="mt-1 text-sm text-textSub">{focusedSong.culture} · {focusedSong.emotion}</p>
+            </div>
+          )}
 
-              <div className="mt-3 space-y-2.5">
-                {progressRows.map((row) => (
-                  <div key={row.key}>
-                    <div className="flex items-center justify-between text-[11px] text-textSub">
-                      <span>{row.label}</span>
-                      <span>{Math.round(row.value * 100)}%</span>
+          {/* Scene selector */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {scenes.map((scene, index) => (
+              <button
+                key={scene.name}
+                onClick={() => setSceneStep(index)}
+                className={cn(
+                  'h-2 rounded-full transition-all',
+                  sceneStep === index
+                    ? 'w-8 bg-za'
+                    : 'w-2 bg-ink/20 hover:bg-ink/40'
+                )}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Right panel - Explorer & controls */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="space-y-3"
+        >
+          {/* Latent Explorer */}
+          <LatentExplorer className="h-[200px]" />
+
+          {/* Audio Garden */}
+          <OrganicAudioGarden className="h-[160px]" />
+
+          {/* Factor Pads */}
+          <OrganicFactorPads className="h-[180px]" />
+        </motion.div>
+      </div>
+
+      {/* Info panel overlay */}
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-8 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4"
+          >
+            <div className="rounded-2xl border border-ink/20 bg-white/95 p-6 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-textMain">
+                    {isZh ? '潜空间序章' : 'Prelude to Latent Space'}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-textSub">
+                    {isZh
+                      ? '欢迎来到因子星云——一个可视化的跨文化音乐潜空间。在这里，每首歌曲都被编码为三个维度的向量：zc（内容）、zs（文化）、za（情感）。通过探索这个三维空间，你可以直观理解深度解纠缠是如何工作的。'
+                      : 'Welcome to the Factor Nebula—a visualization of cross-cultural music latent space. Here, each song is encoded as a vector across three dimensions: zc (content), zs (culture), za (affect). Explore this 3D space to understand how deep disentanglement works.'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowInfo(false)}
+                  className="ml-4 rounded-full p-1 text-textSub transition hover:bg-ink/10 hover:text-textMain"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                {[
+                  { key: 'zc', color: '#ea4335', desc: isZh ? '旋律、节奏、和声' : 'Melody, rhythm, harmony' },
+                  { key: 'zs', color: '#188038', desc: isZh ? '文化、音色、语境' : 'Culture, timbre, context' },
+                  { key: 'za', color: '#1a73e8', desc: isZh ? '效价、唤醒度' : 'Valence, arousal' }
+                ].map((item) => (
+                  <div key={item.key} className="rounded-xl border border-ink/15 bg-white p-3">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="font-mono text-xs font-bold text-textMain">{item.key}</span>
                     </div>
-                    <div className="mt-1 h-2.5 rounded-full bg-ink/10">
-                      <div className={cn('h-full rounded-full transition-all', row.tone)} style={{ width: `${Math.round(row.value * 100)}%` }} />
-                    </div>
-                    <p className="mt-1 text-[11px] text-textSub">{row.explain}</p>
+                    <p className="mt-1 text-[10px] text-textSub">{item.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="rounded-2xl border border-ink/15 bg-white/88 px-4 py-3 text-sm text-textSub">
-              <p className="font-semibold text-textMain">{isZh ? '最近一次联动（Audio ↔ Stage）' : 'latest linkage (audio ↔ stage)'}</p>
-              <p className="mt-1">{auditionTrace ? (isZh ? auditionTrace.summaryZh : auditionTrace.summaryEn) : hint}</p>
-            </div>
-
-            <div className="max-w-xl">
-              <SongRadar song={focusedSong} />
-              {selectedSongId ? (
-                <button className="mt-2 text-xs text-textSub underline decoration-dotted underline-offset-4" onClick={() => setSelectedSongId(null)}>
-                  {isZh ? '清除已选' : 'Clear selected'}
-                </button>
-              ) : null}
-            </div>
           </motion.div>
+        )}
+      </AnimatePresence>
 
-          <div className="reveal-item space-y-4">
-            <div className="relative overflow-hidden rounded-3xl paper-card">
-              <div className="absolute left-3 top-3 z-10 chapter-chip">{isZh ? '三因子联动分镜台' : 'tri-factor linked storyboard'}</div>
-              <div className="absolute right-3 top-3 z-10 sticker">{galleryMode.toUpperCase()}</div>
-
-              <div className="h-[58vh] md:h-[64vh]">
-                <LatentCinemaStage galleryMode={galleryMode} cultureFilter={cultureFilter} factorState={factorState} routeIndex={routeIndex} energy={energy} sceneStep={sceneStep} />
-              </div>
-
-              <div className="absolute inset-x-3 bottom-3 z-10 rounded-2xl border border-ink/15 bg-white/86 p-2.5">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {scenes.map((scene, index) => (
-                      <button
-                        key={`${scene.name}-${index}`}
-                        onClick={() => setSceneStep(index)}
-                        className={cn('h-6 min-w-6 rounded-full border px-2 text-[11px] font-semibold transition', sceneStep === index ? 'border-za/40 bg-za/10 text-za' : 'border-ink/20 bg-white text-textSub')}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => setAutoScene((prev) => !prev)} className={cn('rounded-full border px-2.5 py-1 text-[11px] font-semibold', autoScene ? 'border-zs/35 bg-zs/10 text-zs' : 'border-ink/20 bg-white text-textSub')}>
-                    {isZh ? (autoScene ? '自动中' : '自动') : autoScene ? 'AUTO ON' : 'AUTO'}
-                  </button>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center">
-                  <div className="rounded-xl border border-ink/12 bg-white px-2.5 py-1.5 text-xs text-textSub">{scenes[sceneStep]?.name}</div>
-
-                  <select value={cultureFilter} onChange={(event) => setCultureFilter(event.target.value)} className="rounded-xl border border-ink/20 bg-white px-2 py-1.5 text-xs text-textMain">
-                    <option value="All">{isZh ? '全部文化' : 'All'}</option>
-                    {Array.from(new Set(songPoints.map((item) => item.culture))).map((culture) => (
-                      <option key={culture} value={culture}>
-                        {culture}
-                      </option>
-                    ))}
-                  </select>
-
-                  <button onClick={() => setRouteIndex((prev) => (prev + 1) % otDemoRoutes.length)} className="inline-flex items-center rounded-xl border border-ink/20 bg-white px-2.5 py-1.5 text-xs font-semibold text-textSub">
-                    <Workflow size={12} className="mr-1" />
-                    {isZh ? '路径' : 'Route'}
-                  </button>
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {(['zc', 'zs', 'za'] as const).map((factor) => (
-                    <button
-                      key={factor}
-                      onClick={() => toggleFactor(factor)}
-                      className={cn(
-                        'inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold transition',
-                        factorState[factor]
-                          ? factor === 'zc'
-                            ? 'border-zc/35 bg-zc/10 text-zc'
-                            : factor === 'zs'
-                              ? 'border-zs/35 bg-zs/10 text-zs'
-                              : 'border-za/35 bg-za/10 text-za'
-                          : 'border-ink/20 bg-white text-textSub'
-                      )}
-                    >
-                      <Layers3 size={11} className="mr-1" />
-                      {factor}
-                    </button>
-                  ))}
-
-                  <span className="ml-auto rounded-full border border-ink/15 bg-white px-2 py-1 text-[11px] text-textSub">{routeCultureNames.join(' -> ')}</span>
-                </div>
-              </div>
-            </div>
-
-            <PulseConsole />
-          </div>
-        </div>
+      {/* Bottom hint */}
+      <div className="mt-8 text-center">
+        <p className="text-xs text-textSub">{hint}</p>
       </div>
-
-      <p className="sr-only">{isZh ? '潜空间舞台与因子声音映射已改为同源联动展示。' : 'Latent stage and factor audio mapper now show source-linked behavior.'}</p>
-    </section>
+    </SectionShell>
   )
 }

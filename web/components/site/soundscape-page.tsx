@@ -91,13 +91,11 @@ export function SoundscapePage() {
       <div className="star-fog" />
       <div className="noise-mask" />
       <div className="pointer-events-none fixed inset-0 z-[2] opacity-24 grid-hud" />
-      {!reduceMotion ? (
-        <motion.div
-          className="cursor-blob"
-          animate={{ x: pointer.x - 130, y: pointer.y - 130 }}
-          transition={{ type: 'spring', stiffness: 110, damping: 24, mass: 0.8 }}
-        />
-      ) : null}
+      <motion.div
+        className="cursor-blob"
+        animate={{ x: pointer.x - 130, y: pointer.y - 130 }}
+        transition={{ type: 'spring', stiffness: 110, damping: 24, mass: 0.8 }}
+      />
 
       <TopNav brand={copy.brand} labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
       <SideNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
