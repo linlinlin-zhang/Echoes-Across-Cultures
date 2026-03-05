@@ -126,6 +126,18 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
         { key: 'pal', title: 'PAL', caption: 'Human-in-the-loop feedback', tone: 'from-za/14 to-za/5 border-za/30 text-za' }
       ]
 
+  const mechanismFlow = isZh
+    ? [
+        { key: 'input', title: '输入', body: '多文化音乐进入同一潜空间。' },
+        { key: 'split', title: '解纠缠', body: 'DDRL 分离 zc（内容）/ zs（文化）/ za（情感）。' },
+        { key: 'output', title: '输出', body: 'OT 对齐 + PAL 回灌，得到可解释跨文化推荐。' }
+      ]
+    : [
+        { key: 'input', title: 'Input', body: 'Multi-cultural tracks enter one latent space.' },
+        { key: 'split', title: 'Disentangle', body: 'DDRL separates zc (content), zs (culture), and za (affect).' },
+        { key: 'output', title: 'Output', body: 'OT alignment + PAL feedback yields explainable cross-cultural recs.' }
+      ]
+
   return (
     <section id="hero" ref={sectionRef} data-section-id="hero" className="relative min-h-screen overflow-hidden px-4 pb-10 pt-28 md:px-10" aria-labelledby="hero-title">
       <div className="mx-auto max-w-7xl">
@@ -175,6 +187,16 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               <p className="mt-1 text-sm text-textSub">{hint}</p>
             </div>
 
+            <div className="grid gap-2 md:grid-cols-3">
+              {mechanismFlow.map((item, index) => (
+                <div key={item.key} className="rounded-2xl border border-ink/15 bg-white/88 p-3">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-textSub">{isZh ? `步骤 ${index + 1}` : `STEP ${index + 1}`}</p>
+                  <p className="mt-1 font-display text-xl text-textMain">{item.title}</p>
+                  <p className="mt-1 text-xs text-textSub">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
             {hoveredSong ? (
               <div className="max-w-xl">
                 <SongRadar song={hoveredSong} />
@@ -185,7 +207,10 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
                 ) : null}
               </div>
             ) : (
-              <div className="max-w-xl rounded-2xl border border-ink/15 bg-white/85 px-4 py-3 text-sm text-textSub">{isZh ? '点击舞台中的任一点查看歌曲解剖卡。' : 'Click any point in the stage to inspect a song anatomy card.'}</div>
+              <div className="grid max-w-xl gap-2 sm:grid-cols-2">
+                <div className="rounded-2xl border border-ink/15 bg-white/85 px-4 py-3 text-sm text-textSub">{isZh ? '点击舞台中的任一点查看歌曲解剖卡。' : 'Click any point in the stage to inspect a song anatomy card.'}</div>
+                <div className="rounded-2xl border border-ink/15 bg-white/85 px-4 py-3 text-sm text-textSub">{isZh ? '右下角“交互潜变量乐器”用于试听 zc/zs/za，并同步高亮舞台对应轨道。' : 'The lower-right latent instrument lets you audition zc/zs/za and sync-highlight the stage lane.'}</div>
+              </div>
             )}
           </motion.div>
 
@@ -260,6 +285,11 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               </div>
             </div>
 
+            <div className="rounded-2xl border border-ink/15 bg-white/82 p-3 text-sm text-textSub">
+              <p className="font-display text-lg text-textMain">{isZh ? '交互潜变量乐器在做什么？' : 'What does the latent instrument do?'}</p>
+              <p className="mt-1">{isZh ? '每个按键都映射到 zc / zs / za 的一个通道。触发后会听到对应音色，并在上方舞台看到同色轨迹被即时强调。' : 'Each key maps to one zc / zs / za channel. Triggering it plays a matching timbre and instantly emphasizes the same-color lane in the stage above.'}</p>
+            </div>
+
             <PulseConsole />
           </div>
         </div>
@@ -269,3 +299,8 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
     </section>
   )
 }
+
+
+
+
+

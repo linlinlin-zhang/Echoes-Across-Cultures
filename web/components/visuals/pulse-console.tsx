@@ -230,11 +230,34 @@ export function PulseConsole() {
     [isZh]
   )
 
+  const factorMeta: Record<FactorKey, { label: string; color: string }> = {
+    zc: { label: isZh ? 'zc 内容（Content）' : 'zc content', color: '#ea4335' },
+    zs: { label: isZh ? 'zs 文化（Culture）' : 'zs culture', color: '#188038' },
+    za: { label: isZh ? 'za 情感（Affect）' : 'za affect', color: '#1a73e8' }
+  }
+
+  const activeFactorText = auditionFactor ? factorMeta[auditionFactor].label : isZh ? '未激活（点击任意按键）' : 'inactive (click any pad)'
+  const activeFactorColor = auditionFactor ? factorMeta[auditionFactor].color : '#6b7280'
+
   return (
     <div ref={wrapRef} className="relative overflow-hidden rounded-3xl paper-card p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="chapter-chip">{isZh ? '因子声音映射台（Factor Audio Mapper）' : 'factor audio mapper'}</span>
         <span className="sticker">{audioReady ? (isZh ? 'Audio Live' : 'audio live') : isZh ? 'Click Any Pad' : 'click any pad'}</span>
+      </div>
+
+      <p className="mb-2 text-sm text-textSub">
+        {isZh
+          ? '作用：通过键盘/点击触发 zc、zs、za 的试听通道，帮助你听见因子差异，并联动上方潜空间舞台。'
+          : 'Purpose: trigger zc, zs, and za audition channels by keyboard/click to hear factor differences and sync with the stage above.'}
+      </p>
+
+      <div className="mb-2 rounded-xl border border-ink/15 bg-white/85 px-3 py-2 text-xs text-textSub">
+        <span className="font-semibold text-textMain">{isZh ? '当前激活：' : 'Active channel:'}</span>
+        <span className="ml-2 inline-flex items-center font-semibold" style={{ color: activeFactorColor }}>
+          <span className="mr-1 inline-flex h-2 w-2 rounded-full" style={{ background: activeFactorColor }} />
+          {activeFactorText}
+        </span>
       </div>
 
       <div className="mb-2 grid gap-2 md:grid-cols-3">
@@ -269,7 +292,7 @@ export function PulseConsole() {
                   {pad.keyLabel}
                 </div>
                 <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-textSub">{pad.note}</div>
-                <div className="mt-1 text-[10px] text-textSub">{pad.factor}</div>
+                <div className="mt-1 text-[10px] text-textSub">{pad.factor === 'zc' ? (isZh ? 'zc 内容' : 'zc content') : pad.factor === 'zs' ? (isZh ? 'zs 文化' : 'zs culture') : isZh ? 'za 情感' : 'za affect'}</div>
               </div>
             </button>
           )
@@ -294,3 +317,6 @@ export function PulseConsole() {
     </div>
   )
 }
+
+
+
