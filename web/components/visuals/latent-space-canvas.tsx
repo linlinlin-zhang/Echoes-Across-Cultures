@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
@@ -18,9 +18,9 @@ type FactorPoint = {
 }
 
 const factorColor = {
-  zc: new THREE.Color('#ff6f61'),
-  zs: new THREE.Color('#00a7a0'),
-  za: new THREE.Color('#7e57c2')
+  zc: new THREE.Color('#ea4335'),
+  zs: new THREE.Color('#188038'),
+  za: new THREE.Color('#1a73e8')
 }
 
 function seededRandom(seed: number) {
@@ -108,7 +108,7 @@ function ParticleCloud({ points }: { points: FactorPoint[] }) {
       onClick={handleSelect}
     >
       <sphereGeometry args={[0.11, 12, 12]} />
-      <meshStandardMaterial transparent opacity={0.88} emissive={new THREE.Color('#f2efe7')} metalness={0.05} roughness={0.28} />
+      <meshStandardMaterial transparent opacity={0.88} emissive={new THREE.Color('#f6e9cf')} metalness={0.05} roughness={0.28} />
     </instancedMesh>
   )
 }
@@ -118,12 +118,12 @@ function SceneCore() {
 
   return (
     <>
-      <color attach="background" args={['#f9f4e8']} />
-      <fog attach="fog" args={['#f3ede0', 4.5, 12]} />
+      <color attach="background" args={['#f8efdc']} />
+      <fog attach="fog" args={['#efe1c5', 4.5, 12]} />
       <ambientLight intensity={1.4} />
-      <pointLight position={[4, 3, 2]} intensity={2} color={'#ff6f61'} />
-      <pointLight position={[-5, -2.5, 3]} intensity={1.8} color={'#00a7a0'} />
-      <pointLight position={[0, 3.2, -2]} intensity={1.5} color={'#7e57c2'} />
+      <pointLight position={[4, 3, 2]} intensity={2} color={'#ea4335'} />
+      <pointLight position={[-5, -2.5, 3]} intensity={1.8} color={'#188038'} />
+      <pointLight position={[0, 3.2, -2]} intensity={1.5} color={'#1a73e8'} />
       <ParticleCloud points={points} />
       <OrbitControls enablePan={false} enableZoom minDistance={2.4} maxDistance={7.2} autoRotate autoRotateSpeed={0.2} />
     </>
@@ -137,3 +137,4 @@ export function LatentSpaceCanvas() {
     </Canvas>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
@@ -22,8 +22,10 @@ gsap.registerPlugin(ScrollTrigger)
 
 export function SoundscapePage() {
   const [activeSection, setActiveSection] = useState<SectionId>('hero')
+  const [pointer, setPointer] = useState({ x: -240, y: -240 })
   const { locale, highContrast, reduceMotion } = useAccessibility()
   const copy = useMemo(() => copyByLocale[locale], [locale])
+  const isZh = locale === 'zh'
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -50,16 +52,16 @@ export function SoundscapePage() {
       gsap.utils.toArray<HTMLElement>('.reveal-item').forEach((item) => {
         gsap.fromTo(
           item,
-          { opacity: 0, y: 20 },
+          { opacity: 0, y: 26 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.6,
-            ease: 'power2.out',
+            duration: 0.68,
+            ease: 'power3.out',
             scrollTrigger: {
               trigger: item,
-              start: 'top 84%',
-              end: 'bottom 16%',
+              start: 'top 88%',
+              end: 'bottom 18%',
               toggleActions: 'play none none reverse'
             }
           }
@@ -69,6 +71,15 @@ export function SoundscapePage() {
     return () => ctx.revert()
   }, [reduceMotion])
 
+  useEffect(() => {
+    if (reduceMotion) return
+    const onMove = (event: MouseEvent) => {
+      setPointer({ x: event.clientX, y: event.clientY })
+    }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [reduceMotion])
+
   const scrollToSection = (id: SectionId) => {
     const element = document.getElementById(id)
     if (!element) return
@@ -76,12 +87,19 @@ export function SoundscapePage() {
   }
 
   return (
-    <div className="relative min-h-screen text-textMain">
+    <div className="relative min-h-screen bg-deepGradient text-textMain">
       <div className="star-fog" />
       <div className="noise-mask" />
-      <div className="pointer-events-none fixed inset-0 z-[2] opacity-20 grid-hud" />
+      <div className="pointer-events-none fixed inset-0 z-[2] opacity-24 grid-hud" />
+      {!reduceMotion ? (
+        <motion.div
+          className="cursor-blob"
+          animate={{ x: pointer.x - 130, y: pointer.y - 130 }}
+          transition={{ type: 'spring', stiffness: 110, damping: 24, mass: 0.8 }}
+        />
+      ) : null}
 
-      <TopNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
+      <TopNav brand={copy.brand} labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
       <SideNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
 
       <main className="relative z-10">
@@ -104,8 +122,12 @@ export function SoundscapePage() {
 
       <motion.footer className="relative z-10 border-t border-ink/15 bg-white/75 px-4 py-8 md:px-10" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs text-textSub">
-          <p>Soundscape Without Borders · chapterized editorial interaction</p>
-          <p>Accessibility: {highContrast ? 'High Contrast On' : 'Standard Contrast'} · {reduceMotion ? 'Reduced Motion On' : 'Motion On'}</p>
+          <p>{isZh ? '声界无疆 · 艺术馆式数据叙事交互界面' : 'Soundscape Without Borders · gallery-style data narrative interface'}</p>
+          <p>
+            {isZh
+              ? `无障碍：${highContrast ? '高对比（High Contrast）已开启' : '标准对比'} · ${reduceMotion ? '减少动画（Reduced Motion）已开启' : '动态模式'}`
+              : `Accessibility: ${highContrast ? 'High Contrast On' : 'Standard Contrast'} · ${reduceMotion ? 'Reduced Motion On' : 'Motion On'}`}
+          </p>
         </div>
       </motion.footer>
     </div>

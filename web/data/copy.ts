@@ -1,4 +1,4 @@
-import type { Locale } from '@/components/ui/types'
+﻿import type { Locale } from '@/components/ui/types'
 
 export const sectionIds = ['hero', 'problem', 'architecture', 'galaxy', 'lab', 'pal', 'results', 'ethics'] as const
 
@@ -30,7 +30,7 @@ type Copy = {
 export const copyByLocale: Record<Locale, Copy> = {
   zh: {
     brand: '声界无疆',
-    subtitle: 'Deep Disentanglement for Cross-Cultural Music Recommendation',
+    subtitle: '跨文化音乐推荐的深度解纠缠（Deep Disentanglement for Cross-Cultural Music Recommendation）',
     nav: {
       hero: '潜空间序章',
       problem: '问题叙事',
@@ -55,7 +55,7 @@ export const copyByLocale: Record<Locale, Copy> = {
       architectureTitle: 'DDRL 任务控制架构',
       galaxyTitle: '文化对齐银河',
       labTitle: '解纠缠实验室',
-      palTitle: '参与式主动学习 PAL',
+      palTitle: '参与式主动学习（PAL）',
       resultsTitle: '推荐结果与公平性控制台',
       ethicsTitle: '伦理承诺与协作入口'
     }

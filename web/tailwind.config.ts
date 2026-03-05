@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+﻿import type { Config } from 'tailwindcss'
 
 const config: Config = {
   darkMode: ['class'],
@@ -6,29 +6,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        abyss: '#1f2430',
-        indigoVoid: '#eef2ff',
-        zc: '#ff6f61',
-        zs: '#00a7a0',
-        za: '#7e57c2',
-        textMain: '#20232d',
-        textSub: '#596172',
-        glass: 'rgba(255, 255, 255, 0.8)',
-        paper: '#f7f2e9',
-        ink: '#1f2430'
+        abyss: '#202124',
+        indigoVoid: '#f6f7f8',
+        zc: '#ea4335',
+        zs: '#188038',
+        za: '#1a73e8',
+        textMain: '#202124',
+        textSub: '#5f6368',
+        glass: 'rgba(255,255,255,0.78)',
+        paper: '#f6f7f8',
+        ink: '#202124'
       },
       fontFamily: {
-        display: ['Fraunces', 'Georgia', 'serif'],
-        body: ['DM Sans', 'Segoe UI', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'JetBrains Mono', 'Consolas', 'monospace']
+        display: ['Manrope', 'Noto Sans SC', 'Segoe UI', 'sans-serif'],
+        body: ['Manrope', 'Noto Sans SC', 'Segoe UI', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Consolas', 'monospace']
       },
       boxShadow: {
-        neon: '0 10px 28px rgba(42, 49, 67, 0.12)',
-        glow: '0 8px 20px rgba(255, 111, 97, 0.18)'
+        neon: '0 10px 30px rgba(32,33,36,0.07)',
+        glow: '0 10px 30px rgba(26,115,232,0.14)'
       },
       backgroundImage: {
         deepGradient:
-          'radial-gradient(circle at 15% 20%, rgba(255,111,97,0.16), transparent 45%), radial-gradient(circle at 80% 10%, rgba(0,167,160,0.18), transparent 40%), linear-gradient(180deg, #f7f2e9 0%, #f2efe7 100%)'
+          'radial-gradient(circle at 14% 16%, rgba(26,115,232,0.09), transparent 36%), radial-gradient(circle at 86% 8%, rgba(24,128,56,0.08), transparent 34%), radial-gradient(circle at 52% 88%, rgba(234,67,53,0.08), transparent 42%), linear-gradient(180deg, #f6f7f8 0%, #eef1f5 52%, #e8edf4 100%)'
       },
       animation: {
         floatSlow: 'floatSlow 8s ease-in-out infinite',

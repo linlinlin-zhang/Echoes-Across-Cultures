@@ -1,8 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import * as Tone from 'tone'
+
+import { useAccessibility } from '@/components/providers/accessibility-provider'
 
 type Pulse = {
   id: number
@@ -15,18 +17,21 @@ type Pad = {
   keyLabel: string
   note: string
   color: string
-  hint: string
+  hint: {
+    zh: string
+    en: string
+  }
 }
 
 const pads: Pad[] = [
-  { keyLabel: 'A', note: 'C4', color: '#ff6f61', hint: 'content spark' },
-  { keyLabel: 'S', note: 'D4', color: '#f29f05', hint: 'motif rise' },
-  { keyLabel: 'D', note: 'E4', color: '#00a7a0', hint: 'culture drift' },
-  { keyLabel: 'F', note: 'G4', color: '#3d77c3', hint: 'flow pulse' },
-  { keyLabel: 'J', note: 'A4', color: '#7e57c2', hint: 'affect lift' },
-  { keyLabel: 'K', note: 'B4', color: '#b65bd8', hint: 'memory shade' },
-  { keyLabel: 'L', note: 'D5', color: '#ff5ea8', hint: 'bridge jump' },
-  { keyLabel: ';', note: 'E5', color: '#54b95a', hint: 'serendipity' }
+  { keyLabel: 'A', note: 'C4', color: '#ea4335', hint: { zh: '内容火花（Content Spark）', en: 'content spark' } },
+  { keyLabel: 'S', note: 'D4', color: '#fbbc04', hint: { zh: '动机上扬（Motif Rise）', en: 'motif rise' } },
+  { keyLabel: 'D', note: 'E4', color: '#188038', hint: { zh: '文化漂移（Culture Drift）', en: 'culture drift' } },
+  { keyLabel: 'F', note: 'G4', color: '#4285f4', hint: { zh: '流动脉冲（Flow Pulse）', en: 'flow pulse' } },
+  { keyLabel: 'J', note: 'A4', color: '#1a73e8', hint: { zh: '情感抬升（Affect Lift）', en: 'affect lift' } },
+  { keyLabel: 'K', note: 'B4', color: '#a142f4', hint: { zh: '记忆阴影（Memory Shade）', en: 'memory shade' } },
+  { keyLabel: 'L', note: 'D5', color: '#e52592', hint: { zh: '桥接跳跃（Bridge Jump）', en: 'bridge jump' } },
+  { keyLabel: ';', note: 'E5', color: '#34a853', hint: { zh: '机缘巧合（Serendipity）', en: 'serendipity' } }
 ]
 
 export function PulseConsole() {
@@ -36,6 +41,8 @@ export function PulseConsole() {
   const [audioReady, setAudioReady] = useState(false)
   const [ripples, setRipples] = useState<Pulse[]>([])
   const idRef = useRef(0)
+  const { locale } = useAccessibility()
+  const isZh = locale === 'zh'
 
   const keyMap = useMemo(() => new Map(pads.map((pad) => [pad.keyLabel, pad])), [])
 
@@ -94,10 +101,10 @@ export function PulseConsole() {
     <div ref={wrapRef} className="relative overflow-hidden rounded-3xl paper-card p-4 scanline">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <span className="chapter-chip">interactive latent instrument</span>
-          <p className="mt-2 font-display text-lg text-textMain">Tap pads or press keyboard keys</p>
+          <span className="chapter-chip">{isZh ? '交互潜变量乐器（Interactive Latent Instrument）' : 'interactive latent instrument'}</span>
+          <p className="mt-2 font-display text-lg text-textMain">{isZh ? '点击音垫或按键盘触发（Tap Pads or Press Keyboard Keys）' : 'Tap pads or press keyboard keys'}</p>
         </div>
-        <span className="sticker">{audioReady ? 'audio live' : 'click any pad'}</span>
+        <span className="sticker">{audioReady ? (isZh ? '音频已激活（Audio Live）' : 'audio live') : isZh ? '点击任意音垫（Click Any Pad）' : 'click any pad'}</span>
       </div>
 
       <div className="grid grid-cols-4 gap-2 md:gap-3">
@@ -113,14 +120,17 @@ export function PulseConsole() {
                   y: rect.top + rect.height / 2 - (wrapRef.current?.getBoundingClientRect().top ?? 0)
                 })
               }}
+              aria-label={isZh ? `音垫 ${pad.keyLabel}，提示：${pad.hint.zh}` : `Pad ${pad.keyLabel}, ${pad.hint.en}`}
               className="group relative overflow-hidden rounded-2xl border border-ink/20 bg-white p-3 text-left transition duration-150 hover:border-ink/45"
               style={{ boxShadow: active ? `0 0 0 1px ${pad.color}, 0 0 20px ${pad.color}77` : undefined }}
             >
               <div className="absolute inset-0 opacity-35 transition duration-150 group-hover:opacity-60" style={{ background: `radial-gradient(circle at 50% 20%, ${pad.color}, transparent 70%)` }} />
               <div className="relative">
-                <div className="font-display text-xl font-bold" style={{ color: pad.color }}>{pad.keyLabel}</div>
+                <div className="font-display text-xl font-bold" style={{ color: pad.color }}>
+                  {pad.keyLabel}
+                </div>
                 <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-textSub">{pad.note}</div>
-                <div className="mt-2 text-xs text-textSub">{pad.hint}</div>
+                <div className="mt-2 text-xs text-textSub">{isZh ? pad.hint.zh : pad.hint.en}</div>
               </div>
             </button>
           )
@@ -143,3 +153,5 @@ export function PulseConsole() {
     </div>
   )
 }
+
+
