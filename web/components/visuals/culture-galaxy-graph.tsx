@@ -65,9 +65,9 @@ export function CultureGalaxyGraph() {
       .attr('id', 'galaxy-core')
       .selectAll('stop')
       .data([
-        { offset: '0%', color: '#4ecdc4', opacity: 0.5 },
-        { offset: '60%', color: '#a55eea', opacity: 0.18 },
-        { offset: '100%', color: '#0a0a0f', opacity: 0 }
+        { offset: '0%', color: '#fff5d7', opacity: 0.95 },
+        { offset: '58%', color: '#ffd6c6', opacity: 0.4 },
+        { offset: '100%', color: '#f4ecdf', opacity: 0.1 }
       ])
       .enter()
       .append('stop')
@@ -96,7 +96,7 @@ export function CultureGalaxyGraph() {
         d3
           .forceLink<GraphNode, GraphLink>(links)
           .id((d) => d.id)
-          .distance((d) => 180 - (mode === 'structural' ? d.structural : d.emotional) * 90)
+          .distance((d) => 175 - (mode === 'structural' ? d.structural : d.emotional) * 90)
       )
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
@@ -109,8 +109,8 @@ export function CultureGalaxyGraph() {
       .data(links)
       .enter()
       .append('line')
-      .attr('stroke', '#94a3b8')
-      .attr('stroke-opacity', 0.3)
+      .attr('stroke', '#7f8ca8')
+      .attr('stroke-opacity', 0.35)
       .attr('stroke-width', (d) => 1 + (mode === 'structural' ? d.structural : d.emotional) * 6)
 
     const nodeLayer = svg.append('g')
@@ -127,9 +127,9 @@ export function CultureGalaxyGraph() {
 
     nodeSelection
       .append('circle')
-      .attr('r', 32)
-      .attr('fill', '#0f172a')
-      .attr('stroke', '#4ecdc4')
+      .attr('r', 33)
+      .attr('fill', '#fffdfa')
+      .attr('stroke', '#00a7a0')
       .attr('stroke-width', 1.5)
 
     nodeSelection
@@ -138,7 +138,7 @@ export function CultureGalaxyGraph() {
       .attr('text-anchor', 'middle')
       .attr('dy', 4)
       .attr('font-size', 11)
-      .attr('fill', '#e2e8f0')
+      .attr('fill', '#233043')
 
     simulation.on('tick', () => {
       linkSelection
@@ -153,7 +153,7 @@ export function CultureGalaxyGraph() {
         .attr('stroke', (d) => {
           const sourceId = resolveEndpointId(d.source)
           const targetId = resolveEndpointId(d.target)
-          return isRouteEdge(sourceId, targetId, activeRoutePairs) ? '#4ecdc4' : '#94a3b8'
+          return isRouteEdge(sourceId, targetId, activeRoutePairs) ? '#00a7a0' : '#7f8ca8'
         })
         .attr('stroke-dasharray', (d) => {
           const sourceId = resolveEndpointId(d.source)
@@ -163,12 +163,12 @@ export function CultureGalaxyGraph() {
         .attr('stroke-opacity', (d) => {
           const sourceId = resolveEndpointId(d.source)
           const targetId = resolveEndpointId(d.target)
-          return isRouteEdge(sourceId, targetId, activeRoutePairs) ? 0.95 : 0.28
+          return isRouteEdge(sourceId, targetId, activeRoutePairs) ? 1 : 0.32
         })
 
       nodeSelection
         .select('circle')
-        .attr('stroke', (d) => (selectedNode?.id === d.id ? '#ff6b6b' : '#4ecdc4'))
+        .attr('stroke', (d) => (selectedNode?.id === d.id ? '#ff6f61' : '#00a7a0'))
         .attr('stroke-width', (d) => (selectedNode?.id === d.id ? 3 : 1.5))
         .attr('opacity', (d) => {
           if (!search.trim()) return 1
@@ -191,23 +191,17 @@ export function CultureGalaxyGraph() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-      <div className="rounded-3xl border border-white/10 bg-black/25 p-4">
+      <div className="rounded-3xl paper-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-full border border-white/15 bg-black/20 p-1 text-sm">
+          <div className="inline-flex rounded-full border border-ink/15 bg-white p-1 text-sm">
             <button
-              className={cn(
-                'rounded-full px-3 py-1 transition',
-                mode === 'emotional' ? 'bg-za/30 text-za' : 'text-textSub hover:text-textMain'
-              )}
+              className={cn('rounded-full px-3 py-1 transition', mode === 'emotional' ? 'bg-za/15 text-za' : 'text-textSub hover:text-textMain')}
               onClick={() => setMode('emotional')}
             >
               Emotional Similarity (za)
             </button>
             <button
-              className={cn(
-                'rounded-full px-3 py-1 transition',
-                mode === 'structural' ? 'bg-zc/30 text-zc' : 'text-textSub hover:text-textMain'
-              )}
+              className={cn('rounded-full px-3 py-1 transition', mode === 'structural' ? 'bg-zc/15 text-zc' : 'text-textSub hover:text-textMain')}
               onClick={() => setMode('structural')}
             >
               Structural Similarity (zc)
@@ -217,15 +211,15 @@ export function CultureGalaxyGraph() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search culture..."
-            className="w-56 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-sm text-textMain outline-none ring-zs placeholder:text-textSub focus:ring-2"
+            className="w-56 rounded-full border border-ink/20 bg-white px-3 py-1.5 text-sm text-textMain outline-none ring-zs placeholder:text-textSub focus:ring-2"
           />
         </div>
 
-        <div ref={containerRef} className="h-[450px] w-full rounded-2xl border border-white/10 bg-black/30" />
+        <div ref={containerRef} className="h-[450px] w-full rounded-2xl border border-ink/15 bg-[#fff9ef]" />
       </div>
 
       <div className="space-y-4">
-        <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
+        <div className="rounded-3xl paper-card p-5">
           <h3 className="font-display text-2xl text-textMain">{selectedNode?.name}</h3>
           <p className="mt-1 text-sm text-textSub">{selectedNode?.family}</p>
           <p className="mt-3 text-sm leading-relaxed text-textSub">{selectedNode?.history}</p>
@@ -246,16 +240,13 @@ export function CultureGalaxyGraph() {
               <span>Mode-conditioned connection strength</span>
               <span>{(scoreForSelected * 100).toFixed(0)}%</span>
             </div>
-            <div className="h-2 rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-zc via-zs to-za"
-                style={{ width: `${(scoreForSelected * 100).toFixed(0)}%` }}
-              />
+            <div className="h-2 rounded-full bg-ink/10">
+              <div className="h-full rounded-full bg-gradient-to-r from-zc via-zs to-za" style={{ width: `${(scoreForSelected * 100).toFixed(0)}%` }} />
             </div>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
+        <div className="rounded-3xl paper-card p-5">
           <h4 className="font-display text-lg text-textMain">Optimal Transport Demo Route</h4>
           <p className="mt-1 text-sm text-textSub">Watch preference mass flow from source culture to target culture.</p>
           <div className="mt-3 space-y-2">
@@ -264,16 +255,14 @@ export function CultureGalaxyGraph() {
                 key={route.join('-')}
                 className={cn(
                   'w-full rounded-xl border px-3 py-2 text-left text-sm transition',
-                  routeIndex === index
-                    ? 'border-zs/70 bg-zs/10 text-textMain'
-                    : 'border-white/15 bg-black/20 text-textSub hover:border-white/40'
+                  routeIndex === index ? 'border-zs/55 bg-zs/10 text-textMain' : 'border-ink/15 bg-white text-textSub hover:border-ink/35'
                 )}
                 onClick={() => setRouteIndex(index)}
               >
                 {route.map((item, i) => (
                   <span key={`${item}-${i}`}>
                     {cultureNodes.find((node) => node.id === item)?.name ?? item}
-                    {i === route.length - 1 ? '' : '  →  '}
+                    {i === route.length - 1 ? '' : '  ->  '}
                   </span>
                 ))}
               </button>

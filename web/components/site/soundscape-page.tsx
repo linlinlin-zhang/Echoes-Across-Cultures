@@ -28,26 +28,16 @@ export function SoundscapePage() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)
         if (!visible.length) return
         const id = visible[0].target.getAttribute('data-section-id') as SectionId | null
-        if (id && sectionIds.includes(id)) {
-          setActiveSection(id)
-        }
+        if (id && sectionIds.includes(id)) setActiveSection(id)
       },
-      {
-        threshold: [0.3, 0.5, 0.7]
-      }
+      { threshold: [0.3, 0.5, 0.7] }
     )
 
-    const sections = document.querySelectorAll<HTMLElement>('[data-section-id]')
-    sections.forEach((section) => observer.observe(section))
-
-    return () => {
-      observer.disconnect()
-    }
+    document.querySelectorAll<HTMLElement>('[data-section-id]').forEach((section) => observer.observe(section))
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -60,23 +50,22 @@ export function SoundscapePage() {
       gsap.utils.toArray<HTMLElement>('.reveal-item').forEach((item) => {
         gsap.fromTo(
           item,
-          { opacity: 0, y: 30 },
+          { opacity: 0, y: 20 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.75,
+            duration: 0.6,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: item,
-              start: 'top 82%',
-              end: 'bottom 20%',
+              start: 'top 84%',
+              end: 'bottom 16%',
               toggleActions: 'play none none reverse'
             }
           }
         )
       })
     })
-
     return () => ctx.revert()
   }, [reduceMotion])
 
@@ -90,7 +79,7 @@ export function SoundscapePage() {
     <div className="relative min-h-screen text-textMain">
       <div className="star-fog" />
       <div className="noise-mask" />
-      <div className="pointer-events-none fixed inset-0 z-[2] opacity-30 grid-hud" />
+      <div className="pointer-events-none fixed inset-0 z-[2] opacity-20 grid-hud" />
 
       <TopNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
       <SideNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
@@ -113,17 +102,10 @@ export function SoundscapePage() {
         <EthicsSection title={copy.sections.ethicsTitle} />
       </main>
 
-      <motion.footer
-        className="relative z-10 border-t border-white/10 bg-black/50 px-4 py-8 md:px-10"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-      >
+      <motion.footer className="relative z-10 border-t border-ink/15 bg-white/75 px-4 py-8 md:px-10" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs text-textSub">
-          <p>Soundscape Without Borders · Exhibition-grade interactive research website</p>
-          <p>
-            Accessibility: {highContrast ? 'High Contrast On' : 'Standard Contrast'} · {reduceMotion ? 'Reduced Motion On' : 'Motion On'}
-          </p>
+          <p>Soundscape Without Borders · chapterized editorial interaction</p>
+          <p>Accessibility: {highContrast ? 'High Contrast On' : 'Standard Contrast'} · {reduceMotion ? 'Reduced Motion On' : 'Motion On'}</p>
         </div>
       </motion.footer>
     </div>

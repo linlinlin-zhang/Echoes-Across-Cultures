@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import * as Tone from 'tone'
 
 type Pulse = {
@@ -19,14 +19,14 @@ type Pad = {
 }
 
 const pads: Pad[] = [
-  { keyLabel: 'A', note: 'C4', color: '#ff6b6b', hint: 'Content spark' },
-  { keyLabel: 'S', note: 'D4', color: '#ff8c61', hint: 'Motif rise' },
-  { keyLabel: 'D', note: 'E4', color: '#4ecdc4', hint: 'Culture drift' },
-  { keyLabel: 'F', note: 'G4', color: '#40b8ff', hint: 'Flow pulse' },
-  { keyLabel: 'J', note: 'A4', color: '#a55eea', hint: 'Affect lift' },
-  { keyLabel: 'K', note: 'B4', color: '#d36fff', hint: 'Memory shade' },
-  { keyLabel: 'L', note: 'D5', color: '#ff6bd2', hint: 'Bridge jump' },
-  { keyLabel: ';', note: 'E5', color: '#9eff8c', hint: 'Serendipity' }
+  { keyLabel: 'A', note: 'C4', color: '#ff6f61', hint: 'content spark' },
+  { keyLabel: 'S', note: 'D4', color: '#f29f05', hint: 'motif rise' },
+  { keyLabel: 'D', note: 'E4', color: '#00a7a0', hint: 'culture drift' },
+  { keyLabel: 'F', note: 'G4', color: '#3d77c3', hint: 'flow pulse' },
+  { keyLabel: 'J', note: 'A4', color: '#7e57c2', hint: 'affect lift' },
+  { keyLabel: 'K', note: 'B4', color: '#b65bd8', hint: 'memory shade' },
+  { keyLabel: 'L', note: 'D5', color: '#ff5ea8', hint: 'bridge jump' },
+  { keyLabel: ';', note: 'E5', color: '#54b95a', hint: 'serendipity' }
 ]
 
 export function PulseConsole() {
@@ -54,9 +54,7 @@ export function PulseConsole() {
   const spawnRipple = useCallback((x: number, y: number, color: string) => {
     const id = ++idRef.current
     setRipples((prev) => [...prev, { id, x, y, color }].slice(-16))
-    window.setTimeout(() => {
-      setRipples((prev) => prev.filter((item) => item.id !== id))
-    }, 600)
+    window.setTimeout(() => setRipples((prev) => prev.filter((item) => item.id !== id)), 600)
   }, [])
 
   const triggerPad = useCallback(
@@ -93,15 +91,13 @@ export function PulseConsole() {
   }, [keyMap, triggerPad])
 
   return (
-    <div ref={wrapRef} className="relative overflow-hidden rounded-3xl panel-deep p-4 scanline">
+    <div ref={wrapRef} className="relative overflow-hidden rounded-3xl paper-card p-4 scanline">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-textSub">Interactive Latent Instrument</p>
-          <p className="font-display text-lg text-textMain">Tap pads or press keyboard keys</p>
+          <span className="chapter-chip">interactive latent instrument</span>
+          <p className="mt-2 font-display text-lg text-textMain">Tap pads or press keyboard keys</p>
         </div>
-        <span className="rounded-full border border-white/20 bg-white/5 px-3 py-1 font-mono text-[11px] text-textSub">
-          {audioReady ? 'Audio Live' : 'Click Any Pad'}
-        </span>
+        <span className="sticker">{audioReady ? 'audio live' : 'click any pad'}</span>
       </div>
 
       <div className="grid grid-cols-4 gap-2 md:gap-3">
@@ -112,19 +108,17 @@ export function PulseConsole() {
               key={pad.keyLabel}
               onClick={(event) => {
                 const rect = event.currentTarget.getBoundingClientRect()
-                triggerPad(pad, { x: rect.left + rect.width / 2 - (wrapRef.current?.getBoundingClientRect().left ?? 0), y: rect.top + rect.height / 2 - (wrapRef.current?.getBoundingClientRect().top ?? 0) })
+                triggerPad(pad, {
+                  x: rect.left + rect.width / 2 - (wrapRef.current?.getBoundingClientRect().left ?? 0),
+                  y: rect.top + rect.height / 2 - (wrapRef.current?.getBoundingClientRect().top ?? 0)
+                })
               }}
-              className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-3 text-left transition duration-150 hover:border-white/50"
-              style={{ boxShadow: active ? `0 0 0 1px ${pad.color}, 0 0 24px ${pad.color}88` : undefined }}
+              className="group relative overflow-hidden rounded-2xl border border-ink/20 bg-white p-3 text-left transition duration-150 hover:border-ink/45"
+              style={{ boxShadow: active ? `0 0 0 1px ${pad.color}, 0 0 20px ${pad.color}77` : undefined }}
             >
-              <div
-                className="absolute inset-0 opacity-35 transition duration-150 group-hover:opacity-60"
-                style={{ background: `radial-gradient(circle at 50% 20%, ${pad.color}, transparent 70%)` }}
-              />
+              <div className="absolute inset-0 opacity-35 transition duration-150 group-hover:opacity-60" style={{ background: `radial-gradient(circle at 50% 20%, ${pad.color}, transparent 70%)` }} />
               <div className="relative">
-                <div className="font-display text-xl font-bold" style={{ color: pad.color }}>
-                  {pad.keyLabel}
-                </div>
+                <div className="font-display text-xl font-bold" style={{ color: pad.color }}>{pad.keyLabel}</div>
                 <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-textSub">{pad.note}</div>
                 <div className="mt-2 text-xs text-textSub">{pad.hint}</div>
               </div>
@@ -142,12 +136,7 @@ export function PulseConsole() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="pointer-events-none absolute h-16 w-16 rounded-full"
-            style={{
-              left: ripple.x - 32,
-              top: ripple.y - 32,
-              border: `2px solid ${ripple.color}`,
-              boxShadow: `0 0 24px ${ripple.color}`
-            }}
+            style={{ left: ripple.x - 32, top: ripple.y - 32, border: `2px solid ${ripple.color}`, boxShadow: `0 0 24px ${ripple.color}` }}
           />
         ))}
       </AnimatePresence>

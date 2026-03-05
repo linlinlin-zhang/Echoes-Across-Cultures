@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber'
-import { OrbitControls, Stars } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 
 import { songPoints, type SongPoint } from '@/data/mock-data'
 import { clamp } from '@/lib/utils'
@@ -18,9 +18,9 @@ type FactorPoint = {
 }
 
 const factorColor = {
-  zc: new THREE.Color('#ff6b6b'),
-  zs: new THREE.Color('#4ecdc4'),
-  za: new THREE.Color('#a55eea')
+  zc: new THREE.Color('#ff6f61'),
+  zs: new THREE.Color('#00a7a0'),
+  za: new THREE.Color('#7e57c2')
 }
 
 function seededRandom(seed: number) {
@@ -35,17 +35,17 @@ function buildFactorPoints(songs: SongPoint[]) {
   const random = seededRandom(7)
   const noise = () => (random() * 2 - 1) * 0.6
   const direction = {
-    zc: new THREE.Vector3(1.6, -0.8, 0.45),
-    zs: new THREE.Vector3(-1.4, 0.5, 1.2),
-    za: new THREE.Vector3(0.25, 1.65, -1.35)
+    zc: new THREE.Vector3(1.65, -0.72, 0.38),
+    zs: new THREE.Vector3(-1.48, 0.62, 1.18),
+    za: new THREE.Vector3(0.2, 1.64, -1.42)
   }
 
   const points: FactorPoint[] = []
   songs.forEach((song) => {
     ;(['zc', 'zs', 'za'] as const).forEach((factor) => {
       const z = factor === 'zc' ? song.zcVector : factor === 'zs' ? song.zsVector : [song.zaVector[0], song.zaVector[1], 0]
-      const base = new THREE.Vector3(z[0] * 0.35 + noise(), z[1] * 0.35 + noise(), z[2] * 0.35 + noise())
-      const target = base.clone().add(direction[factor].clone().multiplyScalar(0.95))
+      const base = new THREE.Vector3(z[0] * 0.34 + noise(), z[1] * 0.34 + noise(), z[2] * 0.34 + noise())
+      const target = base.clone().add(direction[factor].clone().multiplyScalar(0.98))
       points.push({ song, factor, base, target, color: factorColor[factor] })
     })
   })
@@ -65,7 +65,7 @@ function ParticleCloud({ points }: { points: FactorPoint[] }) {
   useFrame((_state, delta) => {
     if (!instancedRef.current) return
     const instance = instancedRef.current
-    const alpha = clamp(0.065 + delta * 0.1)
+    const alpha = clamp(0.07 + delta * 0.1)
 
     points.forEach((item, index) => {
       const end = item.target.clone().multiplyScalar(separation)
@@ -73,7 +73,7 @@ function ParticleCloud({ points }: { points: FactorPoint[] }) {
       const pos = start.add(end)
 
       temp.position.lerp(pos, alpha)
-      temp.scale.setScalar(item.factor === 'za' ? 0.09 : 0.08)
+      temp.scale.setScalar(item.factor === 'za' ? 0.092 : 0.082)
       temp.updateMatrix()
       instance.setMatrixAt(index, temp.matrix)
       instance.setColorAt(index, colorCache[index])
@@ -107,8 +107,8 @@ function ParticleCloud({ points }: { points: FactorPoint[] }) {
       onPointerOut={() => setHoveredSongId(null)}
       onClick={handleSelect}
     >
-      <sphereGeometry args={[0.12, 12, 12]} />
-      <meshStandardMaterial transparent opacity={0.9} emissive={new THREE.Color('#101828')} metalness={0.1} roughness={0.35} />
+      <sphereGeometry args={[0.11, 12, 12]} />
+      <meshStandardMaterial transparent opacity={0.88} emissive={new THREE.Color('#f2efe7')} metalness={0.05} roughness={0.28} />
     </instancedMesh>
   )
 }
@@ -118,14 +118,14 @@ function SceneCore() {
 
   return (
     <>
-      <color attach="background" args={['#080912']} />
-      <fog attach="fog" args={['#090b18', 4.5, 12]} />
-      <ambientLight intensity={1.1} />
-      <pointLight position={[4, 3, 2]} intensity={2.4} color={'#a55eea'} />
-      <pointLight position={[-5, -2.5, 3]} intensity={1.8} color={'#4ecdc4'} />
+      <color attach="background" args={['#f9f4e8']} />
+      <fog attach="fog" args={['#f3ede0', 4.5, 12]} />
+      <ambientLight intensity={1.4} />
+      <pointLight position={[4, 3, 2]} intensity={2} color={'#ff6f61'} />
+      <pointLight position={[-5, -2.5, 3]} intensity={1.8} color={'#00a7a0'} />
+      <pointLight position={[0, 3.2, -2]} intensity={1.5} color={'#7e57c2'} />
       <ParticleCloud points={points} />
-      <Stars radius={110} depth={32} count={1900} factor={4.2} saturation={0.65} fade speed={0.45} />
-      <OrbitControls enablePan={false} enableZoom minDistance={2.4} maxDistance={7.2} autoRotate autoRotateSpeed={0.3} />
+      <OrbitControls enablePan={false} enableZoom minDistance={2.4} maxDistance={7.2} autoRotate autoRotateSpeed={0.2} />
     </>
   )
 }

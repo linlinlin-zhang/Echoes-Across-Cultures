@@ -1,4 +1,4 @@
-﻿import type { SongPoint } from '@/data/mock-data'
+import type { SongPoint } from '@/data/mock-data'
 
 function toPolar([x, y, z]: [number, number, number]) {
   const ax = Math.abs(x)
@@ -24,19 +24,20 @@ export function SongRadar({ song }: { song: SongPoint }) {
   ]
 
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/5 p-4 backdrop-blur-md">
+    <div className="paper-card rounded-2xl p-4">
       <div className="mb-3">
-        <h4 className="font-display text-lg text-textMain">{song.title}</h4>
-        <p className="font-body text-sm text-textSub">{song.culture} · {song.emotion}</p>
+        <span className="chapter-chip">song anatomy</span>
+        <h4 className="mt-2 font-display text-xl text-textMain">{song.title}</h4>
+        <p className="text-sm text-textSub">{song.culture} · {song.emotion}</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {stats.map((item) => (
-          <div key={item.label} className="rounded-lg bg-black/20 px-2 py-1.5">
+          <div key={item.label} className="stat-tile">
             <div className="flex items-center justify-between text-xs text-textSub">
               <span>{item.label}</span>
               <span>{item.value.toFixed(2)}</span>
             </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10">
               <div className="h-full rounded-full" style={{ width: `${Math.min(100, item.value * 80)}%`, background: item.color }} />
             </div>
           </div>
