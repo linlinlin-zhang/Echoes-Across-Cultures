@@ -362,31 +362,31 @@ import { Wind, Waves, Flame } from 'lucide-react'
         </AnimatePresence>
       </div>
 
-      {/* Metrics - 使用更紧凑的设计 */}
-      <div className="grid grid-cols-3 gap-px border-t border-ink/15 bg-ink/5 flex-shrink-0">
+      {/* Metrics */}
+      <div className="grid grid-cols-3 gap-px border-t border-ink/15 bg-ink/5">
         {[
           {
             key: 'zc',
-            label: isZh ? '内容' : 'Content',
+            label: isZh ? '内容密度' : 'Content',
             value: `${Math.round(metrics.zcStrength * 100)}%`,
             color: '#e85d4e'
           },
           {
             key: 'zs',
-            label: isZh ? '文化' : 'Culture',
+            label: isZh ? '文化强度' : 'Culture',
             value: `${Math.round(metrics.zsStrength * 100)}%`,
             color: '#2d8a5e'
           },
           {
             key: 'za',
-            label: isZh ? '情感' : 'Affect',
+            label: isZh ? '情感唤醒' : 'Arousal',
             value: `${Math.round(((metrics.zaArousal + 1) / 2) * 100)}%`,
             color: '#4a90d9'
           }
         ].map(metric => (
-          <div key={metric.key} className="px-2 py-2 text-center">
-            <p className="text-[9px] text-textSub">{metric.label}</p>
-            <p className="font-mono text-sm font-semibold" style={{ color: metric.color }}>
+          <div key={metric.key} className="px-4 py-3 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-textSub">{metric.label}</p>
+            <p className="font-mono text-lg font-semibold" style={{ color: metric.color }}>
               {metric.value}
             </p>
           </div>

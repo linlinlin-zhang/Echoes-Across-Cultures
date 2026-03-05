@@ -200,8 +200,8 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
       subtitle={lead}
       className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.35),transparent_35%)]"
     >
-      <div className="grid gap-4 xl:grid-cols-[300px_1fr_340px] xl:items-start">
-        {/* Left panel - Factor controls & info */}
+      <div className="grid gap-4 xl:grid-cols-[320px_1fr_320px] xl:items-start">
+        {/* Left panel - Factor cards + Audio Garden */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -295,6 +295,9 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               {ctaSecondary}
             </button>
           </div>
+
+          {/* Audio Garden - 移到左侧 */}
+          <OrganicAudioGarden className="h-[200px]" />
         </motion.div>
 
         {/* Center - Main visualization */}
@@ -348,9 +351,9 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
 
           {viewMode === 'immersive' ? (
-            <OrganicLatentNebula className="h-[520px] w-full" />
+            <OrganicLatentNebula className="h-[600px] w-full" />
           ) : (
-            <div className="relative h-[520px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
+            <div className="relative h-[600px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
               <div className="flex h-full items-center justify-center text-textSub">
                 {isZh ? '经典模式开发中' : 'Classic mode coming soon'}
               </div>
@@ -374,21 +377,18 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
         </motion.div>
 
-        {/* Right panel - Explorer & controls - 与中间等高，内部滚动 */}
+        {/* Right panel - Explorer & Factor Pads */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col gap-3 h-[520px]"
+          className="flex flex-col gap-4"
         >
-          {/* Latent Explorer */}
-          <LatentExplorer className="flex-[1.3] min-h-0" />
+          {/* Latent Explorer - 足够高度完整展示 */}
+          <LatentExplorer className="h-[340px]" />
 
-          {/* Audio Garden */}
-          <OrganicAudioGarden className="flex-1 min-h-0" />
-
-          {/* Factor Pads */}
-          <OrganicFactorPads className="flex-1 min-h-0" />
+          {/* Factor Pads - 足够高度完整展示 */}
+          <OrganicFactorPads className="h-[240px]" />
         </motion.div>
       </div>
 

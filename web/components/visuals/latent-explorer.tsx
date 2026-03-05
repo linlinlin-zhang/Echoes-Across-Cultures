@@ -261,16 +261,16 @@ export function LatentExplorer({ className }: { className?: string }) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-3 min-h-0 overflow-auto">
+      <div className="flex-1 p-3 overflow-auto">
         {/* Culture filter */}
         <div className="mb-2">
           <CultureRibbon selected={cultureFilter} onSelect={setCultureFilter} />
         </div>
 
         {viewMode === 'explore' ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {/* Scatter plot */}
-            <div className="h-28">
+            <div className="h-32">
               <LatentScatter
                 songs={filteredSongs}
                 selectedId={selectedSongId}
@@ -308,15 +308,15 @@ export function LatentExplorer({ className }: { className?: string }) {
         )}
       </div>
 
-      {/* Stats footer - 更紧凑 */}
-      <div className="grid grid-cols-3 gap-px border-t border-ink/15 bg-ink/5 flex-shrink-0">
+      {/* Stats footer */}
+      <div className="grid grid-cols-3 gap-px border-t border-ink/15 bg-ink/5">
         {[
           { label: isZh ? '样本' : 'Samples', value: filteredSongs.length },
           { label: isZh ? '文化' : 'Cultures', value: new Set(filteredSongs.map(s => s.culture)).size },
           { label: isZh ? '维度' : 'Dimensions', value: '3D' }
         ].map(stat => (
-          <div key={stat.label} className="px-2 py-1.5 text-center">
-            <p className="text-[9px] text-textSub">{stat.label}</p>
+          <div key={stat.label} className="px-3 py-2 text-center">
+            <p className="text-[10px] text-textSub">{stat.label}</p>
             <p className="font-mono text-sm font-semibold text-textMain">{stat.value}</p>
           </div>
         ))}

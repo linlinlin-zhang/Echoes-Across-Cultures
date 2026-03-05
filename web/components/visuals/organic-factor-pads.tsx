@@ -252,8 +252,8 @@ export function OrganicFactorPads({ className }: { className?: string }) {
         </span>
       </div>
 
-      {/* Pads area - 使用 flex 布局避免截断 */}
-      <div className="flex flex-col flex-1 p-3 min-h-0 gap-2">
+      {/* Pads area - 使用 flex 布局 */}
+      <div className="flex flex-col flex-1 p-3 gap-2">
         {/* Factor labels row */}
         <div className="flex justify-around">
           {Object.entries(factorGroups).map(([factor, config]) => {
@@ -271,7 +271,7 @@ export function OrganicFactorPads({ className }: { className?: string }) {
           })}
         </div>
 
-        {/* Pads grid - 3行4列 */}
+        {/* Pads grid - 3行4列，更大尺寸 */}
         <div className="grid grid-cols-4 gap-2 flex-1">
           {pads.map((pad) => {
             const isActive = activePads.has(pad.id)
@@ -286,7 +286,7 @@ export function OrganicFactorPads({ className }: { className?: string }) {
                 whileTap={{ scale: 0.95 }}
               >
                 <motion.div
-                  className="flex flex-col items-center justify-center rounded-xl border w-full h-full min-h-[48px]"
+                  className="flex flex-col items-center justify-center rounded-xl border w-full h-full min-h-[56px]"
                   style={{
                     borderColor: isActive ? factorConfig.color : `${factorConfig.color}33`,
                     backgroundColor: isActive ? `${factorConfig.color}33` : `${factorConfig.color}11`,
@@ -295,13 +295,13 @@ export function OrganicFactorPads({ className }: { className?: string }) {
                   animate={isActive ? { scale: [1, 1.05, 1] } : {}}
                 >
                   <span
-                    className="font-mono text-sm font-bold"
+                    className="font-mono text-base font-bold"
                     style={{ color: factorConfig.color }}
                   >
                     {pad.note}
-                    <sup className="text-[8px]">{pad.octave}</sup>
+                    <sup className="text-[9px]">{pad.octave}</sup>
                   </span>
-                  <span className="text-[7px] text-textSub">{pad.factor}</span>
+                  <span className="text-[8px] text-textSub">{pad.factor}</span>
                 </motion.div>
 
                 {/* Ripple effect */}
@@ -323,12 +323,12 @@ export function OrganicFactorPads({ className }: { className?: string }) {
         </div>
       </div>
 
-      {/* Instructions - 更紧凑 */}
-      <div className="border-t border-ink/15 px-3 py-1.5 flex-shrink-0">
-        <p className="text-[9px] text-textSub truncate">
+      {/* Instructions */}
+      <div className="border-t border-ink/15 px-4 py-2">
+        <p className="text-[10px] text-textSub">
           {isZh
-            ? 'A S D F (内容) · J K L ; (文化) · Q W E R (情感)'
-            : 'A S D F (Content) · J K L ; (Culture) · Q W E R (Affect)'}
+            ? '按键: A S D F (内容) · J K L ; (文化) · Q W E R (情感)'
+            : 'Keys: A S D F (Content) · J K L ; (Culture) · Q W E R (Affect)'}
         </p>
       </div>
     </div>
