@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 import { useAccessibility } from '@/components/providers/accessibility-provider'
 import { useSceneStore } from '@/components/state/scene-store'
+import { songPoints } from '@/data/mock-data'
+import { buildFactorMetrics, factorSummaryEn, factorSummaryZh } from '@/lib/factor-mapping'
 import { cn } from '@/lib/utils'
 
 type Pulse = {
@@ -67,6 +69,69 @@ function noteToFrequency(note: string) {
   return 440 * Math.pow(2, (midi - 69) / 12)
 }
 
+function playVoice({
+  context,
+  master,
+  frequency,
+  type,
+  start,
+  duration,
+  attack,
+  release,
+  filterHz,
+  vibratoHz
+}: {
+  context: AudioContext
+  master: GainNode
+  frequency: number
+  type: OscillatorType
+  start: number
+  duration: number
+  attack: number
+  release: number
+  filterHz?: number
+  vibratoHz?: number
+}) {
+  const oscillator = context.createOscillator()
+  const gain = context.createGain()
+
+  oscillator.type = type
+  oscillator.frequency.setValueAtTime(frequency, start)
+
+  let filter: BiquadFilterNode | null = null
+  if (filterHz) {
+    filter = context.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.setValueAtTime(filterHz, start)
+    filter.Q.value = 0.85
+    oscillator.connect(filter)
+    filter.connect(gain)
+  } else {
+    oscillator.connect(gain)
+  }
+
+  if (vibratoHz) {
+    const vibrato = context.createOscillator()
+    const vibratoGain = context.createGain()
+    vibrato.type = 'sine'
+    vibrato.frequency.setValueAtTime(vibratoHz, start)
+    vibratoGain.gain.value = 8
+    vibrato.connect(vibratoGain)
+    vibratoGain.connect(oscillator.frequency)
+    vibrato.start(start)
+    vibrato.stop(start + duration + release + 0.08)
+  }
+
+  gain.gain.setValueAtTime(0.0001, start)
+  gain.gain.exponentialRampToValueAtTime(0.18, start + Math.max(0.01, attack))
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration + Math.max(0.05, release))
+
+  gain.connect(master)
+
+  oscillator.start(start)
+  oscillator.stop(start + duration + Math.max(0.05, release) + 0.08)
+}
+
 export function PulseConsole() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -81,8 +146,15 @@ export function PulseConsole() {
   const idRef = useRef(0)
   const { locale } = useAccessibility()
   const isZh = locale === 'zh'
-  const setAuditionFactor = useSceneStore((state) => state.setAuditionFactor)
+
+  const hoveredSongId = useSceneStore((state) => state.hoveredSongId)
+  const selectedSongId = useSceneStore((state) => state.selectedSongId)
   const auditionFactor = useSceneStore((state) => state.auditionFactor)
+  const setAuditionFactor = useSceneStore((state) => state.setAuditionFactor)
+  const setAuditionTrace = useSceneStore((state) => state.setAuditionTrace)
+
+  const activeSong = useMemo(() => songPoints.find((item) => item.id === (selectedSongId ?? hoveredSongId)) ?? songPoints[0], [hoveredSongId, selectedSongId])
+  const metrics = useMemo(() => buildFactorMetrics(activeSong), [activeSong])
 
   const keyMap = useMemo(() => new Map(pads.map((pad) => [pad.keyLabel, pad])), [])
 
@@ -99,7 +171,7 @@ export function PulseConsole() {
         const masterGain = context.createGain()
         const compressor = context.createDynamicsCompressor()
 
-        masterGain.gain.value = 0.22
+        masterGain.gain.value = 0.2
         compressor.threshold.value = -20
         compressor.knee.value = 20
         compressor.ratio.value = 8
@@ -142,31 +214,63 @@ export function PulseConsole() {
 
         const context = audioContextRef.current
         const now = context.currentTime
+        const baseFrequency = noteToFrequency(pad.note)
 
-        const oscillator = context.createOscillator()
-        const gain = context.createGain()
-
-        oscillator.type = pad.factor === 'zc' ? 'triangle' : pad.factor === 'zs' ? 'square' : 'sine'
-        oscillator.frequency.setValueAtTime(noteToFrequency(pad.note), now)
-
-        gain.gain.setValueAtTime(0.0001, now)
-        gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02)
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34)
-
-        oscillator.connect(gain)
-        gain.connect(masterGainRef.current)
-
-        oscillator.start(now)
-        oscillator.stop(now + 0.35)
+        if (pad.factor === 'zc') {
+          const ratios = metrics.melodySteps.slice(0, 4).map((value) => 0.82 + value * 0.7)
+          ratios.forEach((ratio, index) => {
+            playVoice({
+              context,
+              master: masterGainRef.current as GainNode,
+              frequency: baseFrequency * ratio,
+              type: 'triangle',
+              start: now + index * 0.085,
+              duration: 0.06,
+              attack: 0.01,
+              release: 0.06
+            })
+          })
+        } else if (pad.factor === 'zs') {
+          playVoice({
+            context,
+            master: masterGainRef.current,
+            frequency: baseFrequency * 0.95,
+            type: metrics.wave,
+            start: now,
+            duration: 0.2,
+            attack: 0.02,
+            release: 0.16,
+            filterHz: metrics.filterHz
+          })
+        } else {
+          playVoice({
+            context,
+            master: masterGainRef.current,
+            frequency: baseFrequency,
+            type: 'sine',
+            start: now,
+            duration: 0.24,
+            attack: metrics.attack,
+            release: metrics.release,
+            vibratoHz: metrics.vibratoHz
+          })
+        }
 
         setAuditionFactor(pad.factor)
+        setAuditionTrace({
+          factor: pad.factor,
+          summaryZh: factorSummaryZh(pad.factor, activeSong, metrics),
+          summaryEn: factorSummaryEn(pad.factor, activeSong, metrics),
+          timestamp: Date.now()
+        })
+
         if (clearFactorTimerRef.current) {
           window.clearTimeout(clearFactorTimerRef.current)
         }
-        clearFactorTimerRef.current = window.setTimeout(() => setAuditionFactor(null), 340)
+        clearFactorTimerRef.current = window.setTimeout(() => setAuditionFactor(null), 460)
 
         setActiveKey(pad.keyLabel)
-        window.setTimeout(() => setActiveKey((prev) => (prev === pad.keyLabel ? null : prev)), 130)
+        window.setTimeout(() => setActiveKey((prev) => (prev === pad.keyLabel ? null : prev)), 160)
 
         const rect = wrapRef.current?.getBoundingClientRect()
         if (rect) {
@@ -179,7 +283,7 @@ export function PulseConsole() {
         setAudioError(message)
       }
     },
-    [ensureAudio, setAuditionFactor, spawnRipple]
+    [activeSong, ensureAudio, metrics, setAuditionFactor, setAuditionTrace, spawnRipple]
   )
 
   useEffect(() => {
@@ -206,25 +310,22 @@ export function PulseConsole() {
     }
   }, [keyMap, setAuditionFactor, triggerPad])
 
-  const groups: Array<{ factor: FactorKey; label: string; color: string; keys: Pad[] }> = useMemo(
+  const groups: Array<{ factor: FactorKey; label: string; color: string }> = useMemo(
     () => [
       {
         factor: 'zc',
-        label: isZh ? 'zc 内容' : 'zc content',
-        color: '#ea4335',
-        keys: pads.filter((item) => item.factor === 'zc')
+        label: isZh ? 'zc 内容（旋律/节奏）' : 'zc content (melody/rhythm)',
+        color: '#ea4335'
       },
       {
         factor: 'zs',
-        label: isZh ? 'zs 文化' : 'zs culture',
-        color: '#188038',
-        keys: pads.filter((item) => item.factor === 'zs')
+        label: isZh ? 'zs 文化（音色/乐器）' : 'zs culture (timbre/instrument)',
+        color: '#188038'
       },
       {
         factor: 'za',
-        label: isZh ? 'za 情感' : 'za affect',
-        color: '#1a73e8',
-        keys: pads.filter((item) => item.factor === 'za')
+        label: isZh ? 'za 情感（包络/能量）' : 'za affect (envelope/energy)',
+        color: '#1a73e8'
       }
     ],
     [isZh]
@@ -246,10 +347,17 @@ export function PulseConsole() {
         <span className="sticker">{audioReady ? (isZh ? 'Audio Live' : 'audio live') : isZh ? 'Click Any Pad' : 'click any pad'}</span>
       </div>
 
+      <div className="mb-2 rounded-xl border border-ink/15 bg-white/85 px-3 py-2 text-xs text-textSub">
+        <span className="font-semibold text-textMain">{isZh ? '当前样本：' : 'Current sample:'}</span>
+        <span className="ml-2 text-textMain">{activeSong.title}</span>
+        <span className="ml-2">{activeSong.culture}</span>
+        <span className="ml-2">{activeSong.emotion}</span>
+      </div>
+
       <p className="mb-2 text-sm text-textSub">
         {isZh
-          ? '作用：通过键盘/点击触发 zc、zs、za 的试听通道，帮助你听见因子差异，并联动上方潜空间舞台。'
-          : 'Purpose: trigger zc, zs, and za audition channels by keyboard/click to hear factor differences and sync with the stage above.'}
+          ? '点击按键后，同一因子会同时驱动声音参数和上方舞台同色分镜。'
+          : 'Each trigger drives both audio parameters and the same-color stage lane above.'}
       </p>
 
       <div className="mb-2 rounded-xl border border-ink/15 bg-white/85 px-3 py-2 text-xs text-textSub">
@@ -267,6 +375,18 @@ export function PulseConsole() {
             <span className="ml-1">{group.label}</span>
           </div>
         ))}
+      </div>
+
+      <div className="mb-3 grid gap-2 md:grid-cols-3">
+        <div className="rounded-xl border border-zc/20 bg-zc/5 px-2.5 py-2 text-[11px] text-zc">
+          {isZh ? `zc 密度 ${Math.round(metrics.rhythmDensity * 100)}%` : `zc density ${Math.round(metrics.rhythmDensity * 100)}%`}
+        </div>
+        <div className="rounded-xl border border-zs/20 bg-zs/5 px-2.5 py-2 text-[11px] text-zs">
+          {isZh ? `zs 音色 ${metrics.cultureDescriptorZh}` : `zs timbre ${metrics.cultureDescriptorEn}`}
+        </div>
+        <div className="rounded-xl border border-za/20 bg-za/5 px-2.5 py-2 text-[11px] text-za">
+          {isZh ? `za 情绪 V ${metrics.zaValence.toFixed(2)} / A ${metrics.zaArousal.toFixed(2)}` : `za affect V ${metrics.zaValence.toFixed(2)} / A ${metrics.zaArousal.toFixed(2)}`}
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-2 md:gap-3">
@@ -317,6 +437,3 @@ export function PulseConsole() {
     </div>
   )
 }
-
-
-

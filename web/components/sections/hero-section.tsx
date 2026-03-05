@@ -3,13 +3,14 @@
 import dynamic from 'next/dynamic'
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDownRight, Layers3, Pointer, Workflow } from 'lucide-react'
+import { ArrowDownRight, Layers3, Workflow } from 'lucide-react'
 
 import { cultureNodes, otDemoRoutes, songPoints } from '@/data/mock-data'
 import { useSceneStore } from '@/components/state/scene-store'
 import { SongRadar } from '@/components/visuals/song-radar'
 import { PulseConsole } from '@/components/visuals/pulse-console'
 import { useAccessibility } from '@/components/providers/accessibility-provider'
+import { buildFactorMetrics } from '@/lib/factor-mapping'
 import { clamp, cn } from '@/lib/utils'
 
 type GalleryMode = 'observe' | 'disentangle' | 'transport'
@@ -36,6 +37,7 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
 
   const hoveredSongId = useSceneStore((state) => state.hoveredSongId)
   const selectedSongId = useSceneStore((state) => state.selectedSongId)
+  const auditionTrace = useSceneStore((state) => state.auditionTrace)
   const setSelectedSongId = useSceneStore((state) => state.setSelectedSongId)
   const setSeparation = useSceneStore((state) => state.setSeparation)
 
@@ -47,7 +49,13 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
   const [autoScene, setAutoScene] = useState(false)
   const [factorState, setFactorState] = useState<FactorState>({ zc: true, zs: true, za: true })
 
-  const hoveredSong = useMemo(() => songPoints.find((song) => song.id === (selectedSongId ?? hoveredSongId)) ?? null, [hoveredSongId, selectedSongId])
+  const filteredSongs = useMemo(() => {
+    const pool = cultureFilter === 'All' ? songPoints : songPoints.filter((song) => song.culture === cultureFilter)
+    return pool.length > 0 ? pool : songPoints
+  }, [cultureFilter])
+
+  const focusedSong = useMemo(() => filteredSongs.find((song) => song.id === (selectedSongId ?? hoveredSongId)) ?? filteredSongs[0], [filteredSongs, hoveredSongId, selectedSongId])
+  const focusedMetrics = useMemo(() => buildFactorMetrics(focusedSong), [focusedSong])
 
   const scenes = useMemo(
     () =>
@@ -114,28 +122,52 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
     })
   }
 
-  const signatureCards = isZh
+  const progressRows = isZh
     ? [
-        { key: 'ddrl', title: 'DDRL', caption: '三因子解纠缠', tone: 'from-zc/14 to-zc/5 border-zc/30 text-zc' },
-        { key: 'ot', title: 'OT', caption: '跨文化迁移', tone: 'from-zs/14 to-zs/5 border-zs/30 text-zs' },
-        { key: 'pal', title: 'PAL', caption: '人机反馈闭环', tone: 'from-za/14 to-za/5 border-za/30 text-za' }
+        {
+          key: 'zc',
+          label: 'zc 内容（旋律/节奏）',
+          value: focusedMetrics.zcStrength,
+          tone: 'bg-zc',
+          explain: '声音：脉冲密度  画面：顶层节奏块'
+        },
+        {
+          key: 'zs',
+          label: 'zs 文化（音色/乐器）',
+          value: focusedMetrics.zsStrength,
+          tone: 'bg-zs',
+          explain: '声音：文化音色  画面：中层音色谱'
+        },
+        {
+          key: 'za',
+          label: 'za 情感（能量/包络）',
+          value: (focusedMetrics.zaArousal + 1) / 2,
+          tone: 'bg-za',
+          explain: '声音：包络+颤音  画面：底层情绪坐标'
+        }
       ]
     : [
-        { key: 'ddrl', title: 'DDRL', caption: 'Tri-factor disentanglement', tone: 'from-zc/14 to-zc/5 border-zc/30 text-zc' },
-        { key: 'ot', title: 'OT', caption: 'Cross-cultural transfer', tone: 'from-zs/14 to-zs/5 border-zs/30 text-zs' },
-        { key: 'pal', title: 'PAL', caption: 'Human-in-the-loop feedback', tone: 'from-za/14 to-za/5 border-za/30 text-za' }
-      ]
-
-  const mechanismFlow = isZh
-    ? [
-        { key: 'input', title: '输入', body: '多文化音乐进入同一潜空间。' },
-        { key: 'split', title: '解纠缠', body: 'DDRL 分离 zc（内容）/ zs（文化）/ za（情感）。' },
-        { key: 'output', title: '输出', body: 'OT 对齐 + PAL 回灌，得到可解释跨文化推荐。' }
-      ]
-    : [
-        { key: 'input', title: 'Input', body: 'Multi-cultural tracks enter one latent space.' },
-        { key: 'split', title: 'Disentangle', body: 'DDRL separates zc (content), zs (culture), and za (affect).' },
-        { key: 'output', title: 'Output', body: 'OT alignment + PAL feedback yields explainable cross-cultural recs.' }
+        {
+          key: 'zc',
+          label: 'zc content (melody/rhythm)',
+          value: focusedMetrics.zcStrength,
+          tone: 'bg-zc',
+          explain: 'Audio: pulse density  Visual: top rhythm blocks'
+        },
+        {
+          key: 'zs',
+          label: 'zs culture (timbre/instrument)',
+          value: focusedMetrics.zsStrength,
+          tone: 'bg-zs',
+          explain: 'Audio: cultural timbre  Visual: middle spectrum lane'
+        },
+        {
+          key: 'za',
+          label: 'za affect (energy/envelope)',
+          value: (focusedMetrics.zaArousal + 1) / 2,
+          tone: 'bg-za',
+          explain: 'Audio: envelope + vibrato  Visual: bottom affect plane'
+        }
       ]
 
   return (
@@ -160,15 +192,6 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               <span className="rounded-full border border-za/30 bg-za/10 px-3 py-1 text-za">za</span>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-3">
-              {signatureCards.map((item) => (
-                <div key={item.key} className={cn('rounded-2xl border bg-gradient-to-b p-3', item.tone)}>
-                  <p className="font-display text-xl text-textMain">{item.title}</p>
-                  <p className="mt-1 text-xs text-textSub">{item.caption}</p>
-                </div>
-              ))}
-            </div>
-
             <div className="flex flex-wrap gap-3 pt-1">
               <button onClick={() => onNavigate('galaxy')} className="group rounded-full bg-za px-5 py-2.5 font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-glow">
                 {ctaPrimary}
@@ -179,44 +202,47 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               </button>
             </div>
 
-            <div className="rounded-2xl border border-ink/15 bg-white/85 p-3">
-              <div className="flex items-center gap-2 text-xs text-textSub">
-                <Pointer size={12} />
-                <span className="font-mono uppercase tracking-[0.1em]">{isZh ? '提示' : 'note'}</span>
+            <div className="rounded-2xl border border-ink/15 bg-white/88 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-display text-xl text-textMain">{isZh ? '当前解剖样本（Current Specimen）' : 'current specimen'}</p>
+                <span className="sticker">{focusedSong.title}</span>
               </div>
-              <p className="mt-1 text-sm text-textSub">{hint}</p>
+              <p className="mt-1 text-sm text-textSub">{focusedSong.culture} · {focusedSong.emotion}</p>
+
+              <div className="mt-3 space-y-2.5">
+                {progressRows.map((row) => (
+                  <div key={row.key}>
+                    <div className="flex items-center justify-between text-[11px] text-textSub">
+                      <span>{row.label}</span>
+                      <span>{Math.round(row.value * 100)}%</span>
+                    </div>
+                    <div className="mt-1 h-2.5 rounded-full bg-ink/10">
+                      <div className={cn('h-full rounded-full transition-all', row.tone)} style={{ width: `${Math.round(row.value * 100)}%` }} />
+                    </div>
+                    <p className="mt-1 text-[11px] text-textSub">{row.explain}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-3">
-              {mechanismFlow.map((item, index) => (
-                <div key={item.key} className="rounded-2xl border border-ink/15 bg-white/88 p-3">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-textSub">{isZh ? `步骤 ${index + 1}` : `STEP ${index + 1}`}</p>
-                  <p className="mt-1 font-display text-xl text-textMain">{item.title}</p>
-                  <p className="mt-1 text-xs text-textSub">{item.body}</p>
-                </div>
-              ))}
+            <div className="rounded-2xl border border-ink/15 bg-white/88 px-4 py-3 text-sm text-textSub">
+              <p className="font-semibold text-textMain">{isZh ? '最近一次联动（Audio ↔ Stage）' : 'latest linkage (audio ↔ stage)'}</p>
+              <p className="mt-1">{auditionTrace ? (isZh ? auditionTrace.summaryZh : auditionTrace.summaryEn) : hint}</p>
             </div>
 
-            {hoveredSong ? (
-              <div className="max-w-xl">
-                <SongRadar song={hoveredSong} />
-                {selectedSongId ? (
-                  <button className="mt-2 text-xs text-textSub underline decoration-dotted underline-offset-4" onClick={() => setSelectedSongId(null)}>
-                    {isZh ? '清除已选' : 'Clear selected'}
-                  </button>
-                ) : null}
-              </div>
-            ) : (
-              <div className="grid max-w-xl gap-2 sm:grid-cols-2">
-                <div className="rounded-2xl border border-ink/15 bg-white/85 px-4 py-3 text-sm text-textSub">{isZh ? '点击舞台中的任一点查看歌曲解剖卡。' : 'Click any point in the stage to inspect a song anatomy card.'}</div>
-                <div className="rounded-2xl border border-ink/15 bg-white/85 px-4 py-3 text-sm text-textSub">{isZh ? '右下角“交互潜变量乐器”用于试听 zc/zs/za，并同步高亮舞台对应轨道。' : 'The lower-right latent instrument lets you audition zc/zs/za and sync-highlight the stage lane.'}</div>
-              </div>
-            )}
+            <div className="max-w-xl">
+              <SongRadar song={focusedSong} />
+              {selectedSongId ? (
+                <button className="mt-2 text-xs text-textSub underline decoration-dotted underline-offset-4" onClick={() => setSelectedSongId(null)}>
+                  {isZh ? '清除已选' : 'Clear selected'}
+                </button>
+              ) : null}
+            </div>
           </motion.div>
 
           <div className="reveal-item space-y-4">
             <div className="relative overflow-hidden rounded-3xl paper-card">
-              <div className="absolute left-3 top-3 z-10 chapter-chip">{isZh ? '潜空间动态舞台' : 'latent motion stage'}</div>
+              <div className="absolute left-3 top-3 z-10 chapter-chip">{isZh ? '三因子联动分镜台' : 'tri-factor linked storyboard'}</div>
               <div className="absolute right-3 top-3 z-10 sticker">{galleryMode.toUpperCase()}</div>
 
               <div className="h-[58vh] md:h-[64vh]">
@@ -285,22 +311,12 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               </div>
             </div>
 
-            <div className="rounded-2xl border border-ink/15 bg-white/82 p-3 text-sm text-textSub">
-              <p className="font-display text-lg text-textMain">{isZh ? '交互潜变量乐器在做什么？' : 'What does the latent instrument do?'}</p>
-              <p className="mt-1">{isZh ? '每个按键都映射到 zc / zs / za 的一个通道。触发后会听到对应音色，并在上方舞台看到同色轨迹被即时强调。' : 'Each key maps to one zc / zs / za channel. Triggering it plays a matching timbre and instantly emphasizes the same-color lane in the stage above.'}</p>
-            </div>
-
             <PulseConsole />
           </div>
         </div>
       </div>
 
-      <p className="sr-only">{isZh ? '潜空间展厅已切换为动态分镜舞台。' : 'Latent gallery is now a dynamic storyboard stage.'}</p>
+      <p className="sr-only">{isZh ? '潜空间舞台与因子声音映射已改为同源联动展示。' : 'Latent stage and factor audio mapper now show source-linked behavior.'}</p>
     </section>
   )
 }
-
-
-
-
-
