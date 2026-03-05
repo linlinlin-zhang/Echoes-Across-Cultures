@@ -273,16 +273,16 @@ export function LatentExplorer({ className }: { className?: string }) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-4 min-h-0 overflow-auto">
+      <div className="flex-1 p-3 min-h-0 overflow-auto">
         {/* Culture filter */}
-        <div className="mb-3">
+        <div className="mb-2">
           <CultureRibbon selected={cultureFilter} onSelect={setCultureFilter} />
         </div>
 
         {viewMode === 'explore' ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {/* Scatter plot */}
-            <div className="h-24">
+            <div className="h-28">
               <LatentScatter
                 songs={filteredSongs}
                 selectedId={selectedSongId}

@@ -286,7 +286,7 @@ import { Wind, Waves, Flame } from 'lucide-react'
   return (
     <div className={`flex flex-col overflow-hidden rounded-3xl border border-ink/15 bg-white backdrop-blur-sm ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-ink/15 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-ink/15 px-3 py-2">
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-ink/10 px-3 py-1 text-xs font-medium text-textMain">
             {isZh ? '有机音景' : 'Organic Soundscape'}

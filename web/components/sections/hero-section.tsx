@@ -200,16 +200,16 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
       subtitle={lead}
       className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.35),transparent_35%)]"
     >
-      <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px] xl:items-start" style={{ minHeight: '600px' }}>
+      <div className="grid gap-4 xl:grid-cols-[300px_1fr_340px] xl:items-start">
         {/* Left panel - Factor controls & info */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="space-y-3"
+          className="flex flex-col gap-4"
         >
           {/* Factor cards */}
-          <div className="space-y-2.5">
+          <div className="flex flex-col gap-3">
             <FactorCard
               factor="zc"
               title={isZh ? '内容' : 'Content'}
@@ -348,9 +348,9 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
 
           {viewMode === 'immersive' ? (
-            <OrganicLatentNebula className="h-[540px] w-full" />
+            <OrganicLatentNebula className="h-[580px] w-full" />
           ) : (
-            <div className="relative h-[540px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
+            <div className="relative h-[580px] overflow-hidden rounded-3xl border border-ink/15 bg-white">
               <div className="flex h-full items-center justify-center text-textSub">
                 {isZh ? '经典模式开发中' : 'Classic mode coming soon'}
               </div>
@@ -379,16 +379,16 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="space-y-3"
+          className="flex flex-col gap-4"
         >
           {/* Latent Explorer */}
-          <LatentExplorer className="h-[200px]" />
+          <LatentExplorer className="h-[220px]" />
 
           {/* Audio Garden */}
-          <OrganicAudioGarden className="h-[160px]" />
+          <OrganicAudioGarden className="h-[180px]" />
 
           {/* Factor Pads */}
-          <OrganicFactorPads className="h-[180px]" />
+          <OrganicFactorPads className="h-[200px]" />
         </motion.div>
       </div>
 

@@ -240,7 +240,7 @@ export function OrganicFactorPads({ className }: { className?: string }) {
   return (
     <div className={`flex flex-col overflow-hidden rounded-3xl border border-ink/15 bg-white backdrop-blur-sm ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-ink/15 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-ink/15 px-3 py-2">
         <div className="flex items-center gap-2">
           <Volume2 size={14} className="text-textSub" />
           <span className="text-xs font-semibold text-textMain">
@@ -253,14 +253,14 @@ export function OrganicFactorPads({ className }: { className?: string }) {
       </div>
 
       {/* Pads area */}
-      <div className="relative flex-1 p-4 min-h-0">
+      <div className="relative flex-1 p-3 min-h-0">
         {/* Factor labels */}
         {Object.entries(factorGroups).map(([factor, config], index) => {
           const Icon = config.icon
           return (
             <div
               key={factor}
-              className="absolute top-4 flex items-center gap-1.5 text-[10px] font-medium"
+              className="absolute top-3 flex items-center gap-1.5 text-[10px] font-medium"
               style={{ left: `${index * 33.33 + 5}%`, color: config.color }}
             >
               <Icon size={10} />
