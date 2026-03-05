@@ -379,16 +379,16 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-3"
         >
-          {/* Latent Explorer */}
-          <LatentExplorer className="h-[220px]" />
+          {/* Latent Explorer - 增加高度避免截断 */}
+          <LatentExplorer className="h-[240px]" />
 
           {/* Audio Garden */}
-          <OrganicAudioGarden className="h-[180px]" />
+          <OrganicAudioGarden className="h-[170px]" />
 
-          {/* Factor Pads */}
-          <OrganicFactorPads className="h-[200px]" />
+          {/* Factor Pads - 增加高度并改为自适应布局 */}
+          <OrganicFactorPads className="h-[220px]" />
         </motion.div>
       </div>
 

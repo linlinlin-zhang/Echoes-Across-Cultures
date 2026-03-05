@@ -107,45 +107,42 @@ function FactorBreakdown({ song }: { song: typeof songPoints[0] }) {
       color: '#e85d4e',
       icon: '🎵',
       details: [
-        isZh ? `节奏密度 ${Math.round(metrics.rhythmDensity * 100)}%` : `Rhythm ${Math.round(metrics.rhythmDensity * 100)}%`,
-        isZh ? `旋律轮廓活跃` : 'Active Contour'
+        isZh ? `密度 ${Math.round(metrics.rhythmDensity * 100)}%` : `${Math.round(metrics.rhythmDensity * 100)}%`,
       ]
     },
     {
       key: 'zs',
       name: isZh ? '文化' : 'Culture',
-      fullName: song.culture,
+      fullName: song.culture.length > 8 ? song.culture.slice(0, 8) + '...' : song.culture,
       value: metrics.zsStrength,
       color: '#2d8a5e',
       icon: '🌍',
       details: [
-        isZh ? metrics.cultureDescriptorZh : metrics.cultureDescriptorEn,
-        isZh ? `音色特征明显` : 'Distinct Timbre'
+        isZh ? metrics.cultureDescriptorZh.slice(0, 6) : metrics.cultureDescriptorEn.slice(0, 10),
       ]
     },
     {
       key: 'za',
       name: isZh ? '情感' : 'Affect',
-      fullName: isZh ? '效价与唤醒' : 'Valence & Arousal',
+      fullName: isZh ? '效价与唤醒' : 'V & A',
       value: (metrics.zaArousal + 1) / 2,
       color: '#4a90d9',
       icon: '💫',
       details: [
-        `V: ${metrics.zaValence.toFixed(2)}`,
-        `A: ${metrics.zaArousal.toFixed(2)}`
+        `${metrics.zaValence.toFixed(1)}/${metrics.zaArousal.toFixed(1)}`,
       ]
     }
   ]
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {factors.map((factor, index) => (
         <motion.div
           key={factor.key}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: index * 0.1 }}
-          className="group relative overflow-hidden rounded-xl border border-ink/15 bg-ink/5 p-3 transition-all hover:bg-ink/10"
+          className="group relative overflow-hidden rounded-xl border border-ink/15 bg-ink/5 p-2 transition-all hover:bg-ink/10"
         >
           {/* Progress bar background */}
           <div
@@ -154,11 +151,11 @@ function FactorBreakdown({ song }: { song: typeof songPoints[0] }) {
           />
 
           <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">{factor.icon}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">{factor.icon}</span>
               <div>
-                <p className="text-xs font-semibold text-textMain">{factor.name}</p>
-                <p className="text-[10px] text-textSub">{factor.fullName}</p>
+                <p className="text-xs font-semibold text-textMain leading-tight">{factor.name}</p>
+                <p className="text-[9px] text-textSub truncate max-w-[100px]">{factor.fullName}</p>
               </div>
             </div>
 
@@ -167,15 +164,6 @@ function FactorBreakdown({ song }: { song: typeof songPoints[0] }) {
                 {Math.round(factor.value * 100)}%
               </p>
             </div>
-          </div>
-
-          {/* Detail tags */}
-          <div className="relative mt-2 flex flex-wrap gap-1">
-            {factor.details.map((detail, i) => (
-              <span key={i} className="rounded-full bg-ink/10 px-2 py-0.5 text-[8px] text-textSub">
-                {detail}
-              </span>
-            ))}
           </div>
         </motion.div>
       ))}

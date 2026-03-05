@@ -320,7 +320,7 @@ import { Wind, Waves, Flame } from 'lucide-react'
       </div>
 
       {/* Visualization area */}
-      <div className="relative flex-1 p-4 min-h-0">
+      <div className="relative flex-1 p-2 min-h-0">
         {mode === 'wind' && <WindVisualization cells={cells} intensity={intensity} factor={auditionFactor} />}
         {mode === 'water' && <WaterVisualization intensity={intensity} factor={auditionFactor} />}
         {mode === 'fire' && <FireVisualization intensity={intensity} factor={auditionFactor} />}

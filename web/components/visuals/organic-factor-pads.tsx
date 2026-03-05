@@ -252,70 +252,68 @@ export function OrganicFactorPads({ className }: { className?: string }) {
         </span>
       </div>
 
-      {/* Pads area */}
-      <div className="relative flex-1 p-3 min-h-0">
-        {/* Factor labels */}
-        {Object.entries(factorGroups).map(([factor, config], index) => {
-          const Icon = config.icon
-          return (
-            <div
-              key={factor}
-              className="absolute top-3 flex items-center gap-1.5 text-[10px] font-medium"
-              style={{ left: `${index * 33.33 + 5}%`, color: config.color }}
-            >
-              <Icon size={10} />
-              {config.label}
-            </div>
-          )
-        })}
+      {/* Pads area - 使用 flex 布局避免截断 */}
+      <div className="flex flex-col flex-1 p-3 min-h-0 gap-2">
+        {/* Factor labels row */}
+        <div className="flex justify-around">
+          {Object.entries(factorGroups).map(([factor, config]) => {
+            const Icon = config.icon
+            return (
+              <div
+                key={factor}
+                className="flex items-center gap-1 text-[10px] font-medium"
+                style={{ color: config.color }}
+              >
+                <Icon size={10} />
+                {config.label}
+              </div>
+            )
+          })}
+        </div>
 
-        {/* Organic pad layout */}
-        <div className="absolute inset-0 pt-8">
-          {pads.map((pad, index) => {
+        {/* Pads grid - 3行4列 */}
+        <div className="grid grid-cols-4 gap-2 flex-1">
+          {pads.map((pad) => {
             const isActive = activePads.has(pad.id)
             const factorConfig = factorGroups[pad.factor]
 
             return (
               <motion.button
                 key={pad.id}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  left: `${(index % 4) * 25 + 12.5}%`,
-                  top: `${Math.floor(index / 4) * 50 + 35}%`
-                }}
+                className="flex items-center justify-center w-full h-full"
                 onClick={() => triggerPad(pad)}
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <motion.div
-                  className="flex h-16 w-16 flex-col items-center justify-center rounded-2xl border transition-all"
+                  className="flex flex-col items-center justify-center rounded-xl border w-full h-full min-h-[48px]"
                   style={{
                     borderColor: isActive ? factorConfig.color : `${factorConfig.color}33`,
                     backgroundColor: isActive ? `${factorConfig.color}33` : `${factorConfig.color}11`,
-                    boxShadow: isActive ? `0 0 30px ${factorConfig.color}66` : 'none'
+                    boxShadow: isActive ? `0 0 20px ${factorConfig.color}44` : 'none'
                   }}
-                  animate={isActive ? { scale: [1, 1.1, 1] } : {}}
+                  animate={isActive ? { scale: [1, 1.05, 1] } : {}}
                 >
                   <span
-                    className="font-mono text-lg font-bold"
+                    className="font-mono text-sm font-bold"
                     style={{ color: factorConfig.color }}
                   >
                     {pad.note}
-                    {pad.octave}
+                    <sup className="text-[8px]">{pad.octave}</sup>
                   </span>
-                  <span className="text-[8px] text-textSub">{pad.factor}</span>
+                  <span className="text-[7px] text-textSub">{pad.factor}</span>
                 </motion.div>
 
                 {/* Ripple effect */}
                 <AnimatePresence>
                   {isActive && (
                     <motion.div
-                      className="pointer-events-none absolute inset-0 rounded-2xl"
+                      className="pointer-events-none absolute inset-0 rounded-xl"
                       style={{ borderColor: factorConfig.color, borderWidth: 2 }}
                       initial={{ scale: 1, opacity: 1 }}
-                      animate={{ scale: 2, opacity: 0 }}
+                      animate={{ scale: 1.5, opacity: 0 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
+                      transition={{ duration: 0.4 }}
                     />
                   )}
                 </AnimatePresence>
@@ -323,38 +321,6 @@ export function OrganicFactorPads({ className }: { className?: string }) {
             )
           })}
         </div>
-
-        {/* Connection lines visualization */}
-        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-20">
-          {activePads.size > 0 &&
-            Array.from(activePads).map((padId, i) => {
-              const pad = pads.find((p) => p.id === padId)
-              if (!pad) return null
-              const activeArray = Array.from(activePads)
-              const nextPadId = activeArray[i + 1]
-              if (!nextPadId) return null
-              const nextPad = pads.find((p) => p.id === nextPadId)
-              if (!nextPad) return null
-
-              const x1 = ((pads.indexOf(pad) % 4) * 25 + 12.5) + '%'
-              const y1 = (Math.floor(pads.indexOf(pad) / 4) * 50 + 35) + '%'
-              const x2 = ((pads.indexOf(nextPad) % 4) * 25 + 12.5) + '%'
-              const y2 = (Math.floor(pads.indexOf(nextPad) / 4) * 50 + 35) + '%'
-
-              return (
-                <line
-                  key={`line-${i}`}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={factorGroups[pad.factor].color}
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                />
-              )
-            })}
-        </svg>
       </div>
 
       {/* Instructions */}
