@@ -39,6 +39,7 @@ export function PulseConsole() {
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const [audioReady, setAudioReady] = useState(false)
+  const [audioError, setAudioError] = useState<string | null>(null)
   const [ripples, setRipples] = useState<Pulse[]>([])
   const idRef = useRef(0)
   const { locale } = useAccessibility()
@@ -47,15 +48,27 @@ export function PulseConsole() {
   const keyMap = useMemo(() => new Map(pads.map((pad) => [pad.keyLabel, pad])), [])
 
   const ensureAudio = useCallback(async () => {
-    if (audioReady) return
-    await Tone.start()
-    const synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle8' },
-      envelope: { attack: 0.02, decay: 0.2, sustain: 0.1, release: 0.35 }
-    }).toDestination()
-    synth.volume.value = -12
-    synthRef.current = synth
-    setAudioReady(true)
+    if (audioReady && synthRef.current) return true
+    try {
+      await Tone.start()
+      if (!synthRef.current) {
+        const synth = new Tone.PolySynth(Tone.Synth).toDestination()
+        synth.set({
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.02, decay: 0.2, sustain: 0.12, release: 0.35 }
+        })
+        synth.volume.value = -12
+        synthRef.current = synth
+      }
+      setAudioReady(true)
+      setAudioError(null)
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      setAudioReady(false)
+      setAudioError(message)
+      return false
+    }
   }, [audioReady])
 
   const spawnRipple = useCallback((x: number, y: number, color: string) => {
@@ -66,16 +79,25 @@ export function PulseConsole() {
 
   const triggerPad = useCallback(
     async (pad: Pad, point?: { x: number; y: number }) => {
-      await ensureAudio()
-      synthRef.current?.triggerAttackRelease(pad.note, '8n')
-      setActiveKey(pad.keyLabel)
-      window.setTimeout(() => setActiveKey((prev) => (prev === pad.keyLabel ? null : prev)), 130)
+      try {
+        const ready = await ensureAudio()
+        if (!ready) return
 
-      const rect = wrapRef.current?.getBoundingClientRect()
-      if (rect) {
-        const x = point?.x ?? rect.width * (0.12 + Math.random() * 0.76)
-        const y = point?.y ?? rect.height * (0.22 + Math.random() * 0.58)
-        spawnRipple(x, y, pad.color)
+        const safeNote = /^([A-G])(#{0,1}|b{0,1})([0-8])$/.test(pad.note) ? pad.note : 'C4'
+        synthRef.current?.triggerAttackRelease(safeNote, '8n')
+
+        setActiveKey(pad.keyLabel)
+        window.setTimeout(() => setActiveKey((prev) => (prev === pad.keyLabel ? null : prev)), 130)
+
+        const rect = wrapRef.current?.getBoundingClientRect()
+        if (rect) {
+          const x = point?.x ?? rect.width * (0.12 + Math.random() * 0.76)
+          const y = point?.y ?? rect.height * (0.22 + Math.random() * 0.58)
+          spawnRipple(x, y, pad.color)
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        setAudioError(message)
       }
     },
     [ensureAudio, spawnRipple]
@@ -87,7 +109,7 @@ export function PulseConsole() {
       const matched = keyMap.get(key)
       if (!matched) return
       event.preventDefault()
-      triggerPad(matched)
+      void triggerPad(matched)
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -115,7 +137,7 @@ export function PulseConsole() {
               key={pad.keyLabel}
               onClick={(event) => {
                 const rect = event.currentTarget.getBoundingClientRect()
-                triggerPad(pad, {
+                void triggerPad(pad, {
                   x: rect.left + rect.width / 2 - (wrapRef.current?.getBoundingClientRect().left ?? 0),
                   y: rect.top + rect.height / 2 - (wrapRef.current?.getBoundingClientRect().top ?? 0)
                 })
@@ -150,8 +172,8 @@ export function PulseConsole() {
           />
         ))}
       </AnimatePresence>
+
+      {audioError ? <div className="mt-3 rounded-xl border border-zc/35 bg-zc/10 px-3 py-2 text-xs text-zc">{isZh ? `音频触发异常（Audio Trigger Warning）：${audioError}` : `Audio trigger warning: ${audioError}`}</div> : null}
     </div>
   )
 }
-
-

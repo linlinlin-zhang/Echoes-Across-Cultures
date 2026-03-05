@@ -35,6 +35,8 @@ export function ProblemSection({ title }: { title: string }) {
   const [policyMode, setPolicyMode] = useState<PolicyMode>('balanced')
   const [explorationIntent, setExplorationIntent] = useState(0.58)
   const [storyAutoPlay, setStoryAutoPlay] = useState(false)
+  const [interventionEnabled, setInterventionEnabled] = useState(true)
+  const [repairBudget, setRepairBudget] = useState(0.66)
   const { locale } = useAccessibility()
   const isZh = locale === 'zh'
 
@@ -99,12 +101,26 @@ export function ProblemSection({ title }: { title: string }) {
   const babelData = useMemo(() => {
     const policy = policyAdjustments[policyMode]
     const intentShift = explorationIntent - 0.5
+    const budgetShift = repairBudget - 0.5
 
     return baseBabelData.map((item, index) => {
       const longTailBoost = index >= 2 ? 1.2 : 0.7
-      const relevance = clamp(item.relevance + policy.relevance + intentShift * 0.16 * (index === 0 ? -0.5 : 1), 0.05, 0.98)
-      const fairness = clamp(item.culturalFairness + policy.fairness + intentShift * 0.2 * longTailBoost, 0.05, 0.98)
-      const uncertainty = clamp(item.uncertainty + policy.uncertainty - intentShift * 0.12 * longTailBoost, 0.03, 0.99)
+
+      let relevance = clamp(item.relevance + policy.relevance + intentShift * 0.16 * (index === 0 ? -0.5 : 1), 0.05, 0.98)
+      let fairness = clamp(item.culturalFairness + policy.fairness + intentShift * 0.2 * longTailBoost, 0.05, 0.98)
+      let uncertainty = clamp(item.uncertainty + policy.uncertainty - intentShift * 0.12 * longTailBoost, 0.03, 0.99)
+
+      if (index === 3) {
+        if (interventionEnabled) {
+          relevance = clamp(relevance + 0.12 + budgetShift * 0.2, 0.05, 0.99)
+          fairness = clamp(fairness + 0.2 + budgetShift * 0.28, 0.05, 0.99)
+          uncertainty = clamp(uncertainty - 0.18 - budgetShift * 0.2, 0.02, 0.99)
+        } else {
+          relevance = clamp(baseBabelData[2].relevance + policy.relevance - 0.03 + intentShift * 0.08, 0.05, 0.98)
+          fairness = clamp(baseBabelData[2].culturalFairness + policy.fairness - 0.04 + intentShift * 0.05, 0.05, 0.96)
+          uncertainty = clamp(baseBabelData[2].uncertainty + policy.uncertainty + 0.07 - intentShift * 0.03, 0.03, 0.99)
+        }
+      }
 
       return {
         ...item,
@@ -114,7 +130,7 @@ export function ProblemSection({ title }: { title: string }) {
         uncertainty
       }
     })
-  }, [explorationIntent, isZh, policyMode])
+  }, [explorationIntent, interventionEnabled, isZh, policyMode, repairBudget])
 
   const highlight = useMemo(() => babelData[Math.min(active, babelData.length - 1)], [active, babelData])
 
@@ -123,6 +139,61 @@ export function ProblemSection({ title }: { title: string }) {
     { key: 'balanced', labelZh: '均衡策略', labelEn: 'Balanced' },
     { key: 'fairness', labelZh: '公平优先', labelEn: 'Fairness First' }
   ]
+
+  const diagnostic = useMemo(() => {
+    const fairnessGap = clamp(highlight.relevance - highlight.culturalFairness, 0, 1)
+    const uncertaintyRisk = highlight.uncertainty
+    const interventionGain = clamp(
+      highlight.culturalFairness - (babelData[2]?.culturalFairness ?? 0.2) + ((babelData[2]?.uncertainty ?? 0.6) - highlight.uncertainty) * 0.4,
+      0,
+      1
+    )
+
+    return [
+      {
+        label: isZh ? '公平缺口（Fairness Gap）' : 'Fairness Gap',
+        value: fairnessGap,
+        color: 'bg-zc',
+        hint: isZh ? '越低越好：相关性与公平性越接近。' : 'Lower is better: relevance and fairness stay closer.'
+      },
+      {
+        label: isZh ? '不确定风险（Uncertainty Risk）' : 'Uncertainty Risk',
+        value: uncertaintyRisk,
+        color: 'bg-za',
+        hint: isZh ? '越低越好：跨文化解释更稳定。' : 'Lower is better: cross-cultural interpretation is more stable.'
+      },
+      {
+        label: isZh ? '干预增益（Intervention Gain）' : 'Intervention Gain',
+        value: interventionGain,
+        color: 'bg-zs',
+        hint: isZh ? '越高越好：说明修复链路正在生效。' : 'Higher is better: intervention pathway is producing gains.'
+      }
+    ]
+  }, [babelData, highlight.culturalFairness, highlight.relevance, highlight.uncertainty, isZh])
+
+  const tacticalActions = useMemo(
+    () => [
+      {
+        id: 'act1',
+        title: isZh ? '提高 PAL 样本预算（Increase PAL budget）' : 'Increase PAL budget',
+        done: repairBudget >= 0.6,
+        desc: isZh ? '增加高不确定样本的人类标注，优先补齐长尾文化本体。' : 'Allocate more annotation effort to high-uncertainty and long-tail cultures.'
+      },
+      {
+        id: 'act2',
+        title: isZh ? '启用干预链路（Enable DDRL intervention）' : 'Enable DDRL intervention',
+        done: interventionEnabled,
+        desc: isZh ? '开启解纠缠 + OT + 约束回灌，避免“看似多样”但无几何修复。' : 'Enable disentanglement + OT + constraint feedback to avoid cosmetic diversity.'
+      },
+      {
+        id: 'act3',
+        title: isZh ? '保持探索意图 > 55%（Exploration > 55%）' : 'Keep exploration > 55%',
+        done: explorationIntent > 0.55,
+        desc: isZh ? '探索意图偏低会让推荐回到主流文化近邻。' : 'Low exploration pulls recommendations back to mainstream neighbors.'
+      }
+    ],
+    [explorationIntent, interventionEnabled, isZh, repairBudget]
+  )
 
   return (
     <SectionShell
@@ -183,6 +254,26 @@ export function ProblemSection({ title }: { title: string }) {
                   className="w-full accent-za"
                 />
               </label>
+
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between text-xs text-textSub">
+                    <span>{isZh ? '修复预算（Repair Budget）' : 'Repair Budget'}</span>
+                    <span>{(repairBudget * 100).toFixed(0)}%</span>
+                  </div>
+                  <input type="range" min={0} max={1} step={0.01} value={repairBudget} onChange={(event) => setRepairBudget(Number(event.target.value))} className="w-full accent-zs" />
+                </label>
+
+                <button
+                  onClick={() => setInterventionEnabled((prev) => !prev)}
+                  className={cn(
+                    'rounded-full border px-3 py-2 text-xs font-semibold transition',
+                    interventionEnabled ? 'border-zs/40 bg-zs/10 text-zs' : 'border-ink/20 bg-white text-textSub hover:text-textMain'
+                  )}
+                >
+                  {isZh ? (interventionEnabled ? '已启用干预（Intervention ON）' : '未启用干预（Intervention OFF）') : interventionEnabled ? 'Intervention ON' : 'Intervention OFF'}
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -201,7 +292,7 @@ export function ProblemSection({ title }: { title: string }) {
               ))}
             </div>
 
-            <div className="mt-4 h-[270px] rounded-2xl border border-ink/15 bg-white p-2">
+            <div className="mt-4 h-[250px] rounded-2xl border border-ink/15 bg-white p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={babelData} margin={{ left: 2, right: 2, top: 8, bottom: 4 }}>
                   <defs>
@@ -229,11 +320,38 @@ export function ProblemSection({ title }: { title: string }) {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+
+            <div className="mt-4 grid gap-2">
+              {diagnostic.map((item) => (
+                <div key={item.label} className="rounded-xl border border-ink/15 bg-white px-3 py-2">
+                  <div className="mb-1 flex items-center justify-between text-xs text-textSub">
+                    <span>{item.label}</span>
+                    <span>{(item.value * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-ink/10">
+                    <div className={cn('h-full rounded-full', item.color)} style={{ width: `${item.value * 100}%` }} />
+                  </div>
+                  <p className="mt-1 text-[11px] text-textSub">{item.hint}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="relative space-y-4">
           <div className="absolute bottom-0 left-[15px] top-0 hidden w-px bg-ink/12 md:block" />
+
+          <div className="reveal-item rounded-3xl border border-zs/25 bg-zs/5 p-4 md:ml-8">
+            <p className="chapter-chip">{isZh ? '修复动作清单（Repair Actions）' : 'repair actions'}</p>
+            <div className="mt-2 space-y-2 text-sm text-textSub">
+              {tacticalActions.map((action) => (
+                <p key={action.id} className={action.done ? 'text-zs' : ''}>
+                  {action.done ? '●' : '○'} {action.title} · {action.desc}
+                </p>
+              ))}
+            </div>
+          </div>
+
           {chapters.map((chapter, index) => (
             <article
               key={chapter.title}

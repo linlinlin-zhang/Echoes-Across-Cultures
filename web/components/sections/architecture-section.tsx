@@ -7,13 +7,38 @@ import { SectionShell } from '@/components/layout/section-shell'
 import { useAccessibility } from '@/components/providers/accessibility-provider'
 import { clamp, cn } from '@/lib/utils'
 
+type StepId = 'A' | 'B' | 'C' | 'D' | 'E'
+
+const impactByStep: Record<
+  StepId,
+  {
+    disentanglement: number
+    fairness: number
+    fidelity: number
+    serendipity: number
+  }
+> = {
+  A: { disentanglement: 0.12, fairness: 0.06, fidelity: 0.11, serendipity: 0.08 },
+  B: { disentanglement: 0.24, fairness: 0.08, fidelity: 0.06, serendipity: 0.09 },
+  C: { disentanglement: 0.2, fairness: 0.12, fidelity: 0.04, serendipity: 0.07 },
+  D: { disentanglement: 0.06, fairness: 0.26, fidelity: 0.02, serendipity: 0.18 },
+  E: { disentanglement: 0.05, fairness: 0.18, fidelity: 0.01, serendipity: 0.11 }
+}
+
 export function ArchitectureSection({ title }: { title: string }) {
   const { locale } = useAccessibility()
   const isZh = locale === 'zh'
   const [activeStep, setActiveStep] = useState(0)
   const [autoRun, setAutoRun] = useState(false)
+  const [componentsEnabled, setComponentsEnabled] = useState<Record<StepId, boolean>>({
+    A: true,
+    B: true,
+    C: true,
+    D: true,
+    E: true
+  })
 
-  const steps = isZh
+  const steps: Array<{ id: StepId; title: string; detail: string; accent: string }> = isZh
     ? [
         {
           id: 'A',
@@ -99,26 +124,101 @@ export function ArchitectureSection({ title }: { title: string }) {
         { key: 'za', desc: 'Valence-arousal trajectory', color: '#1a73e8' }
       ]
 
-  const liveSignals = useMemo(() => {
-    const t = activeStep / Math.max(1, steps.length - 1)
-    return [
+  const enabledCount = useMemo(() => Object.values(componentsEnabled).filter(Boolean).length, [componentsEnabled])
+
+  const dynamicSignals = useMemo(() => {
+    const baseline = {
+      disentanglement: 0.2,
+      fairness: 0.16,
+      fidelity: 0.62,
+      serendipity: 0.22
+    }
+
+    const scored = (Object.keys(componentsEnabled) as StepId[]).reduce(
+      (acc, key) => {
+        if (!componentsEnabled[key]) return acc
+        acc.disentanglement += impactByStep[key].disentanglement
+        acc.fairness += impactByStep[key].fairness
+        acc.fidelity += impactByStep[key].fidelity
+        acc.serendipity += impactByStep[key].serendipity
+        return acc
+      },
+      { ...baseline }
+    )
+
+    const stageT = activeStep / Math.max(1, steps.length - 1)
+
+    return {
+      disentanglement: clamp(scored.disentanglement + stageT * 0.05, 0, 0.99),
+      fairness: clamp(scored.fairness + stageT * 0.04, 0, 0.99),
+      fidelity: clamp(scored.fidelity - stageT * 0.05, 0, 0.99),
+      serendipity: clamp(scored.serendipity + stageT * 0.06, 0, 0.99)
+    }
+  }, [activeStep, componentsEnabled, steps.length])
+
+  const liveSignals = useMemo(
+    () => [
       {
         label: isZh ? '解耦度（Disentanglement）' : 'Disentanglement',
-        value: clamp(0.42 + t * 0.46, 0, 1),
+        value: dynamicSignals.disentanglement,
         color: 'bg-zc'
       },
       {
         label: isZh ? '公平增益（Fairness Gain）' : 'Fairness Gain',
-        value: clamp(0.28 + t * 0.58, 0, 1),
+        value: dynamicSignals.fairness,
         color: 'bg-zs'
       },
       {
         label: isZh ? '重建保真（Reconstruction Fidelity）' : 'Reconstruction Fidelity',
-        value: clamp(0.86 - t * 0.18, 0, 1),
+        value: dynamicSignals.fidelity,
         color: 'bg-za'
+      },
+      {
+        label: isZh ? '机缘巧合（Serendipity）' : 'Serendipity',
+        value: dynamicSignals.serendipity,
+        color: 'bg-zc'
       }
-    ]
-  }, [activeStep, isZh, steps.length])
+    ],
+    [dynamicSignals.disentanglement, dynamicSignals.fairness, dynamicSignals.fidelity, dynamicSignals.serendipity, isZh]
+  )
+
+  const benchmarkRows = useMemo(
+    () => [
+      {
+        name: isZh ? '标准 VAE（Standard VAE）' : 'Standard VAE',
+        disentanglement: 0.31,
+        fairness: 0.22,
+        serendipity: 0.34
+      },
+      {
+        name: isZh ? 'β-VAE' : 'β-VAE',
+        disentanglement: 0.46,
+        fairness: 0.28,
+        serendipity: 0.41
+      },
+      {
+        name: isZh ? 'FactorVAE' : 'FactorVAE',
+        disentanglement: 0.52,
+        fairness: 0.33,
+        serendipity: 0.45
+      },
+      {
+        name: isZh ? '当前配置（Current Config）' : 'Current Config',
+        disentanglement: dynamicSignals.disentanglement,
+        fairness: dynamicSignals.fairness,
+        serendipity: dynamicSignals.serendipity
+      }
+    ],
+    [dynamicSignals.disentanglement, dynamicSignals.fairness, dynamicSignals.serendipity, isZh]
+  )
+
+  const toggleComponent = (id: StepId) => {
+    setComponentsEnabled((prev) => {
+      const next = { ...prev, [id]: !prev[id] }
+      if (Object.values(next).some(Boolean)) return next
+      return prev
+    })
+  }
 
   return (
     <SectionShell
@@ -134,7 +234,11 @@ export function ArchitectureSection({ title }: { title: string }) {
       <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="reveal-item xl:sticky xl:top-24 xl:h-fit">
           <div className="paper-card rounded-3xl p-6">
-            <span className="chapter-chip">{isZh ? '训练目标（Objective Function）' : 'objective function'}</span>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="chapter-chip">{isZh ? '训练目标（Objective Function）' : 'objective function'}</span>
+              <span className="sticker">{isZh ? `${enabledCount}/5 模块启用（Modules ON）` : `${enabledCount}/5 modules on`}</span>
+            </div>
+
             <h3 className="mt-3 font-display text-3xl text-textMain">{isZh ? '三因子学习核心（Three-Factor Learning Core）' : 'Three-Factor Learning Core'}</h3>
 
             <div className="mt-4 rounded-2xl border border-ink/15 bg-white p-4 font-mono text-xs text-textSub">
@@ -177,7 +281,22 @@ export function ArchitectureSection({ title }: { title: string }) {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {steps.map((step) => (
+                  <button
+                    key={`switch-${step.id}`}
+                    onClick={() => toggleComponent(step.id)}
+                    className={cn(
+                      'rounded-xl border px-2.5 py-2 text-left text-xs transition',
+                      componentsEnabled[step.id] ? 'border-zs/35 bg-zs/10 text-zs' : 'border-ink/20 bg-white text-textSub hover:text-textMain'
+                    )}
+                  >
+                    <span className="font-semibold">{step.id}</span> · {componentsEnabled[step.id] ? (isZh ? '启用中（ON）' : 'ON') : isZh ? '已关闭（OFF）' : 'OFF'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 space-y-2">
                 {liveSignals.map((signal) => (
                   <div key={signal.label}>
                     <div className="mb-1 flex items-center justify-between text-xs text-textSub">
@@ -197,37 +316,66 @@ export function ArchitectureSection({ title }: { title: string }) {
                 ? '评估目标：在保持跨文化语义一致性的前提下，同时提升机缘巧合性（Serendipity）与少数文化曝光。'
                 : 'Evaluation target: raise serendipity and minority exposure while preserving cross-cultural semantic fidelity.'}
             </div>
+
+            <div className="mt-4 rounded-2xl border border-ink/15 bg-white p-3">
+              <p className="font-mono text-xs text-textSub">{isZh ? '对比基线（Baseline Comparison）' : 'Baseline Comparison'}</p>
+              <div className="mt-2 space-y-2 text-xs text-textSub">
+                {benchmarkRows.map((row) => (
+                  <div key={row.name} className="rounded-xl border border-ink/12 bg-white px-2.5 py-2">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-textMain">{row.name}</span>
+                      <span>S {(row.serendipity * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="h-1 rounded-full bg-ink/10">
+                      <div className="h-full rounded-full bg-zc" style={{ width: `${row.disentanglement * 100}%` }} />
+                    </div>
+                    <div className="mt-1 h-1 rounded-full bg-ink/10">
+                      <div className="h-full rounded-full bg-zs" style={{ width: `${row.fairness * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="space-y-3">
-          {steps.map((step, index) => (
-            <motion.article
-              key={step.id}
-              onClick={() => setActiveStep(index)}
-              className={cn(
-                `reveal-item rounded-3xl border border-ink/15 bg-white/85 p-5 ${step.accent} border-l-[6px] ${index % 2 ? 'md:ml-10' : 'md:mr-10'} cursor-pointer`,
-                activeStep === index ? 'ring-2 ring-za/30' : ''
-              )}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-10% 0px -10% 0px' }}
-              transition={{ duration: 0.45, delay: index * 0.06 }}
-            >
-              <div className="flex items-start gap-3">
-                <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl font-mono text-xs', activeStep === index ? 'bg-za/15 text-za' : 'bg-ink/5 text-textSub')}>
-                  {step.id}
-                </span>
-                <div className="w-full">
-                  <h4 className="font-display text-2xl text-textMain">{step.title}</h4>
-                  <p className="mt-2 text-base leading-relaxed text-textSub">{step.detail}</p>
-                  <div className="mt-3 h-1.5 rounded-full bg-ink/10">
-                    <div className="h-full rounded-full bg-za transition-all" style={{ width: `${activeStep >= index ? 100 : 15}%` }} />
+          {steps.map((step, index) => {
+            const enabled = componentsEnabled[step.id]
+            return (
+              <motion.article
+                key={step.id}
+                onClick={() => setActiveStep(index)}
+                className={cn(
+                  `reveal-item rounded-3xl border border-ink/15 bg-white/85 p-5 ${step.accent} border-l-[6px] ${index % 2 ? 'md:ml-10' : 'md:mr-10'} cursor-pointer`,
+                  activeStep === index ? 'ring-2 ring-za/30' : '',
+                  enabled ? '' : 'opacity-45 grayscale'
+                )}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-10% 0px -10% 0px' }}
+                transition={{ duration: 0.45, delay: index * 0.06 }}
+              >
+                <div className="flex items-start gap-3">
+                  <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl font-mono text-xs', activeStep === index ? 'bg-za/15 text-za' : 'bg-ink/5 text-textSub')}>
+                    {step.id}
+                  </span>
+                  <div className="w-full">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-display text-2xl text-textMain">{step.title}</h4>
+                      <span className={cn('rounded-full border px-2 py-0.5 text-[11px]', enabled ? 'border-zs/35 bg-zs/10 text-zs' : 'border-ink/20 bg-white text-textSub')}>
+                        {enabled ? (isZh ? '启用（ON）' : 'ON') : isZh ? '关闭（OFF）' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-base leading-relaxed text-textSub">{step.detail}</p>
+                    <div className="mt-3 h-1.5 rounded-full bg-ink/10">
+                      <div className="h-full rounded-full bg-za transition-all" style={{ width: `${activeStep >= index && enabled ? 100 : enabled ? 28 : 8}%` }} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.article>
-          ))}
+              </motion.article>
+            )
+          })}
         </div>
       </div>
     </SectionShell>
