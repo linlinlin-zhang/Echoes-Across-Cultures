@@ -52,7 +52,7 @@ function FactorCard({
     <motion.button
       onClick={onClick}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 min-h-[120px]',
+        'group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300',
         isActive
           ? 'border-za/40 bg-white shadow-[0_10px_26px_rgba(26,115,232,0.14)]'
           : 'paper-card hover:border-ink/35'
@@ -297,7 +297,7 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           </div>
 
           {/* Audio Garden - 移到左侧，高度与右侧对齐 */}
-          <OrganicAudioGarden className="h-[260px]" />
+          <OrganicAudioGarden className="h-[220px]" />
         </motion.div>
 
         {/* Center - Main visualization */}
