@@ -114,6 +114,18 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
     })
   }
 
+  const signatureCards = isZh
+    ? [
+        { key: 'ddrl', title: 'DDRL', caption: '三因子解纠缠', tone: 'from-zc/14 to-zc/5 border-zc/30 text-zc' },
+        { key: 'ot', title: 'OT', caption: '跨文化迁移', tone: 'from-zs/14 to-zs/5 border-zs/30 text-zs' },
+        { key: 'pal', title: 'PAL', caption: '人机反馈闭环', tone: 'from-za/14 to-za/5 border-za/30 text-za' }
+      ]
+    : [
+        { key: 'ddrl', title: 'DDRL', caption: 'Tri-factor disentanglement', tone: 'from-zc/14 to-zc/5 border-zc/30 text-zc' },
+        { key: 'ot', title: 'OT', caption: 'Cross-cultural transfer', tone: 'from-zs/14 to-zs/5 border-zs/30 text-zs' },
+        { key: 'pal', title: 'PAL', caption: 'Human-in-the-loop feedback', tone: 'from-za/14 to-za/5 border-za/30 text-za' }
+      ]
+
   return (
     <section id="hero" ref={sectionRef} data-section-id="hero" className="relative min-h-screen overflow-hidden px-4 pb-10 pt-28 md:px-10" aria-labelledby="hero-title">
       <div className="mx-auto max-w-7xl">
@@ -134,6 +146,15 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
               <span className="rounded-full border border-zc/30 bg-zc/10 px-3 py-1 text-zc">zc</span>
               <span className="rounded-full border border-zs/30 bg-zs/10 px-3 py-1 text-zs">zs</span>
               <span className="rounded-full border border-za/30 bg-za/10 px-3 py-1 text-za">za</span>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-3">
+              {signatureCards.map((item) => (
+                <div key={item.key} className={cn('rounded-2xl border bg-gradient-to-b p-3', item.tone)}>
+                  <p className="font-display text-xl text-textMain">{item.title}</p>
+                  <p className="mt-1 text-xs text-textSub">{item.caption}</p>
+                </div>
+              ))}
             </div>
 
             <div className="flex flex-wrap gap-3 pt-1">
@@ -163,7 +184,9 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
                   </button>
                 ) : null}
               </div>
-            ) : null}
+            ) : (
+              <div className="max-w-xl rounded-2xl border border-ink/15 bg-white/85 px-4 py-3 text-sm text-textSub">{isZh ? '点击舞台中的任一点查看歌曲解剖卡。' : 'Click any point in the stage to inspect a song anatomy card.'}</div>
+            )}
           </motion.div>
 
           <div className="reveal-item space-y-4">
@@ -246,4 +269,3 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
     </section>
   )
 }
-

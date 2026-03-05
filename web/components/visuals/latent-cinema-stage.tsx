@@ -79,6 +79,7 @@ export function LatentCinemaStage({ galleryMode, cultureFilter, factorState, rou
 
   const hoveredSongId = useSceneStore((state) => state.hoveredSongId)
   const selectedSongId = useSceneStore((state) => state.selectedSongId)
+  const auditionFactor = useSceneStore((state) => state.auditionFactor)
   const setHoveredSongId = useSceneStore((state) => state.setHoveredSongId)
   const setSelectedSongId = useSceneStore((state) => state.setSelectedSongId)
 
@@ -199,21 +200,24 @@ export function LatentCinemaStage({ galleryMode, cultureFilter, factorState, rou
 
         <rect x={0} y={0} width={stage.width} height={stage.height} fill={`rgba(26,115,232,${sceneFlash})`} />
 
-        {(['zc', 'zs', 'za'] as const).map((factor) => (
-          <g key={`lane-${factor}`}>
-            <polyline
-              points={ribbons[factor]}
-              fill="none"
-              stroke={colorByFactor[factor]}
-              strokeWidth={factorState[factor] ? 2.4 : 1}
-              strokeOpacity={factorState[factor] ? 0.34 : 0.1}
-              filter="url(#softGlow)"
-            />
-            <text x={26} y={laneY(galleryMode, factor) - 12} fontSize={11} fill={colorByFactor[factor]} opacity={factorState[factor] ? 0.7 : 0.35}>
-              {laneNameByFactor[factor]}
-            </text>
-          </g>
-        ))}
+        {(['zc', 'zs', 'za'] as const).map((factor) => {
+          const emphasized = auditionFactor === factor
+          return (
+            <g key={`lane-${factor}`}>
+              <polyline
+                points={ribbons[factor]}
+                fill="none"
+                stroke={colorByFactor[factor]}
+                strokeWidth={factorState[factor] ? (emphasized ? 4.4 : 2.4) : 1}
+                strokeOpacity={factorState[factor] ? (emphasized ? 0.78 : 0.34) : 0.1}
+                filter="url(#softGlow)"
+              />
+              <text x={26} y={laneY(galleryMode, factor) - 12} fontSize={11} fill={colorByFactor[factor]} opacity={factorState[factor] ? (emphasized ? 1 : 0.7) : 0.35}>
+                {laneNameByFactor[factor]}
+              </text>
+            </g>
+          )
+        })}
 
         {galleryMode === 'transport' && transferPolyline ? (
           <polyline points={transferPolyline} fill="none" stroke="#188038" strokeWidth={4} strokeOpacity={0.48} strokeDasharray="14 8" filter="url(#softGlow)" />
@@ -225,17 +229,18 @@ export function LatentCinemaStage({ galleryMode, cultureFilter, factorState, rou
 
           const highlighted = selectedSongId === dot.song.id || hoveredSongId === dot.song.id
           const routed = galleryMode === 'transport' && routeSet.has(dot.song.culture)
+          const emphasized = auditionFactor === dot.factor
 
           return (
             <circle
               key={dot.id}
               cx={dot.x}
               cy={dot.y}
-              r={highlighted ? 5.4 : routed ? 3.8 : 2.9}
+              r={highlighted ? 5.4 : emphasized ? 4.4 : routed ? 3.8 : 2.9}
               fill={colorByFactor[dot.factor]}
-              fillOpacity={highlighted ? 1 : routed ? 0.9 : 0.7}
-              stroke={highlighted ? '#0f172a' : 'none'}
-              strokeWidth={highlighted ? 1.4 : 0}
+              fillOpacity={highlighted ? 1 : emphasized ? 0.96 : routed ? 0.9 : 0.7}
+              stroke={highlighted ? '#0f172a' : emphasized ? '#ffffff' : 'none'}
+              strokeWidth={highlighted ? 1.4 : emphasized ? 0.8 : 0}
               onMouseEnter={() => setHoveredSongId(dot.song.id)}
               onMouseLeave={() => setHoveredSongId(null)}
               onClick={() => setSelectedSongId(dot.song.id)}

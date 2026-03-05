@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { useAccessibility } from '@/components/providers/accessibility-provider'
+import { useSceneStore } from '@/components/state/scene-store'
+import { cn } from '@/lib/utils'
 
 type Pulse = {
   id: number
@@ -12,21 +14,24 @@ type Pulse = {
   color: string
 }
 
+type FactorKey = 'zc' | 'zs' | 'za'
+
 type Pad = {
   keyLabel: string
   note: string
   color: string
+  factor: FactorKey
 }
 
 const pads: Pad[] = [
-  { keyLabel: 'A', note: 'C4', color: '#ea4335' },
-  { keyLabel: 'S', note: 'D4', color: '#fbbc04' },
-  { keyLabel: 'D', note: 'E4', color: '#188038' },
-  { keyLabel: 'F', note: 'G4', color: '#4285f4' },
-  { keyLabel: 'J', note: 'A4', color: '#1a73e8' },
-  { keyLabel: 'K', note: 'B4', color: '#a142f4' },
-  { keyLabel: 'L', note: 'D5', color: '#e52592' },
-  { keyLabel: ';', note: 'E5', color: '#34a853' }
+  { keyLabel: 'A', note: 'C4', color: '#ea4335', factor: 'zc' },
+  { keyLabel: 'S', note: 'D4', color: '#ea4335', factor: 'zc' },
+  { keyLabel: 'D', note: 'E4', color: '#188038', factor: 'zs' },
+  { keyLabel: 'F', note: 'G4', color: '#188038', factor: 'zs' },
+  { keyLabel: 'J', note: 'A4', color: '#1a73e8', factor: 'za' },
+  { keyLabel: 'K', note: 'B4', color: '#1a73e8', factor: 'za' },
+  { keyLabel: 'L', note: 'D5', color: '#1a73e8', factor: 'za' },
+  { keyLabel: ';', note: 'E5', color: '#1a73e8', factor: 'za' }
 ]
 
 const semitoneMap: Record<string, number> = {
@@ -66,6 +71,7 @@ export function PulseConsole() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const masterGainRef = useRef<GainNode | null>(null)
+  const clearFactorTimerRef = useRef<number | null>(null)
 
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const [audioReady, setAudioReady] = useState(false)
@@ -75,6 +81,8 @@ export function PulseConsole() {
   const idRef = useRef(0)
   const { locale } = useAccessibility()
   const isZh = locale === 'zh'
+  const setAuditionFactor = useSceneStore((state) => state.setAuditionFactor)
+  const auditionFactor = useSceneStore((state) => state.auditionFactor)
 
   const keyMap = useMemo(() => new Map(pads.map((pad) => [pad.keyLabel, pad])), [])
 
@@ -91,7 +99,7 @@ export function PulseConsole() {
         const masterGain = context.createGain()
         const compressor = context.createDynamicsCompressor()
 
-        masterGain.gain.value = 0.2
+        masterGain.gain.value = 0.22
         compressor.threshold.value = -20
         compressor.knee.value = 20
         compressor.ratio.value = 8
@@ -138,7 +146,7 @@ export function PulseConsole() {
         const oscillator = context.createOscillator()
         const gain = context.createGain()
 
-        oscillator.type = 'triangle'
+        oscillator.type = pad.factor === 'zc' ? 'triangle' : pad.factor === 'zs' ? 'square' : 'sine'
         oscillator.frequency.setValueAtTime(noteToFrequency(pad.note), now)
 
         gain.gain.setValueAtTime(0.0001, now)
@@ -150,6 +158,12 @@ export function PulseConsole() {
 
         oscillator.start(now)
         oscillator.stop(now + 0.35)
+
+        setAuditionFactor(pad.factor)
+        if (clearFactorTimerRef.current) {
+          window.clearTimeout(clearFactorTimerRef.current)
+        }
+        clearFactorTimerRef.current = window.setTimeout(() => setAuditionFactor(null), 340)
 
         setActiveKey(pad.keyLabel)
         window.setTimeout(() => setActiveKey((prev) => (prev === pad.keyLabel ? null : prev)), 130)
@@ -165,7 +179,7 @@ export function PulseConsole() {
         setAudioError(message)
       }
     },
-    [ensureAudio, spawnRipple]
+    [ensureAudio, setAuditionFactor, spawnRipple]
   )
 
   useEffect(() => {
@@ -180,19 +194,56 @@ export function PulseConsole() {
     window.addEventListener('keydown', onKeyDown)
     return () => {
       window.removeEventListener('keydown', onKeyDown)
+      if (clearFactorTimerRef.current) {
+        window.clearTimeout(clearFactorTimerRef.current)
+      }
+      setAuditionFactor(null)
       if (audioContextRef.current) {
         void audioContextRef.current.close()
         audioContextRef.current = null
         masterGainRef.current = null
       }
     }
-  }, [keyMap, triggerPad])
+  }, [keyMap, setAuditionFactor, triggerPad])
+
+  const groups: Array<{ factor: FactorKey; label: string; color: string; keys: Pad[] }> = useMemo(
+    () => [
+      {
+        factor: 'zc',
+        label: isZh ? 'zc 内容' : 'zc content',
+        color: '#ea4335',
+        keys: pads.filter((item) => item.factor === 'zc')
+      },
+      {
+        factor: 'zs',
+        label: isZh ? 'zs 文化' : 'zs culture',
+        color: '#188038',
+        keys: pads.filter((item) => item.factor === 'zs')
+      },
+      {
+        factor: 'za',
+        label: isZh ? 'za 情感' : 'za affect',
+        color: '#1a73e8',
+        keys: pads.filter((item) => item.factor === 'za')
+      }
+    ],
+    [isZh]
+  )
 
   return (
     <div ref={wrapRef} className="relative overflow-hidden rounded-3xl paper-card p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="chapter-chip">{isZh ? '交互潜变量乐器' : 'interactive latent instrument'}</span>
+        <span className="chapter-chip">{isZh ? '因子声音映射台（Factor Audio Mapper）' : 'factor audio mapper'}</span>
         <span className="sticker">{audioReady ? (isZh ? 'Audio Live' : 'audio live') : isZh ? 'Click Any Pad' : 'click any pad'}</span>
+      </div>
+
+      <div className="mb-2 grid gap-2 md:grid-cols-3">
+        {groups.map((group) => (
+          <div key={group.factor} className={cn('rounded-xl border px-2 py-1.5 text-[11px] font-semibold transition', auditionFactor === group.factor ? 'border-ink/30 bg-white text-textMain' : 'border-ink/15 bg-white/70 text-textSub')}>
+            <span className="inline-flex h-2 w-2 rounded-full" style={{ background: group.color }} />
+            <span className="ml-1">{group.label}</span>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-4 gap-2 md:gap-3">
@@ -218,6 +269,7 @@ export function PulseConsole() {
                   {pad.keyLabel}
                 </div>
                 <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-textSub">{pad.note}</div>
+                <div className="mt-1 text-[10px] text-textSub">{pad.factor}</div>
               </div>
             </button>
           )
