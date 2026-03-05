@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
@@ -26,8 +26,6 @@ export function SoundscapePage() {
   const copy = useMemo(() => copyByLocale[locale], [locale])
 
   useEffect(() => {
-    const observers: IntersectionObserver[] = []
-
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -46,10 +44,9 @@ export function SoundscapePage() {
 
     const sections = document.querySelectorAll<HTMLElement>('[data-section-id]')
     sections.forEach((section) => observer.observe(section))
-    observers.push(observer)
 
     return () => {
-      observers.forEach((item) => item.disconnect())
+      observer.disconnect()
     }
   }, [])
 
@@ -63,15 +60,15 @@ export function SoundscapePage() {
       gsap.utils.toArray<HTMLElement>('.reveal-item').forEach((item) => {
         gsap.fromTo(
           item,
-          { opacity: 0, y: 26 },
+          { opacity: 0, y: 30 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.7,
+            duration: 0.75,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: item,
-              start: 'top 80%',
+              start: 'top 82%',
               end: 'bottom 20%',
               toggleActions: 'play none none reverse'
             }
@@ -90,9 +87,10 @@ export function SoundscapePage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-deepGradient text-textMain">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_80%,rgba(255,107,107,.18),transparent_38%),radial-gradient(circle_at_85%_20%,rgba(78,205,196,.16),transparent_32%)]" />
-      <div className="pointer-events-none fixed inset-0 z-0 opacity-40 [background:linear-gradient(rgba(136,146,176,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(136,146,176,.08)_1px,transparent_1px)] [background-size:40px_40px]" />
+    <div className="relative min-h-screen text-textMain">
+      <div className="star-fog" />
+      <div className="noise-mask" />
+      <div className="pointer-events-none fixed inset-0 z-[2] opacity-30 grid-hud" />
 
       <TopNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
       <SideNav labels={copy.nav} activeSection={activeSection} onNavigate={scrollToSection} />
@@ -116,13 +114,13 @@ export function SoundscapePage() {
       </main>
 
       <motion.footer
-        className="relative z-10 border-t border-white/10 bg-black/45 px-4 py-8 md:px-10"
+        className="relative z-10 border-t border-white/10 bg-black/50 px-4 py-8 md:px-10"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs text-textSub">
-          <p>Soundscape Without Borders · DDRL / OT / PAL showcase</p>
+          <p>Soundscape Without Borders · Exhibition-grade interactive research website</p>
           <p>
             Accessibility: {highContrast ? 'High Contrast On' : 'Standard Contrast'} · {reduceMotion ? 'Reduced Motion On' : 'Motion On'}
           </p>

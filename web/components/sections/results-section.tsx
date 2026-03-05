@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import dynamic from 'next/dynamic'
 
@@ -17,7 +17,7 @@ export function ResultsSection({ title }: { title: string }) {
     <SectionShell
       id="results"
       title={title}
-      subtitle="Compare baseline recommendation behavior with DDRL + OT trajectories under serendipity and fairness objectives."
+      subtitle="A comparative control deck inspired by data journalism: every number has a story, and every story has a fairness cost."
     >
       <RecommendationDemo />
     </SectionShell>

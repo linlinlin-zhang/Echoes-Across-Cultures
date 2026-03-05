@@ -1,20 +1,21 @@
-﻿'use client'
+'use client'
 
 import dynamic from 'next/dynamic'
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
 import { useMemo, useRef } from 'react'
-import { ArrowDownRight, Sparkle } from 'lucide-react'
+import { ArrowDownRight, Compass, Joystick, Orbit } from 'lucide-react'
 
 import { songPoints } from '@/data/mock-data'
 import { useSceneStore } from '@/components/state/scene-store'
 import { SongRadar } from '@/components/visuals/song-radar'
+import { PulseConsole } from '@/components/visuals/pulse-console'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
 const LatentSpaceCanvas = dynamic(
   () => import('@/components/visuals/latent-space-canvas').then((mod) => mod.LatentSpaceCanvas),
   {
     ssr: false,
-    loading: () => <div className="h-[62vh] animate-pulse rounded-3xl bg-white/10" />
+    loading: () => <div className="h-[58vh] animate-pulse rounded-3xl bg-white/10" />
   }
 )
 
@@ -47,7 +48,7 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
   })
 
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setSeparation(Math.min(1, value * 1.35))
+    setSeparation(Math.min(1, value * 1.45))
   })
 
   return (
@@ -55,44 +56,60 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
       id="hero"
       ref={sectionRef}
       data-section-id="hero"
-      className="relative min-h-screen overflow-hidden px-4 pt-28 md:px-10"
+      className="relative min-h-screen overflow-hidden px-4 pb-8 pt-28 md:px-10"
       aria-labelledby="hero-title"
     >
-      <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <motion.div
-          className="reveal-item space-y-6"
-          initial={{ opacity: 0, y: 30 }}
+          className="reveal-item space-y-5"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-zs/40 bg-zs/10 px-3 py-1 text-xs font-mono tracking-wide text-zs">
-            <Sparkle size={13} />
-            Deep Disentanglement Representation Learning
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 panel-glass px-3 py-1 font-mono text-[11px] uppercase tracking-[0.24em] text-zs">
+            <Orbit size={12} />
+            Cross-Cultural Cognitive Music Interface
           </div>
-          <h1 id="hero-title" className="font-display text-4xl font-black leading-tight text-textMain md:text-6xl lg:text-7xl">
+
+          <h1 id="hero-title" className="hero-title-glow font-display text-4xl font-extrabold leading-[0.95] text-textMain md:text-6xl lg:text-7xl">
             {title}
           </h1>
-          <p className="max-w-2xl font-body text-lg leading-relaxed text-textSub md:text-xl">{lead}</p>
-          <p className="font-mono text-sm text-textSub/90">{hint}</p>
+          <p className="max-w-2xl font-body text-base leading-relaxed text-textSub md:text-lg">{lead}</p>
 
-          <div className="flex flex-wrap gap-3 pt-3">
+          <div className="grid gap-2 rounded-2xl panel-deep p-4 md:grid-cols-3">
+            {[
+              { icon: Compass, label: 'Navigate', text: 'Scroll to split latent factors' },
+              { icon: Joystick, label: 'Play', text: 'Keyboard pads trigger audiovisual pulses' },
+              { icon: Orbit, label: 'Inspect', text: 'Hover points to open anatomy cards' }
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <item.icon size={14} className="text-zs" />
+                <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-textSub">{item.label}</p>
+                <p className="mt-1 text-xs text-textSub">{item.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-3 pt-1">
             <button
               onClick={() => onNavigate('galaxy')}
-              className="group rounded-full bg-zs px-5 py-2.5 font-semibold text-abyss transition hover:-translate-y-0.5 hover:shadow-neon"
+              className="group rounded-full bg-zs px-5 py-2.5 font-semibold text-abyss transition hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(78,205,196,0.55)]"
             >
               {ctaPrimary}
               <ArrowDownRight size={16} className="ml-2 inline transition group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
             </button>
             <button
               onClick={() => onNavigate('lab')}
-              className="rounded-full border border-white/20 bg-white/5 px-5 py-2.5 font-semibold text-textMain transition hover:border-zc/60 hover:bg-zc/10"
+              className="rounded-full border border-white/25 bg-white/5 px-5 py-2.5 font-semibold text-textMain transition hover:border-zc/60 hover:bg-zc/10"
             >
               {ctaSecondary}
             </button>
           </div>
 
+          <p className="font-mono text-xs text-textSub/90">{hint}</p>
+
           {hoveredSong ? (
-            <div className="max-w-xl animate-floatSlow">
+            <div className="max-w-xl">
               <SongRadar song={hoveredSong} />
               {selectedSongId ? (
                 <button
@@ -106,28 +123,29 @@ export function HeroSection({ title, lead, hint, ctaPrimary, ctaSecondary, onNav
           ) : null}
         </motion.div>
 
-        <div className="relative reveal-item">
-          <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-r from-zc/20 via-za/15 to-zs/20 blur-3xl" />
-          <div className="h-[62vh] overflow-hidden rounded-3xl border border-white/10 bg-black/30 shadow-neon md:h-[70vh]">
-            {isMobile ? (
-              <div className="flex h-full items-center justify-center px-6 text-center">
-                <p className="max-w-md font-body text-base text-textSub">
-                  Mobile preview mode: 3D latent space is simplified for performance. Rotate and deep interaction are enabled on tablet/desktop.
-                </p>
-              </div>
-            ) : (
-              <LatentSpaceCanvas />
-            )}
+        <div className="reveal-item space-y-4">
+          <div className="relative overflow-hidden rounded-3xl panel-deep scanline">
+            <div className="absolute left-3 top-3 z-10 rounded-full border border-white/20 bg-black/50 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-textSub">
+              Latent Orbit View
+            </div>
+            <div className="h-[58vh] md:h-[64vh]">
+              {isMobile ? (
+                <div className="flex h-full items-center justify-center px-6 text-center">
+                  <p className="max-w-md font-body text-base text-textSub">
+                    Mobile mode uses a lightweight preview. Open desktop for full 3D navigation, point-level selection, and orbit control.
+                  </p>
+                </div>
+              ) : (
+                <LatentSpaceCanvas />
+              )}
+            </div>
           </div>
-          <div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 font-mono text-xs text-textSub">
-            Latent factor split progress is driven by scroll. Current separation: dynamic from 0 to 1.
-          </div>
+
+          <PulseConsole />
         </div>
       </div>
 
-      <p className="sr-only">
-        Three-dimensional latent space map: particles represent songs and disentangled factors for content, culture style, and emotion.
-      </p>
+      <p className="sr-only">Three-dimensional latent map with disentangled content, style, and affect trajectories.</p>
     </section>
   )
 }

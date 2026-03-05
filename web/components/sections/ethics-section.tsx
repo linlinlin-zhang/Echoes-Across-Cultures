@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 
@@ -14,38 +14,44 @@ export function EthicsSection({ title }: { title: string }) {
     <SectionShell
       id="ethics"
       title={title}
-      subtitle="Cultural recommendation systems must be accountable to communities, transparent about limitations, and open to plural epistemologies."
+      subtitle="Research interfaces are also political interfaces. We expose assumptions, uncertainty, and cultural blind spots by design."
     >
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-4 rounded-3xl border border-white/10 bg-black/30 p-6">
+        <div className="space-y-4 rounded-3xl panel-deep p-6">
+          <p className="font-display text-3xl leading-tight text-textMain md:text-4xl">
+            No universal listener model exists.
+            <br />
+            Our system must remain negotiable.
+          </p>
+
           {[
-            'We reject one-size-fits-all cultural embeddings and document ontology gaps explicitly.',
-            'We expose minority representation metrics and integrate participatory correction loops.',
-            'We preserve uncertainty signals instead of masking low-confidence cross-cultural mappings.'
+            'We document ontology gaps explicitly instead of hiding them behind aggregate metrics.',
+            'We report minority exposure and invite community-defined correction loops.',
+            'We preserve uncertainty in the UI so users can see where the model is weak or culturally underfit.'
           ].map((line) => (
-            <p key={line} className="font-body text-base leading-relaxed text-textSub">
+            <div key={line} className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-relaxed text-textSub">
               {line}
-            </p>
+            </div>
           ))}
 
-          <div className="rounded-2xl border border-zs/30 bg-zs/10 p-4 text-sm text-textMain">
-            Ethics checkpoint: Always report dataset coverage, weak-supervision boundaries, and cultural ontology blind spots in publications.
+          <div className="rounded-2xl border border-zs/35 bg-zs/10 p-4 text-sm text-textMain">
+            Publication note: include dataset provenance, annotation governance, ontology expansion protocol, and fairness trade-off analysis.
           </div>
         </div>
 
         <form
-          className="rounded-3xl border border-white/10 bg-black/30 p-6"
+          className="rounded-3xl panel-deep p-6"
           onSubmit={(event) => {
             event.preventDefault()
             setSubmitted(true)
           }}
         >
-          <h3 className="font-display text-2xl text-textMain">Collaboration Contact</h3>
-          <p className="mb-4 text-sm text-textSub">Co-design new cultural concepts, annotation protocols, or evaluation criteria.</p>
+          <h3 className="font-display text-2xl text-textMain">Collaboration Console</h3>
+          <p className="mb-4 text-sm text-textSub">Invite us to co-design cultural concept nodes, annotation rubrics, and evaluation audits.</p>
 
           <div className="space-y-3">
             <label className="block">
-              <span className="mb-1 block text-xs text-textSub">Name</span>
+              <span className="mb-1 block font-mono text-[11px] uppercase tracking-[0.14em] text-textSub">Name</span>
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -55,7 +61,7 @@ export function EthicsSection({ title }: { title: string }) {
             </label>
 
             <label className="block">
-              <span className="mb-1 block text-xs text-textSub">Email</span>
+              <span className="mb-1 block font-mono text-[11px] uppercase tracking-[0.14em] text-textSub">Email</span>
               <input
                 type="email"
                 value={email}
@@ -66,7 +72,7 @@ export function EthicsSection({ title }: { title: string }) {
             </label>
 
             <label className="block">
-              <span className="mb-1 block text-xs text-textSub">Message</span>
+              <span className="mb-1 block font-mono text-[11px] uppercase tracking-[0.14em] text-textSub">Message</span>
               <textarea
                 rows={4}
                 value={message}
@@ -76,14 +82,17 @@ export function EthicsSection({ title }: { title: string }) {
               />
             </label>
 
-            <button type="submit" className="rounded-full bg-za px-4 py-2 text-sm font-semibold text-white">
-              Send Message
+            <button
+              type="submit"
+              className="rounded-full bg-gradient-to-r from-zc to-za px-4 py-2 text-sm font-semibold text-white shadow-[0_0_18px_rgba(165,94,234,0.4)]"
+            >
+              Send Collaboration Request
             </button>
           </div>
 
           {submitted ? (
             <p className="mt-3 rounded-lg border border-zs/30 bg-zs/10 px-3 py-2 text-xs text-zs">
-              Thanks, {name || 'researcher'}! This demo uses placeholder submission flow.
+              Thanks, {name || 'researcher'}! Demo mode enabled: this form currently stores no external data.
             </p>
           ) : null}
         </form>
