@@ -10,6 +10,7 @@ import { cultureLabel, songTitleLabel } from '@/lib/bilingual'
 import { clamp } from '@/lib/utils'
 
 type MoodKey = 'calm' | 'joyful' | 'mystic' | 'melancholic'
+type PresetId = 'bridge' | 'safe' | 'fairness'
 
 type RecommendationItem = {
   id: string
@@ -28,6 +29,18 @@ type ScenarioSnapshot = {
   decolonization: number
   preferredCulture: string
   mood: MoodKey
+}
+
+type PresetConfig = {
+  id: PresetId
+  culture: string
+  mood: MoodKey
+  exploration: number
+  relevanceWeight: number
+  noveltyWeight: number
+  fairnessWeight: number
+  label: string
+  description: string
 }
 
 const moodTargets: Record<
@@ -88,9 +101,86 @@ export function RecommendationDemo() {
   const [fairnessWeight, setFairnessWeight] = useState(0.25)
   const [selectedTrackId, setSelectedTrackId] = useState<string>('')
   const [scenarioLog, setScenarioLog] = useState<ScenarioSnapshot[]>([])
+  const [activePreset, setActivePreset] = useState<PresetId | 'custom'>('bridge')
 
   const { locale } = useAccessibility()
   const isZh = locale === 'zh'
+
+  const presetOptions = useMemo<PresetConfig[]>(
+    () =>
+      isZh
+        ? [
+            {
+              id: 'bridge',
+              culture: 'Western Pop',
+              mood: 'mystic',
+              exploration: 0.64,
+              relevanceWeight: 0.45,
+              noveltyWeight: 0.32,
+              fairnessWeight: 0.23,
+              label: '跨文化试水',
+              description: '从熟悉的文化出发，但把探索强度抬高，让系统主动带你越界。'
+            },
+            {
+              id: 'safe',
+              culture: 'Western Pop',
+              mood: 'calm',
+              exploration: 0.28,
+              relevanceWeight: 0.62,
+              noveltyWeight: 0.18,
+              fairnessWeight: 0.2,
+              label: '稳妥匹配',
+              description: '先看一个更保守的推荐结果，感受基线和多目标推荐的差别。'
+            },
+            {
+              id: 'fairness',
+              culture: 'Guqin',
+              mood: 'mystic',
+              exploration: 0.82,
+              relevanceWeight: 0.28,
+              noveltyWeight: 0.27,
+              fairnessWeight: 0.45,
+              label: '少数文化优先',
+              description: '提高公平目标，看看推荐结果如何主动给少数文化更多位置。'
+            }
+          ]
+        : [
+            {
+              id: 'bridge',
+              culture: 'Western Pop',
+              mood: 'mystic',
+              exploration: 0.64,
+              relevanceWeight: 0.45,
+              noveltyWeight: 0.32,
+              fairnessWeight: 0.23,
+              label: 'Bridge outward',
+              description: 'Start from a familiar culture, then push exploration high enough to cross into other traditions.'
+            },
+            {
+              id: 'safe',
+              culture: 'Western Pop',
+              mood: 'calm',
+              exploration: 0.28,
+              relevanceWeight: 0.62,
+              noveltyWeight: 0.18,
+              fairnessWeight: 0.2,
+              label: 'Play it safe',
+              description: 'Begin with a conservative profile and compare it against the fairness-aware alternative.'
+            },
+            {
+              id: 'fairness',
+              culture: 'Guqin',
+              mood: 'mystic',
+              exploration: 0.82,
+              relevanceWeight: 0.28,
+              noveltyWeight: 0.27,
+              fairnessWeight: 0.45,
+              label: 'Prioritize minority cultures',
+              description: 'Raise the fairness objective and watch the lineup give more room to underexposed traditions.'
+            }
+          ],
+    [isZh]
+  )
 
   const weights = useMemo(() => normalizeWeights(relevanceWeight, noveltyWeight, fairnessWeight), [fairnessWeight, noveltyWeight, relevanceWeight])
 
@@ -239,6 +329,16 @@ export function RecommendationDemo() {
     )
   }
 
+  const applyPreset = (preset: PresetConfig) => {
+    setActivePreset(preset.id)
+    setPreferredCulture(preset.culture)
+    setTargetMood(preset.mood)
+    setExploration(preset.exploration)
+    setRelevanceWeight(preset.relevanceWeight)
+    setNoveltyWeight(preset.noveltyWeight)
+    setFairnessWeight(preset.fairnessWeight)
+  }
+
   const randomizeScenario = () => {
     const randomCulture = cultureNodes[Math.floor(Math.random() * cultureNodes.length)]
     const moods = Object.keys(moodTargets) as MoodKey[]
@@ -250,10 +350,51 @@ export function RecommendationDemo() {
     setRelevanceWeight(Number((0.25 + Math.random() * 0.5).toFixed(2)))
     setNoveltyWeight(Number((0.2 + Math.random() * 0.55).toFixed(2)))
     setFairnessWeight(Number((0.2 + Math.random() * 0.55).toFixed(2)))
+    setActivePreset('custom')
   }
 
   return (
     <div className="space-y-6">
+      <div className="paper-card rounded-3xl p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <span className="chapter-chip">{isZh ? '先体验推荐（Start Here）' : 'start here'}</span>
+            <h3 className="mt-2 font-display text-3xl text-textMain">{isZh ? '先选一个听歌意图，再看推荐怎么变。' : 'Pick a listening intent, then watch the lineup change.'}</h3>
+          </div>
+          <span className="sticker">{activePreset === 'custom' ? (isZh ? 'custom' : 'custom') : isZh ? 'preset' : 'preset'}</span>
+        </div>
+
+        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-textSub">
+          {isZh
+            ? '像真正的音乐产品一样，第一步先给用户一个可点击的场景。你可以直接用预设，也可以继续细调下面的文化、情绪和权重。'
+            : 'Like a real music product, the first step is a clickable listening scenario. Start with a preset, then keep tuning culture, mood, and policy weights below.'}
+        </p>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {presetOptions.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => applyPreset(preset)}
+              className={`rounded-2xl border p-4 text-left transition ${
+                activePreset === preset.id ? 'border-zs/35 bg-zs/10' : 'bg-white hover:border-ink/30'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-display text-lg text-textMain">{preset.label}</span>
+                <span className="chapter-chip">{cultureLabel(locale, preset.culture)}</span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-textSub">{preset.description}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-textSub">
+                <span className="rounded-full border border-ink/15 px-2 py-1">{isZh ? `${moodTargets[preset.mood].zh}（${moodTargets[preset.mood].en}）` : moodTargets[preset.mood].en}</span>
+                <span className="rounded-full border border-ink/15 px-2 py-1">
+                  {isZh ? `探索 ${preset.exploration.toFixed(2)}` : `Explore ${preset.exploration.toFixed(2)}`}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="paper-card rounded-3xl p-5">
           <div className="mb-3 flex items-end justify-between gap-3">
@@ -317,7 +458,14 @@ export function RecommendationDemo() {
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <label className="block">
               <span className="mb-1 block text-xs text-textSub">{isZh ? '目标文化（Target Culture）' : 'Target Culture'}</span>
-              <select value={preferredCulture} onChange={(event) => setPreferredCulture(event.target.value)} className="w-full rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm text-textMain">
+              <select
+                value={preferredCulture}
+                onChange={(event) => {
+                  setActivePreset('custom')
+                  setPreferredCulture(event.target.value)
+                }}
+                className="w-full rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm text-textMain"
+              >
                 {cultureNodes.map((node) => (
                   <option key={node.id} value={node.name}>
                     {cultureLabel(locale, node.name)}
@@ -328,7 +476,14 @@ export function RecommendationDemo() {
 
             <label className="block">
               <span className="mb-1 block text-xs text-textSub">{isZh ? '目标情绪（Target Affect）' : 'Target Affect'}</span>
-              <select value={targetMood} onChange={(event) => setTargetMood(event.target.value as MoodKey)} className="w-full rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm text-textMain">
+              <select
+                value={targetMood}
+                onChange={(event) => {
+                  setActivePreset('custom')
+                  setTargetMood(event.target.value as MoodKey)
+                }}
+                className="w-full rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm text-textMain"
+              >
                 {(Object.keys(moodTargets) as MoodKey[]).map((mood) => (
                   <option key={mood} value={mood}>
                     {isZh ? `${moodTargets[mood].zh}（${moodTargets[mood].en}）` : moodTargets[mood].en}
@@ -344,7 +499,18 @@ export function RecommendationDemo() {
                 <span>{isZh ? '探索强度（Exploration Intensity）' : 'Exploration Intensity'}</span>
                 <span>{exploration.toFixed(2)}</span>
               </div>
-              <input type="range" min={0} max={1} step={0.01} value={exploration} onChange={(event) => setExploration(Number(event.target.value))} className="w-full accent-zc" />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={exploration}
+                onChange={(event) => {
+                  setActivePreset('custom')
+                  setExploration(Number(event.target.value))
+                }}
+                className="w-full accent-zc"
+              />
             </label>
 
             <label className="block">
@@ -352,7 +518,18 @@ export function RecommendationDemo() {
                 <span>{isZh ? '相关性权重（Relevance Weight）' : 'Relevance Weight'}</span>
                 <span>{weights.relevance.toFixed(2)}</span>
               </div>
-              <input type="range" min={0.05} max={1} step={0.01} value={relevanceWeight} onChange={(event) => setRelevanceWeight(Number(event.target.value))} className="w-full accent-za" />
+              <input
+                type="range"
+                min={0.05}
+                max={1}
+                step={0.01}
+                value={relevanceWeight}
+                onChange={(event) => {
+                  setActivePreset('custom')
+                  setRelevanceWeight(Number(event.target.value))
+                }}
+                className="w-full accent-za"
+              />
             </label>
 
             <label className="block">
@@ -360,7 +537,18 @@ export function RecommendationDemo() {
                 <span>{isZh ? '意外性权重（Unexpectedness Weight）' : 'Unexpectedness Weight'}</span>
                 <span>{weights.novelty.toFixed(2)}</span>
               </div>
-              <input type="range" min={0.05} max={1} step={0.01} value={noveltyWeight} onChange={(event) => setNoveltyWeight(Number(event.target.value))} className="w-full accent-zs" />
+              <input
+                type="range"
+                min={0.05}
+                max={1}
+                step={0.01}
+                value={noveltyWeight}
+                onChange={(event) => {
+                  setActivePreset('custom')
+                  setNoveltyWeight(Number(event.target.value))
+                }}
+                className="w-full accent-zs"
+              />
             </label>
 
             <label className="block">
@@ -368,7 +556,18 @@ export function RecommendationDemo() {
                 <span>{isZh ? '公平性权重（Fairness Weight）' : 'Fairness Weight'}</span>
                 <span>{weights.fairness.toFixed(2)}</span>
               </div>
-              <input type="range" min={0.05} max={1} step={0.01} value={fairnessWeight} onChange={(event) => setFairnessWeight(Number(event.target.value))} className="w-full accent-zc" />
+              <input
+                type="range"
+                min={0.05}
+                max={1}
+                step={0.01}
+                value={fairnessWeight}
+                onChange={(event) => {
+                  setActivePreset('custom')
+                  setFairnessWeight(Number(event.target.value))
+                }}
+                className="w-full accent-zc"
+              />
             </label>
           </div>
 
