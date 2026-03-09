@@ -52,7 +52,7 @@ function FactorCard({
     <motion.button
       onClick={onClick}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300',
+        'group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration- min-h-[80px]',
         isActive
           ? 'border-za/40 bg-white shadow-[0_10px_26px_rgba(26,115,232,0.14)]'
           : 'paper-card hover:border-ink/35'
