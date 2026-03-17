@@ -1,0 +1,151 @@
+{
+  "base_eval_path": "E:\\Desktop\\Echo\\reports\\benchmarks\\toy_small\\eval\\hybrid_content_popularity_diversity.json",
+  "candidate_eval_path": "E:\\Desktop\\Echo\\reports\\benchmarks\\toy_small\\eval\\dcas_full_ot.json",
+  "config": {
+    "metrics": [
+      "serendipity",
+      "cultural_calibration_kl",
+      "minority_exposure_at_k"
+    ],
+    "bootstrap_samples": 200,
+    "permutation_samples": 200,
+    "seed": 143,
+    "used_metrics": [
+      "serendipity",
+      "cultural_calibration_kl",
+      "minority_exposure_at_k"
+    ]
+  },
+  "metrics": {
+    "serendipity": {
+      "n_pairs": 18,
+      "base_mean": 0.6928064347785277,
+      "candidate_mean": 0.7978846578172135,
+      "delta_mean": 0.1050782230386858,
+      "delta_std": 0.14971551926440976,
+      "delta_ci95_low": 0.035429861550405936,
+      "delta_ci95_high": 0.16599945007745262,
+      "p_value_two_sided": 0.01990049751243781,
+      "cohen_d_paired": 0.701852577174108,
+      "per_target_culture": {
+        "africa": {
+          "n_pairs": 6,
+          "base_mean": 0.6755235866846414,
+          "candidate_mean": 0.8166366689404133,
+          "delta_mean": 0.14111308225577177,
+          "delta_ci95_low": 0.01438002568249063,
+          "delta_ci95_high": 0.2717443951126052,
+          "p_value_two_sided": 0.07960199004975124,
+          "cohen_d_paired": 0.8468381641046319
+        },
+        "india": {
+          "n_pairs": 6,
+          "base_mean": 0.6842979296465487,
+          "candidate_mean": 0.7836726895148631,
+          "delta_mean": 0.09937475986831439,
+          "delta_ci95_low": 0.011250707273231275,
+          "delta_ci95_high": 0.19186265670051292,
+          "p_value_two_sided": 0.18407960199004975,
+          "cohen_d_paired": 0.7952397261541355
+        },
+        "west": {
+          "n_pairs": 6,
+          "base_mean": 0.7185977880043928,
+          "candidate_mean": 0.793344614996364,
+          "delta_mean": 0.07474682699197126,
+          "delta_ci95_low": -0.059965598477319165,
+          "delta_ci95_high": 0.19476521060373642,
+          "p_value_two_sided": 0.3283582089552239,
+          "cohen_d_paired": 0.43064720559700664
+        }
+      }
+    },
+    "cultural_calibration_kl": {
+      "n_pairs": 18,
+      "base_mean": 0.0430288016484253,
+      "candidate_mean": 0.042653137629098795,
+      "delta_mean": -0.00037566401932651137,
+      "delta_std": 0.004782739520021184,
+      "delta_ci95_low": -0.002369044780647794,
+      "delta_ci95_high": 0.0017042707784408605,
+      "p_value_two_sided": 0.7661691542288557,
+      "cohen_d_paired": -0.07854578275775458,
+      "per_target_culture": {
+        "africa": {
+          "n_pairs": 6,
+          "base_mean": 0.050894031842816954,
+          "candidate_mean": 0.05107661158448663,
+          "delta_mean": 0.00018257974166967111,
+          "delta_ci95_low": -0.00015540661796467314,
+          "delta_ci95_high": 0.00048393588031571177,
+          "p_value_two_sided": 0.3283582089552239,
+          "cohen_d_paired": 0.42138806203284035
+        },
+        "india": {
+          "n_pairs": 6,
+          "base_mean": 0.03787159227316611,
+          "candidate_mean": 0.03928263928320396,
+          "delta_mean": 0.0014110470100378552,
+          "delta_ci95_low": -0.003942933447709571,
+          "delta_ci95_high": 0.0066376977730350905,
+          "p_value_two_sided": 0.7313432835820896,
+          "cohen_d_paired": 0.1841435926861666
+        },
+        "west": {
+          "n_pairs": 6,
+          "base_mean": 0.04032078082929284,
+          "candidate_mean": 0.03760016201960578,
+          "delta_mean": -0.00272061880968706,
+          "delta_ci95_low": -0.004633551137180952,
+          "delta_ci95_high": -0.0008256387868593233,
+          "p_value_two_sided": 0.04477611940298507,
+          "cohen_d_paired": -0.9580142593054544
+        }
+      }
+    },
+    "minority_exposure_at_k": {
+      "n_pairs": 18,
+      "base_mean": 0.09444444444444443,
+      "candidate_mean": 0.1277777777777778,
+      "delta_mean": 0.03333333333333333,
+      "delta_std": 0.1028991510855053,
+      "delta_ci95_low": -0.016666666666666666,
+      "delta_ci95_high": 0.07777777777777778,
+      "p_value_two_sided": 0.2537313432835821,
+      "cohen_d_paired": 0.32394177193585,
+      "per_target_culture": {
+        "africa": {
+          "n_pairs": 6,
+          "base_mean": 0.10000000000000002,
+          "candidate_mean": 0.09999999999999999,
+          "delta_mean": 0.0,
+          "delta_ci95_low": -0.06666666666666667,
+          "delta_ci95_high": 0.09999999999999998,
+          "p_value_two_sided": 1.0,
+          "cohen_d_paired": 0.0
+        },
+        "india": {
+          "n_pairs": 6,
+          "base_mean": 0.18333333333333335,
+          "candidate_mean": 0.23333333333333336,
+          "delta_mean": 0.049999999999999996,
+          "delta_ci95_low": -0.01666666666666668,
+          "delta_ci95_high": 0.13333333333333333,
+          "p_value_two_sided": 0.472636815920398,
+          "cohen_d_paired": 0.4767312946227961
+        },
+        "west": {
+          "n_pairs": 6,
+          "base_mean": 0.0,
+          "candidate_mean": 0.05000000000000001,
+          "delta_mean": 0.05000000000000001,
+          "delta_ci95_low": 0.0,
+          "delta_ci95_high": 0.10000000000000002,
+          "p_value_two_sided": 0.5024875621890548,
+          "cohen_d_paired": 0.5976143046671969
+        }
+      }
+    }
+  },
+  "n_pairs": 18
+}
