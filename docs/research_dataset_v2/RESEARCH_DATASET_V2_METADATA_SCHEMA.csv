@@ -1,0 +1,21 @@
+field_name,required,type,example,description,notes
+track_id,yes,string,china_000001,Global unique track identifier,Must remain stable across re-runs
+culture,yes,string,china,Project-level culture id,Must be one of germany/china/japan/india/turkey/anglo_pop
+audio_path,yes,string,china/audio/track_000001.wav,Relative or absolute audio path,Must resolve locally before embedding generation
+source_dataset,yes,string,ccmusic-database/CTIS,Original dataset or archive name,Used for provenance and paper reporting
+source_split,yes,string,train,Original split name,Can be empty only if source has no split
+source_index,yes,string,123,Original row or item index,Used for provenance and traceability
+label,no,string,pizzicato,Original source label,Keep source semantics even if not cross-domain aligned
+substyle,no,string,erhu_technique,Within-domain substyle or repertoire tag,Use to avoid losing useful local distinctions
+instrument,no,string,erhu,Primary instrument or ensemble cue,Helpful for later PAL and error analysis
+language,no,string,zh,Primary sung/spoken language if applicable,Leave empty for purely instrumental data
+title,no,string,Example Track,Track title if available,Optional
+artist,no,string,Example Artist,Artist or performer if available,Optional
+duration_sec,no,float,5.82,Audio duration in seconds,Can be backfilled after import
+license,no,string,cc-by-4.0,Short license identifier,Must be preserved if known
+license_note,no,string,Research use allowed; audio redistribution restricted,Human-readable license caveat,Important for later release planning
+region,no,string,sichuan,Finer-grained region if source provides it,Optional
+instrument_family,no,string,bowed_strings,Higher-level instrument grouping,Optional but useful for analysis
+era,no,string,traditional,Period or era tag if source provides it,Optional
+notes,no,string,source contains technique demo style clips,Free-form notes for later data review,Use sparingly
+url,no,string,https://example.org/item/123,Original item URL,Optional provenance field
