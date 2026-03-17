@@ -1,0 +1,82 @@
+{
+  "suite_name": "v2_main_culturemert",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v2/tracks_culturemert_v2_main.npz",
+  "metadata": "E:/Desktop/Echo/storage/public/research_dataset_v2/metadata_v2_main.csv",
+  "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v2/interactions_v2_main.csv",
+  "auto_synthesize_interactions": {
+    "enabled": true,
+    "out": "E:/Desktop/Echo/storage/public/research_dataset_v2/interactions_v2_main.csv",
+    "users_per_culture": 24,
+    "tracks_per_user": 40,
+    "min_weight": 0.5,
+    "max_weight": 2.0,
+    "genre_column": "label",
+    "seed": 42
+  },
+  "output_dir": "E:/Desktop/Echo/reports/benchmarks/v2_main_culturemert",
+  "k": 20,
+  "bootstrap_samples": 1000,
+  "permutation_samples": 1000,
+  "bootstrap_seed": 42,
+  "minority_quantile": 0.25,
+  "prefer_cuda": false,
+  "mlp": {
+    "checkpoint": "E:/Desktop/Echo/storage/models/shallow_ranker_v2_main_culturemert.pt",
+    "train_if_missing": true,
+    "hidden_dim": 128,
+    "epochs": 5,
+    "batch_size": 256,
+    "lr": 0.001,
+    "negative_samples": 2,
+    "seed": 42,
+    "prefer_cuda": false
+  },
+  "hybrid_weights": {
+    "cosine": 0.4,
+    "knn": 0.25,
+    "popularity": 0.2,
+    "novelty": 0.15
+  },
+  "methods": [
+    {
+      "name": "popularity",
+      "family": "raw",
+      "kind": "popularity"
+    },
+    {
+      "name": "cosine",
+      "family": "raw",
+      "kind": "cosine"
+    },
+    {
+      "name": "knn",
+      "family": "raw",
+      "kind": "knn"
+    },
+    {
+      "name": "shallow_mlp",
+      "family": "raw",
+      "kind": "mlp"
+    },
+    {
+      "name": "hybrid_content_popularity_diversity",
+      "family": "raw",
+      "kind": "hybrid"
+    },
+    {
+      "name": "dcas_full_ot",
+      "family": "dcas",
+      "kind": "ot",
+      "checkpoint": "E:/Desktop/Echo/storage/models/dcas_full_v2_main_culturemert.pt",
+      "epsilon": 0.1,
+      "iters": 200
+    },
+    {
+      "name": "dcas_full_knn",
+      "family": "dcas",
+      "kind": "knn",
+      "checkpoint": "E:/Desktop/Echo/storage/models/dcas_full_v2_main_culturemert.pt"
+    }
+  ],
+  "reference_method": "dcas_full_ot"
+}

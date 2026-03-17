@@ -1,0 +1,71 @@
+{
+  "suite_name": "toy_small_benchmark",
+  "tracks": "E:/Desktop/Echo/toy_small/tracks.npz",
+  "interactions": "E:/Desktop/Echo/toy_small/interactions.csv",
+  "output_dir": "E:/Desktop/Echo/reports/benchmarks/toy_small",
+  "k": 10,
+  "bootstrap_samples": 200,
+  "permutation_samples": 200,
+  "bootstrap_seed": 42,
+  "minority_quantile": 0.25,
+  "prefer_cuda": false,
+  "mlp": {
+    "checkpoint": "E:/Desktop/Echo/reports/benchmarks/toy_small/shallow_ranker.pt",
+    "train_if_missing": true,
+    "hidden_dim": 64,
+    "epochs": 2,
+    "batch_size": 128,
+    "lr": 0.001,
+    "negative_samples": 2,
+    "seed": 42,
+    "prefer_cuda": false
+  },
+  "hybrid_weights": {
+    "cosine": 0.4,
+    "knn": 0.25,
+    "popularity": 0.2,
+    "novelty": 0.15
+  },
+  "methods": [
+    {
+      "name": "popularity",
+      "family": "raw",
+      "kind": "popularity"
+    },
+    {
+      "name": "cosine",
+      "family": "raw",
+      "kind": "cosine"
+    },
+    {
+      "name": "knn",
+      "family": "raw",
+      "kind": "knn"
+    },
+    {
+      "name": "shallow_mlp",
+      "family": "raw",
+      "kind": "mlp"
+    },
+    {
+      "name": "hybrid_content_popularity_diversity",
+      "family": "raw",
+      "kind": "hybrid"
+    },
+    {
+      "name": "dcas_full_ot",
+      "family": "dcas",
+      "kind": "ot",
+      "checkpoint": "E:/Desktop/Echo/toy_small/model.pt",
+      "epsilon": 0.1,
+      "iters": 50
+    },
+    {
+      "name": "dcas_full_knn",
+      "family": "dcas",
+      "kind": "knn",
+      "checkpoint": "E:/Desktop/Echo/toy_small/model.pt"
+    }
+  ],
+  "reference_method": "dcas_full_ot"
+}

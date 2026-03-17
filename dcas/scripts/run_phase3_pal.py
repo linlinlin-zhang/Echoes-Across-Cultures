@@ -110,6 +110,7 @@ def run_phase3_pal(
     rounds: int = 2,
     tasks_per_round: int = 120,
     label_col: str = "label",
+    uncertainty_method: str = "auto",
     epochs: int = 10,
     batch_size: int = 64,
     lr: float = 2e-3,
@@ -160,6 +161,7 @@ def run_phase3_pal(
             out_path=tasks_path,
             n=int(tasks_per_round),
             prefer_cuda=bool(prefer_cuda),
+            uncertainty_method=str(uncertainty_method),
         )
 
         round_constraints_path = artifacts_p / f"round{ridx}_constraints.jsonl"
@@ -247,6 +249,7 @@ def run_phase3_pal(
             "rounds": int(rounds),
             "tasks_per_round": int(tasks_per_round),
             "label_col": str(label_col),
+            "uncertainty_method": str(uncertainty_method),
             "epochs": int(epochs),
             "batch_size": int(batch_size),
             "lr": float(lr),
@@ -287,6 +290,7 @@ def main() -> None:
     ap.add_argument("--rounds", type=int, default=2)
     ap.add_argument("--tasks_per_round", type=int, default=120)
     ap.add_argument("--label_col", default="label")
+    ap.add_argument("--uncertainty_method", default="auto")
     ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--lr", type=float, default=2e-3)
@@ -315,6 +319,7 @@ def main() -> None:
         rounds=int(args.rounds),
         tasks_per_round=int(args.tasks_per_round),
         label_col=str(args.label_col),
+        uncertainty_method=str(args.uncertainty_method),
         epochs=int(args.epochs),
         batch_size=int(args.batch_size),
         lr=float(args.lr),
