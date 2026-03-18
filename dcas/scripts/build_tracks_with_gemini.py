@@ -41,6 +41,12 @@ def _resolve_api_key(api_key: str | None, api_key_file: str | Path | None) -> st
     return p.read_text(encoding="utf-8").strip()
 
 
+def _prep_payload_bytes(prep: dict[str, Any]) -> int:
+    if "total_payload_bytes" in prep:
+        return int(prep["total_payload_bytes"])
+    return int(prep.get("payload_bytes", 0))
+
+
 def build_tracks_with_gemini(
     metadata_csv: str | Path,
     out_npz: str | Path,
@@ -233,7 +239,7 @@ def build_tracks_with_gemini(
                     prep = result["prep"]
                     print(
                         f"[{result['index']}/{total}] prepared: {result['track_id']} "
-                        f"({result['culture']}) payload={prep['payload_bytes']} bytes"
+                        f"({result['culture']}) payload={_prep_payload_bytes(prep)} bytes"
                     )
                 else:
                     source = "cache" if bool(result.get("cache_hit")) else "api"
@@ -259,7 +265,7 @@ def build_tracks_with_gemini(
                         prep = result["prep"]
                         print(
                             f"[{result['index']}/{total}] prepared: {result['track_id']} "
-                            f"({result['culture']}) payload={prep['payload_bytes']} bytes"
+                            f"({result['culture']}) payload={_prep_payload_bytes(prep)} bytes"
                         )
                     else:
                         source = "cache" if bool(result.get("cache_hit")) else "api"

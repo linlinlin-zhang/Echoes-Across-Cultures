@@ -204,6 +204,7 @@ def build_pseudo_constraints(
         positive + negative,
         key=lambda c: (c.track_id_a, c.track_id_b, 0 if c.similar else 1),
     )
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     save_constraints(str(out_path), constraints)
 
     report = {

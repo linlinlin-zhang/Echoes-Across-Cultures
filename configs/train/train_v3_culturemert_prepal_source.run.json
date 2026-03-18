@@ -1,0 +1,22 @@
+{
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+  "constraints": "E:/Desktop/Echo/storage/pal/v3_main_prepal/pseudo_constraints_v1.jsonl",
+  "out": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_culturemert_open_prepal.pt",
+  "epochs": 10,
+  "batch_size": 128,
+  "lr": 0.002,
+  "seed": 42,
+  "prefer_cuda": true,
+  "lambda_constraints": 0.15,
+  "constraint_margin": 1.0,
+  "lambda_domain": 0.5,
+  "lambda_contrast": 0.2,
+  "lambda_cov": 0.05,
+  "lambda_tc": 0.05,
+  "lambda_hsic": 0.02,
+  "lambda_source": 0.1,
+  "beta_kl": 1.0,
+  "shared_encoder": false,
+  "regularizer_warmup_epochs": 3,
+  "source_balanced_batch": true
+}
