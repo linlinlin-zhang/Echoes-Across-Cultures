@@ -85,7 +85,16 @@ class GeminiEmbedding2Embedder:
 
     def _load_audio(self, path: str | Path) -> tuple[torch.Tensor, int]:
         audio_path = Path(path)
-        wav, sr = torchaudio.load(str(audio_path))
+        load_kwargs: dict[str, int] = {}
+        if self.cfg.max_seconds is not None and float(self.cfg.max_seconds) > 0:
+            try:
+                info = torchaudio.info(str(audio_path))
+                sr_hint = int(info.sample_rate)
+                if sr_hint > 0:
+                    load_kwargs["num_frames"] = int(float(self.cfg.max_seconds) * sr_hint)
+            except Exception:
+                pass
+        wav, sr = torchaudio.load(str(audio_path), **load_kwargs)
         if wav.ndim != 2:
             raise ValueError(f"invalid waveform shape for {audio_path}: {tuple(wav.shape)}")
         wav = wav.mean(dim=0)

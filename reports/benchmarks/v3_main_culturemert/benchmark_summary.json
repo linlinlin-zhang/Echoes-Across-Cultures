@@ -1,0 +1,136 @@
+{
+  "suite_name": "v3_main_culturemert",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main.npz",
+  "interactions": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\interactions_v3_main.csv",
+  "methods": {
+    "popularity": {
+      "serendipity_mean": 0.6435098250406677,
+      "cultural_calibration_kl_mean": 2.040497777524267,
+      "minority_exposure_at_k_mean": 0.0,
+      "target_culture_prob_mean": 0.18593645095825195
+    },
+    "cosine": {
+      "serendipity_mean": 0.7443658341710384,
+      "cultural_calibration_kl_mean": 2.1858023005648364,
+      "minority_exposure_at_k_mean": 0.41089583333333335,
+      "target_culture_prob_mean": 0.1609093716337035
+    },
+    "knn": {
+      "serendipity_mean": 0.7685017015674156,
+      "cultural_calibration_kl_mean": 2.1876564441025432,
+      "minority_exposure_at_k_mean": 0.40910416666666666,
+      "target_culture_prob_mean": 0.16000488557852804
+    },
+    "shallow_mlp": {
+      "serendipity_mean": 0.6891708546635226,
+      "cultural_calibration_kl_mean": 2.1872802411333723,
+      "minority_exposure_at_k_mean": 0.4016458333333333,
+      "target_culture_prob_mean": 0.15910586705120902
+    },
+    "hybrid_content_popularity_diversity": {
+      "serendipity_mean": 0.7056082904197214,
+      "cultural_calibration_kl_mean": 2.1657512989449423,
+      "minority_exposure_at_k_mean": 0.14177083333333335,
+      "target_culture_prob_mean": 0.1642649766523391
+    },
+    "dcas_full_ot": {
+      "serendipity_mean": 0.8136768707955625,
+      "cultural_calibration_kl_mean": 2.058420728654023,
+      "minority_exposure_at_k_mean": 0.4027291666666667,
+      "target_culture_prob_mean": 0.18557469099760054
+    },
+    "dcas_full_knn": {
+      "serendipity_mean": 0.8132848784279559,
+      "cultural_calibration_kl_mean": 2.0584009357057007,
+      "minority_exposure_at_k_mean": 0.4023125,
+      "target_culture_prob_mean": 0.18563420492224394
+    }
+  },
+  "reference_method": "dcas_full_ot",
+  "comparisons_vs_reference": {
+    "popularity": {
+      "serendipity": {
+        "delta_mean": 0.17016704575489483,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.017922951129755647,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.40272916666666664,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "cosine": {
+      "serendipity": {
+        "delta_mean": 0.06931103662452408,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.12738157191081348,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.008166666666666666,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "knn": {
+      "serendipity": {
+        "delta_mean": 0.04517516922814687,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.12923571544852047,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.0063750000000000005,
+        "p_value_two_sided": 0.009966777408637873
+      }
+    },
+    "shallow_mlp": {
+      "serendipity": {
+        "delta_mean": 0.1245060161320399,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.12885951247934974,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.001083333333333333,
+        "p_value_two_sided": 0.654485049833887
+      }
+    },
+    "hybrid_content_popularity_diversity": {
+      "serendipity": {
+        "delta_mean": 0.10806858037584106,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.10733057029091952,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.2609583333333333,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "dcas_full_knn": {
+      "serendipity": {
+        "delta_mean": 0.0003919923676065375,
+        "p_value_two_sided": 0.15946843853820597
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 1.979294832203641e-05,
+        "p_value_two_sided": 0.9501661129568106
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.00041666666666666724,
+        "p_value_two_sided": 0.4584717607973422
+      }
+    }
+  }
+}
