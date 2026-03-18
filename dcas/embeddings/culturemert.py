@@ -152,9 +152,16 @@ class CultureMERTEmbedder:
     def embed_file(self, path: str | Path) -> np.ndarray:
         plans = self._window_plan(path)
         embs: list[np.ndarray] = []
+        last_error: Exception | None = None
         for frame_offset, num_frames in plans:
-            wav = self._load_audio(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
-            embs.append(self.embed_waveform(wav=wav, sampling_rate=self.sampling_rate))
+            try:
+                wav = self._load_audio(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
+                embs.append(self.embed_waveform(wav=wav, sampling_rate=self.sampling_rate))
+            except Exception as e:
+                last_error = e
+                continue
+        if not embs:
+            raise RuntimeError(f"all embedding windows failed for {Path(path)}: {last_error}") from last_error
         if len(embs) == 1:
             return embs[0]
         stack = np.stack(embs, axis=0).astype(np.float32)

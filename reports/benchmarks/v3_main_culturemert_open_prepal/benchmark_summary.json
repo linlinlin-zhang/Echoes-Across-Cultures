@@ -1,0 +1,176 @@
+{
+  "suite_name": "v3_main_culturemert_open_prepal",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+  "interactions": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\interactions_v3_main_mixed_mw3.csv",
+  "methods": {
+    "popularity": {
+      "serendipity_mean": 0.45430265443212015,
+      "cultural_calibration_kl_mean": 2.070947461466341,
+      "minority_exposure_at_k_mean": 0.0,
+      "target_culture_prob_mean": 0.18422900289297103
+    },
+    "cosine": {
+      "serendipity_mean": 0.5542390163298586,
+      "cultural_calibration_kl_mean": 2.176031133120395,
+      "minority_exposure_at_k_mean": 0.22654166666666667,
+      "target_culture_prob_mean": 0.16447540521932144
+    },
+    "knn": {
+      "serendipity_mean": 0.5704624771446994,
+      "cultural_calibration_kl_mean": 2.1846338017850306,
+      "minority_exposure_at_k_mean": 0.22635416666666666,
+      "target_culture_prob_mean": 0.16238389461456487
+    },
+    "shallow_mlp": {
+      "serendipity_mean": 0.48129831586338945,
+      "cultural_calibration_kl_mean": 2.1309744926783654,
+      "minority_exposure_at_k_mean": 0.16739583333333333,
+      "target_culture_prob_mean": 0.1725107594144841
+    },
+    "hybrid_content_popularity_diversity": {
+      "serendipity_mean": 0.5368679992580738,
+      "cultural_calibration_kl_mean": 2.163824331481816,
+      "minority_exposure_at_k_mean": 0.07002083333333334,
+      "target_culture_prob_mean": 0.16631102053758998
+    },
+    "dcas_full_ot": {
+      "serendipity_mean": 0.8332318287142493,
+      "cultural_calibration_kl_mean": 2.069891234634675,
+      "minority_exposure_at_k_mean": 0.237,
+      "target_culture_prob_mean": 0.18495869000287105
+    },
+    "dcas_full_knn": {
+      "serendipity_mean": 0.8342228910694485,
+      "cultural_calibration_kl_mean": 2.0697162389508064,
+      "minority_exposure_at_k_mean": 0.2350625,
+      "target_culture_prob_mean": 0.18517868729308248
+    },
+    "dcas_full_ot_open": {
+      "serendipity_mean": 0.2571791550484062,
+      "cultural_calibration_kl_mean": 2.295682346781576,
+      "minority_exposure_at_k_mean": 0.44435416666666666,
+      "target_culture_prob_mean": 0.13339753747452052
+    },
+    "dcas_full_knn_open": {
+      "serendipity_mean": 0.24519021693714455,
+      "cultural_calibration_kl_mean": 2.296226060655557,
+      "minority_exposure_at_k_mean": 0.4464375,
+      "target_culture_prob_mean": 0.13337821319544066
+    }
+  },
+  "reference_method": "dcas_full_ot_open",
+  "comparisons_vs_reference": {
+    "popularity": {
+      "serendipity": {
+        "delta_mean": -0.1971234993837139,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.22473488531523506,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.44435416666666666,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "cosine": {
+      "serendipity": {
+        "delta_mean": -0.2970598612814524,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.11965121366118074,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.2178125,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "knn": {
+      "serendipity": {
+        "delta_mean": -0.3132833220962933,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.11104854499654519,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.21800000000000003,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "shallow_mlp": {
+      "serendipity": {
+        "delta_mean": -0.22411916081498318,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.16470785410321062,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.27695833333333336,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "hybrid_content_popularity_diversity": {
+      "serendipity": {
+        "delta_mean": -0.2796888442096676,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.13185801529976,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.37433333333333335,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "dcas_full_ot": {
+      "serendipity": {
+        "delta_mean": -0.576052673665843,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.2257911121469008,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.20735416666666664,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "dcas_full_knn": {
+      "serendipity": {
+        "delta_mean": -0.5770437360210423,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.2259661078307694,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.20929166666666665,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "dcas_full_knn_open": {
+      "serendipity": {
+        "delta_mean": 0.011988938111261692,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.0005437138739811018,
+        "p_value_two_sided": 0.3853820598006645
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.0020833333333333333,
+        "p_value_two_sided": 0.026578073089700997
+      }
+    }
+  }
+}

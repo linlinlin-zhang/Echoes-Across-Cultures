@@ -271,14 +271,31 @@ class GeminiEmbedding2Embedder:
         plans = self._window_plan(path)
         prep_windows: list[dict[str, Any]] = []
         embs: list[np.ndarray] = []
+        window_failures: list[dict[str, Any]] = []
+        last_error: Exception | None = None
         for i, (frame_offset, num_frames) in enumerate(plans):
-            audio_bytes, prep = self._prepare_window(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
-            prep = dict(prep)
-            prep["window_index"] = int(i)
-            prep["frame_offset"] = int(frame_offset)
-            prep["frame_offset_seconds"] = float(frame_offset) / float(prep["sample_rate"])
-            prep_windows.append(prep)
-            embs.append(self.embed_audio_bytes(audio_bytes=audio_bytes, title=title))
+            try:
+                audio_bytes, prep = self._prepare_window(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
+                prep = dict(prep)
+                prep["window_index"] = int(i)
+                prep["frame_offset"] = int(frame_offset)
+                prep["frame_offset_seconds"] = float(frame_offset) / float(prep["sample_rate"])
+                prep_windows.append(prep)
+                embs.append(self.embed_audio_bytes(audio_bytes=audio_bytes, title=title))
+            except Exception as e:
+                last_error = e
+                window_failures.append(
+                    {
+                        "window_index": int(i),
+                        "frame_offset": int(frame_offset),
+                        "num_frames": int(num_frames) if num_frames is not None else None,
+                        "error": str(e),
+                    }
+                )
+                continue
+
+        if not embs:
+            raise RuntimeError(f"all embedding windows failed for {Path(path)}: {last_error}") from last_error
 
         if len(embs) == 1:
             emb = embs[0].astype(np.float32)
@@ -296,5 +313,6 @@ class GeminiEmbedding2Embedder:
             "sample_rate": int(prep_windows[0]["sample_rate"]) if prep_windows else int(self.cfg.target_sample_rate),
             "n_samples": int(sum(int(x["n_samples"]) for x in prep_windows)),
             "mime_type": str(prep_windows[0]["mime_type"]) if prep_windows else self.cfg.audio_mime_type,
+            "window_failures": window_failures,
         }
         return emb, prep_report
