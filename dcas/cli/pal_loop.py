@@ -45,7 +45,7 @@ def main() -> None:
                 "culture": str(tracks.culture[idx]),
                 "uncertainty": float(score),
                 "compare_to": str(tracks.track_id[nn]),
-                "question": "它们在情感/功能上是否相似？如果相似/不相似，请给出理由（rationale）。",
+                "question": "Do these two tracks feel similar in affective function or listening intent? If yes or no, write one short rationale.",
             }
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 

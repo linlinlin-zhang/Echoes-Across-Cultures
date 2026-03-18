@@ -302,47 +302,6 @@ def pal_tasks(
     out_path: str | Path,
     n: int = 100,
     prefer_cuda: bool = False,
-) -> dict:
-    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
-    model, _ = load_checkpoint(str(model_path), map_location=str(device))
-    tracks: Tracks = load_tracks(str(tracks_path))
-    ranked = rank_by_uncertainty(model=model, tracks=tracks, device=device)
-    top = ranked[: int(n)]
-
-    track_id_to_idx = {str(tid): i for i, tid in enumerate(tracks.track_id.tolist())}
-    x_all = torch.from_numpy(tracks.embedding.astype(np.float32)).to(device)
-    model.eval()
-    model.to(device)
-    with torch.no_grad():
-        _, _, za_mu = model.encode(x_all)
-
-    out_path = Path(out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        for tid, score in top:
-            idx = track_id_to_idx[tid]
-            z = za_mu[idx : idx + 1]
-            d = torch.cdist(z, za_mu).squeeze(0)
-            nn = int(torch.topk(d, k=6, largest=False).indices[1].item())
-            obj = {
-                "track_id": tid,
-                "culture": str(tracks.culture[idx]),
-                "uncertainty": float(score),
-                "compare_to": str(tracks.track_id[nn]),
-                "question": "它们在情感/功能上是否相似？如果相似/不相似，请给出理由（rationale）。",
-            }
-            f.write(json.dumps(obj, ensure_ascii=False) + "\n")
-
-    return {"tasks": str(out_path), "count": int(len(top))}
-
-
-# Override PAL task generation with a UTF-8-safe, uncertainty-method-aware version.
-def pal_tasks(
-    model_path: str | Path,
-    tracks_path: str | Path,
-    out_path: str | Path,
-    n: int = 100,
-    prefer_cuda: bool = False,
     uncertainty_method: str = "auto",
 ) -> dict:
     device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
@@ -372,7 +331,7 @@ def pal_tasks(
                 "uncertainty": float(score),
                 "uncertainty_method": str(uncertainty_method),
                 "compare_to": str(tracks.track_id[nn]),
-                "question": "它们在情感或功能上是否相似？如判断为相似或不相似，请写一句简短理由。",
+                "question": "Do these two tracks feel similar in affective function or listening intent? If yes or no, write one short rationale.",
             }
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
