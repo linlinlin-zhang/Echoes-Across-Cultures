@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from dcas.data.batch import collate_batch
 from dcas.data.interactions import Interaction, load_interactions
 from dcas.data.npz_tracks import Tracks, load_tracks
-from dcas.data.torch_dataset import CultureVocab, TrackDataset
+from dcas.data.torch_dataset import CultureVocab, SourceVocab, TrackDataset, make_source_balanced_sampler
 from dcas.models.dcas_vae import DCASConfig, DCASModel
 from dcas.pal.constraints import PairwiseConstraint, load_constraints
 from dcas.pal.uncertainty import rank_by_uncertainty
@@ -76,20 +76,25 @@ def train_model(
     beta_kl: float = 1.0,
     shared_encoder: bool = False,
     regularizer_warmup_epochs: int = 0,
+    lambda_source: float = 0.0,
+    source_balanced_batch: bool = False,
 ) -> dict:
     set_seed(int(seed))
     device = get_device(bool(prefer_cuda))
 
     tracks = load_tracks(str(tracks_path))
     vocab = CultureVocab.from_tracks(tracks)
-    ds = TrackDataset(tracks, vocab)
+    source_vocab = SourceVocab.from_tracks(tracks) if tracks.source_dataset is not None else None
+    ds = TrackDataset(tracks, vocab, source_vocab=source_vocab)
     if len(ds) == 0:
         raise RuntimeError("empty dataset: no tracks to train on")
     effective_batch_size = min(int(batch_size), len(ds))
+    sampler = make_source_balanced_sampler(tracks) if bool(source_balanced_batch) else None
     dl = DataLoader(
         ds,
         batch_size=effective_batch_size,
-        shuffle=True,
+        shuffle=bool(sampler is None),
+        sampler=sampler,
         num_workers=0,
         collate_fn=collate_batch,
         drop_last=False,
@@ -104,6 +109,7 @@ def train_model(
     cfg = DCASConfig(
         in_dim=tracks.dim,
         n_cultures=len(vocab.id_to_culture),
+        n_sources=len(source_vocab.id_to_source) if source_vocab is not None else 0,
         lambda_affect=lambda_affect,
         affect_classes=affect_classes,
         lambda_domain=float(lambda_domain),
@@ -111,6 +117,7 @@ def train_model(
         lambda_cov=float(lambda_cov),
         lambda_tc=float(lambda_tc),
         lambda_hsic=float(lambda_hsic),
+        lambda_source=float(lambda_source),
         beta_kl=float(beta_kl),
         shared_encoder=bool(shared_encoder),
     )
@@ -154,6 +161,7 @@ def train_model(
                 culture=batch.culture.to(device),
                 track_index=batch.track_index.to(device),
                 affect_label=batch.affect_label.to(device) if batch.affect_label is not None else None,
+                source_label=batch.source_label.to(device) if batch.source_label is not None else None,
             )
             out = model(
                 batch,
@@ -164,6 +172,7 @@ def train_model(
                     "tc": reg_scale,
                     "hsic": reg_scale,
                     "affect": reg_scale,
+                    "source": reg_scale,
                 },
             )
             loss = out["loss"]

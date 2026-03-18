@@ -12,6 +12,7 @@ class Tracks:
     culture: np.ndarray
     embedding: np.ndarray
     affect_label: np.ndarray | None
+    source_dataset: np.ndarray | None
 
     def __len__(self) -> int:
         return int(self.embedding.shape[0])
@@ -35,11 +36,20 @@ def load_tracks(path: str) -> Tracks:
     culture = data["culture"].astype(str)
     embedding = data["embedding"].astype(np.float32)
     affect_label = data["affect_label"].astype(np.int64) if "affect_label" in data else None
+    source_dataset = data["source_dataset"].astype(str) if "source_dataset" in data else None
     if embedding.ndim != 2:
         raise ValueError("embedding must be 2D (N, D)")
     if track_id.shape[0] != embedding.shape[0] or culture.shape[0] != embedding.shape[0]:
         raise ValueError("track_id/culture/embedding must have same N")
     if affect_label is not None and affect_label.shape[0] != embedding.shape[0]:
         raise ValueError("affect_label must have same N as embedding")
-    return Tracks(track_id=track_id, culture=culture, embedding=embedding, affect_label=affect_label)
+    if source_dataset is not None and source_dataset.shape[0] != embedding.shape[0]:
+        raise ValueError("source_dataset must have same N as embedding")
+    return Tracks(
+        track_id=track_id,
+        culture=culture,
+        embedding=embedding,
+        affect_label=affect_label,
+        source_dataset=source_dataset,
+    )
 

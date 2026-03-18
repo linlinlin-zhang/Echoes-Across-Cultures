@@ -24,6 +24,9 @@ class CultureMERTConfig:
     device: str | None = None
     pooling: str = "mean"
     max_seconds: float | None = 30.0
+    window_count: int = 1
+    window_strategy: str = "single"
+    window_aggregate: str = "mean"
     trust_remote_code: bool = True
 
 
@@ -60,10 +63,45 @@ class CultureMERTEmbedder:
         sr = getattr(self.feature_extractor, "sampling_rate", None)
         self.sampling_rate = int(sr) if sr is not None else 24_000
 
-    def _load_audio(self, path: str | Path) -> torch.Tensor:
+    def _window_plan(self, path: str | Path) -> list[tuple[int, int | None]]:
+        audio_path = Path(path)
+        try:
+            info = torchaudio.info(str(audio_path))
+        except Exception:
+            return [(0, None)]
+
+        sr = int(info.sample_rate)
+        total_frames = int(info.num_frames)
+        if sr <= 0 or total_frames <= 0:
+            return [(0, None)]
+
+        count = max(1, int(self.cfg.window_count))
+        if self.cfg.max_seconds is None or float(self.cfg.max_seconds) <= 0:
+            return [(0, total_frames)]
+
+        segment_frames = max(1, int(float(self.cfg.max_seconds) * sr))
+        if total_frames <= segment_frames or count == 1 or str(self.cfg.window_strategy).strip().lower() == "single":
+            return [(0, min(segment_frames, total_frames))]
+
+        max_offset = max(0, total_frames - segment_frames)
+        starts = np.linspace(0, max_offset, num=count, dtype=np.int64).tolist()
+        unique_starts: list[int] = []
+        seen: set[int] = set()
+        for start in starts:
+            s = int(start)
+            if s not in seen:
+                seen.add(s)
+                unique_starts.append(s)
+        return [(int(s), min(segment_frames, total_frames - int(s))) for s in unique_starts]
+
+    def _load_audio(self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None) -> torch.Tensor:
         audio_path = Path(path)
         load_kwargs: dict[str, int] = {}
-        if self.cfg.max_seconds is not None and float(self.cfg.max_seconds) > 0:
+        if int(frame_offset) > 0:
+            load_kwargs["frame_offset"] = int(frame_offset)
+        if num_frames is not None and int(num_frames) > 0:
+            load_kwargs["num_frames"] = int(num_frames)
+        elif self.cfg.max_seconds is not None and float(self.cfg.max_seconds) > 0:
             try:
                 info = torchaudio.info(str(audio_path))
                 sr_hint = int(info.sample_rate)
@@ -112,5 +150,12 @@ class CultureMERTEmbedder:
         return emb.squeeze(0).detach().cpu().numpy().astype(np.float32)
 
     def embed_file(self, path: str | Path) -> np.ndarray:
-        wav = self._load_audio(path)
-        return self.embed_waveform(wav=wav, sampling_rate=self.sampling_rate)
+        plans = self._window_plan(path)
+        embs: list[np.ndarray] = []
+        for frame_offset, num_frames in plans:
+            wav = self._load_audio(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
+            embs.append(self.embed_waveform(wav=wav, sampling_rate=self.sampling_rate))
+        if len(embs) == 1:
+            return embs[0]
+        stack = np.stack(embs, axis=0).astype(np.float32)
+        return stack.mean(axis=0).astype(np.float32)

@@ -24,6 +24,7 @@ from .mlp import GaussianHead, MLPConfig, make_mlp
 class DCASConfig:
     in_dim: int
     n_cultures: int
+    n_sources: int = 0
     zc_dim: int = 32
     zs_dim: int = 32
     za_dim: int = 16
@@ -38,6 +39,7 @@ class DCASConfig:
     lambda_tc: float = 0.05
     lambda_hsic: float = 0.02
     lambda_affect: float = 0.0
+    lambda_source: float = 0.0
     affect_classes: int = 8
     grl_scale: float = 1.0
     contrast_temperature: float = 0.2
@@ -92,6 +94,19 @@ class DCASModel(nn.Module):
                 dropout=cfg.dropout,
             )
         )
+        self.source_disc = (
+            make_mlp(
+                MLPConfig(
+                    in_dim=cfg.za_dim,
+                    hidden_dim=cfg.hidden_dim,
+                    out_dim=cfg.n_sources,
+                    depth=2,
+                    dropout=cfg.dropout,
+                )
+            )
+            if int(cfg.n_sources) > 1 and float(cfg.lambda_source) > 0
+            else None
+        )
         self.affect_head = make_mlp(
             MLPConfig(
                 in_dim=cfg.za_dim,
@@ -138,6 +153,7 @@ class DCASModel(nn.Module):
         s_tc = float(scales.get("tc", 1.0))
         s_hsic = float(scales.get("hsic", 1.0))
         s_affect = float(scales.get("affect", 1.0))
+        s_source = float(scales.get("source", 1.0))
 
         zc_mu, zc_logvar, zs_mu, zs_logvar, za_mu, za_logvar = self._heads_from_hidden(h)
         zc = reparameterize(zc_mu, zc_logvar)
@@ -151,6 +167,13 @@ class DCASModel(nn.Module):
 
         domain_logits = self.culture_disc(self.grl(za))
         domain = F.cross_entropy(domain_logits, batch.culture)
+
+        source = torch.zeros((), device=x.device)
+        source_acc = torch.zeros((), device=x.device)
+        if batch.source_label is not None and self.source_disc is not None and float(self.cfg.lambda_source) > 0:
+            source_logits = self.source_disc(self.grl(za))
+            source = F.cross_entropy(source_logits, batch.source_label)
+            source_acc = (source_logits.argmax(dim=-1) == batch.source_label).float().mean()
 
         x_aug = x + torch.randn_like(x) * float(self.cfg.aug_noise_std)
         h_aug = self.encoder(x_aug)
@@ -177,6 +200,7 @@ class DCASModel(nn.Module):
             + self.cfg.lambda_tc * s_tc * tc
             + self.cfg.lambda_hsic * s_hsic * hsic
             + self.cfg.lambda_affect * s_affect * affect
+            + self.cfg.lambda_source * s_source * source
         )
 
         return {
@@ -184,6 +208,8 @@ class DCASModel(nn.Module):
             "recon": recon.detach(),
             "kl": kl.detach(),
             "domain": domain.detach(),
+            "source": source.detach(),
+            "source_acc": source_acc.detach(),
             "contrast": contrast.detach(),
             "cov": cov.detach(),
             "tc": tc.detach(),

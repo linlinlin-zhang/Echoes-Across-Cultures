@@ -40,6 +40,9 @@ class GeminiEmbedding2Config:
     title: str | None = None
     max_seconds: float | None = 30.0
     target_sample_rate: int = 16_000
+    window_count: int = 1
+    window_strategy: str = "single"
+    window_aggregate: str = "mean"
     request_timeout_s: int = 180
     max_retries: int = 5
     retry_backoff_s: float = 2.0
@@ -83,10 +86,45 @@ class GeminiEmbedding2Embedder:
             self.session = requests.Session()
             self.session.headers.update({"Content-Type": "application/json"})
 
-    def _load_audio(self, path: str | Path) -> tuple[torch.Tensor, int]:
+    def _window_plan(self, path: str | Path) -> list[tuple[int, int | None]]:
+        audio_path = Path(path)
+        try:
+            info = torchaudio.info(str(audio_path))
+        except Exception:
+            return [(0, None)]
+
+        sr = int(info.sample_rate)
+        total_frames = int(info.num_frames)
+        if sr <= 0 or total_frames <= 0:
+            return [(0, None)]
+
+        count = max(1, int(self.cfg.window_count))
+        if self.cfg.max_seconds is None or float(self.cfg.max_seconds) <= 0:
+            return [(0, total_frames)]
+
+        segment_frames = max(1, int(float(self.cfg.max_seconds) * sr))
+        if total_frames <= segment_frames or count == 1 or str(self.cfg.window_strategy).strip().lower() == "single":
+            return [(0, min(segment_frames, total_frames))]
+
+        max_offset = max(0, total_frames - segment_frames)
+        starts = np.linspace(0, max_offset, num=count, dtype=np.int64).tolist()
+        unique_starts: list[int] = []
+        seen: set[int] = set()
+        for start in starts:
+            s = int(start)
+            if s not in seen:
+                seen.add(s)
+                unique_starts.append(s)
+        return [(int(s), min(segment_frames, total_frames - int(s))) for s in unique_starts]
+
+    def _load_audio(self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None) -> tuple[torch.Tensor, int]:
         audio_path = Path(path)
         load_kwargs: dict[str, int] = {}
-        if self.cfg.max_seconds is not None and float(self.cfg.max_seconds) > 0:
+        if int(frame_offset) > 0:
+            load_kwargs["frame_offset"] = int(frame_offset)
+        if num_frames is not None and int(num_frames) > 0:
+            load_kwargs["num_frames"] = int(num_frames)
+        elif self.cfg.max_seconds is not None and float(self.cfg.max_seconds) > 0:
             try:
                 info = torchaudio.info(str(audio_path))
                 sr_hint = int(info.sample_rate)
@@ -108,8 +146,8 @@ class GeminiEmbedding2Embedder:
             sr = target_sr
         return wav, int(sr)
 
-    def prepare_file(self, path: str | Path) -> tuple[bytes, dict[str, Any]]:
-        wav, sr = self._load_audio(path)
+    def _prepare_window(self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None) -> tuple[bytes, dict[str, Any]]:
+        wav, sr = self._load_audio(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
         audio_bytes = _wav_bytes_from_tensor(wav=wav, sample_rate=sr)
         meta = {
             "sample_rate": int(sr),
@@ -119,6 +157,26 @@ class GeminiEmbedding2Embedder:
             "payload_bytes": int(len(audio_bytes)),
         }
         return audio_bytes, meta
+
+    def prepare_file_report(self, path: str | Path) -> dict[str, Any]:
+        plans = self._window_plan(path)
+        windows: list[dict[str, Any]] = []
+        total_payload = 0
+        for i, (frame_offset, num_frames) in enumerate(plans):
+            audio_bytes, meta = self._prepare_window(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
+            meta = dict(meta)
+            meta["window_index"] = int(i)
+            meta["frame_offset"] = int(frame_offset)
+            meta["frame_offset_seconds"] = float(frame_offset) / float(meta["sample_rate"])
+            windows.append(meta)
+            total_payload += int(len(audio_bytes))
+        return {
+            "window_count": int(len(windows)),
+            "window_strategy": str(self.cfg.window_strategy),
+            "window_aggregate": str(self.cfg.window_aggregate),
+            "total_payload_bytes": int(total_payload),
+            "windows": windows,
+        }
 
     def _request_body(self, audio_bytes: bytes, title: str | None = None) -> dict[str, Any]:
         req: dict[str, Any] = {
@@ -210,8 +268,33 @@ class GeminiEmbedding2Embedder:
         raise RuntimeError(f"Gemini embedding request failed after retries: {last_error}") from last_error
 
     def embed_file(self, path: str | Path, title: str | None = None) -> tuple[np.ndarray, dict[str, Any]]:
-        audio_bytes, prep = self.prepare_file(path)
-        emb = self.embed_audio_bytes(audio_bytes=audio_bytes, title=title)
-        prep = dict(prep)
-        prep["embedding_dim"] = int(emb.shape[0])
-        return emb, prep
+        plans = self._window_plan(path)
+        prep_windows: list[dict[str, Any]] = []
+        embs: list[np.ndarray] = []
+        for i, (frame_offset, num_frames) in enumerate(plans):
+            audio_bytes, prep = self._prepare_window(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
+            prep = dict(prep)
+            prep["window_index"] = int(i)
+            prep["frame_offset"] = int(frame_offset)
+            prep["frame_offset_seconds"] = float(frame_offset) / float(prep["sample_rate"])
+            prep_windows.append(prep)
+            embs.append(self.embed_audio_bytes(audio_bytes=audio_bytes, title=title))
+
+        if len(embs) == 1:
+            emb = embs[0].astype(np.float32)
+        else:
+            emb = np.stack(embs, axis=0).astype(np.float32).mean(axis=0).astype(np.float32)
+
+        prep_report = {
+            "window_count": int(len(prep_windows)),
+            "window_strategy": str(self.cfg.window_strategy),
+            "window_aggregate": str(self.cfg.window_aggregate),
+            "windows": prep_windows,
+            "embedding_dim": int(emb.shape[0]),
+            "payload_bytes": int(sum(int(x["payload_bytes"]) for x in prep_windows)),
+            "duration_seconds": float(sum(float(x["duration_seconds"]) for x in prep_windows) / max(1, len(prep_windows))),
+            "sample_rate": int(prep_windows[0]["sample_rate"]) if prep_windows else int(self.cfg.target_sample_rate),
+            "n_samples": int(sum(int(x["n_samples"]) for x in prep_windows)),
+            "mime_type": str(prep_windows[0]["mime_type"]) if prep_windows else self.cfg.audio_mime_type,
+        }
+        return emb, prep_report

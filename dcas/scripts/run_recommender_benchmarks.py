@@ -26,7 +26,7 @@ from dcas.embedding_recommenders import (
     recommend_popularity,
     train_shallow_ranker,
 )
-from dcas.recommender import Recommendation, recommend_knn, recommend_ot
+from dcas.recommender import Recommendation, recommend_knn, recommend_open_knn, recommend_open_ot, recommend_ot
 from dcas.scripts.compare_recommender_runs import compare_recommender_runs
 from dcas.scripts.synthesize_interactions import synthesize_interactions
 from dcas.serialization import load_checkpoint
@@ -325,6 +325,9 @@ def _ensure_interactions(
         min_weight=float(synth_cfg.get("min_weight", 0.5)),
         max_weight=float(synth_cfg.get("max_weight", 2.0)),
         genre_column=str(synth_cfg.get("genre_column", "label")),
+        mode=str(synth_cfg.get("mode", "single_culture")),
+        secondary_cultures=int(synth_cfg.get("secondary_cultures", 2)),
+        home_share=float(synth_cfg.get("home_share", 0.65)),
         seed=int(synth_cfg.get("seed", 42)),
     )
     return str(Path(out_csv))
@@ -442,6 +445,40 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     target_culture=target_culture,
                     k=top_k,
                     device=_device,
+                )[0]
+            elif kind == "ot_open":
+                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_open_ot(
+                    model=_model,
+                    tracks=_tracks,
+                    interactions=_ints,
+                    user_id=user_id,
+                    target_culture=target_culture,
+                    k=top_k,
+                    recall_k=int(_cfg.get("recall_k", max(50, 10 * int(top_k)))),
+                    device=_device,
+                    epsilon=float(_cfg.get("epsilon", 0.1)),
+                    iters=int(_cfg.get("iters", 200)),
+                    relevance_weight=float(_cfg.get("relevance_weight", 0.4)),
+                    novelty_weight=float(_cfg.get("novelty_weight", 0.2)),
+                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.3)),
+                    minority_weight=float(_cfg.get("minority_weight", 0.1)),
+                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.15)),
+                )[0]
+            elif kind == "knn_open":
+                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_open_knn(
+                    model=_model,
+                    tracks=_tracks,
+                    interactions=_ints,
+                    user_id=user_id,
+                    target_culture=target_culture,
+                    k=top_k,
+                    recall_k=int(_cfg.get("recall_k", max(50, 10 * int(top_k)))),
+                    device=_device,
+                    relevance_weight=float(_cfg.get("relevance_weight", 0.4)),
+                    novelty_weight=float(_cfg.get("novelty_weight", 0.2)),
+                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.3)),
+                    minority_weight=float(_cfg.get("minority_weight", 0.1)),
+                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.15)),
                 )[0]
             else:
                 raise ValueError(f"unsupported dcas method kind: {kind}")

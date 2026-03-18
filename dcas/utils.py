@@ -27,6 +27,7 @@ class Batch:
     culture: torch.Tensor
     track_index: torch.Tensor
     affect_label: torch.Tensor | None
+    source_label: torch.Tensor | None
 
 
 def env_int(name: str, default: int) -> int:

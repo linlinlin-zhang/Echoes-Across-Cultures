@@ -17,6 +17,9 @@ def synthesize_interactions(
     min_weight: float = 0.5,
     max_weight: float = 2.0,
     genre_column: str = "label",
+    mode: str = "single_culture",
+    secondary_cultures: int = 2,
+    home_share: float = 0.65,
     seed: int = 42,
 ) -> dict[str, int | str]:
     meta_path = Path(metadata_csv)
@@ -50,12 +53,28 @@ def synthesize_interactions(
     n_rows = 0
     n_users = 0
     seen_pairs: set[tuple[str, str]] = set()
+    cultures_sorted = sorted(by_culture.keys())
+
+    def _pick_rows(pool: list[dict[str, str]], n_pick: int, preferred_genre: str | None) -> list[dict[str, str]]:
+        if not pool or n_pick <= 0:
+            return []
+        candidate = pool
+        if preferred_genre is not None and has_genre:
+            culture_name = str(pool[0].get("culture", "")).strip()
+            maybe = by_culture_genre.get((culture_name, preferred_genre), [])
+            if maybe:
+                candidate = maybe
+        n_take = min(int(n_pick), len(candidate))
+        if n_take <= 0:
+            return []
+        idx = rng.choice(len(candidate), size=n_take, replace=False)
+        return [candidate[int(j)] for j in idx.tolist()]
 
     with open(out_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["user_id", "track_id", "weight"])
         writer.writeheader()
 
-        for culture in sorted(by_culture.keys()):
+        for culture in cultures_sorted:
             pool = by_culture[culture]
             if not pool:
                 continue
@@ -66,23 +85,48 @@ def synthesize_interactions(
                 preferred_genre = None
                 if has_genre and genres:
                     preferred_genre = str(rng.choice(np.array(genres, dtype=object)))
-                if preferred_genre is not None:
-                    candidate = by_culture_genre.get((culture, preferred_genre), [])
-                    if not candidate:
-                        candidate = pool
+                if str(mode).strip().lower() == "mixed_culture":
+                    n_other = min(int(secondary_cultures), max(0, len(cultures_sorted) - 1))
+                    others = [c for c in cultures_sorted if c != culture]
+                    picked_others = []
+                    if n_other > 0 and others:
+                        chosen = rng.choice(np.array(others, dtype=object), size=n_other, replace=False)
+                        picked_others = [str(x) for x in np.atleast_1d(chosen).tolist()]
+                    total_pick = min(int(tracks_per_user), len(rows))
+                    home_n = int(round(float(total_pick) * float(np.clip(home_share, 0.0, 1.0))))
+                    other_n = max(0, total_pick - home_n)
+                    selected_rows = _pick_rows(pool=pool, n_pick=home_n, preferred_genre=preferred_genre)
+                    if picked_others and other_n > 0:
+                        splits = np.full((len(picked_others),), other_n // len(picked_others), dtype=np.int64)
+                        splits[: other_n % len(picked_others)] += 1
+                        for other_culture, n_take in zip(picked_others, splits.tolist()):
+                            other_pool = by_culture.get(str(other_culture), [])
+                            other_genres = sorted(
+                                {
+                                    str(x.get(genre_column, "")).strip()
+                                    for x in other_pool
+                                    if str(x.get(genre_column, "")).strip() != ""
+                                }
+                            )
+                            other_pref = None
+                            if has_genre and other_genres:
+                                other_pref = str(rng.choice(np.array(other_genres, dtype=object)))
+                            selected_rows.extend(_pick_rows(pool=other_pool, n_pick=int(n_take), preferred_genre=other_pref))
                 else:
-                    candidate = pool
-                n_pick = min(int(tracks_per_user), len(candidate))
-                if n_pick <= 0:
-                    continue
-                idx = rng.choice(len(candidate), size=n_pick, replace=False)
-                for j in idx.tolist():
-                    tid = str(candidate[int(j)]["track_id"])
+                    selected_rows = _pick_rows(pool=pool, n_pick=int(tracks_per_user), preferred_genre=preferred_genre)
+                for row in selected_rows:
+                    tid = str(row["track_id"])
                     pair = (uid, tid)
                     if pair in seen_pairs:
                         continue
                     seen_pairs.add(pair)
                     w = float(rng.uniform(float(min_weight), float(max_weight)))
+                    if str(mode).strip().lower() == "mixed_culture":
+                        row_culture = str(row.get("culture", "")).strip()
+                        if row_culture == culture:
+                            w *= 1.15
+                        else:
+                            w *= 0.9
                     writer.writerow(
                         {
                             "user_id": uid,
@@ -110,6 +154,9 @@ def main() -> None:
     ap.add_argument("--min_weight", type=float, default=0.5)
     ap.add_argument("--max_weight", type=float, default=2.0)
     ap.add_argument("--genre_column", default="label")
+    ap.add_argument("--mode", default="single_culture", choices=["single_culture", "mixed_culture"])
+    ap.add_argument("--secondary_cultures", type=int, default=2)
+    ap.add_argument("--home_share", type=float, default=0.65)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
@@ -121,6 +168,9 @@ def main() -> None:
         min_weight=float(args.min_weight),
         max_weight=float(args.max_weight),
         genre_column=args.genre_column,
+        mode=str(args.mode),
+        secondary_cultures=int(args.secondary_cultures),
+        home_share=float(args.home_share),
         seed=int(args.seed),
     )
     print(json.dumps(out, ensure_ascii=False))

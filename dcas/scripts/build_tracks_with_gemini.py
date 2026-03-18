@@ -54,6 +54,9 @@ def build_tracks_with_gemini(
     task_type: str | None = None,
     max_seconds: float | None = 30.0,
     target_sample_rate: int = 16_000,
+    window_count: int = 1,
+    window_strategy: str = "single",
+    window_aggregate: str = "mean",
     limit: int | None = None,
     skip_errors: bool = False,
     cache_dir: str | Path | None = None,
@@ -76,6 +79,9 @@ def build_tracks_with_gemini(
         task_type=task_type,
         max_seconds=max_seconds,
         target_sample_rate=target_sample_rate,
+        window_count=window_count,
+        window_strategy=window_strategy,
+        window_aggregate=window_aggregate,
     )
 
     worker_count = max(1, int(max_workers))
@@ -91,6 +97,9 @@ def build_tracks_with_gemini(
             task_type=task_type,
             max_seconds=max_seconds,
             target_sample_rate=target_sample_rate,
+            window_count=window_count,
+            window_strategy=window_strategy,
+            window_aggregate=window_aggregate,
         )
         prep_embedder = GeminiEmbedding2Embedder.__new__(GeminiEmbedding2Embedder)
         prep_embedder.cfg = dry_cfg
@@ -137,6 +146,7 @@ def build_tracks_with_gemini(
                 "index": i,
                 "track_id": tid,
                 "culture": cul,
+                "source_dataset": str(row.get("source_dataset", "")).strip(),
                 "audio_path": audio_path,
                 "title": str(row.get("title", "")).strip() or None,
                 "raw_affect": str(row.get("affect_label", "")).strip(),
@@ -170,13 +180,14 @@ def build_tracks_with_gemini(
 
         if dry_run:
             assert prep_embedder is not None
-            _, prep = prep_embedder.prepare_file(audio_path)
+            prep = prep_embedder.prepare_file_report(audio_path)
             prep["track_id"] = tid
             prep["culture"] = cul
             return {
                 "index": int(item["index"]),
                 "track_id": tid,
                 "culture": cul,
+                "source_dataset": str(item["source_dataset"]),
                 "raw_affect": str(item["raw_affect"]),
                 "prep": prep,
                 "dry_run": True,
@@ -188,6 +199,7 @@ def build_tracks_with_gemini(
                 "index": int(item["index"]),
                 "track_id": tid,
                 "culture": cul,
+                "source_dataset": str(item["source_dataset"]),
                 "raw_affect": str(item["raw_affect"]),
                 "prep": prep,
                 "embedding": _load_cache(cache_file),
@@ -201,6 +213,7 @@ def build_tracks_with_gemini(
             "index": int(item["index"]),
             "track_id": tid,
             "culture": cul,
+            "source_dataset": str(item["source_dataset"]),
             "raw_affect": str(item["raw_affect"]),
             "prep": prep,
             "embedding": emb.astype(np.float32),
@@ -265,6 +278,8 @@ def build_tracks_with_gemini(
     cultures: list[str] = []
     embeds: list[np.ndarray] = []
     affects: list[int] = []
+    sources: list[str] = []
+    has_source = True
     has_affect = True
     prep_reports: list[dict[str, Any]] = []
 
@@ -278,6 +293,10 @@ def build_tracks_with_gemini(
         cultures.append(str(result["culture"]))
         embeds.append(np.asarray(result["embedding"], dtype=np.float32))
         cache_hits += 1 if bool(result.get("cache_hit")) else 0
+        raw_source = str(result.get("source_dataset", "")).strip()
+        if raw_source == "":
+            has_source = False
+        sources.append(raw_source)
 
         raw_affect = str(result.get("raw_affect", "")).strip()
         if raw_affect == "":
@@ -299,6 +318,9 @@ def build_tracks_with_gemini(
             "vertex_location": vertex_location,
             "max_seconds": max_seconds,
             "target_sample_rate": target_sample_rate,
+            "window_count": int(window_count),
+            "window_strategy": str(window_strategy),
+            "window_aggregate": str(window_aggregate),
             "limit": limit,
             "skip_errors": bool(skip_errors),
             "max_workers": int(worker_count),
@@ -324,6 +346,8 @@ def build_tracks_with_gemini(
         "culture": np.array(cultures, dtype="<U64"),
         "embedding": emb_arr,
     }
+    if has_source:
+        obj["source_dataset"] = np.array(sources, dtype="<U128")
     if has_affect:
         obj["affect_label"] = np.array(affects, dtype=np.int64)
 
@@ -341,6 +365,9 @@ def build_tracks_with_gemini(
         "task_type": task_type,
         "max_seconds": max_seconds,
         "target_sample_rate": target_sample_rate,
+        "window_count": int(window_count),
+        "window_strategy": str(window_strategy),
+        "window_aggregate": str(window_aggregate),
         "audio_mime_type": cfg.audio_mime_type,
         "limit": limit,
         "skip_errors": bool(skip_errors),
@@ -348,6 +375,7 @@ def build_tracks_with_gemini(
         "n_tracks": int(emb_arr.shape[0]),
         "dim": int(emb_arr.shape[1]),
         "has_affect_label": bool(has_affect),
+        "has_source_dataset": bool(has_source),
         "n_errors": int(len(errors)),
         "n_cache_hits": int(cache_hits),
         "errors": errors,
@@ -379,6 +407,9 @@ def main() -> None:
     ap.add_argument("--task_type", default=None)
     ap.add_argument("--max_seconds", type=float, default=30.0)
     ap.add_argument("--target_sample_rate", type=int, default=16000)
+    ap.add_argument("--window_count", type=int, default=1)
+    ap.add_argument("--window_strategy", default="single")
+    ap.add_argument("--window_aggregate", default="mean")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--skip_errors", action="store_true")
     ap.add_argument("--cache_dir", default=None)
@@ -399,6 +430,9 @@ def main() -> None:
         task_type=args.task_type,
         max_seconds=args.max_seconds,
         target_sample_rate=args.target_sample_rate,
+        window_count=int(args.window_count),
+        window_strategy=str(args.window_strategy),
+        window_aggregate=str(args.window_aggregate),
         limit=args.limit,
         skip_errors=args.skip_errors,
         cache_dir=args.cache_dir,

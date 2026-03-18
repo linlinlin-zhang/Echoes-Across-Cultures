@@ -24,6 +24,9 @@ def build_tracks_from_audio(
     device: str | None = None,
     pooling: str = "mean",
     max_seconds: float | None = 30.0,
+    window_count: int = 1,
+    window_strategy: str = "single",
+    window_aggregate: str = "mean",
     limit: int | None = None,
     skip_errors: bool = False,
 ) -> dict[str, object]:
@@ -36,6 +39,9 @@ def build_tracks_from_audio(
         device=device,
         pooling=pooling,
         max_seconds=max_seconds,
+        window_count=window_count,
+        window_strategy=window_strategy,
+        window_aggregate=window_aggregate,
     )
     embedder = CultureMERTEmbedder(cfg)
 
@@ -43,7 +49,9 @@ def build_tracks_from_audio(
     cultures: list[str] = []
     embeds: list[np.ndarray] = []
     affects: list[int] = []
+    sources: list[str] = []
     has_affect = True
+    has_source = True
     errors: list[str] = []
 
     with open(metadata_path, "r", encoding="utf-8", newline="") as f:
@@ -87,6 +95,10 @@ def build_tracks_from_audio(
             track_ids.append(tid)
             cultures.append(cul)
             embeds.append(emb.astype(np.float32))
+            raw_source = str(row.get("source_dataset", "")).strip()
+            if raw_source == "":
+                has_source = False
+            sources.append(raw_source)
 
             raw_affect = str(row.get("affect_label", "")).strip()
             if raw_affect == "":
@@ -113,6 +125,8 @@ def build_tracks_from_audio(
         "culture": np.array(cultures, dtype="<U64"),
         "embedding": emb_arr,
     }
+    if has_source:
+        obj["source_dataset"] = np.array(sources, dtype="<U128")
     if has_affect:
         obj["affect_label"] = np.array(affects, dtype=np.int64)
 
@@ -125,11 +139,15 @@ def build_tracks_from_audio(
         "pooling": pooling,
         "device": device or "auto",
         "max_seconds": max_seconds,
+        "window_count": int(window_count),
+        "window_strategy": str(window_strategy),
+        "window_aggregate": str(window_aggregate),
         "limit": limit,
         "skip_errors": bool(skip_errors),
         "n_tracks": int(emb_arr.shape[0]),
         "dim": int(emb_arr.shape[1]),
         "has_affect_label": bool(has_affect),
+        "has_source_dataset": bool(has_source),
         "n_errors": int(len(errors)),
         "errors": errors,
     }
@@ -153,6 +171,9 @@ def main() -> None:
     ap.add_argument("--device", default=None, help="cpu/cuda, default auto")
     ap.add_argument("--pooling", default="mean", choices=["mean", "cls"], help="Embedding pooling strategy")
     ap.add_argument("--max_seconds", type=float, default=30.0, help="Trim each track to this duration before embedding")
+    ap.add_argument("--window_count", type=int, default=1, help="Number of windows to sample and aggregate per track")
+    ap.add_argument("--window_strategy", default="single", help="Window sampling strategy: single or uniform")
+    ap.add_argument("--window_aggregate", default="mean", help="Window aggregation strategy")
     ap.add_argument("--limit", type=int, default=None, help="Optional max number of rows")
     ap.add_argument("--skip_errors", action="store_true")
     args = ap.parse_args()
@@ -164,6 +185,9 @@ def main() -> None:
         device=args.device,
         pooling=args.pooling,
         max_seconds=args.max_seconds,
+        window_count=int(args.window_count),
+        window_strategy=str(args.window_strategy),
+        window_aggregate=str(args.window_aggregate),
         limit=args.limit,
         skip_errors=args.skip_errors,
     )
