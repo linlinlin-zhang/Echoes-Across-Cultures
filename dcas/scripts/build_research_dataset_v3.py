@@ -7,6 +7,7 @@ import html
 import io
 import json
 import math
+import numpy as np
 import os
 import random
 import re
@@ -35,6 +36,9 @@ DEFAULT_CACHE_ROOT = DEFAULT_OUT_ROOT / "_cache"
 
 FMA_REPO_ID = "benjamin-paine/free-music-archive-full"
 FMA_METADATA_ZIP = ROOT / "tmp" / "fma_metadata.zip"
+OPENCPOP_SONGLIST_URL = "https://wenet-e2e.github.io/opencpop/resources/songlist/"
+CHINA_JINGJU_TARGET = 30
+CHINA_OPENCPOP_TARGET = 50
 
 COUNTRY_PATTERNS: dict[str, list[str]] = {
     "great_britain": [
@@ -530,6 +534,13 @@ def _build_jingju_rows(out_dir: Path, raw_root: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _uniform_subsample_rows(rows: list[dict[str, Any]], target_n: int | None) -> list[dict[str, Any]]:
+    if target_n is None or int(target_n) <= 0 or len(rows) <= int(target_n):
+        return list(rows)
+    idx = np.linspace(0, len(rows) - 1, num=int(target_n), dtype=int).tolist()
+    return [rows[int(i)] for i in idx]
+
+
 def _build_ctis_rows(limit: int | None = None) -> list[dict[str, Any]]:
     src_csv = ROOT / "storage" / "public" / "research_dataset_v2" / "china" / "metadata.csv"
     src_rows = _read_csv(src_csv)
@@ -569,13 +580,108 @@ def _build_ctis_rows(limit: int | None = None) -> list[dict[str, Any]]:
     return rows
 
 
-def _build_china(out_root: Path, raw_root: Path) -> Path:
+def _load_opencpop_songlist(raw_root: Path) -> pd.DataFrame:
+    opencpop_root = raw_root / "opencpop"
+    opencpop_root.mkdir(parents=True, exist_ok=True)
+    cache_csv = opencpop_root / "songlist.csv"
+    if cache_csv.exists():
+        return pd.read_csv(cache_csv)
+    df = pd.read_html(OPENCPOP_SONGLIST_URL)[0]
+    df = df.rename(
+        columns={
+            "Song Id": "song_id",
+            "Song Name": "song_name",
+            "Time Signature": "time_signature",
+            "BPM": "bpm",
+        }
+    )
+    df["song_id"] = df["song_id"].astype(int)
+    df["bpm"] = df["bpm"].astype(float)
+    df.to_csv(cache_csv, index=False, encoding="utf-8")
+    return df
+
+
+def _select_opencpop_songlist(df: pd.DataFrame, target_n: int) -> pd.DataFrame:
+    if len(df) <= int(target_n):
+        return df.sort_values("song_id").reset_index(drop=True)
+    ranked = df.sort_values(["bpm", "song_id"]).reset_index(drop=True)
+    idx = np.linspace(0, len(ranked) - 1, num=int(target_n), dtype=int)
+    picked = ranked.iloc[idx].drop_duplicates(subset=["song_id"]).sort_values("song_id").reset_index(drop=True)
+    return picked
+
+
+def _build_opencpop_rows(
+    out_dir: Path,
+    raw_root: Path,
+    password: str | None,
+    target_n: int,
+) -> list[dict[str, Any]]:
+    if int(target_n) <= 0:
+        return []
+    zip_path = raw_root / "opencpop" / "wavs_raw.zip"
+    if not zip_path.exists():
+        alt = raw_root / "opencpop" / "wavs.zip"
+        if alt.exists():
+            zip_path = alt
+    if not zip_path.exists():
+        raise FileNotFoundError(f"OpenCpop wav zip not found: {zip_path}")
+    if password is None or str(password).strip() == "":
+        raise RuntimeError("OpenCpop password is required. Set OPENCPOP_ZIP_PASSWORD or pass --opencpop_password.")
+
+    songlist = _load_opencpop_songlist(raw_root)
+    chosen = _select_opencpop_songlist(songlist, target_n=int(target_n))
+
+    rows: list[dict[str, Any]] = []
+    with zipfile.ZipFile(zip_path) as zf:
+        for out_idx, song in enumerate(chosen.to_dict(orient="records")):
+            song_id = int(song["song_id"])
+            zip_name = f"{2000 + song_id}.wav"
+            payload = zf.read(zip_name, pwd=str(password).encode("utf-8"))
+            duration = _duration_from_bytes(payload)
+            if duration < 30:
+                continue
+            track_id = f"china_opencpop_{out_idx:04d}"
+            dst = out_dir / "audio" / f"{track_id}.wav"
+            _copy_bytes(dst, payload)
+            rows.append(
+                {
+                    "track_id": track_id,
+                    "culture": "china",
+                    "audio_path": str(Path("audio") / dst.name),
+                    "source_dataset": "OpenCpop",
+                    "source_split": "wavs_raw",
+                    "source_index": song_id,
+                    "label": "mandarin_pop",
+                    "substyle": "mandarin_pop_singing",
+                    "instrument": "voice",
+                    "language": "zh",
+                    "title": str(song["song_name"]),
+                    "artist": "opencpop_single_singer",
+                    "duration_sec": round(duration, 6),
+                    "license": "cc-by-nc-nd-4.0",
+                    "license_note": "OpenCpop raw song-level wavs; authorized local access, non-commercial usage only.",
+                    "region": "china",
+                    "instrument_family": "voice",
+                    "era": "modern",
+                    "notes": f"song_id={song_id}; bpm={float(song['bpm'])}; time_signature={song['time_signature']}; single-singer Mandarin pop corpus",
+                }
+            )
+    return rows
+
+
+def _build_china(
+    out_root: Path,
+    raw_root: Path,
+    jingju_target: int = CHINA_JINGJU_TARGET,
+    opencpop_target: int = CHINA_OPENCPOP_TARGET,
+    opencpop_password: str | None = None,
+) -> Path:
     out_dir = _domain_out(out_root, "china")
     metadata_path = out_dir / "metadata.csv"
     if metadata_path.exists():
         return metadata_path
 
-    rows = _build_jingju_rows(out_dir, raw_root)
+    rows = _uniform_subsample_rows(_build_jingju_rows(out_dir, raw_root), target_n=int(jingju_target))
     ctis_rows = _build_ctis_rows()
     for row in ctis_rows:
         dst = out_dir / "audio" / f"{row['track_id']}{Path(str(row['src_audio'])).suffix.lower() or '.wav'}"
@@ -583,6 +689,14 @@ def _build_china(out_root: Path, raw_root: Path) -> Path:
         row["audio_path"] = str(Path("audio") / dst.name)
         row.pop("src_audio", None)
         rows.append(row)
+    rows.extend(
+        _build_opencpop_rows(
+            out_dir=out_dir,
+            raw_root=raw_root,
+            password=opencpop_password,
+            target_n=int(opencpop_target),
+        )
+    )
     _write_csv(metadata_path, rows)
     return metadata_path
 
@@ -1358,6 +1472,9 @@ def build_research_dataset_v3(
     turkey_target: int,
     anglo_pop_target: int,
     workers: int,
+    china_jingju_target: int = CHINA_JINGJU_TARGET,
+    china_opencpop_target: int = CHINA_OPENCPOP_TARGET,
+    opencpop_password: str | None = None,
 ) -> dict[str, Any]:
     random.seed(0)
     out_root.mkdir(parents=True, exist_ok=True)
@@ -1365,7 +1482,13 @@ def build_research_dataset_v3(
 
     india = _build_india(out_root, raw_root)
     turkey = _build_turkey(out_root, target_n=turkey_target)
-    china = _build_china(out_root, raw_root)
+    china = _build_china(
+        out_root,
+        raw_root,
+        jingju_target=int(china_jingju_target),
+        opencpop_target=int(china_opencpop_target),
+        opencpop_password=opencpop_password,
+    )
     indonesia = _build_indonesia(out_root, raw_root, cache_root, workers=workers)
     anglo = _build_anglo_pop(out_root, target_n=anglo_pop_target)
     indonesia_probe = _build_indonesia_probe(out_root, raw_root)
@@ -1405,6 +1528,9 @@ def main() -> None:
     ap.add_argument("--turkey_target", type=int, default=150)
     ap.add_argument("--anglo_pop_target", type=int, default=120)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--china_jingju_target", type=int, default=CHINA_JINGJU_TARGET)
+    ap.add_argument("--china_opencpop_target", type=int, default=CHINA_OPENCPOP_TARGET)
+    ap.add_argument("--opencpop_password", default=None)
     args = ap.parse_args()
 
     out = build_research_dataset_v3(
@@ -1415,6 +1541,9 @@ def main() -> None:
         turkey_target=int(args.turkey_target),
         anglo_pop_target=int(args.anglo_pop_target),
         workers=int(args.workers),
+        china_jingju_target=int(args.china_jingju_target),
+        china_opencpop_target=int(args.china_opencpop_target),
+        opencpop_password=args.opencpop_password or os.environ.get("OPENCPOP_ZIP_PASSWORD"),
     )
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
