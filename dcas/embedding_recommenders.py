@@ -1477,7 +1477,12 @@ def recommend_embedding_bpr_two_stage_hybrid(
     target_culture: str,
     k: int = 20,
     recall_k: int = 120,
-    blend_weight: float = 0.22,
+    rerank_weight: float = 0.62,
+    recall_weight: float = 0.16,
+    bpr_weight: float = 0.10,
+    target_affinity_weight: float = 0.08,
+    minority_weight: float = 0.02,
+    source_weight: float = 0.02,
     device: torch.device | None = None,
 ) -> list[Recommendation]:
     if device is None:
@@ -1516,5 +1521,16 @@ def recommend_embedding_bpr_two_stage_hybrid(
         logits = ranker(torch.from_numpy(feat_recall).to(device)).detach().cpu().numpy().astype(np.float32)
     rerank_scores = _minmax(1.0 / (1.0 + np.exp(-logits)))
     recall_scores = _minmax(recall_score[recall_local])
-    final_scores = ((1.0 - float(blend_weight)) * rerank_scores + float(blend_weight) * recall_scores).astype(np.float32)
+    bpr_scores = scalar_features[recall_local, 10]
+    target_scores = scalar_features[recall_local, 7]
+    minority_scores = scalar_features[recall_local, 6]
+    source_scores = scalar_features[recall_local, 9]
+    final_scores = (
+        float(rerank_weight) * rerank_scores
+        + float(recall_weight) * recall_scores
+        + float(bpr_weight) * bpr_scores
+        + float(target_affinity_weight) * target_scores
+        + float(minority_weight) * minority_scores
+        + float(source_weight) * source_scores
+    ).astype(np.float32)
     return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx_recall, final_scores, k=k)

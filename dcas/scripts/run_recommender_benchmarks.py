@@ -588,7 +588,12 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     target_culture,
                     k=top_k,
                     recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
-                    blend_weight=float(_cfg.get("blend_weight", 0.22)),
+                    rerank_weight=float(_cfg.get("rerank_weight", 0.62)),
+                    recall_weight=float(_cfg.get("recall_weight", 0.16)),
+                    bpr_weight=float(_cfg.get("bpr_weight", 0.10)),
+                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.08)),
+                    minority_weight=float(_cfg.get("minority_weight", 0.02)),
+                    source_weight=float(_cfg.get("source_weight", 0.02)),
                     device=_device,
                 )
             else:
