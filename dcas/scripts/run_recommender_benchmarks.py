@@ -18,13 +18,19 @@ if str(REPO_ROOT) not in sys.path:
 from dcas.data.interactions import Interaction, load_interactions
 from dcas.data.npz_tracks import Tracks, load_tracks
 from dcas.embedding_recommenders import (
+    load_bpr_mf,
     load_shallow_ranker,
+    load_two_stage_hybrid_ranker,
+    recommend_bpr_mf,
     recommend_embedding_cosine,
     recommend_embedding_hybrid,
     recommend_embedding_knn,
     recommend_embedding_mlp,
+    recommend_embedding_two_stage_hybrid,
     recommend_popularity,
+    train_bpr_mf,
     train_shallow_ranker,
+    train_two_stage_hybrid_ranker,
 )
 from dcas.recommender import Recommendation, recommend_knn, recommend_open_knn, recommend_open_ot, recommend_ot
 from dcas.scripts.compare_recommender_runs import compare_recommender_runs
@@ -362,6 +368,8 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
 
     mlp_cfg = dict(cfg.get("mlp", {}))
     hybrid_weights = dict(cfg.get("hybrid_weights", {}))
+    strong_hybrid_cfg = dict(cfg.get("strong_hybrid", {}))
+    bpr_cfg = dict(cfg.get("bpr", {}))
 
     results_by_method: dict[str, dict[str, Any]] = {}
     eval_paths: dict[str, str] = {}
@@ -417,6 +425,69 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 ranker = load_shallow_ranker(ckpt, map_location=str(device))
                 recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _device=device: recommend_embedding_mlp(
                     _ranker, _tracks, _ints, user_id, target_culture, k=top_k, device=_device
+                )
+            elif kind == "two_stage_hybrid":
+                ckpt = str(strong_hybrid_cfg.get("checkpoint", out_dir / "two_stage_hybrid_ranker.pt"))
+                if not Path(ckpt).exists():
+                    if not bool(strong_hybrid_cfg.get("train_if_missing", True)):
+                        raise RuntimeError(f"two-stage hybrid checkpoint missing and train_if_missing=false: {ckpt}")
+                    train_two_stage_hybrid_ranker(
+                        tracks=tracks,
+                        interactions=interactions,
+                        out_path=ckpt,
+                        hidden_dim=int(strong_hybrid_cfg.get("hidden_dim", 128)),
+                        depth=int(strong_hybrid_cfg.get("depth", 3)),
+                        dropout=float(strong_hybrid_cfg.get("dropout", 0.1)),
+                        epochs=int(strong_hybrid_cfg.get("epochs", 6)),
+                        batch_size=int(strong_hybrid_cfg.get("batch_size", 256)),
+                        lr=float(strong_hybrid_cfg.get("lr", 1e-3)),
+                        negative_samples=int(strong_hybrid_cfg.get("negative_samples", 4)),
+                        recall_k=int(strong_hybrid_cfg.get("recall_k", max(80, 4 * int(k)))),
+                        hard_negative_ratio=float(strong_hybrid_cfg.get("hard_negative_ratio", 0.75)),
+                        seed=int(strong_hybrid_cfg.get("seed", 42)),
+                        prefer_cuda=bool(strong_hybrid_cfg.get("prefer_cuda", prefer_cuda)),
+                    )
+                device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+                ranker = load_two_stage_hybrid_ranker(ckpt, map_location=str(device))
+                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _device=device, _cfg=strong_hybrid_cfg: recommend_embedding_two_stage_hybrid(
+                    _ranker,
+                    _tracks,
+                    _ints,
+                    user_id,
+                    target_culture,
+                    k=top_k,
+                    recall_k=int(_cfg.get("recall_k", max(80, 4 * int(top_k)))),
+                    blend_weight=float(_cfg.get("blend_weight", 0.25)),
+                    device=_device,
+                )
+            elif kind == "bpr":
+                ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
+                if not Path(ckpt).exists():
+                    if not bool(bpr_cfg.get("train_if_missing", True)):
+                        raise RuntimeError(f"BPR checkpoint missing and train_if_missing=false: {ckpt}")
+                    train_bpr_mf(
+                        tracks=tracks,
+                        interactions=interactions,
+                        out_path=ckpt,
+                        latent_dim=int(bpr_cfg.get("latent_dim", 64)),
+                        epochs=int(bpr_cfg.get("epochs", 10)),
+                        batch_size=int(bpr_cfg.get("batch_size", 512)),
+                        lr=float(bpr_cfg.get("lr", 5e-3)),
+                        reg=float(bpr_cfg.get("reg", 1e-4)),
+                        seed=int(bpr_cfg.get("seed", 42)),
+                        prefer_cuda=bool(bpr_cfg.get("prefer_cuda", prefer_cuda)),
+                    )
+                device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+                ranker, user_to_id = load_bpr_mf(ckpt, map_location=str(device))
+                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _users=user_to_id, _device=device: recommend_bpr_mf(
+                    _ranker,
+                    _users,
+                    _tracks,
+                    _ints,
+                    user_id,
+                    target_culture,
+                    k=top_k,
+                    device=_device,
                 )
             else:
                 raise ValueError(f"unsupported raw method kind: {kind}")
