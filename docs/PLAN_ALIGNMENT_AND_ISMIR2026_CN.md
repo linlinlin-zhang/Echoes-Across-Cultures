@@ -1,6 +1,6 @@
 # 原计划对照、当前完成度与 ISMIR 2026 投稿调整建议
 
-更新日期：2026-03-12
+更新日期：2026-03-19
 
 ## 1. 这份文档要回答什么
 
@@ -21,14 +21,14 @@
 
 如果按“核心研究原型是否已经做出来”计算，当前完成度大约是 `70%`。
 
-如果按“是否已经达到原计划中那篇完整论文的证据强度”计算，当前完成度更接近 `55%~60%`。
+如果按“是否已经达到原计划中那篇完整论文的证据强度”计算，当前完成度更接近 `60%~65%`。
 
 也就是说：
 
 - 方向没有跑偏。
 - 重点发生了收缩。
 - 项目已经从“概念草图”推进到了“可运行研究原型”。
-- 但距离“ISMIR 级别的完整论文证据”还差一截，尤其差在真实标注、公开 benchmark、强基线和更聚焦的论文叙事。
+- 但距离“ISMIR 级别的完整论文证据”还差一截，尤其差在真实标注、公开 benchmark、更标准的公开 / 工业风格排序基线，以及更聚焦的论文叙事。
 
 ## 3. 总体完成度总表
 
@@ -42,7 +42,7 @@
 | PAL 主动学习 | 不确定性采样 + 专家回路 | 原型实现完成；真实专家闭环未完成 | 60% | 机制有了，证据不够 |
 | 动态本体 | 支持概念扩展、关系、训练约束导出 | 已实现工程 v1 | 60% | 系统存在，但仍偏轻量 |
 | 解纠缠评测 | MIG/DCI/SAP 等标准评测 | 已实现多 seed 评测 | 75% | 已经足够作为实验部分的一环 |
-| 推荐评测 | Serendipity、公平性、显著性检验 | 已实现统一评测 | 80% | 工程上完成度较高 |
+| 推荐评测 | Serendipity、公平性、显著性检验 | 已实现统一评测，并补齐强基线与 calibrated DCAS | 85% | 工程上完成度较高，论文证据明显增强 |
 | 公共 benchmark 验证 | GlobalMood / CultureMERT benchmarks / GlobalDISCO | 基本未完成 | 20% | 这是当前最大缺口 |
 | 真实数据建设 | 至少多个文化域的真实音频与前处理 | 已做出 `research_dataset_v1` | 65% | 数据建设已起步，但还没支撑论文主张 |
 | 工程化闭环 | 数据、训练、推荐、PAL、API、前端 | 已有可运行闭环 | 85% | 原型系统层面超出最初草图 |
@@ -86,19 +86,21 @@
 - `dcas/recommender.py`、`dcas/ot/sinkhorn.py` 已经把 OT 推荐主链落地。
 - `docs/PAPER_CLAIM_ALIGNMENT.md` 明确把 OT/Sinkhorn 标记为“已实现”。
 - Phase 4 推荐实验报告已存在，说明这不是一次性 demo，而是迭代过的实验链。
-- `reports/routeA_recommender_compare_phase4_cn.md` 显示 `serendipity_mean` 相比 Phase 2 有明显提升。
+- `research_dataset_v3` 的 `Batch3` 与后续实验已经把主链推进到 `CultureMERT + stage3 DCAS + calibrated closed-set rerank`。
+- `reports/benchmarks/v3_main_culturemert_stage3_dcascal/benchmark_summary.json` 显示：相对原始 `dcas_full_ot`，`calibrated_target` 仅以不到 `1%` 的 `serendipity` 损失，换来 `KL / minority / target_prob` 的显著提升；`calibrated_minor` 进一步强化了少数文化曝光。
+- 与强非 DCAS 基线相比，当前 `DCAS calibrated` 已不再只是“比简单最近邻更强”，而是能在当前小规模 `CultureMERT` 设置下压过 `BPR-MF / two-stage hybrid / listwise hybrid`。
 
 判断：
 
 - 从“有没有”角度看，这部分已经做成。
-- 从“能不能发 ISMIR”角度看，这部分还需要更标准的 baseline 与更可信的数据设定。
+- 从“能不能发 ISMIR”角度看，baseline 缺口已明显收窄，但仍需要更标准的树模型 / 公开 benchmark 排序对照与更可信的数据设定。
 
 完成度判断：`80%`
 
 还差什么：
 
-- 至少补上 2 到 3 个有说服力的 baseline。
-- 需要把“为什么 OT 比简单最近邻/线性映射更合适”用实验说清楚。
+- 需要补上更标准的 `tree-based ranker / LambdaMART` 风格基线。
+- 需要把“为什么 `DCAS + calibrated rerank` 比强混合排序更合适”用公开可复现实验说清楚。
 
 ### 4.3 CultureMERT 路线
 
@@ -223,21 +225,23 @@
 
 - 这部分已经是目前仓库里最成熟的评测链之一。
 - `dcas/cli/eval.py` 和比较脚本已存在。
-- `reports/eval_suite_phase4_v2/eval_suite_summary.json` 中，Phase 4 的 `serendipity_mean` 已经达到 `0.8726` 左右。
-- 同时，`cultural_calibration_kl_mean` 仍然比较高，说明“文化校准”问题并没有和 serendipity 一起被解决。
+- 旧的 Phase 4 报告已经证明 `serendipity` 可显著提升。
+- 新的 `research_dataset_v3` 评测则进一步表明：原始 `DCAS stage3` 的提升仍主要集中在 `serendipity`，但 `calibrated DCAS` 已经把 `KL / minority exposure / target culture affinity` 一起拉了上来。
+- `reports/benchmarks/v3_main_culturemert_stage3_bprhybrid/benchmark_summary.json` 与 `reports/benchmarks/v3_main_culturemert_stage3_bprlistwise_tuned/benchmark_summary.json` 说明当前最强非 DCAS 基线已推进到 `BPR listwise hybrid` 这一档，而不再只是 `cosine / kNN`。
+- `reports/benchmarks/v3_main_culturemert_stage3_dcascal/benchmark_summary.json` 说明 `dcas_full_ot_calibrated_target` 与 `dcas_full_ot_calibrated_minor` 已可在当前设置下对这些强基线保持整体优势。
 
 判断：
 
 - 这部分是可以写进论文的。
-- 但必须诚实：当前提升主要集中在 surprise / serendipity，不是全面解决了公平性。
+- 但必须诚实：原始 `DCAS` 的提升主要集中在 surprise / serendipity；当前更完整的主结果应写成 `DCAS backbone + calibrated rerank`，而不是宣称“单靠原始 latent 推荐已经全面解决公平性”。
 
 完成度判断：`80%`
 
 还差什么：
 
-- 需要更强的 baseline。
 - 需要更好地解释指标之间的 trade-off。
-- 需要把“公平性”从口号变成更可辩护的实验设计。
+- 需要补更标准的 `tree-based` 排序基线与公开 benchmark。
+- 需要把“公平性”从口号变成更可辩护的实验设计，并在真实 PAL / 公开数据上复核。
 
 ### 4.9 公共 benchmark 与大规模验证
 
@@ -487,24 +491,28 @@
 - 至少完成 1 轮真实 pairwise constraints 回灌。
 - 报告回灌前后指标变化。
 
-### 7.2 必做：补 baseline
+### 7.2 必做：补 baseline（2026-03-19 更新）
 
 为什么必须做：
 
 - 目前仓库里有自己的阶段对比，但从 reviewer 视角看，还不够像标准论文对照。
 
-建议至少补这几类：
+当前已经补上的 baseline：
 
 1. `CultureMERT embedding + nearest neighbor / cosine retrieval`
-2. `CultureMERT embedding + simple MLP / metric head`
-3. `DCAS without OT`
-4. `DCAS without domain adversarial`
-5. `DCAS without constraints`
+2. `heuristic hybrid`
+3. `BPR-MF`
+4. `BPR two-stage hybrid`
+5. `BPR listwise hybrid`
+6. `DCAS without OT`
+7. `DCAS without domain adversarial`
+8. `DCAS without constraints`
 
-如果时间允许，再加：
+仍建议继续补的 baseline：
 
-- 一个非 CultureMERT 特征基线
-- 一个简单 popularity / frequency baseline
+- `tree-based ranker / LambdaMART` 风格强排序基线
+- 更接近工业系统的多路 candidate generation + learned reranking
+- 一个公开 benchmark 上可复用的对照协议
 
 ### 7.3 必做：把数据短板讲清楚
 
@@ -603,7 +611,7 @@
 - 确定论文最终题目方向。
 - 确定只保留 3 个主贡献。
 - 如果符合条件，立即申请 mentoring。
-- 在 `research_dataset_v1` 上跑出正式 baseline。
+- 在 `research_dataset_v1 / v3` 上跑出正式 baseline，并固化最强非 DCAS 对手。
 
 ### 第 2 周
 
@@ -613,7 +621,7 @@
 
 ### 第 3 周
 
-- 补主 baseline 与 ablation。
+- 补主 baseline 与 ablation，并确定 `calibrated DCAS` 是否进入主结果表。
 - 对 `serendipity / calibration / MIG/DCI/SAP` 统一出表。
 
 ### 第 4 周

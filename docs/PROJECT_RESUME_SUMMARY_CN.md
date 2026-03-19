@@ -1,6 +1,6 @@
 # Echo / DCAS 项目简历摘要
 
-更新时间：2026-03-15
+更新时间：2026-03-19
 
 ## 一句话版本
 
@@ -25,7 +25,7 @@
 - 设计并实现 `DCAS`（Disentangled Cross-cultural Alignment System）研究原型：使用三因子 latent 表示 (`zc/zs/za`) 对音乐 embedding 进行结构化分解，并结合 domain adversarial learning、optimal transport ranking 和 pairwise constraint feedback 实现跨文化推荐。
 - 构建了统一的公开音频数据处理流水线：支持 Hugging Face 音频数据导入、metadata 标准化合并、弱监督 interactions 合成、数据质检、切分和 embedding 构建。
 - 基于 `CultureMERT` 完成音频 embedding 数据集生成，并进一步规划 / 搭建面向 `Gemini Embedding 2` 的统一向量数据库迁移方案。
-- 实现推荐评测与研究脚本，包括 serendipity、cultural calibration、minority exposure、per-target-culture breakdown、bootstrap 置信区间、显著性比较和多种 ablation / baseline 实验。
+- 实现统一推荐评测与研究脚本，包括 serendipity、cultural calibration、minority exposure、per-target-culture breakdown、bootstrap 置信区间、显著性比较，以及 `BPR-MF / two-stage hybrid / listwise hybrid / calibrated DCAS` 等多类 baseline 与强基线实验；在当前 `CultureMERT` 小规模设置下，`calibrated DCAS` 对最强非 DCAS 基线保持四项指标整体优势。
 - 推进 Germany / Japan / Turkey 等文化域的数据来源审计，结合 Europeana、Zenodo、Hugging Face 等平台完成来源规模、音频可得性和 license 合规性判断。
 
 ## 可直接放进简历的关键词

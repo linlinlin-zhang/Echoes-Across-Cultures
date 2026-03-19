@@ -1,6 +1,6 @@
 # 面向 ISMIR 2026 的项目重构方案
 
-更新日期：2026-03-12
+更新日期：2026-03-19
 
 ## 1. 这份方案的目标
 
@@ -40,7 +40,7 @@
 
 新的项目只做三件主事：
 
-1. 提出并验证一个 `解纠缠 + 领域对抗 + OT` 的跨文化推荐框架。
+1. 提出并验证一个 `解纠缠 + 领域对抗 + OT + calibrated rerank` 的跨文化推荐框架。
 2. 用统一协议评估 `serendipity / cultural calibration / disentanglement`。
 3. 用一轮小规模但真实的 `PAL 专家反馈回灌` 证明“人类反馈对跨文化推荐是有用的”。
 
@@ -283,25 +283,30 @@ ISMIR 2026 的主题与 call 对你的题目是友好的：
 
 ### 7.3 Baseline 方案
 
-新的论文至少要补以下 baseline。
+截至 `2026-03-19`，这部分已经从“待补 baseline”推进到“已完成一批强基线，仍需继续补更标准的排序基线”。
 
-#### 最低配置 baseline
+#### 已完成 baseline
 
 1. `CultureMERT + cosine retrieval`
 2. `CultureMERT + kNN retrieval`
-3. `DCAS without OT`
-4. `DCAS without domain adversarial`
-5. `DCAS without constraints`
+3. `simple heuristic hybrid`
+4. `BPR-MF`
+5. `BPR two-stage hybrid`
+6. `BPR listwise hybrid`
+7. `DCAS without OT`
+8. `DCAS without domain adversarial`
+9. `DCAS without constraints`
 
-#### 建议再补的 baseline
+#### 仍建议补的 baseline
 
-6. `simple MLP scoring head on embeddings`
-7. `popularity / frequency baseline`
+1. `tree-based ranker / LambdaMART` 风格强排序基线
+2. 更接近工业系统的多路召回 + learned reranking
+3. 一个公开 benchmark 上可复用的 baseline protocol
 
 这样做的好处是：
 
 - reviewer 能看懂你到底比什么强；
-- 能拆出 OT、domain、constraints 各自的贡献；
+- 能拆出 OT、domain、constraints、calibrated rerank 各自的贡献；
 - 不会让论文看起来只是在做“自己跟自己比”。
 
 ### 7.4 主实验设计
@@ -312,7 +317,7 @@ ISMIR 2026 的主题与 call 对你的题目是友好的：
 
 目的：
 
-- 证明 DCAS 相比简单 embedding 检索更适合跨文化推荐。
+- 证明 `DCAS + calibrated rerank` 相比简单 embedding 检索和强混合排序更适合跨文化推荐。
 
 指标建议：
 
@@ -548,7 +553,7 @@ ISMIR 2026 的主题与 call 对你的题目是友好的：
 
 ### 第 1 周
 
-- 在 `research_dataset_v1` 上跑完整 baseline。
+- 在 `research_dataset_v1 / v3` 上跑完整 baseline，并记录 strongest non-DCAS baseline。
 - 补 `ismir2026_baselines` 报告。
 - 确定第一轮专家标注协议。
 
@@ -560,7 +565,7 @@ ISMIR 2026 的主题与 call 对你的题目是友好的：
 
 ### 第 3 周
 
-- 补主实验和 ablation。
+- 补主实验和 ablation，并确定 `dcas_full_ot_calibrated_target` / `dcas_full_ot_calibrated_minor` 的主表位置。
 - 固化统计显著性结果。
 - 选 2~3 个最强案例做定性分析。
 
@@ -589,7 +594,7 @@ ISMIR 2026 的主题与 call 对你的题目是友好的：
 
 而应该是：
 
-`一个聚焦跨文化推荐的研究原型，核心方法是解纠缠表示与 OT 对齐，并通过一轮真实 PAL 试点证明人类反馈能够改进推荐行为`
+`一个聚焦跨文化推荐的研究原型，核心方法是解纠缠表示、OT 对齐与 calibrated rerank，并通过一轮真实 PAL 试点证明人类反馈能够改进推荐行为`
 
 这是一个明显更窄、但也明显更有投稿可行性的方向。
 
