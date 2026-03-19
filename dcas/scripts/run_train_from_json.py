@@ -25,6 +25,7 @@ def main() -> None:
         tracks_path=str(cfg["tracks"]),
         out_path=str(cfg["out"]),
         constraints_path=str(cfg["constraints"]) if cfg.get("constraints") else None,
+        interactions_path=str(cfg["interactions"]) if cfg.get("interactions") else None,
         epochs=int(cfg.get("epochs", 10)),
         batch_size=int(cfg.get("batch_size", 256)),
         lr=float(cfg.get("lr", 2e-3)),
@@ -42,6 +43,18 @@ def main() -> None:
         regularizer_warmup_epochs=int(cfg.get("regularizer_warmup_epochs", 0)),
         lambda_source=float(cfg.get("lambda_source", 0.0)),
         source_balanced_batch=bool(cfg.get("source_balanced_batch", False)),
+        lambda_rank=float(cfg.get("lambda_rank", 0.0)),
+        ranking_batch_size=int(cfg.get("ranking_batch_size", 32)),
+        ranking_negatives=int(cfg.get("ranking_negatives", 4)),
+        ranking_margin=float(cfg.get("ranking_margin", 0.2)),
+        ranking_same_culture_ratio=float(cfg.get("ranking_same_culture_ratio", 0.5)),
+        constraint_batch_size=int(cfg.get("constraint_batch_size", 64)),
+        constraint_candidate_pool_size=int(cfg.get("constraint_candidate_pool_size", 256)),
+        constraint_hard_mining=bool(cfg.get("constraint_hard_mining", False)),
+        constraint_start_epoch=int(cfg.get("constraint_start_epoch", 0)),
+        constraint_warmup_epochs=int(cfg.get("constraint_warmup_epochs", 0)),
+        rank_start_epoch=int(cfg.get("rank_start_epoch", 0)),
+        rank_warmup_epochs=int(cfg.get("rank_warmup_epochs", 0)),
     )
     print(json.dumps(out, ensure_ascii=False))
 

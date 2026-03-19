@@ -1,0 +1,176 @@
+{
+  "suite_name": "v3_main_culturemert_stage3",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+  "interactions": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\interactions_v3_main_mixed_mw3.csv",
+  "methods": {
+    "popularity": {
+      "serendipity_mean": 0.45430265443212015,
+      "cultural_calibration_kl_mean": 2.070947461466341,
+      "minority_exposure_at_k_mean": 0.0,
+      "target_culture_prob_mean": 0.18422900289297103
+    },
+    "cosine": {
+      "serendipity_mean": 0.5542390163298586,
+      "cultural_calibration_kl_mean": 2.176031133120395,
+      "minority_exposure_at_k_mean": 0.22654166666666667,
+      "target_culture_prob_mean": 0.16447540521932144
+    },
+    "knn": {
+      "serendipity_mean": 0.5704624771446994,
+      "cultural_calibration_kl_mean": 2.1846338017850306,
+      "minority_exposure_at_k_mean": 0.22635416666666666,
+      "target_culture_prob_mean": 0.16238389461456487
+    },
+    "shallow_mlp": {
+      "serendipity_mean": 0.48129831586338945,
+      "cultural_calibration_kl_mean": 2.1309744926783654,
+      "minority_exposure_at_k_mean": 0.16739583333333333,
+      "target_culture_prob_mean": 0.1725107594144841
+    },
+    "hybrid_content_popularity_diversity": {
+      "serendipity_mean": 0.5368679992580738,
+      "cultural_calibration_kl_mean": 2.163824331481816,
+      "minority_exposure_at_k_mean": 0.07002083333333334,
+      "target_culture_prob_mean": 0.16631102053758998
+    },
+    "dcas_full_ot": {
+      "serendipity_mean": 0.8448537518244262,
+      "cultural_calibration_kl_mean": 2.043247731072672,
+      "minority_exposure_at_k_mean": 0.23920833333333333,
+      "target_culture_prob_mean": 0.19199764107974868
+    },
+    "dcas_full_knn": {
+      "serendipity_mean": 0.8454375306028609,
+      "cultural_calibration_kl_mean": 2.041659015776019,
+      "minority_exposure_at_k_mean": 0.2395,
+      "target_culture_prob_mean": 0.19251643862885734
+    },
+    "dcas_full_ot_open": {
+      "serendipity_mean": 0.27557980666373155,
+      "cultural_calibration_kl_mean": 2.3009621209245874,
+      "minority_exposure_at_k_mean": 0.3724791666666667,
+      "target_culture_prob_mean": 0.1327906921505928
+    },
+    "dcas_full_knn_open": {
+      "serendipity_mean": 0.26323745463681303,
+      "cultural_calibration_kl_mean": 2.2987603883266385,
+      "minority_exposure_at_k_mean": 0.3735833333333333,
+      "target_culture_prob_mean": 0.13354501533710086
+    }
+  },
+  "reference_method": "dcas_full_ot",
+  "comparisons_vs_reference": {
+    "popularity": {
+      "serendipity": {
+        "delta_mean": 0.3905510973923061,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.02769973039366878,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.23920833333333336,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "cosine": {
+      "serendipity": {
+        "delta_mean": 0.2906147354945676,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.13278340204772307,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.012666666666666666,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "knn": {
+      "serendipity": {
+        "delta_mean": 0.2743912746797268,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.14138607071235862,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.012854166666666667,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "shallow_mlp": {
+      "serendipity": {
+        "delta_mean": 0.36355543596103684,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.0877267616056932,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.07181250000000002,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "hybrid_content_popularity_diversity": {
+      "serendipity": {
+        "delta_mean": 0.30798575256635247,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.12057660040914385,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.16918750000000002,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "dcas_full_knn": {
+      "serendipity": {
+        "delta_mean": -0.0005837787784346584,
+        "p_value_two_sided": 0.08970099667774087
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": 0.0015887152966531802,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.00029166666666666675,
+        "p_value_two_sided": 0.5946843853820598
+      }
+    },
+    "dcas_full_ot_open": {
+      "serendipity": {
+        "delta_mean": 0.5692739451606947,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.25771438985191514,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.13327083333333334,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    },
+    "dcas_full_knn_open": {
+      "serendipity": {
+        "delta_mean": 0.5816162971876131,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.2555126572539662,
+        "p_value_two_sided": 0.0033222591362126247
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.134375,
+        "p_value_two_sided": 0.0033222591362126247
+      }
+    }
+  }
+}
