@@ -39,7 +39,14 @@ class BenchmarkBundle:
     summary_json: Path
 
 
-def _bundle_paths() -> tuple[list[DatasetBundle], list[BenchmarkBundle], Path]:
+@dataclass(frozen=True)
+class LogBenchmarkBundle:
+    name: str
+    title: str
+    summary_json: Path
+
+
+def _bundle_paths() -> tuple[list[DatasetBundle], list[BenchmarkBundle], list[LogBenchmarkBundle], Path]:
     datasets = [
         DatasetBundle(
             name="v3_main",
@@ -55,6 +62,13 @@ def _bundle_paths() -> tuple[list[DatasetBundle], list[BenchmarkBundle], Path]:
             interactions_csv=REPO_ROOT / "storage/public/routeA_phase2_cn/interactions.csv",
             tracks_npz=REPO_ROOT / "storage/public/routeA_phase2_cn/tracks.npz",
         ),
+        DatasetBundle(
+            name="yambda_5b_subset",
+            title="Yambda-5B Subset",
+            metadata_csv=REPO_ROOT / "storage/public/yambda_5b_subset/metadata.csv",
+            interactions_csv=REPO_ROOT / "storage/public/yambda_5b_subset/interactions.csv",
+            tracks_npz=REPO_ROOT / "storage/public/yambda_5b_subset/tracks.npz",
+        ),
     ]
     benchmarks = [
         BenchmarkBundle(
@@ -68,8 +82,15 @@ def _bundle_paths() -> tuple[list[DatasetBundle], list[BenchmarkBundle], Path]:
             summary_json=REPO_ROOT / "reports/benchmarks/public_routeA_phase2_cn_lambdamart/benchmark_summary.json",
         ),
     ]
+    log_benchmarks = [
+        LogBenchmarkBundle(
+            name="yambda_5b_subset_global_log_benchmark",
+            title="Yambda-5B Subset Global Log Benchmark",
+            summary_json=REPO_ROOT / "reports/benchmarks/yambda_5b_subset_global_log_benchmark/benchmark_summary.json",
+        ),
+    ]
     pal_summary = REPO_ROOT / "reports/routeA_phase3_pal_cn/phase3_pal_summary.json"
-    return datasets, benchmarks, pal_summary
+    return datasets, benchmarks, log_benchmarks, pal_summary
 
 
 def _save_figure(fig: plt.Figure, out_path: Path) -> None:
@@ -196,6 +217,47 @@ def _benchmark_frontier(df: pd.DataFrame, title: str, out_path: Path) -> None:
         ax.set_xlabel(x_metric)
         ax.set_ylabel(y_metric)
         ax.set_title(subtitle)
+    fig.suptitle(title)
+    _save_figure(fig, out_path)
+
+
+def _load_log_benchmark_metrics(path: Path, suite_name: str) -> pd.DataFrame:
+    obj = json.loads(path.read_text(encoding="utf-8"))
+    methods = obj.get("methods", {})
+    rows: list[dict[str, Any]] = []
+    for method_name, metrics in methods.items():
+        if not isinstance(metrics, dict):
+            continue
+        rows.append(
+            {
+                "suite": suite_name,
+                "method": str(method_name),
+                "recall_at_10": float(metrics.get("recall_at_10_mean", float("nan"))),
+                "recall_at_20": float(metrics.get("recall_at_20_mean", float("nan"))),
+                "ndcg_at_20": float(metrics.get("ndcg_at_20_mean", float("nan"))),
+                "mrr_at_20": float(metrics.get("mrr_at_20_mean", float("nan"))),
+                "coverage_at_20": float(metrics.get("coverage_at_20", float("nan"))),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _log_benchmark_bar_grid(df: pd.DataFrame, title: str, out_path: Path) -> None:
+    if df.empty:
+        return
+    metric_specs = [
+        ("recall_at_10", "#2A9D8F"),
+        ("recall_at_20", "#577590"),
+        ("ndcg_at_20", "#BC6C25"),
+        ("mrr_at_20", "#E76F51"),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.2))
+    for ax, (metric, color) in zip(axes.flatten(), metric_specs):
+        subset = df[["method", metric]].copy().sort_values(metric, ascending=True)
+        ax.barh(subset["method"], subset[metric], color=color)
+        ax.set_title(metric)
+        for idx, value in enumerate(subset[metric].tolist()):
+            ax.text(float(value), idx, f" {value:.3f}", va="center", fontsize=8)
     fig.suptitle(title)
     _save_figure(fig, out_path)
 
@@ -342,6 +404,31 @@ def _summarize_benchmarks(bundles: list[BenchmarkBundle], out_dir: Path) -> tupl
     return combined, figures
 
 
+def _summarize_log_benchmarks(
+    bundles: list[LogBenchmarkBundle],
+    out_dir: Path,
+) -> tuple[pd.DataFrame, list[dict[str, str]]]:
+    all_rows: list[pd.DataFrame] = []
+    figures: list[dict[str, str]] = []
+    for bundle in bundles:
+        if not bundle.summary_json.exists():
+            continue
+        frame = _load_log_benchmark_metrics(bundle.summary_json, bundle.title)
+        if frame.empty:
+            continue
+        csv_path = out_dir / f"{bundle.name}_metrics.csv"
+        frame.to_csv(csv_path, index=False)
+        bar_path = out_dir / f"{bundle.name}_metric_grid.png"
+        _log_benchmark_bar_grid(frame, f"{bundle.title}: ranking metrics", bar_path)
+        figures.append({"name": f"{bundle.name}_metric_grid", "path": str(bar_path.resolve())})
+        all_rows.append(frame)
+    if not all_rows:
+        return pd.DataFrame(), figures
+    combined = pd.concat(all_rows, ignore_index=True)
+    combined.to_csv(out_dir / "log_benchmark_metrics_combined.csv", index=False)
+    return combined, figures
+
+
 def _pal_task_frame(path: Path, round_name: str) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     with path.open("r", encoding="utf-8") as f:
@@ -455,6 +542,7 @@ def _write_markdown_summary(
     out_path: Path,
     dataset_summaries: list[dict[str, Any]],
     benchmark_rows: pd.DataFrame,
+    log_benchmark_rows: pd.DataFrame,
     pal_summary: dict[str, Any],
     figures: list[dict[str, str]],
 ) -> None:
@@ -478,6 +566,16 @@ def _write_markdown_summary(
                 f"best minority exposure = {best_min['method']} ({best_min['minority_exposure_at_k']:.4f})"
             )
         lines.append("")
+    if not log_benchmark_rows.empty:
+        lines.append("## Log Benchmark Snapshots")
+        for suite_name, suite_df in log_benchmark_rows.groupby("suite"):
+            best_recall = suite_df.sort_values("recall_at_20", ascending=False).iloc[0]
+            best_ndcg = suite_df.sort_values("ndcg_at_20", ascending=False).iloc[0]
+            lines.append(
+                f"- {suite_name}: best Recall@20 = {best_recall['method']} ({best_recall['recall_at_20']:.4f}); "
+                f"best NDCG@20 = {best_ndcg['method']} ({best_ndcg['ndcg_at_20']:.4f})"
+            )
+        lines.append("")
     if pal_summary:
         lines.append("## PAL snapshot")
         lines.append(
@@ -495,7 +593,7 @@ def _write_markdown_summary(
 
 
 def generate_project_figures(out_dir: Path) -> dict[str, Any]:
-    datasets, benchmarks, pal_summary_path = _bundle_paths()
+    datasets, benchmarks, log_benchmarks, pal_summary_path = _bundle_paths()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     dataset_summaries: list[dict[str, Any]] = []
@@ -510,6 +608,9 @@ def generate_project_figures(out_dir: Path) -> dict[str, Any]:
     benchmark_rows, benchmark_figures = _summarize_benchmarks(bundles=benchmarks, out_dir=out_dir)
     manifest_figures.extend(benchmark_figures)
 
+    log_benchmark_rows, log_benchmark_figures = _summarize_log_benchmarks(bundles=log_benchmarks, out_dir=out_dir)
+    manifest_figures.extend(log_benchmark_figures)
+
     pal_summary, pal_figures = _summarize_pal(summary_path=pal_summary_path, out_dir=out_dir)
     manifest_figures.extend(pal_figures)
 
@@ -518,6 +619,7 @@ def generate_project_figures(out_dir: Path) -> dict[str, Any]:
         out_path=summary_md,
         dataset_summaries=dataset_summaries,
         benchmark_rows=benchmark_rows,
+        log_benchmark_rows=log_benchmark_rows,
         pal_summary=pal_summary,
         figures=manifest_figures,
     )
@@ -528,6 +630,7 @@ def generate_project_figures(out_dir: Path) -> dict[str, Any]:
         "pal": pal_summary,
         "figures": manifest_figures,
         "benchmark_rows": int(len(benchmark_rows)),
+        "log_benchmark_rows": int(len(log_benchmark_rows)),
         "summary_markdown": str(summary_md.resolve()),
     }
     manifest_path = out_dir / "figure_manifest.json"
