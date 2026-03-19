@@ -359,6 +359,104 @@ class BPRMF(nn.Module):
 
 
 @dataclass(frozen=True)
+class ContentBPRMFConfig:
+    n_users: int
+    n_items: int
+    item_feat_dim: int
+    n_cultures: int
+    n_sources: int
+    latent_dim: int = 64
+    reg: float = 1e-4
+    profile_weight: float = 0.75
+    content_weight: float = 1.0
+    culture_weight: float = 0.25
+    source_weight: float = 0.15
+
+
+class ContentBPRMF(nn.Module):
+    def __init__(self, cfg: ContentBPRMFConfig) -> None:
+        super().__init__()
+        self.cfg = cfg
+        self.user_factors = nn.Embedding(int(cfg.n_users), int(cfg.latent_dim))
+        self.item_factors = nn.Embedding(int(cfg.n_items), int(cfg.latent_dim))
+        self.item_bias = nn.Embedding(int(cfg.n_items), 1)
+        self.user_proj = nn.Linear(int(cfg.item_feat_dim), int(cfg.latent_dim), bias=False)
+        self.item_proj = nn.Linear(int(cfg.item_feat_dim), int(cfg.latent_dim), bias=False)
+        self.culture_factors = nn.Embedding(max(1, int(cfg.n_cultures)), int(cfg.latent_dim))
+        self.source_factors = nn.Embedding(max(1, int(cfg.n_sources)), int(cfg.latent_dim))
+        nn.init.normal_(self.user_factors.weight, std=0.05)
+        nn.init.normal_(self.item_factors.weight, std=0.05)
+        nn.init.normal_(self.user_proj.weight, std=0.05)
+        nn.init.normal_(self.item_proj.weight, std=0.05)
+        nn.init.normal_(self.culture_factors.weight, std=0.05)
+        nn.init.normal_(self.source_factors.weight, std=0.05)
+        nn.init.zeros_(self.item_bias.weight)
+
+    def _user_latent(self, user_idx: torch.Tensor, user_profile: torch.Tensor) -> torch.Tensor:
+        return self.user_factors(user_idx) + float(self.cfg.profile_weight) * self.user_proj(user_profile)
+
+    def _item_latent(
+        self,
+        item_idx: torch.Tensor,
+        item_feat: torch.Tensor,
+        item_culture_idx: torch.Tensor,
+        item_source_idx: torch.Tensor,
+    ) -> torch.Tensor:
+        return (
+            self.item_factors(item_idx)
+            + float(self.cfg.content_weight) * self.item_proj(item_feat)
+            + float(self.cfg.culture_weight) * self.culture_factors(item_culture_idx)
+            + float(self.cfg.source_weight) * self.source_factors(item_source_idx)
+        )
+
+    def score_with_features(
+        self,
+        user_idx: torch.Tensor,
+        item_idx: torch.Tensor,
+        user_profile: torch.Tensor,
+        item_features: torch.Tensor,
+        item_culture_ids: torch.Tensor,
+        item_source_ids: torch.Tensor,
+    ) -> torch.Tensor:
+        user_latent = self._user_latent(user_idx, user_profile)
+        item_latent = self._item_latent(
+            item_idx,
+            item_features[item_idx],
+            item_culture_ids[item_idx],
+            item_source_ids[item_idx],
+        )
+        return (user_latent * item_latent).sum(dim=-1) + self.item_bias(item_idx).squeeze(-1)
+
+    def forward(
+        self,
+        user_idx: torch.Tensor,
+        pos_idx: torch.Tensor,
+        neg_idx: torch.Tensor,
+        user_profile: torch.Tensor,
+        item_features: torch.Tensor,
+        item_culture_ids: torch.Tensor,
+        item_source_ids: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        pos_score = self.score_with_features(
+            user_idx=user_idx,
+            item_idx=pos_idx,
+            user_profile=user_profile,
+            item_features=item_features,
+            item_culture_ids=item_culture_ids,
+            item_source_ids=item_source_ids,
+        )
+        neg_score = self.score_with_features(
+            user_idx=user_idx,
+            item_idx=neg_idx,
+            user_profile=user_profile,
+            item_features=item_features,
+            item_culture_ids=item_culture_ids,
+            item_source_ids=item_source_ids,
+        )
+        return pos_score, neg_score
+
+
+@dataclass(frozen=True)
 class ShallowRankerConfig:
     input_dim: int
     hidden_dim: int = 128
@@ -755,6 +853,44 @@ def _build_bpr_training_state(
     )
 
 
+def _user_content_profiles(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_to_id: dict[str, int],
+    track_id_to_idx: dict[str, int],
+) -> np.ndarray:
+    profiles = np.zeros((len(user_to_id), int(tracks.embedding.shape[1])), dtype=np.float32)
+    totals = np.zeros((len(user_to_id),), dtype=np.float32)
+    for it in interactions:
+        tid = track_id_to_idx.get(str(it.track_id))
+        uid = user_to_id.get(str(it.user_id))
+        if tid is None or uid is None:
+            continue
+        w = max(1e-3, float(it.weight))
+        profiles[int(uid)] += tracks.embedding[int(tid)].astype(np.float32) * float(w)
+        totals[int(uid)] += float(w)
+    mask = totals > 0
+    profiles[mask] = profiles[mask] / np.maximum(totals[mask].reshape(-1, 1), 1e-12)
+    return profiles.astype(np.float32)
+
+
+def _item_feature_id_tables(
+    tracks: Tracks,
+) -> tuple[dict[str, int], dict[str, int], np.ndarray, np.ndarray]:
+    culture_values = [str(x) for x in tracks.culture.tolist()]
+    culture_to_id = {str(name): int(i) for i, name in enumerate(sorted(set(culture_values)))}
+    item_culture_ids = np.array([int(culture_to_id[str(x)]) for x in culture_values], dtype=np.int64)
+
+    if tracks.source_dataset is None:
+        source_to_id = {"__none__": 0}
+        item_source_ids = np.zeros((len(tracks),), dtype=np.int64)
+    else:
+        source_values = [str(x) for x in tracks.source_dataset.tolist()]
+        source_to_id = {str(name): int(i) for i, name in enumerate(sorted(set(source_values)))}
+        item_source_ids = np.array([int(source_to_id[str(x)]) for x in source_values], dtype=np.int64)
+    return culture_to_id, source_to_id, item_culture_ids, item_source_ids
+
+
 def train_bpr_mf(
     tracks: Tracks,
     interactions: list[Interaction],
@@ -863,3 +999,522 @@ def recommend_bpr_mf(
         scores = model.score(user_idx, item_idx).detach().cpu().numpy().astype(np.float32)
     scores = _safe_softmax(scores)
     return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx, scores, k=k)
+
+
+def train_content_bpr_mf(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    out_path: str | Path,
+    latent_dim: int = 64,
+    epochs: int = 12,
+    batch_size: int = 512,
+    lr: float = 3e-3,
+    reg: float = 1e-4,
+    profile_weight: float = 0.75,
+    content_weight: float = 1.0,
+    culture_weight: float = 0.25,
+    source_weight: float = 0.15,
+    seed: int = 42,
+    prefer_cuda: bool = False,
+) -> dict[str, object]:
+    rng = np.random.default_rng(int(seed))
+    track_id_to_idx = _track_id_to_idx(tracks)
+    user_to_id, user_idx, pos_idx, weights, neg_pools = _build_bpr_training_state(tracks=tracks, interactions=interactions)
+    if user_idx.size <= 0:
+        raise RuntimeError("could not build content-BPR training state")
+    user_profiles = _user_content_profiles(
+        tracks=tracks,
+        interactions=interactions,
+        user_to_id=user_to_id,
+        track_id_to_idx=track_id_to_idx,
+    )
+    culture_to_id, source_to_id, item_culture_ids, item_source_ids = _item_feature_id_tables(tracks)
+
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    cfg = ContentBPRMFConfig(
+        n_users=int(len(user_to_id)),
+        n_items=int(len(tracks)),
+        item_feat_dim=int(tracks.embedding.shape[1]),
+        n_cultures=int(max(1, len(culture_to_id))),
+        n_sources=int(max(1, len(source_to_id))),
+        latent_dim=int(latent_dim),
+        reg=float(reg),
+        profile_weight=float(profile_weight),
+        content_weight=float(content_weight),
+        culture_weight=float(culture_weight),
+        source_weight=float(source_weight),
+    )
+    model = ContentBPRMF(cfg).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=float(lr))
+
+    item_features_t = torch.from_numpy(tracks.embedding.astype(np.float32)).to(device)
+    item_culture_t = torch.from_numpy(item_culture_ids.astype(np.int64)).to(device)
+    item_source_t = torch.from_numpy(item_source_ids.astype(np.int64)).to(device)
+    user_profiles_t = torch.from_numpy(user_profiles.astype(np.float32)).to(device)
+    order = np.arange(user_idx.shape[0], dtype=np.int64)
+    history: list[dict[str, float]] = []
+    for epoch in range(int(epochs)):
+        rng.shuffle(order)
+        losses: list[float] = []
+        model.train()
+        for start in range(0, int(order.shape[0]), int(batch_size)):
+            batch_ids = order[start : start + int(batch_size)]
+            bu = user_idx[batch_ids]
+            bp = pos_idx[batch_ids]
+            bw = weights[batch_ids]
+            bn = np.empty_like(bp)
+            for j, uid in enumerate(bu.tolist()):
+                pool = neg_pools.get(int(uid))
+                if pool is None or int(pool.size) <= 0:
+                    bn[j] = int(bp[j])
+                else:
+                    bn[j] = int(pool[rng.integers(0, int(pool.size))])
+            t_user = torch.from_numpy(bu).to(device)
+            t_pos = torch.from_numpy(bp).to(device)
+            t_neg = torch.from_numpy(bn).to(device)
+            t_weight = torch.from_numpy(np.maximum(1e-3, bw)).to(device)
+            t_profile = user_profiles_t[t_user]
+            pos_score, neg_score = model(
+                user_idx=t_user,
+                pos_idx=t_pos,
+                neg_idx=t_neg,
+                user_profile=t_profile,
+                item_features=item_features_t,
+                item_culture_ids=item_culture_t,
+                item_source_ids=item_source_t,
+            )
+            pair_loss = -torch.nn.functional.logsigmoid(pos_score - neg_score)
+            bpr_loss = (pair_loss * t_weight).mean()
+            reg_loss = float(cfg.reg) * (
+                model.user_factors(t_user).pow(2).sum(dim=1)
+                + model.item_factors(t_pos).pow(2).sum(dim=1)
+                + model.item_factors(t_neg).pow(2).sum(dim=1)
+            ).mean()
+            proj_reg = float(cfg.reg) * (
+                model.user_proj.weight.pow(2).mean()
+                + model.item_proj.weight.pow(2).mean()
+                + model.culture_factors.weight.pow(2).mean()
+                + model.source_factors.weight.pow(2).mean()
+            )
+            loss = bpr_loss + reg_loss + proj_reg
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            opt.step()
+            losses.append(float(loss.detach().cpu().item()))
+        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(
+        {
+            "cfg": asdict(cfg),
+            "state_dict": model.state_dict(),
+            "history": history,
+            "user_to_id": dict(user_to_id),
+            "culture_to_id": dict(culture_to_id),
+            "source_to_id": dict(source_to_id),
+        },
+        str(out),
+    )
+    return {
+        "checkpoint": str(out),
+        "history": history,
+        "n_examples": int(user_idx.shape[0]),
+        "n_users": int(len(user_to_id)),
+    }
+
+
+def load_content_bpr_mf(
+    path: str | Path,
+    map_location: str | None = None,
+) -> tuple[ContentBPRMF, dict[str, int], dict[str, int], dict[str, int]]:
+    obj = torch.load(str(path), map_location=map_location)
+    cfg = ContentBPRMFConfig(**obj["cfg"])
+    model = ContentBPRMF(cfg)
+    model.load_state_dict(obj["state_dict"])
+    user_to_id = {str(k): int(v) for k, v in obj["user_to_id"].items()}
+    culture_to_id = {str(k): int(v) for k, v in obj["culture_to_id"].items()}
+    source_to_id = {str(k): int(v) for k, v in obj["source_to_id"].items()}
+    return model, user_to_id, culture_to_id, source_to_id
+
+
+def recommend_content_bpr_mf(
+    model: ContentBPRMF,
+    user_to_id: dict[str, int],
+    culture_to_id: dict[str, int],
+    source_to_id: dict[str, int],
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    mf_weight: float = 0.6,
+    content_weight: float = 0.2,
+    novelty_weight: float = 0.1,
+    minority_weight: float = 0.05,
+    source_weight: float = 0.05,
+    device: torch.device | None = None,
+) -> list[Recommendation]:
+    if device is None:
+        device = torch.device("cpu")
+    if str(user_id) not in user_to_id:
+        raise ValueError(f"user_id not found in content BPR model: {user_id}")
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
+    user_profile = _user_profile(tracks.embedding, hist_idx, hist_w).astype(np.float32)
+    user_profile_t = torch.from_numpy(np.repeat(user_profile.reshape(1, -1), int(cand_idx.shape[0]), axis=0)).to(device)
+    item_features_t = torch.from_numpy(tracks.embedding.astype(np.float32)).to(device)
+    item_culture_ids = np.array(
+        [int(culture_to_id.get(str(x), 0)) for x in tracks.culture.tolist()],
+        dtype=np.int64,
+    )
+    if tracks.source_dataset is None:
+        item_source_ids = np.zeros((len(tracks),), dtype=np.int64)
+    else:
+        item_source_ids = np.array(
+            [int(source_to_id.get(str(x), 0)) for x in tracks.source_dataset.tolist()],
+            dtype=np.int64,
+        )
+    item_culture_t = torch.from_numpy(item_culture_ids).to(device)
+    item_source_t = torch.from_numpy(item_source_ids).to(device)
+    user_idx = torch.full((int(cand_idx.shape[0]),), int(user_to_id[str(user_id)]), dtype=torch.long, device=device)
+    item_idx = torch.from_numpy(cand_idx.astype(np.int64)).to(device)
+    model.eval()
+    model.to(device)
+    with torch.no_grad():
+        scores = model.score_with_features(
+            user_idx=user_idx,
+            item_idx=item_idx,
+            user_profile=user_profile_t,
+            item_features=item_features_t,
+            item_culture_ids=item_culture_t,
+            item_source_ids=item_source_t,
+        ).detach().cpu().numpy().astype(np.float32)
+    mf_scores = _minmax(scores)
+    cand_emb = tracks.embedding[cand_idx]
+    hist_emb = tracks.embedding[hist_idx]
+    content_scores = _minmax(_cosine_similarity(user_profile, cand_emb))
+    novelty_scores = _minmax(np.linalg.norm(hist_emb[:, None, :] - cand_emb[None, :, :], axis=2).mean(axis=0))
+    pop_by_track = _popularity_by_track(interactions)
+    minority_raw = np.array([float(-pop_by_track.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+    minority_scores = _minmax(minority_raw)
+    if tracks.source_dataset is None:
+        source_scores = np.zeros_like(mf_scores, dtype=np.float32)
+    else:
+        src_values = [str(x) for x in tracks.source_dataset.tolist()]
+        unique, counts = np.unique(np.array(src_values, dtype=object), return_counts=True)
+        source_inv = {str(k): 1.0 / float(v) for k, v in zip(unique.tolist(), counts.tolist())}
+        source_scores = _minmax(
+            np.array([float(source_inv.get(str(tracks.source_dataset[int(i)]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+        )
+    final_scores = (
+        float(mf_weight) * mf_scores
+        + float(content_weight) * content_scores
+        + float(novelty_weight) * novelty_scores
+        + float(minority_weight) * minority_scores
+        + float(source_weight) * source_scores
+    ).astype(np.float32)
+    final_scores = _safe_softmax(final_scores)
+    return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx, final_scores, k=k)
+
+
+def _bpr_scores_for_candidates(
+    model: BPRMF,
+    user_to_id: dict[str, int],
+    user_id: str,
+    cand_idx: np.ndarray,
+    device: torch.device,
+) -> np.ndarray:
+    if str(user_id) not in user_to_id:
+        raise ValueError(f"user_id not found in BPR model: {user_id}")
+    user_idx = torch.full((int(cand_idx.shape[0]),), int(user_to_id[str(user_id)]), dtype=torch.long, device=device)
+    item_idx = torch.from_numpy(cand_idx.astype(np.int64)).to(device)
+    with torch.no_grad():
+        scores = model.score(user_idx, item_idx).detach().cpu().numpy().astype(np.float32)
+    return scores
+
+
+def _bpr_hybrid_feature_table(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    hist_idx: np.ndarray,
+    hist_w: np.ndarray,
+    cand_idx: np.ndarray,
+    target_culture: str,
+    pop_by_track: dict[str, float],
+    source_inv_freq: dict[str, float],
+    culture_centroids: dict[str, np.ndarray],
+    bpr_model: BPRMF,
+    user_to_id: dict[str, int],
+    user_id: str,
+    device: torch.device,
+) -> tuple[np.ndarray, np.ndarray]:
+    feature_mat, _ = _candidate_feature_table(
+        tracks=tracks,
+        interactions=interactions,
+        hist_idx=hist_idx,
+        hist_w=hist_w,
+        cand_idx=cand_idx,
+        target_culture=target_culture,
+        pop_by_track=pop_by_track,
+        source_inv_freq=source_inv_freq,
+        culture_centroids=culture_centroids,
+    )
+    bpr_scores = _minmax(_bpr_scores_for_candidates(bpr_model, user_to_id, user_id, cand_idx, device))
+    recall_score = (
+        0.38 * bpr_scores
+        + 0.15 * feature_mat[:, 0]
+        + 0.12 * feature_mat[:, 1]
+        + 0.08 * feature_mat[:, 2]
+        + 0.07 * feature_mat[:, 3]
+        + 0.08 * feature_mat[:, 4]
+        + 0.05 * feature_mat[:, 6]
+        + 0.05 * feature_mat[:, 7]
+        + 0.02 * feature_mat[:, 8]
+    ).astype(np.float32)
+    scalar_features = np.concatenate(
+        [feature_mat.astype(np.float32), bpr_scores.reshape(-1, 1), recall_score.reshape(-1, 1)],
+        axis=1,
+    ).astype(np.float32)
+    return scalar_features, recall_score
+
+
+def _make_bpr_hybrid_pairwise_examples(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    bpr_model: BPRMF,
+    user_to_id: dict[str, int],
+    recall_k: int,
+    negative_samples: int,
+    hard_negative_ratio: float,
+    seed: int,
+    device: torch.device,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    rng = np.random.default_rng(int(seed))
+    track_id_to_idx = _track_id_to_idx(tracks)
+    by_user: dict[str, list[Interaction]] = {}
+    for it in interactions:
+        by_user.setdefault(str(it.user_id), []).append(it)
+
+    pop_by_track = _popularity_by_track(interactions)
+    source_inv_freq = _source_inverse_frequency(tracks)
+    culture_centroids = _culture_centroid_embeddings(tracks)
+
+    pos_features: list[np.ndarray] = []
+    neg_features: list[np.ndarray] = []
+    pair_weights: list[float] = []
+    for user_id in sorted(by_user.keys()):
+        if str(user_id) not in user_to_id:
+            continue
+        rows = [it for it in by_user[user_id] if str(it.track_id) in track_id_to_idx]
+        if len(rows) <= 1:
+            continue
+        pos_idx = np.array([track_id_to_idx[str(it.track_id)] for it in rows], dtype=np.int64)
+        weights = np.array([float(it.weight) for it in rows], dtype=np.float32)
+        weights = weights / max(1e-12, float(weights.sum()))
+        seen = {int(i) for i in pos_idx.tolist()}
+        for j, pos in enumerate(pos_idx.tolist()):
+            mask = np.ones_like(pos_idx, dtype=bool)
+            mask[int(j)] = False
+            context_idx = pos_idx[mask]
+            context_w = weights[mask]
+            if int(context_idx.size) <= 0:
+                continue
+            context_w = context_w / max(1e-12, float(context_w.sum()))
+            target_culture = str(tracks.culture[int(pos)])
+            cand_all = tracks.indices_of_cultures([target_culture]).astype(np.int64)
+            cand_idx = np.array(
+                [int(i) for i in cand_all.tolist() if int(i) == int(pos) or int(i) not in seen],
+                dtype=np.int64,
+            )
+            if int(cand_idx.size) <= 1:
+                continue
+            user_vec = _user_profile(tracks.embedding, context_idx, context_w)
+            scalar_features, recall_score = _bpr_hybrid_feature_table(
+                tracks=tracks,
+                interactions=interactions,
+                hist_idx=context_idx,
+                hist_w=context_w,
+                cand_idx=cand_idx,
+                target_culture=target_culture,
+                pop_by_track=pop_by_track,
+                source_inv_freq=source_inv_freq,
+                culture_centroids=culture_centroids,
+                bpr_model=bpr_model,
+                user_to_id=user_to_id,
+                user_id=str(user_id),
+                device=device,
+            )
+            model_feature_mat = _hybrid_model_feature_matrix(
+                user_vec=user_vec,
+                cand_emb=tracks.embedding[cand_idx],
+                scalar_features=scalar_features,
+            )
+            pos_local = np.nonzero(cand_idx == int(pos))[0]
+            if int(pos_local.size) <= 0:
+                continue
+            pos_local_idx = int(pos_local[0])
+            ordered = np.argsort(-recall_score)
+            ordered = ordered[ordered != pos_local_idx]
+            if int(ordered.size) <= 0:
+                continue
+            hard_limit = min(int(recall_k), int(ordered.size))
+            hard_pool = ordered[:hard_limit]
+            hard_count = min(int(round(float(negative_samples) * float(hard_negative_ratio))), int(hard_pool.size))
+            easy_count = max(0, int(negative_samples) - int(hard_count))
+            chosen: list[int] = []
+            if hard_count > 0 and int(hard_pool.size) > 0:
+                chosen.extend(rng.choice(hard_pool, size=hard_count, replace=False).tolist())
+            if easy_count > 0:
+                easy_pool = np.array([int(x) for x in ordered.tolist() if int(x) not in set(chosen)], dtype=np.int64)
+                if int(easy_pool.size) > 0:
+                    take = min(int(easy_count), int(easy_pool.size))
+                    chosen.extend(rng.choice(easy_pool, size=take, replace=False).tolist())
+            if not chosen:
+                chosen = ordered[: min(int(negative_samples), int(ordered.size))].tolist()
+            for neg_local_idx in chosen:
+                pos_features.append(model_feature_mat[pos_local_idx].astype(np.float32))
+                neg_features.append(model_feature_mat[int(neg_local_idx)].astype(np.float32))
+                pair_weights.append(float(weights[int(j)]))
+
+    if not pos_features:
+        raise RuntimeError("could not build BPR-hybrid pairwise training examples")
+    return (
+        np.stack(pos_features, axis=0).astype(np.float32),
+        np.stack(neg_features, axis=0).astype(np.float32),
+        np.array(pair_weights, dtype=np.float32),
+    )
+
+
+def train_bpr_two_stage_hybrid_ranker(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    bpr_checkpoint: str | Path,
+    out_path: str | Path,
+    hidden_dim: int = 256,
+    depth: int = 3,
+    dropout: float = 0.1,
+    epochs: int = 6,
+    batch_size: int = 256,
+    lr: float = 1e-3,
+    recall_k: int = 100,
+    negative_samples: int = 6,
+    hard_negative_ratio: float = 0.8,
+    seed: int = 42,
+    prefer_cuda: bool = False,
+) -> dict[str, object]:
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    bpr_model, user_to_id = load_bpr_mf(bpr_checkpoint, map_location=str(device))
+    bpr_model.to(device)
+    bpr_model.eval()
+    pos_x, neg_x, pair_w = _make_bpr_hybrid_pairwise_examples(
+        tracks=tracks,
+        interactions=interactions,
+        bpr_model=bpr_model,
+        user_to_id=user_to_id,
+        recall_k=int(recall_k),
+        negative_samples=int(negative_samples),
+        hard_negative_ratio=float(hard_negative_ratio),
+        seed=int(seed),
+        device=device,
+    )
+    ds = TensorDataset(torch.from_numpy(pos_x), torch.from_numpy(neg_x), torch.from_numpy(pair_w))
+    dl = DataLoader(ds, batch_size=min(int(batch_size), len(ds)), shuffle=True, drop_last=False)
+    cfg = TwoStageHybridConfig(
+        input_dim=int(pos_x.shape[1]),
+        hidden_dim=int(hidden_dim),
+        depth=int(depth),
+        dropout=float(dropout),
+    )
+    model = TwoStageHybridRanker(cfg).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=float(lr))
+    history: list[dict[str, float]] = []
+    for epoch in range(int(epochs)):
+        model.train()
+        losses: list[float] = []
+        for batch_pos, batch_neg, batch_w in dl:
+            batch_pos = batch_pos.to(device)
+            batch_neg = batch_neg.to(device)
+            batch_w = batch_w.to(device)
+            pos_logits = model(batch_pos)
+            neg_logits = model(batch_neg)
+            pair_loss = -torch.nn.functional.logsigmoid(pos_logits - neg_logits)
+            loss = (pair_loss * batch_w).mean()
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            opt.step()
+            losses.append(float(loss.detach().cpu().item()))
+        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(
+        {
+            "cfg": asdict(cfg),
+            "state_dict": model.state_dict(),
+            "history": history,
+            "bpr_checkpoint": str(bpr_checkpoint),
+        },
+        str(out),
+    )
+    return {"checkpoint": str(out), "history": history, "n_pairs": int(pos_x.shape[0])}
+
+
+def load_bpr_two_stage_hybrid_ranker(path: str | Path, map_location: str | None = None) -> TwoStageHybridRanker:
+    obj = torch.load(str(path), map_location=map_location)
+    cfg = TwoStageHybridConfig(**obj["cfg"])
+    model = TwoStageHybridRanker(cfg)
+    model.load_state_dict(obj["state_dict"])
+    return model
+
+
+def recommend_embedding_bpr_two_stage_hybrid(
+    ranker: TwoStageHybridRanker,
+    bpr_model: BPRMF,
+    user_to_id: dict[str, int],
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    recall_k: int = 120,
+    blend_weight: float = 0.22,
+    device: torch.device | None = None,
+) -> list[Recommendation]:
+    if device is None:
+        device = torch.device("cpu")
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
+    user_vec = _user_profile(tracks.embedding, hist_idx, hist_w)
+    pop_by_track = _popularity_by_track(interactions)
+    source_inv_freq = _source_inverse_frequency(tracks)
+    culture_centroids = _culture_centroid_embeddings(tracks)
+    scalar_features, recall_score = _bpr_hybrid_feature_table(
+        tracks=tracks,
+        interactions=interactions,
+        hist_idx=hist_idx,
+        hist_w=hist_w,
+        cand_idx=cand_idx,
+        target_culture=target_culture,
+        pop_by_track=pop_by_track,
+        source_inv_freq=source_inv_freq,
+        culture_centroids=culture_centroids,
+        bpr_model=bpr_model,
+        user_to_id=user_to_id,
+        user_id=str(user_id),
+        device=device,
+    )
+    recall_n = min(max(int(k), int(recall_k)), int(cand_idx.shape[0]))
+    recall_local = np.argsort(-recall_score)[:recall_n]
+    cand_idx_recall = cand_idx[recall_local]
+    feat_recall = _hybrid_model_feature_matrix(
+        user_vec=user_vec,
+        cand_emb=tracks.embedding[cand_idx_recall],
+        scalar_features=scalar_features[recall_local],
+    )
+    ranker.eval()
+    ranker.to(device)
+    with torch.no_grad():
+        logits = ranker(torch.from_numpy(feat_recall).to(device)).detach().cpu().numpy().astype(np.float32)
+    rerank_scores = _minmax(1.0 / (1.0 + np.exp(-logits)))
+    recall_scores = _minmax(recall_score[recall_local])
+    final_scores = ((1.0 - float(blend_weight)) * rerank_scores + float(blend_weight) * recall_scores).astype(np.float32)
+    return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx_recall, final_scores, k=k)
