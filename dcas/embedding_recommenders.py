@@ -1385,6 +1385,99 @@ def _make_bpr_hybrid_pairwise_examples(
     )
 
 
+def _make_bpr_hybrid_listwise_queries(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    bpr_model: BPRMF,
+    user_to_id: dict[str, int],
+    recall_k: int,
+    seed: int,
+    device: torch.device,
+) -> list[dict[str, object]]:
+    _ = int(seed)
+    track_id_to_idx = _track_id_to_idx(tracks)
+    by_user: dict[str, list[Interaction]] = {}
+    for it in interactions:
+        by_user.setdefault(str(it.user_id), []).append(it)
+
+    pop_by_track = _popularity_by_track(interactions)
+    source_inv_freq = _source_inverse_frequency(tracks)
+    culture_centroids = _culture_centroid_embeddings(tracks)
+
+    queries: list[dict[str, object]] = []
+    for user_id in sorted(by_user.keys()):
+        if str(user_id) not in user_to_id:
+            continue
+        rows = [it for it in by_user[user_id] if str(it.track_id) in track_id_to_idx]
+        if len(rows) <= 1:
+            continue
+        pos_idx = np.array([track_id_to_idx[str(it.track_id)] for it in rows], dtype=np.int64)
+        weights = np.array([float(it.weight) for it in rows], dtype=np.float32)
+        weights = weights / max(1e-12, float(weights.sum()))
+        seen = {int(i) for i in pos_idx.tolist()}
+        for j, pos in enumerate(pos_idx.tolist()):
+            mask = np.ones_like(pos_idx, dtype=bool)
+            mask[int(j)] = False
+            context_idx = pos_idx[mask]
+            context_w = weights[mask]
+            if int(context_idx.size) <= 0:
+                continue
+            context_w = context_w / max(1e-12, float(context_w.sum()))
+            target_culture = str(tracks.culture[int(pos)])
+            cand_all = tracks.indices_of_cultures([target_culture]).astype(np.int64)
+            cand_idx = np.array(
+                [int(i) for i in cand_all.tolist() if int(i) == int(pos) or int(i) not in seen],
+                dtype=np.int64,
+            )
+            if int(cand_idx.size) <= 1:
+                continue
+            user_vec = _user_profile(tracks.embedding, context_idx, context_w)
+            scalar_features, recall_score = _bpr_hybrid_feature_table(
+                tracks=tracks,
+                interactions=interactions,
+                hist_idx=context_idx,
+                hist_w=context_w,
+                cand_idx=cand_idx,
+                target_culture=target_culture,
+                pop_by_track=pop_by_track,
+                source_inv_freq=source_inv_freq,
+                culture_centroids=culture_centroids,
+                bpr_model=bpr_model,
+                user_to_id=user_to_id,
+                user_id=str(user_id),
+                device=device,
+            )
+            pos_local = np.nonzero(cand_idx == int(pos))[0]
+            if int(pos_local.size) <= 0:
+                continue
+            pos_local_idx = int(pos_local[0])
+            ordered = np.argsort(-recall_score)
+            recall_n = min(max(20, int(recall_k)), int(cand_idx.shape[0]))
+            selected_local = ordered[:recall_n].tolist()
+            if pos_local_idx not in selected_local:
+                if selected_local:
+                    selected_local[-1] = pos_local_idx
+                else:
+                    selected_local = [pos_local_idx]
+            selected_local_arr = np.array(selected_local, dtype=np.int64)
+            cand_idx_recall = cand_idx[selected_local_arr].astype(np.int64)
+            pos_in_recall = np.nonzero(cand_idx_recall == int(pos))[0]
+            if int(pos_in_recall.size) <= 0:
+                continue
+            queries.append(
+                {
+                    "user_vec": user_vec.astype(np.float32),
+                    "cand_idx": cand_idx_recall,
+                    "scalar_features": scalar_features[selected_local_arr].astype(np.float32),
+                    "pos_local": int(pos_in_recall[0]),
+                    "query_weight": float(weights[int(j)]),
+                }
+            )
+    if not queries:
+        raise RuntimeError("could not build BPR-hybrid listwise training queries")
+    return queries
+
+
 def train_bpr_two_stage_hybrid_ranker(
     tracks: Tracks,
     interactions: list[Interaction],
@@ -1459,12 +1552,100 @@ def train_bpr_two_stage_hybrid_ranker(
     return {"checkpoint": str(out), "history": history, "n_pairs": int(pos_x.shape[0])}
 
 
+def train_bpr_listwise_hybrid_ranker(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    bpr_checkpoint: str | Path,
+    out_path: str | Path,
+    hidden_dim: int = 256,
+    depth: int = 3,
+    dropout: float = 0.1,
+    epochs: int = 4,
+    lr: float = 5e-4,
+    recall_k: int = 120,
+    warm_start_checkpoint: str | Path | None = None,
+    seed: int = 42,
+    prefer_cuda: bool = False,
+) -> dict[str, object]:
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    bpr_model, user_to_id = load_bpr_mf(bpr_checkpoint, map_location=str(device))
+    bpr_model.to(device)
+    bpr_model.eval()
+    queries = _make_bpr_hybrid_listwise_queries(
+        tracks=tracks,
+        interactions=interactions,
+        bpr_model=bpr_model,
+        user_to_id=user_to_id,
+        recall_k=int(recall_k),
+        seed=int(seed),
+        device=device,
+    )
+    first_q = queries[0]
+    first_feat = _hybrid_model_feature_matrix(
+        user_vec=np.asarray(first_q["user_vec"], dtype=np.float32),
+        cand_emb=tracks.embedding[np.asarray(first_q["cand_idx"], dtype=np.int64)],
+        scalar_features=np.asarray(first_q["scalar_features"], dtype=np.float32),
+    )
+    cfg = TwoStageHybridConfig(
+        input_dim=int(first_feat.shape[1]),
+        hidden_dim=int(hidden_dim),
+        depth=int(depth),
+        dropout=float(dropout),
+    )
+    model = TwoStageHybridRanker(cfg).to(device)
+    if warm_start_checkpoint is not None and Path(warm_start_checkpoint).exists():
+        warm = torch.load(str(warm_start_checkpoint), map_location=str(device))
+        state_dict = warm.get("state_dict")
+        if isinstance(state_dict, dict):
+            model.load_state_dict(state_dict, strict=False)
+    opt = torch.optim.AdamW(model.parameters(), lr=float(lr))
+    rng = np.random.default_rng(int(seed))
+    history: list[dict[str, float]] = []
+    for epoch in range(int(epochs)):
+        model.train()
+        losses: list[float] = []
+        for q_idx in rng.permutation(len(queries)).tolist():
+            query = queries[int(q_idx)]
+            feat = _hybrid_model_feature_matrix(
+                user_vec=np.asarray(query["user_vec"], dtype=np.float32),
+                cand_emb=tracks.embedding[np.asarray(query["cand_idx"], dtype=np.int64)],
+                scalar_features=np.asarray(query["scalar_features"], dtype=np.float32),
+            )
+            logits = model(torch.from_numpy(feat).to(device))
+            target_idx = int(query["pos_local"])
+            weight = float(query["query_weight"])
+            loss = -torch.log_softmax(logits, dim=0)[target_idx] * weight
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            opt.step()
+            losses.append(float(loss.detach().cpu().item()))
+        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(
+        {
+            "cfg": asdict(cfg),
+            "state_dict": model.state_dict(),
+            "history": history,
+            "bpr_checkpoint": str(bpr_checkpoint),
+            "warm_start_checkpoint": str(warm_start_checkpoint) if warm_start_checkpoint is not None else None,
+        },
+        str(out),
+    )
+    return {"checkpoint": str(out), "history": history, "n_queries": int(len(queries))}
+
+
 def load_bpr_two_stage_hybrid_ranker(path: str | Path, map_location: str | None = None) -> TwoStageHybridRanker:
     obj = torch.load(str(path), map_location=map_location)
     cfg = TwoStageHybridConfig(**obj["cfg"])
     model = TwoStageHybridRanker(cfg)
     model.load_state_dict(obj["state_dict"])
     return model
+
+
+def load_bpr_listwise_hybrid_ranker(path: str | Path, map_location: str | None = None) -> TwoStageHybridRanker:
+    return load_bpr_two_stage_hybrid_ranker(path=path, map_location=map_location)
 
 
 def recommend_embedding_bpr_two_stage_hybrid(
@@ -1521,6 +1702,78 @@ def recommend_embedding_bpr_two_stage_hybrid(
     with torch.no_grad():
         logits = ranker(torch.from_numpy(feat_recall).to(device)).detach().cpu().numpy().astype(np.float32)
     rerank_scores = _minmax(1.0 / (1.0 + np.exp(-logits)))
+    recall_scores = _minmax(recall_score[recall_local])
+    bpr_scores = scalar_features[recall_local, 10]
+    novelty_scores = scalar_features[recall_local, 4]
+    target_scores = scalar_features[recall_local, 7]
+    minority_scores = scalar_features[recall_local, 6]
+    source_scores = scalar_features[recall_local, 9]
+    final_scores = (
+        float(rerank_weight) * rerank_scores
+        + float(recall_weight) * recall_scores
+        + float(bpr_weight) * bpr_scores
+        + float(novelty_weight) * novelty_scores
+        + float(target_affinity_weight) * target_scores
+        + float(minority_weight) * minority_scores
+        + float(source_weight) * source_scores
+    ).astype(np.float32)
+    return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx_recall, final_scores, k=k)
+
+
+def recommend_embedding_bpr_listwise_hybrid(
+    ranker: TwoStageHybridRanker,
+    bpr_model: BPRMF,
+    user_to_id: dict[str, int],
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    recall_k: int = 120,
+    rerank_weight: float = 0.62,
+    recall_weight: float = 0.14,
+    bpr_weight: float = 0.10,
+    novelty_weight: float = 0.02,
+    target_affinity_weight: float = 0.06,
+    minority_weight: float = 0.04,
+    source_weight: float = 0.02,
+    device: torch.device | None = None,
+) -> list[Recommendation]:
+    if device is None:
+        device = torch.device("cpu")
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
+    user_vec = _user_profile(tracks.embedding, hist_idx, hist_w)
+    pop_by_track = _popularity_by_track(interactions)
+    source_inv_freq = _source_inverse_frequency(tracks)
+    culture_centroids = _culture_centroid_embeddings(tracks)
+    scalar_features, recall_score = _bpr_hybrid_feature_table(
+        tracks=tracks,
+        interactions=interactions,
+        hist_idx=hist_idx,
+        hist_w=hist_w,
+        cand_idx=cand_idx,
+        target_culture=target_culture,
+        pop_by_track=pop_by_track,
+        source_inv_freq=source_inv_freq,
+        culture_centroids=culture_centroids,
+        bpr_model=bpr_model,
+        user_to_id=user_to_id,
+        user_id=str(user_id),
+        device=device,
+    )
+    recall_n = min(max(int(k), int(recall_k)), int(cand_idx.shape[0]))
+    recall_local = np.argsort(-recall_score)[:recall_n]
+    cand_idx_recall = cand_idx[recall_local]
+    feat_recall = _hybrid_model_feature_matrix(
+        user_vec=user_vec,
+        cand_emb=tracks.embedding[cand_idx_recall],
+        scalar_features=scalar_features[recall_local],
+    )
+    ranker.eval()
+    ranker.to(device)
+    with torch.no_grad():
+        logits = ranker(torch.from_numpy(feat_recall).to(device)).detach().cpu().numpy().astype(np.float32)
+    rerank_scores = _minmax(logits)
     recall_scores = _minmax(recall_score[recall_local])
     bpr_scores = scalar_features[recall_local, 10]
     novelty_scores = scalar_features[recall_local, 4]
