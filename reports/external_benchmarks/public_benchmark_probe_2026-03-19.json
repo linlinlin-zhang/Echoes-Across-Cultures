@@ -1,0 +1,77 @@
+{
+  "yambda": {
+    "repo": "yandex/yambda",
+    "access": "public",
+    "subset_rows": {
+      "sequential_50m_users": 10000,
+      "sequential_500m_users": 100000,
+      "sequential_5b_users": 1000000
+    },
+    "key_file_sizes_bytes": {
+      "sequential/50m/multi_event.parquet": 437501893,
+      "sequential/500m/multi_event.parquet": 4388605489,
+      "sequential/5b/multi_event.parquet": 43682305922,
+      "embeddings.parquet": 13814230943
+    },
+    "schema_focus": {
+      "interaction_fields": [
+        "uid",
+        "item_id",
+        "timestamp",
+        "is_organic",
+        "event_type",
+        "played_ratio_pct",
+        "track_length_seconds"
+      ],
+      "embedding_fields": [
+        "item_id",
+        "embed",
+        "normalized_embed"
+      ],
+      "missing_for_current_repo": [
+        "culture"
+      ]
+    }
+  },
+  "mssd": {
+    "site": "https://www.aicrowd.com/challenges/spotify-sequential-skip-prediction-challenge",
+    "publication": "https://research.atspotify.com/publications/the-music-streaming-sessions-dataset-short-paper/",
+    "access": "not_publicly_downloadable",
+    "note": "AIcrowd challenge page says that, since 2024-07-08, the dataset is no longer available for download and access requires contacting Spotify Research.",
+    "task": "session-based sequential skip prediction",
+    "public_dataset_scale": {
+      "sessions": 130000000,
+      "tracks": 4000000
+    },
+    "missing_for_current_repo": [
+      "culture",
+      "target_culture offline protocol"
+    ]
+  },
+  "repo_constraints": {
+    "current_tracks_format": {
+      "required_fields": [
+        "track_id",
+        "culture",
+        "embedding"
+      ],
+      "optional_fields": [
+        "source_dataset",
+        "affect_label"
+      ]
+    },
+    "current_interactions_format": {
+      "required_fields": [
+        "user_id",
+        "track_id",
+        "weight"
+      ]
+    },
+    "current_benchmark_assumptions": [
+      "recommendation is evaluated against a target culture per user",
+      "cultural calibration and target-culture probability require track-level culture labels",
+      "current BPR trainer materializes per-user negative pools, which does not scale to industrial item counts"
+    ],
+    "recommended_next_step": "Add a separate scalable recsys benchmark path for Recall/NDCG/MRR before trying Yambda or MSSD."
+  }
+}
