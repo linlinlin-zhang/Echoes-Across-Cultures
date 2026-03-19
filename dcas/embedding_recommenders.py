@@ -1480,6 +1480,7 @@ def recommend_embedding_bpr_two_stage_hybrid(
     rerank_weight: float = 0.62,
     recall_weight: float = 0.16,
     bpr_weight: float = 0.10,
+    novelty_weight: float = 0.0,
     target_affinity_weight: float = 0.08,
     minority_weight: float = 0.02,
     source_weight: float = 0.02,
@@ -1522,6 +1523,7 @@ def recommend_embedding_bpr_two_stage_hybrid(
     rerank_scores = _minmax(1.0 / (1.0 + np.exp(-logits)))
     recall_scores = _minmax(recall_score[recall_local])
     bpr_scores = scalar_features[recall_local, 10]
+    novelty_scores = scalar_features[recall_local, 4]
     target_scores = scalar_features[recall_local, 7]
     minority_scores = scalar_features[recall_local, 6]
     source_scores = scalar_features[recall_local, 9]
@@ -1529,6 +1531,7 @@ def recommend_embedding_bpr_two_stage_hybrid(
         float(rerank_weight) * rerank_scores
         + float(recall_weight) * recall_scores
         + float(bpr_weight) * bpr_scores
+        + float(novelty_weight) * novelty_scores
         + float(target_affinity_weight) * target_scores
         + float(minority_weight) * minority_scores
         + float(source_weight) * source_scores

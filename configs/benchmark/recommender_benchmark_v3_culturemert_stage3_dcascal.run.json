@@ -1,0 +1,108 @@
+{
+  "suite_name": "v3_main_culturemert_stage3_dcascal",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+  "metadata": "E:/Desktop/Echo/storage/public/research_dataset_v3/metadata_v3_main_harmonized_mw3.csv",
+  "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+  "auto_synthesize_interactions": {
+    "enabled": true,
+    "out": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+    "users_per_culture": 24,
+    "tracks_per_user": 40,
+    "min_weight": 0.5,
+    "max_weight": 2.0,
+    "genre_column": "coarse_label",
+    "mode": "mixed_culture",
+    "secondary_cultures": 2,
+    "home_share": 0.6,
+    "seed": 42
+  },
+  "output_dir": "E:/Desktop/Echo/reports/benchmarks/v3_main_culturemert_stage3_dcascal",
+  "k": 20,
+  "bootstrap_samples": 200,
+  "permutation_samples": 200,
+  "bootstrap_seed": 42,
+  "minority_quantile": 0.25,
+  "prefer_cuda": true,
+  "bpr": {
+    "checkpoint": "E:/Desktop/Echo/storage/models/bpr_mf_v3_main_culturemert_stage3.pt",
+    "train_if_missing": true,
+    "latent_dim": 64,
+    "epochs": 12,
+    "batch_size": 512,
+    "lr": 0.005,
+    "reg": 0.0001,
+    "seed": 42,
+    "prefer_cuda": true
+  },
+  "bpr_hybrid": {
+    "checkpoint": "E:/Desktop/Echo/storage/models/bpr_two_stage_hybrid_v3_main_culturemert_stage3.pt",
+    "train_if_missing": true,
+    "hidden_dim": 256,
+    "depth": 3,
+    "dropout": 0.1,
+    "epochs": 5,
+    "batch_size": 256,
+    "lr": 0.001,
+    "recall_k": 120,
+    "negative_samples": 6,
+    "hard_negative_ratio": 0.8,
+    "rerank_weight": 0.6,
+    "recall_weight": 0.12,
+    "bpr_weight": 0.08,
+    "novelty_weight": 0.0,
+    "target_affinity_weight": 0.06,
+    "minority_weight": 0.1,
+    "source_weight": 0.04,
+    "seed": 42,
+    "prefer_cuda": true
+  },
+  "methods": [
+    {
+      "name": "bpr_mf",
+      "family": "raw",
+      "kind": "bpr"
+    },
+    {
+      "name": "bpr_two_stage_hybrid",
+      "family": "raw",
+      "kind": "bpr_two_stage_hybrid"
+    },
+    {
+      "name": "dcas_full_ot",
+      "family": "dcas",
+      "kind": "ot",
+      "checkpoint": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_culturemert_stage3.pt",
+      "epsilon": 0.1,
+      "iters": 200
+    },
+    {
+      "name": "dcas_full_ot_calibrated_target",
+      "family": "dcas",
+      "kind": "ot_calibrated",
+      "checkpoint": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_culturemert_stage3.pt",
+      "epsilon": 0.1,
+      "iters": 200,
+      "relevance_weight": 0.48,
+      "novelty_weight": 0.1,
+      "target_affinity_weight": 0.22,
+      "minority_weight": 0.14,
+      "source_weight": 0.06,
+      "diversity_lambda": 0.03
+    },
+    {
+      "name": "dcas_full_ot_calibrated_minor",
+      "family": "dcas",
+      "kind": "ot_calibrated",
+      "checkpoint": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_culturemert_stage3.pt",
+      "epsilon": 0.1,
+      "iters": 200,
+      "relevance_weight": 0.46,
+      "novelty_weight": 0.1,
+      "target_affinity_weight": 0.14,
+      "minority_weight": 0.22,
+      "source_weight": 0.08,
+      "diversity_lambda": 0.04
+    }
+  ],
+  "reference_method": "dcas_full_ot"
+}

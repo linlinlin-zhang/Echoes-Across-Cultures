@@ -38,7 +38,15 @@ from dcas.embedding_recommenders import (
     train_shallow_ranker,
     train_two_stage_hybrid_ranker,
 )
-from dcas.recommender import Recommendation, recommend_knn, recommend_open_knn, recommend_open_ot, recommend_ot
+from dcas.recommender import (
+    Recommendation,
+    recommend_knn,
+    recommend_knn_calibrated,
+    recommend_open_knn,
+    recommend_open_ot,
+    recommend_ot,
+    recommend_ot_calibrated,
+)
 from dcas.scripts.compare_recommender_runs import compare_recommender_runs
 from dcas.scripts.synthesize_interactions import synthesize_interactions
 from dcas.serialization import load_checkpoint
@@ -591,6 +599,7 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     rerank_weight=float(_cfg.get("rerank_weight", 0.62)),
                     recall_weight=float(_cfg.get("recall_weight", 0.16)),
                     bpr_weight=float(_cfg.get("bpr_weight", 0.10)),
+                    novelty_weight=float(_cfg.get("novelty_weight", 0.0)),
                     target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.08)),
                     minority_weight=float(_cfg.get("minority_weight", 0.02)),
                     source_weight=float(_cfg.get("source_weight", 0.02)),
@@ -623,6 +632,40 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     target_culture=target_culture,
                     k=top_k,
                     device=_device,
+                )[0]
+            elif kind == "ot_calibrated":
+                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_ot_calibrated(
+                    model=_model,
+                    tracks=_tracks,
+                    interactions=_ints,
+                    user_id=user_id,
+                    target_culture=target_culture,
+                    k=top_k,
+                    device=_device,
+                    epsilon=float(_cfg.get("epsilon", 0.1)),
+                    iters=int(_cfg.get("iters", 200)),
+                    relevance_weight=float(_cfg.get("relevance_weight", 0.62)),
+                    novelty_weight=float(_cfg.get("novelty_weight", 0.12)),
+                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.14)),
+                    minority_weight=float(_cfg.get("minority_weight", 0.08)),
+                    source_weight=float(_cfg.get("source_weight", 0.04)),
+                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.03)),
+                )[0]
+            elif kind == "knn_calibrated":
+                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_knn_calibrated(
+                    model=_model,
+                    tracks=_tracks,
+                    interactions=_ints,
+                    user_id=user_id,
+                    target_culture=target_culture,
+                    k=top_k,
+                    device=_device,
+                    relevance_weight=float(_cfg.get("relevance_weight", 0.62)),
+                    novelty_weight=float(_cfg.get("novelty_weight", 0.12)),
+                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.14)),
+                    minority_weight=float(_cfg.get("minority_weight", 0.08)),
+                    source_weight=float(_cfg.get("source_weight", 0.04)),
+                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.03)),
                 )[0]
             elif kind == "ot_open":
                 recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_open_ot(

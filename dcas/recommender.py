@@ -126,6 +126,15 @@ def _track_popularity(tracks: Tracks, interactions: list[Interaction]) -> np.nda
     return popularity
 
 
+def _source_inverse_scores(tracks: Tracks, cand_idx: np.ndarray) -> np.ndarray:
+    if getattr(tracks, "source_dataset", None) is None:
+        return np.zeros((int(cand_idx.shape[0]),), dtype=np.float32)
+    src_values = np.array([str(x) for x in tracks.source_dataset.tolist()], dtype=object)
+    unique, counts = np.unique(src_values, return_counts=True)
+    inv = {str(k): 1.0 / float(v) for k, v in zip(unique.tolist(), counts.tolist())}
+    return _normalize_np(np.array([float(inv.get(str(src_values[int(i)]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32))
+
+
 def _culture_affinity_scores(
     zs_points: torch.Tensor,
     zs_all: torch.Tensor,
@@ -330,6 +339,73 @@ def _finalize_recommendations(
     return recs, metrics
 
 
+def _recommend_closed_target_rerank(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    cand_idx: np.ndarray,
+    zs_all: torch.Tensor,
+    zs_hist: torch.Tensor,
+    zs_cand: torch.Tensor,
+    za_hist: torch.Tensor,
+    za_cand: torch.Tensor,
+    target_culture: str,
+    relevance_all: np.ndarray,
+    k: int,
+    relevance_weight: float,
+    novelty_weight: float,
+    target_affinity_weight: float,
+    minority_weight: float,
+    source_weight: float,
+    diversity_lambda: float,
+) -> tuple[list[Recommendation], dict[str, float]]:
+    novelty = _normalize_np(torch.cdist(zs_cand, zs_hist).mean(dim=1).detach().cpu().numpy())
+    target_affinity = _normalize_np(
+        _culture_affinity_scores(
+            zs_points=zs_cand,
+            zs_all=zs_all,
+            culture_all=tracks.culture.astype(str),
+            target_culture=str(target_culture),
+            temperature=1.0,
+        )
+    )
+    popularity = _track_popularity(tracks=tracks, interactions=interactions)
+    minority_boost = _normalize_np(-np.log1p(popularity[cand_idx]))
+    source_boost = _source_inverse_scores(tracks=tracks, cand_idx=cand_idx)
+    relevance = _normalize_np(relevance_all)
+    base_scores = (
+        float(relevance_weight) * relevance
+        + float(novelty_weight) * novelty
+        + float(target_affinity_weight) * target_affinity
+        + float(minority_weight) * minority_boost
+        + float(source_weight) * source_boost
+    ).astype(np.float32)
+    selected_local = _greedy_diverse_topk(
+        base_scores=base_scores,
+        zs_points=zs_cand,
+        k=int(k),
+        diversity_lambda=float(diversity_lambda),
+    )
+    if not selected_local:
+        selected_local = np.argsort(-base_scores)[: int(k)].tolist()
+    final_scores = np.full((int(cand_idx.shape[0]),), -1e9, dtype=np.float32)
+    if selected_local:
+        lift = float(np.max(base_scores)) + 1.0
+        for rank, local_idx in enumerate(selected_local):
+            final_scores[int(local_idx)] = lift - float(rank)
+    return _finalize_recommendations(
+        tracks=tracks,
+        cand_idx=cand_idx,
+        cand_scores=final_scores,
+        za_hist=za_hist,
+        zs_hist=zs_hist,
+        za_cand=za_cand,
+        zs_cand=zs_cand,
+        zs_all=zs_all,
+        target_culture=str(target_culture),
+        k=int(k),
+    )
+
+
 def recommend_ot(
     model: DCASModel,
     tracks: Tracks,
@@ -387,6 +463,69 @@ def recommend_ot(
     )
 
 
+def recommend_ot_calibrated(
+    model: DCASModel,
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    device: torch.device | None = None,
+    epsilon: float = 0.1,
+    iters: int = 200,
+    relevance_weight: float = 0.62,
+    novelty_weight: float = 0.12,
+    target_affinity_weight: float = 0.14,
+    minority_weight: float = 0.08,
+    source_weight: float = 0.04,
+    diversity_lambda: float = 0.03,
+) -> tuple[list[Recommendation], dict[str, float]]:
+    if device is None:
+        device = torch.device("cpu")
+    model.eval()
+    model.to(device)
+
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(
+        tracks=tracks,
+        interactions=interactions,
+        user_id=user_id,
+        target_culture=target_culture,
+    )
+    x_all = torch.from_numpy(tracks.embedding).to(device)
+    with torch.no_grad():
+        _, zs_mu_all, za_mu_all = model.encode(x_all)
+    za_hist = za_mu_all[torch.from_numpy(hist_idx).to(device)]
+    zs_hist = zs_mu_all[torch.from_numpy(hist_idx).to(device)]
+    za_cand = za_mu_all[torch.from_numpy(cand_idx).to(device)]
+    zs_cand = zs_mu_all[torch.from_numpy(cand_idx).to(device)]
+    a = torch.from_numpy(hist_w.astype(np.float32)).to(device)
+    b = torch.full((cand_idx.shape[0],), 1.0 / cand_idx.shape[0], device=device)
+    cost = squared_euclidean_cost(za_hist, za_cand)
+    plan = sinkhorn_plan(a=a, b=b, cost=cost, epsilon=epsilon, iters=iters)
+    col_mass = plan.sum(dim=0).clamp_min(1e-12)
+    col_avg_cost = (plan * cost).sum(dim=0) / col_mass
+    relevance_all = _normalize_np((-col_avg_cost).detach().cpu().numpy())
+    return _recommend_closed_target_rerank(
+        tracks=tracks,
+        interactions=interactions,
+        cand_idx=cand_idx,
+        zs_all=zs_mu_all,
+        zs_hist=zs_hist,
+        zs_cand=zs_cand,
+        za_hist=za_hist,
+        za_cand=za_cand,
+        target_culture=str(target_culture),
+        relevance_all=relevance_all,
+        k=int(k),
+        relevance_weight=float(relevance_weight),
+        novelty_weight=float(novelty_weight),
+        target_affinity_weight=float(target_affinity_weight),
+        minority_weight=float(minority_weight),
+        source_weight=float(source_weight),
+        diversity_lambda=float(diversity_lambda),
+    )
+
+
 def recommend_knn(
     model: DCASModel,
     tracks: Tracks,
@@ -433,6 +572,63 @@ def recommend_knn(
         zs_all=zs_mu_all,
         target_culture=str(target_culture),
         k=int(k),
+    )
+
+
+def recommend_knn_calibrated(
+    model: DCASModel,
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    device: torch.device | None = None,
+    relevance_weight: float = 0.62,
+    novelty_weight: float = 0.12,
+    target_affinity_weight: float = 0.14,
+    minority_weight: float = 0.08,
+    source_weight: float = 0.04,
+    diversity_lambda: float = 0.03,
+) -> tuple[list[Recommendation], dict[str, float]]:
+    if device is None:
+        device = torch.device("cpu")
+    model.eval()
+    model.to(device)
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(
+        tracks=tracks,
+        interactions=interactions,
+        user_id=user_id,
+        target_culture=target_culture,
+    )
+    x_all = torch.from_numpy(tracks.embedding).to(device)
+    with torch.no_grad():
+        _, zs_mu_all, za_mu_all = model.encode(x_all)
+    za_hist = za_mu_all[torch.from_numpy(hist_idx).to(device)]
+    zs_hist = zs_mu_all[torch.from_numpy(hist_idx).to(device)]
+    za_cand = za_mu_all[torch.from_numpy(cand_idx).to(device)]
+    zs_cand = zs_mu_all[torch.from_numpy(cand_idx).to(device)]
+    hist_w_t = torch.from_numpy(hist_w.astype(np.float32)).to(device)
+    dist = torch.cdist(za_hist, za_cand)
+    avg_dist = (hist_w_t.unsqueeze(1) * dist).sum(dim=0)
+    relevance_all = _normalize_np(torch.softmax(-avg_dist, dim=0).detach().cpu().numpy())
+    return _recommend_closed_target_rerank(
+        tracks=tracks,
+        interactions=interactions,
+        cand_idx=cand_idx,
+        zs_all=zs_mu_all,
+        zs_hist=zs_hist,
+        zs_cand=zs_cand,
+        za_hist=za_hist,
+        za_cand=za_cand,
+        target_culture=str(target_culture),
+        relevance_all=relevance_all,
+        k=int(k),
+        relevance_weight=float(relevance_weight),
+        novelty_weight=float(novelty_weight),
+        target_affinity_weight=float(target_affinity_weight),
+        minority_weight=float(minority_weight),
+        source_weight=float(source_weight),
+        diversity_lambda=float(diversity_lambda),
     )
 
 
