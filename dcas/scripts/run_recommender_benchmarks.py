@@ -20,12 +20,14 @@ from dcas.data.npz_tracks import Tracks, load_tracks
 from dcas.embedding_recommenders import (
     load_bpr_mf,
     load_bpr_listwise_hybrid_ranker,
+    load_bpr_tree_hybrid_ranker,
     load_bpr_two_stage_hybrid_ranker,
     load_content_bpr_mf,
     load_shallow_ranker,
     load_two_stage_hybrid_ranker,
     recommend_bpr_mf,
     recommend_embedding_bpr_listwise_hybrid,
+    recommend_embedding_bpr_tree_hybrid,
     recommend_embedding_bpr_two_stage_hybrid,
     recommend_content_bpr_mf,
     recommend_embedding_cosine,
@@ -36,6 +38,7 @@ from dcas.embedding_recommenders import (
     recommend_popularity,
     train_bpr_mf,
     train_bpr_listwise_hybrid_ranker,
+    train_bpr_tree_hybrid_ranker,
     train_bpr_two_stage_hybrid_ranker,
     train_content_bpr_mf,
     train_shallow_ranker,
@@ -389,6 +392,7 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
     bpr_cfg = dict(cfg.get("bpr", {}))
     bpr_hybrid_cfg = dict(cfg.get("bpr_hybrid", {}))
     bpr_listwise_hybrid_cfg = dict(cfg.get("bpr_listwise_hybrid", {}))
+    bpr_tree_hybrid_cfg = dict(cfg.get("bpr_tree_hybrid", {}))
     lightfm_like_cfg = dict(cfg.get("lightfm_like", {}))
 
     results_by_method: dict[str, dict[str, Any]] = {}
@@ -499,6 +503,7 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     )
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker, user_to_id = load_bpr_mf(ckpt, map_location=str(device))
+                ranker.to(device)
                 recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _users=user_to_id, _device=device: recommend_bpr_mf(
                     _ranker,
                     _users,
@@ -532,6 +537,7 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     )
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker, user_to_id, culture_to_id, source_to_id = load_content_bpr_mf(ckpt, map_location=str(device))
+                ranker.to(device)
                 recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _users=user_to_id, _cultures=culture_to_id, _sources=source_to_id, _device=device: recommend_content_bpr_mf(
                     _ranker,
                     _users,
@@ -589,6 +595,7 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     )
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
+                bpr_model.to(device)
                 ranker = load_bpr_two_stage_hybrid_ranker(ckpt, map_location=str(device))
                 recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_hybrid_cfg: recommend_embedding_bpr_two_stage_hybrid(
                     _ranker,
@@ -647,6 +654,7 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     )
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
+                bpr_model.to(device)
                 ranker = load_bpr_listwise_hybrid_ranker(ckpt, map_location=str(device))
                 recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_listwise_hybrid_cfg: recommend_embedding_bpr_listwise_hybrid(
                     _ranker,
@@ -664,6 +672,68 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
                     target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.06)),
                     minority_weight=float(_cfg.get("minority_weight", 0.04)),
+                    source_weight=float(_cfg.get("source_weight", 0.02)),
+                    device=_device,
+                )
+            elif kind == "bpr_tree_hybrid":
+                bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
+                if not Path(bpr_ckpt).exists():
+                    if not bool(bpr_cfg.get("train_if_missing", True)):
+                        raise RuntimeError(f"BPR checkpoint missing and train_if_missing=false: {bpr_ckpt}")
+                    train_bpr_mf(
+                        tracks=tracks,
+                        interactions=interactions,
+                        out_path=bpr_ckpt,
+                        latent_dim=int(bpr_cfg.get("latent_dim", 64)),
+                        epochs=int(bpr_cfg.get("epochs", 10)),
+                        batch_size=int(bpr_cfg.get("batch_size", 512)),
+                        lr=float(bpr_cfg.get("lr", 5e-3)),
+                        reg=float(bpr_cfg.get("reg", 1e-4)),
+                        seed=int(bpr_cfg.get("seed", 42)),
+                        prefer_cuda=bool(bpr_cfg.get("prefer_cuda", prefer_cuda)),
+                    )
+                ckpt = str(bpr_tree_hybrid_cfg.get("checkpoint", out_dir / "bpr_tree_hybrid.pkl"))
+                if not Path(ckpt).exists():
+                    if not bool(bpr_tree_hybrid_cfg.get("train_if_missing", True)):
+                        raise RuntimeError(f"BPR tree hybrid checkpoint missing and train_if_missing=false: {ckpt}")
+                    train_bpr_tree_hybrid_ranker(
+                        tracks=tracks,
+                        interactions=interactions,
+                        bpr_checkpoint=bpr_ckpt,
+                        out_path=ckpt,
+                        backend=str(bpr_tree_hybrid_cfg.get("backend", "lightgbm")),
+                        recall_k=int(bpr_tree_hybrid_cfg.get("recall_k", max(100, 5 * int(k)))),
+                        n_estimators=int(bpr_tree_hybrid_cfg.get("n_estimators", 300)),
+                        learning_rate=float(bpr_tree_hybrid_cfg.get("learning_rate", 0.05)),
+                        num_leaves=int(bpr_tree_hybrid_cfg.get("num_leaves", 31)),
+                        max_depth=int(bpr_tree_hybrid_cfg.get("max_depth", -1)),
+                        min_child_samples=int(bpr_tree_hybrid_cfg.get("min_child_samples", 20)),
+                        subsample=float(bpr_tree_hybrid_cfg.get("subsample", 0.9)),
+                        colsample_bytree=float(bpr_tree_hybrid_cfg.get("colsample_bytree", 0.8)),
+                        reg_lambda=float(bpr_tree_hybrid_cfg.get("reg_lambda", 1.0)),
+                        seed=int(bpr_tree_hybrid_cfg.get("seed", 42)),
+                        prefer_cuda=bool(bpr_tree_hybrid_cfg.get("prefer_cuda", prefer_cuda)),
+                    )
+                device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+                bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
+                bpr_model.to(device)
+                ranker = load_bpr_tree_hybrid_ranker(ckpt)
+                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_tree_hybrid_cfg: recommend_embedding_bpr_tree_hybrid(
+                    _ranker,
+                    _bpr,
+                    _users,
+                    _tracks,
+                    _ints,
+                    user_id,
+                    target_culture,
+                    k=top_k,
+                    recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
+                    rerank_weight=float(_cfg.get("rerank_weight", 0.58)),
+                    recall_weight=float(_cfg.get("recall_weight", 0.12)),
+                    bpr_weight=float(_cfg.get("bpr_weight", 0.08)),
+                    novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
+                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.12)),
+                    minority_weight=float(_cfg.get("minority_weight", 0.06)),
                     source_weight=float(_cfg.get("source_weight", 0.02)),
                     device=_device,
                 )

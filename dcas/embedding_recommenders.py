@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import pickle
 
 import numpy as np
 import torch
@@ -1646,6 +1647,240 @@ def load_bpr_two_stage_hybrid_ranker(path: str | Path, map_location: str | None 
 
 def load_bpr_listwise_hybrid_ranker(path: str | Path, map_location: str | None = None) -> TwoStageHybridRanker:
     return load_bpr_two_stage_hybrid_ranker(path=path, map_location=map_location)
+
+
+def _build_bpr_tree_ranker_dataset(
+    tracks: Tracks,
+    queries: list[dict[str, object]],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    feature_blocks: list[np.ndarray] = []
+    labels: list[np.ndarray] = []
+    groups: list[int] = []
+    sample_weights: list[np.ndarray] = []
+    for query in queries:
+        _ = np.asarray(query["cand_idx"], dtype=np.int64)
+        feat = np.asarray(query["scalar_features"], dtype=np.float32)
+        y = np.zeros((int(feat.shape[0]),), dtype=np.float32)
+        y[int(query["pos_local"])] = 1.0
+        q_weight = float(query["query_weight"])
+        feature_blocks.append(feat)
+        labels.append(y)
+        groups.append(int(feat.shape[0]))
+        sample_weights.append(np.full((int(feat.shape[0]),), q_weight, dtype=np.float32))
+    if not feature_blocks:
+        raise RuntimeError("could not build tree ranker dataset")
+    return (
+        np.concatenate(feature_blocks, axis=0).astype(np.float32),
+        np.concatenate(labels, axis=0).astype(np.float32),
+        np.array(groups, dtype=np.int32),
+        np.concatenate(sample_weights, axis=0).astype(np.float32),
+    )
+
+
+def train_bpr_tree_hybrid_ranker(
+    tracks: Tracks,
+    interactions: list[Interaction],
+    bpr_checkpoint: str | Path,
+    out_path: str | Path,
+    backend: str = "lightgbm",
+    recall_k: int = 120,
+    n_estimators: int = 300,
+    learning_rate: float = 0.05,
+    num_leaves: int = 31,
+    max_depth: int = -1,
+    min_child_samples: int = 20,
+    subsample: float = 0.9,
+    colsample_bytree: float = 0.8,
+    reg_lambda: float = 1.0,
+    seed: int = 42,
+    prefer_cuda: bool = False,
+) -> dict[str, object]:
+    device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
+    bpr_model, user_to_id = load_bpr_mf(bpr_checkpoint, map_location=str(device))
+    bpr_model.to(device)
+    bpr_model.eval()
+    queries = _make_bpr_hybrid_listwise_queries(
+        tracks=tracks,
+        interactions=interactions,
+        bpr_model=bpr_model,
+        user_to_id=user_to_id,
+        recall_k=int(recall_k),
+        seed=int(seed),
+        device=device,
+    )
+    x, y, groups, sample_weights = _build_bpr_tree_ranker_dataset(tracks=tracks, queries=queries)
+    backend_key = str(backend).strip().lower()
+    model: object
+    if backend_key == "lightgbm":
+        import lightgbm as lgb
+
+        model = lgb.LGBMRanker(
+            objective="lambdarank",
+            metric="ndcg",
+            boosting_type="gbdt",
+            n_estimators=int(n_estimators),
+            learning_rate=float(learning_rate),
+            num_leaves=int(num_leaves),
+            max_depth=int(max_depth),
+            min_child_samples=int(min_child_samples),
+            subsample=float(subsample),
+            colsample_bytree=float(colsample_bytree),
+            reg_lambda=float(reg_lambda),
+            random_state=int(seed),
+            verbosity=-1,
+        )
+        model.fit(
+            x,
+            y,
+            group=groups.tolist(),
+            sample_weight=sample_weights,
+        )
+    elif backend_key == "xgboost":
+        import xgboost as xgb
+
+        model = xgb.XGBRanker(
+            objective="rank:ndcg",
+            tree_method="hist",
+            n_estimators=int(n_estimators),
+            learning_rate=float(learning_rate),
+            max_depth=6 if int(max_depth) <= 0 else int(max_depth),
+            min_child_weight=max(1.0, float(min_child_samples) / 4.0),
+            subsample=float(subsample),
+            colsample_bytree=float(colsample_bytree),
+            reg_lambda=float(reg_lambda),
+            random_state=int(seed),
+        )
+        model.fit(
+            x,
+            y,
+            group=groups.tolist(),
+            sample_weight=sample_weights,
+            verbose=False,
+        )
+    elif backend_key == "sklearn_histgbdt":
+        from sklearn.ensemble import HistGradientBoostingRegressor
+
+        model = HistGradientBoostingRegressor(
+            learning_rate=float(learning_rate),
+            max_iter=int(n_estimators),
+            max_leaf_nodes=max(3, int(num_leaves)),
+            max_depth=None if int(max_depth) <= 0 else int(max_depth),
+            min_samples_leaf=max(1, int(min_child_samples)),
+            l2_regularization=float(reg_lambda),
+            random_state=int(seed),
+        )
+        model.fit(x, y, sample_weight=sample_weights)
+    else:
+        raise ValueError(f"unsupported tree ranker backend: {backend}")
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "wb") as f:
+        pickle.dump(
+            {
+                "backend": backend_key,
+                "model": model,
+                "bpr_checkpoint": str(bpr_checkpoint),
+                "history": {
+                    "n_queries": int(len(queries)),
+                    "n_rows": int(x.shape[0]),
+                    "feature_dim": int(x.shape[1]),
+                    "backend": backend_key,
+                },
+            },
+            f,
+        )
+    return {
+        "checkpoint": str(out),
+        "backend": backend_key,
+        "n_queries": int(len(queries)),
+        "n_rows": int(x.shape[0]),
+        "feature_dim": int(x.shape[1]),
+    }
+
+
+def load_bpr_tree_hybrid_ranker(path: str | Path) -> dict[str, object]:
+    with open(path, "rb") as f:
+        obj = pickle.load(f)
+    if not isinstance(obj, dict) or "model" not in obj:
+        raise ValueError(f"invalid tree ranker checkpoint: {path}")
+    return obj
+
+
+def _predict_tree_ranker_scores(ranker_obj: dict[str, object], features: np.ndarray) -> np.ndarray:
+    backend = str(ranker_obj.get("backend", "lightgbm"))
+    model = ranker_obj["model"]
+    if backend in {"lightgbm", "xgboost"}:
+        scores = np.asarray(model.predict(features), dtype=np.float32)
+    elif backend == "sklearn_histgbdt":
+        scores = np.asarray(model.predict(features), dtype=np.float32)
+    else:
+        raise ValueError(f"unsupported tree ranker backend: {backend}")
+    return scores.reshape(-1).astype(np.float32)
+
+
+def recommend_embedding_bpr_tree_hybrid(
+    ranker_obj: dict[str, object],
+    bpr_model: BPRMF,
+    user_to_id: dict[str, int],
+    tracks: Tracks,
+    interactions: list[Interaction],
+    user_id: str,
+    target_culture: str,
+    k: int = 20,
+    recall_k: int = 120,
+    rerank_weight: float = 0.58,
+    recall_weight: float = 0.12,
+    bpr_weight: float = 0.08,
+    novelty_weight: float = 0.02,
+    target_affinity_weight: float = 0.12,
+    minority_weight: float = 0.06,
+    source_weight: float = 0.02,
+    device: torch.device | None = None,
+) -> list[Recommendation]:
+    if device is None:
+        device = torch.device("cpu")
+    hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
+    user_vec = _user_profile(tracks.embedding, hist_idx, hist_w)
+    pop_by_track = _popularity_by_track(interactions)
+    source_inv_freq = _source_inverse_frequency(tracks)
+    culture_centroids = _culture_centroid_embeddings(tracks)
+    scalar_features, recall_score = _bpr_hybrid_feature_table(
+        tracks=tracks,
+        interactions=interactions,
+        hist_idx=hist_idx,
+        hist_w=hist_w,
+        cand_idx=cand_idx,
+        target_culture=target_culture,
+        pop_by_track=pop_by_track,
+        source_inv_freq=source_inv_freq,
+        culture_centroids=culture_centroids,
+        bpr_model=bpr_model,
+        user_to_id=user_to_id,
+        user_id=str(user_id),
+        device=device,
+    )
+    recall_n = min(max(int(k), int(recall_k)), int(cand_idx.shape[0]))
+    recall_local = np.argsort(-recall_score)[:recall_n]
+    cand_idx_recall = cand_idx[recall_local]
+    feat_recall = scalar_features[recall_local].astype(np.float32)
+    rerank_scores = _minmax(_predict_tree_ranker_scores(ranker_obj, feat_recall))
+    recall_scores = _minmax(recall_score[recall_local])
+    bpr_scores = scalar_features[recall_local, 10]
+    novelty_scores = scalar_features[recall_local, 4]
+    target_scores = scalar_features[recall_local, 7]
+    minority_scores = scalar_features[recall_local, 6]
+    source_scores = scalar_features[recall_local, 9]
+    final_scores = (
+        float(rerank_weight) * rerank_scores
+        + float(recall_weight) * recall_scores
+        + float(bpr_weight) * bpr_scores
+        + float(novelty_weight) * novelty_scores
+        + float(target_affinity_weight) * target_scores
+        + float(minority_weight) * minority_scores
+        + float(source_weight) * source_scores
+    ).astype(np.float32)
+    return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx_recall, final_scores, k=k)
 
 
 def recommend_embedding_bpr_two_stage_hybrid(

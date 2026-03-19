@@ -1,0 +1,116 @@
+{
+  "suite_name": "v3_main_culturemert_stage3_lambdamart",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+  "interactions": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\interactions_v3_main_mixed_mw3.csv",
+  "methods": {
+    "bpr_mf": {
+      "serendipity_mean": 0.4915912126342968,
+      "cultural_calibration_kl_mean": 2.0225767313455694,
+      "minority_exposure_at_k_mean": 0.14914583333333334,
+      "target_culture_prob_mean": 0.19573471341592572
+    },
+    "bpr_two_stage_hybrid": {
+      "serendipity_mean": 0.5101928902195892,
+      "cultural_calibration_kl_mean": 2.008182824922293,
+      "minority_exposure_at_k_mean": 0.28375,
+      "target_culture_prob_mean": 0.2004598865006119
+    },
+    "bpr_listwise_hybrid": {
+      "serendipity_mean": 0.5135160355892406,
+      "cultural_calibration_kl_mean": 1.998583052111236,
+      "minority_exposure_at_k_mean": 0.25033333333333335,
+      "target_culture_prob_mean": 0.20293613741795222
+    },
+    "bpr_lambdamart_hybrid": {
+      "serendipity_mean": 0.5106844154113569,
+      "cultural_calibration_kl_mean": 1.9967404076723334,
+      "minority_exposure_at_k_mean": 0.2662083333333333,
+      "target_culture_prob_mean": 0.20378035220162322
+    },
+    "dcas_full_ot_calibrated_target": {
+      "serendipity_mean": 0.8385876200222213,
+      "cultural_calibration_kl_mean": 1.8792946219570945,
+      "minority_exposure_at_k_mean": 0.3814375,
+      "target_culture_prob_mean": 0.2348513688147068
+    },
+    "dcas_full_ot_calibrated_minor": {
+      "serendipity_mean": 0.8404395023826263,
+      "cultural_calibration_kl_mean": 1.9148020188314812,
+      "minority_exposure_at_k_mean": 0.5189791666666667,
+      "target_culture_prob_mean": 0.22500193021570644
+    }
+  },
+  "reference_method": "dcas_full_ot_calibrated_target",
+  "comparisons_vs_reference": {
+    "bpr_mf": {
+      "serendipity": {
+        "delta_mean": 0.34699640738792464,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.143282109388475,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.23229166666666667,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "bpr_two_stage_hybrid": {
+      "serendipity": {
+        "delta_mean": 0.3283947298026321,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.1288882029651984,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.09768750000000001,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "bpr_listwise_hybrid": {
+      "serendipity": {
+        "delta_mean": 0.32507158443298073,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.11928843015414148,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.13110416666666666,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "bpr_lambdamart_hybrid": {
+      "serendipity": {
+        "delta_mean": 0.3279032046108644,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.11744578571523903,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.11522916666666665,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "dcas_full_ot_calibrated_minor": {
+      "serendipity": {
+        "delta_mean": -0.0018518823604050032,
+        "p_value_two_sided": 0.03482587064676617
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.0355073968743868,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.13754166666666667,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    }
+  }
+}
