@@ -1,0 +1,160 @@
+{
+  "manifest": "configs/dataset/research_dataset_v4_routeA_small.json",
+  "dataset_name": "research_dataset_v4",
+  "dataset_version": "v4_routeA_small_seed_from_public_2026-03-20",
+  "schema_version": "v4.0",
+  "root_out_dir": "storage/public/research_dataset_v4/routeA_small",
+  "n_sources": 4,
+  "cultures": {
+    "china": 1,
+    "india": 1,
+    "turkey": 1,
+    "west": 1
+  },
+  "sources": [
+    {
+      "dataset_id": "routeA_phase2/gtzan",
+      "culture": "west",
+      "local_metadata": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2\\gtzan\\metadata.csv",
+      "exists": true,
+      "n_rows": 160,
+      "fieldnames": [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label"
+      ],
+      "duplicate_track_ids": 0,
+      "missing_audio_rows": 0,
+      "culture_values": {
+        "west": 160
+      },
+      "source_dataset_values": {
+        "sanchit-gandhi/gtzan": 160
+      },
+      "coverage": {
+        "source_dataset": 1.0,
+        "label": 1.0
+      }
+    },
+    {
+      "dataset_id": "routeA_phase2/hindustani",
+      "culture": "india",
+      "local_metadata": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2\\hindustani\\metadata.csv",
+      "exists": true,
+      "n_rows": 160,
+      "fieldnames": [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label"
+      ],
+      "duplicate_track_ids": 0,
+      "missing_audio_rows": 0,
+      "culture_values": {
+        "india": 160
+      },
+      "source_dataset_values": {
+        "neerajaabhyankar/hindustani-raag-small": 160
+      },
+      "coverage": {
+        "source_dataset": 1.0,
+        "label": 1.0
+      }
+    },
+    {
+      "dataset_id": "routeA_phase2/turkish",
+      "culture": "turkey",
+      "local_metadata": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2\\turkish\\metadata.csv",
+      "exists": true,
+      "n_rows": 160,
+      "fieldnames": [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label"
+      ],
+      "duplicate_track_ids": 0,
+      "missing_audio_rows": 0,
+      "culture_values": {
+        "turkey": 160
+      },
+      "source_dataset_values": {
+        "bilal63/turkish_music_emotion_dataset": 160
+      },
+      "coverage": {
+        "source_dataset": 1.0,
+        "label": 1.0
+      }
+    },
+    {
+      "dataset_id": "routeA_phase2_cn/china",
+      "culture": "china",
+      "local_metadata": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2_cn\\china\\metadata.csv",
+      "exists": true,
+      "n_rows": 160,
+      "fieldnames": [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label",
+        "cname",
+        "pinyin",
+        "name"
+      ],
+      "duplicate_track_ids": 0,
+      "missing_audio_rows": 0,
+      "culture_values": {
+        "china": 160
+      },
+      "source_dataset_values": {
+        "ccmusic-database/erhu_playing_tech": 160
+      },
+      "coverage": {
+        "source_dataset": 1.0,
+        "label": 1.0
+      }
+    }
+  ],
+  "embeddings": [
+    {
+      "name": "culturemert",
+      "enabled": true,
+      "model_id": "ntua-slp/CultureMERT-95M",
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean"
+    },
+    {
+      "name": "gemini",
+      "enabled": true,
+      "model_id": "gemini-embedding-2-preview",
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "info",
+      "code": "manifest.single_source_cultures",
+      "message": "cultures backed by a single manifest source: china, india, turkey, west"
+    }
+  ],
+  "embedding_keys": [
+    "culturemert",
+    "gemini"
+  ]
+}

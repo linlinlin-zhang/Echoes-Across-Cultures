@@ -1,0 +1,139 @@
+{
+  "manifest": "E:\\Desktop\\Echo\\tmp\\research_dataset_v4_routeA_small_smoke.json",
+  "out_root": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke",
+  "reports_root": "E:\\Desktop\\Echo\\reports\\datasets\\research_dataset_v4\\routeA_small_smoke",
+  "stages": [
+    "merge",
+    "harmonize",
+    "interactions",
+    "audit",
+    "embeddings"
+  ],
+  "steps": {
+    "merge": {
+      "out_csv": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_raw.csv",
+      "n_rows": 640,
+      "n_sources": 4,
+      "sources": [
+        {
+          "path": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2\\gtzan\\metadata.csv",
+          "rows_before_dedup": 160,
+          "rows_after_dedup": 160
+        },
+        {
+          "path": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2\\hindustani\\metadata.csv",
+          "rows_before_dedup": 160,
+          "rows_after_dedup": 160
+        },
+        {
+          "path": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2\\turkish\\metadata.csv",
+          "rows_before_dedup": 160,
+          "rows_after_dedup": 160
+        },
+        {
+          "path": "E:\\Desktop\\Echo\\storage\\public\\routeA_phase2_cn\\china\\metadata.csv",
+          "rows_before_dedup": 160,
+          "rows_after_dedup": 160
+        }
+      ],
+      "n_cultures": 4,
+      "culture_distribution": [
+        {
+          "culture": "china",
+          "count": 160
+        },
+        {
+          "culture": "india",
+          "count": 160
+        },
+        {
+          "culture": "turkey",
+          "count": 160
+        },
+        {
+          "culture": "west",
+          "count": 160
+        }
+      ],
+      "skipped_duplicates": 0,
+      "report_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_raw.csv.merge_report.json"
+    },
+    "harmonize": {
+      "metadata_in": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_raw.csv",
+      "metadata_clean": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_clean.csv",
+      "metadata_harmonized": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_harmonized.csv",
+      "dataset_version": "v4_routeA_small_smoke_2026-03-20",
+      "schema_version": "v4.0",
+      "n_rows": 640,
+      "clean_field_count": 39,
+      "harmonized_field_count": 39,
+      "report_json": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_harmonized.report.json"
+    },
+    "interactions": {
+      "single": {
+        "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_release.csv",
+        "out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\interactions_synth_single.csv",
+        "n_rows": 3840,
+        "n_users": 96,
+        "n_cultures": 4
+      },
+      "mixed": {
+        "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_release.csv",
+        "out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\interactions_synth_mixed.csv",
+        "n_rows": 3840,
+        "n_users": 96,
+        "n_cultures": 4
+      }
+    },
+    "audit": {
+      "issues": 6,
+      "dataset_profile_json": "E:\\Desktop\\Echo\\reports\\datasets\\research_dataset_v4\\routeA_small_smoke\\dataset_profile.json"
+    },
+    "embeddings": {
+      "culturemert": {
+        "out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\tracks_culturemert_mw3.npz",
+        "manifest": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\tracks_culturemert_mw3.npz.manifest.json",
+        "n_tracks": 1,
+        "dim": 768,
+        "errors": [],
+        "alignment": {
+          "tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\tracks_culturemert_mw3.npz",
+          "track_count": 1,
+          "metadata_in": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_release.csv",
+          "metadata_out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_release_culturemert_mw3.csv",
+          "metadata_rows_in": 640,
+          "metadata_rows_out": 1,
+          "metadata_rows_dropped": 639,
+          "interactions_in": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\interactions_synth_mixed.csv",
+          "interactions_out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\interactions_synth_mixed_culturemert_mw3.csv",
+          "interactions_rows_in": 3840,
+          "interactions_rows_out": 5,
+          "interactions_rows_dropped": 3835,
+          "report_json": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\metadata_release_culturemert_mw3.csv.align_report.json"
+        },
+        "validation": {
+          "status": "warn",
+          "report_json": "E:\\Desktop\\Echo\\reports\\datasets\\research_dataset_v4\\routeA_small_smoke\\validate_culturemert\\report.json",
+          "report_md": "E:\\Desktop\\Echo\\reports\\datasets\\research_dataset_v4\\routeA_small_smoke\\validate_culturemert\\report.md",
+          "summary": {
+            "n_tracks": 1,
+            "embedding_dim": 768,
+            "n_cultures": 1,
+            "has_interactions": true,
+            "n_interactions": 5,
+            "n_users": 5,
+            "n_issues": 3,
+            "n_errors": 0,
+            "n_warnings": 2
+          }
+        }
+      },
+      "gemini": {
+        "out": null,
+        "manifest": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\routeA_small_smoke\\tracks_gemini_embedding2_mw3.npz.manifest.json",
+        "n_tracks_prepared": 1,
+        "errors": []
+      }
+    }
+  }
+}

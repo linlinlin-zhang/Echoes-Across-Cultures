@@ -1,0 +1,199 @@
+{
+  "repo_root": "E:\\Desktop\\Echo",
+  "git_status": "## feature/research-v2-platform-and-results...origin/feature/research-v2-platform-and-results [ahead 3]\n D .claude/settings.local.json\n M README.md\n M dcas/embeddings/culturemert.py\n M dcas/scripts/build_tracks_from_audio.py\n M dcas/scripts/run_culturemert_embedding_build.py\n?? configs/embedding/culturemert_v3_main_multiwindow_layerweighted.example.json\n?? dcas/scripts/attach_metadata_to_tracks.py\n?? dcas/scripts/audit_project_state.py\n?? dcas/scripts/generate_project_figures_zh.py\n?? reports/baseline_comparison/v3_main_culturemert/comparisons/\n?? reports/baseline_comparison/v3_main_culturemert/eval_beta_vae__seed_42.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_beta_vae__seed_43.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_beta_vae__seed_44.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_factorvae__seed_42.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_factorvae__seed_43.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_factorvae__seed_44.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_three_factor_dcas__seed_42.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_three_factor_dcas__seed_43.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_three_factor_dcas__seed_44.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_vae__seed_42.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_vae__seed_43.json\n?? reports/baseline_comparison/v3_main_culturemert/eval_vae__seed_44.json\n?? reports/baseline_comparison/v3_main_gemini/comparisons/\n?? reports/baseline_comparison/v3_main_gemini/eval_beta_vae__seed_42.json\n?? reports/baseline_comparison/v3_main_gemini/eval_beta_vae__seed_43.json\n?? reports/baseline_comparison/v3_main_gemini/eval_beta_vae__seed_44.json\n?? reports/baseline_comparison/v3_main_gemini/eval_factorvae__seed_42.json\n?? reports/baseline_comparison/v3_main_gemini/eval_factorvae__seed_43.json\n?? reports/baseline_comparison/v3_main_gemini/eval_factorvae__seed_44.json\n?? reports/baseline_comparison/v3_main_gemini/eval_three_factor_dcas__seed_42.json\n?? reports/baseline_comparison/v3_main_gemini/eval_three_factor_dcas__seed_43.json\n?? reports/baseline_comparison/v3_main_gemini/eval_three_factor_dcas__seed_44.json\n?? reports/baseline_comparison/v3_main_gemini/eval_vae__seed_42.json\n?? reports/baseline_comparison/v3_main_gemini/eval_vae__seed_43.json\n?? reports/baseline_comparison/v3_main_gemini/eval_vae__seed_44.json\n?? reports/benchmarks/v3_main_culturemert/comparisons/\n?? reports/benchmarks/v3_main_culturemert/eval/\n?? reports/benchmarks/v3_main_culturemert_open_prepal/comparisons/\n?? reports/benchmarks/v3_main_culturemert_open_prepal/eval/\n?? reports/benchmarks/v3_main_culturemert_stage3_lightfmlike/\n?? reports/benchmarks/v3_main_gemini_embedding2/comparisons/\n?? reports/benchmarks/v3_main_gemini_embedding2/eval/\n?? reports/benchmarks/v3_main_gemini_harmonized_open_prepal/\n?? reports/benchmarks/v3_main_gemini_open_prepal/\n?? reports/figures/project_overview_zh_2026-03-20/",
+  "paper": {
+    "exists": true,
+    "contains_placeholder": true,
+    "contains_draft_evaluation": true,
+    "contains_four_domain_1600": true,
+    "contains_synthetic_placeholder_outcomes": true
+  },
+  "datasets": {
+    "v3_tracks": 1122,
+    "v3_cultures": [
+      "china",
+      "france",
+      "germany",
+      "great_britain",
+      "india",
+      "indonesia",
+      "italy",
+      "modern_english_pop",
+      "russia",
+      "turkey"
+    ],
+    "single_source_domains": [
+      "france",
+      "germany",
+      "great_britain",
+      "india",
+      "italy",
+      "modern_english_pop",
+      "russia",
+      "turkey"
+    ],
+    "zero_artist_domains": [
+      "modern_english_pop",
+      "turkey"
+    ],
+    "culturemert_mw3_manifest": {
+      "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main.csv",
+      "out_tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\tracks_culturemert_v3_main_mw3.npz",
+      "model_id": "ntua-slp/CultureMERT-95M",
+      "pooling": "mean",
+      "device": "cuda",
+      "max_seconds": 30.0,
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean",
+      "limit": null,
+      "skip_errors": true,
+      "n_tracks": 1106,
+      "dim": 768,
+      "has_affect_label": false,
+      "has_source_dataset": true,
+      "n_errors": 16,
+      "errors": [
+        "row=166: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=213: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=245: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=270: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=278: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=305: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=327: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=398: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=453: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=543: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=548: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=549: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=662: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=890: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=928: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous",
+        "row=936: cannot reshape tensor of 0 elements into shape [-1, 0] because the unspecified dimension size -1 can be any value and is ambiguous"
+      ]
+    },
+    "mw3_align_report": {
+      "tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\tracks_culturemert_v3_main_mw3.npz",
+      "track_count": 1106,
+      "metadata_in": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main_harmonized.csv",
+      "metadata_out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main_harmonized_mw3.csv",
+      "metadata_rows_in": 1122,
+      "metadata_rows_out": 1106,
+      "metadata_rows_dropped": 16,
+      "interactions_in": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\interactions_v3_main_mixed.csv",
+      "interactions_out": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\interactions_v3_main_mixed_mw3.csv",
+      "interactions_rows_in": 8413,
+      "interactions_rows_out": 8273,
+      "interactions_rows_dropped": 140,
+      "constraints_in": "E:\\Desktop\\Echo\\storage\\pal\\v3_main_prepal\\pseudo_constraints_v1.jsonl",
+      "constraints_out": "E:\\Desktop\\Echo\\storage\\pal\\v3_main_prepal\\pseudo_constraints_v1_mw3.jsonl",
+      "constraints_rows_in": 1200,
+      "constraints_rows_out": 1192,
+      "constraints_rows_dropped": 8
+    }
+  },
+  "benchmarks": [
+    {
+      "suite": "v3_main_culturemert",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v3_main_culturemert\\benchmark_summary.json",
+      "exists": true,
+      "method_count": 7
+    },
+    {
+      "suite": "v3_main_culturemert_stage3",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v3_main_culturemert_stage3\\benchmark_summary.json",
+      "exists": true,
+      "method_count": 9
+    },
+    {
+      "suite": "v3_main_culturemert_stage3_lambdamart",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v3_main_culturemert_stage3_lambdamart\\benchmark_summary.json",
+      "exists": true,
+      "method_count": 6
+    },
+    {
+      "suite": "v3_main_gemini_embedding2",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v3_main_gemini_embedding2\\benchmark_summary.json",
+      "exists": true,
+      "method_count": 7
+    },
+    {
+      "suite": "public_routeA_phase2_cn_lambdamart",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\public_routeA_phase2_cn_lambdamart\\benchmark_summary.json",
+      "exists": true,
+      "method_count": 10
+    },
+    {
+      "suite": "yambda_5b_subset_global_log_benchmark",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\yambda_5b_subset_global_log_benchmark\\benchmark_summary.json",
+      "exists": true,
+      "method_count": 7
+    },
+    {
+      "suite": "v3_main_gemini_stage3_expected",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v3_main_gemini_stage3\\benchmark_summary.json",
+      "exists": false,
+      "method_count": null
+    },
+    {
+      "suite": "v3_main_gemini_stage3_lambdamart_expected",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v3_main_gemini_stage3_lambdamart\\benchmark_summary.json",
+      "exists": false,
+      "method_count": null
+    },
+    {
+      "suite": "public_routeA_phase2_cn_gemini_expected",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\public_routeA_phase2_cn_gemini\\benchmark_summary.json",
+      "exists": false,
+      "method_count": null
+    },
+    {
+      "suite": "mssd_expected",
+      "path": "E:\\Desktop\\Echo\\reports\\benchmarks\\mssd\\benchmark_summary.json",
+      "exists": false,
+      "method_count": null
+    }
+  ],
+  "findings": [
+    {
+      "severity": "warn",
+      "code": "paper.placeholder_content",
+      "message": "paper/ismir2026_draft.tex still contains placeholder wording and should be synchronized with real experiments."
+    },
+    {
+      "severity": "warn",
+      "code": "paper.outdated_dataset_description",
+      "message": "paper draft still references the older four-domain/1600-track setup instead of the current V3/routeA evidence structure."
+    },
+    {
+      "severity": "warn",
+      "code": "culturemert.embedding_failures",
+      "message": "CultureMERT mw3 embedding build dropped 16 rows and needs audit or recovery."
+    },
+    {
+      "severity": "warn",
+      "code": "dataset.mw3_alignment_drop",
+      "message": "mw3 alignment dropped 16 metadata rows and 140 interactions."
+    },
+    {
+      "severity": "warn",
+      "code": "dataset.source_confound_risk",
+      "message": "V3 has cultures dominated by a single source dataset: france, germany, great_britain, india, italy, modern_english_pop, russia, turkey."
+    },
+    {
+      "severity": "info",
+      "code": "dataset.metadata_sparse_artist",
+      "message": "Some V3 cultures still have zero artist metadata coverage: modern_english_pop, turkey."
+    },
+    {
+      "severity": "warn",
+      "code": "benchmark.matrix_incomplete",
+      "message": "Expected benchmark lines are still missing: v3_main_gemini_stage3_expected, v3_main_gemini_stage3_lambdamart_expected, public_routeA_phase2_cn_gemini_expected, mssd_expected."
+    },
+    {
+      "severity": "info",
+      "code": "benchmark.mssd_missing",
+      "message": "MSSD benchmark artifacts are absent; current repo evidence still lacks that external log line."
+    }
+  ]
+}

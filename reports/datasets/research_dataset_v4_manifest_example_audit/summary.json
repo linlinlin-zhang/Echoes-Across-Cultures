@@ -1,0 +1,115 @@
+{
+  "manifest": "configs/dataset/research_dataset_v4_manifest.example.json",
+  "dataset_name": "research_dataset_v4",
+  "dataset_version": "v4_example",
+  "schema_version": "v4.0",
+  "root_out_dir": "E:/Desktop/Echo/storage/public/research_dataset_v4/main",
+  "n_sources": 2,
+  "cultures": {
+    "china": 1,
+    "india": 1
+  },
+  "sources": [
+    {
+      "dataset_id": "example/source_a",
+      "culture": "china",
+      "local_metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\china\\metadata.csv",
+      "exists": true,
+      "n_rows": 145,
+      "fieldnames": [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label",
+        "substyle",
+        "instrument",
+        "language",
+        "title",
+        "artist",
+        "duration_sec",
+        "license",
+        "license_note",
+        "region",
+        "instrument_family",
+        "era",
+        "notes"
+      ],
+      "duplicate_track_ids": 0,
+      "missing_audio_rows": 0,
+      "culture_values": {
+        "china": 145
+      },
+      "source_dataset_values": {
+        "OpenCpop": 50,
+        "ccmusic-database/CTIS": 65,
+        "compmusic_jingju_acappella": 30
+      },
+      "coverage": {
+        "source_dataset": 1.0,
+        "duration_sec": 1.0,
+        "label": 1.0,
+        "title": 1.0,
+        "artist": 0.517241,
+        "license": 0.551724,
+        "language": 0.551724,
+        "instrument": 0.793103,
+        "instrument_family": 1.0
+      }
+    },
+    {
+      "dataset_id": "example/source_b",
+      "culture": "india",
+      "local_metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\india\\metadata.csv",
+      "exists": true,
+      "n_rows": 108,
+      "fieldnames": [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label",
+        "substyle",
+        "title",
+        "artist",
+        "duration_sec",
+        "license",
+        "license_note",
+        "region",
+        "era",
+        "notes"
+      ],
+      "duplicate_track_ids": 0,
+      "missing_audio_rows": 0,
+      "culture_values": {
+        "india": 108
+      },
+      "source_dataset_values": {
+        "saraga_hindustani": 108
+      },
+      "coverage": {
+        "source_dataset": 1.0,
+        "duration_sec": 1.0,
+        "label": 1.0,
+        "title": 1.0,
+        "artist": 1.0,
+        "license": 1.0
+      }
+    }
+  ],
+  "issues": [
+    {
+      "severity": "info",
+      "code": "manifest.single_source_cultures",
+      "message": "cultures backed by a single manifest source: china, india"
+    }
+  ],
+  "embedding_keys": [
+    "culturemert",
+    "gemini"
+  ]
+}

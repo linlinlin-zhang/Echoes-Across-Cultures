@@ -1,0 +1,671 @@
+{
+  "dataset_name": "research_dataset_v4::main",
+  "profile": {
+    "metadata_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\main\\metadata_release.csv",
+    "n_rows": 1122,
+    "n_cultures": 10,
+    "n_sources": 8,
+    "culture_distribution": [
+      {
+        "culture": "turkey",
+        "count": 150,
+        "ratio": 0.13369
+      },
+      {
+        "culture": "china",
+        "count": 145,
+        "ratio": 0.129234
+      },
+      {
+        "culture": "modern_english_pop",
+        "count": 120,
+        "ratio": 0.106952
+      },
+      {
+        "culture": "india",
+        "count": 108,
+        "ratio": 0.096257
+      },
+      {
+        "culture": "france",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "germany",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "great_britain",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "italy",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "russia",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "indonesia",
+        "count": 74,
+        "ratio": 0.065954
+      }
+    ],
+    "source_distribution": [
+      {
+        "source_dataset": "Free Music Archive",
+        "count": 544,
+        "ratio": 0.484848
+      },
+      {
+        "source_dataset": "bilal63/turkish_music_emotion_dataset",
+        "count": 150,
+        "ratio": 0.13369
+      },
+      {
+        "source_dataset": "vtsouval/mtg_jamendo_autotagging",
+        "count": 120,
+        "ratio": 0.106952
+      },
+      {
+        "source_dataset": "saraga_hindustani",
+        "count": 108,
+        "ratio": 0.096257
+      },
+      {
+        "source_dataset": "ccmusic-database/CTIS",
+        "count": 65,
+        "ratio": 0.057932
+      },
+      {
+        "source_dataset": "gamelan_music_dataset",
+        "count": 55,
+        "ratio": 0.04902
+      },
+      {
+        "source_dataset": "OpenCpop",
+        "count": 50,
+        "ratio": 0.044563
+      },
+      {
+        "source_dataset": "compmusic_jingju_acappella",
+        "count": 30,
+        "ratio": 0.026738
+      }
+    ],
+    "duration_sec_stats": {
+      "min": 30.0,
+      "p25": 33.04,
+      "p50": 179.861587,
+      "p75": 291.093333,
+      "max": 4265.653311,
+      "mean": 318.297287
+    },
+    "sample_rate_distribution": {
+      "16000": 120,
+      "44100": 951,
+      "48000": 50,
+      "96000": 1
+    },
+    "channel_distribution": {
+      "1": 249,
+      "2": 873
+    },
+    "culture_imbalance_ratio": 2.027027,
+    "missing_audio_rows": 0
+  },
+  "schema": {
+    "fieldnames": [
+      "track_id",
+      "culture",
+      "audio_path",
+      "source_dataset",
+      "source_split",
+      "source_index",
+      "duration_sec",
+      "sample_rate",
+      "channels",
+      "era",
+      "region",
+      "coarse_label",
+      "is_instrumental",
+      "fine_label",
+      "label",
+      "substyle",
+      "instrument",
+      "instrument_family",
+      "language",
+      "title",
+      "artist",
+      "license",
+      "license_note",
+      "url",
+      "recording_condition",
+      "notes",
+      "schema_version",
+      "dataset_version",
+      "import_batch",
+      "dedup_group_id",
+      "dedup_keep",
+      "qc_status",
+      "qc_notes",
+      "embedding_status_culturemert",
+      "embedding_status_gemini",
+      "drop_reason"
+    ],
+    "required_fields": [
+      "track_id",
+      "culture",
+      "audio_path",
+      "source_dataset",
+      "source_split",
+      "source_index",
+      "duration_sec",
+      "sample_rate",
+      "channels",
+      "coarse_label",
+      "era",
+      "region"
+    ],
+    "recommended_fields": [
+      "fine_label",
+      "label",
+      "substyle",
+      "instrument",
+      "instrument_family",
+      "language",
+      "title",
+      "artist",
+      "license",
+      "license_note",
+      "url",
+      "is_instrumental",
+      "recording_condition"
+    ],
+    "governance_fields": [
+      "schema_version",
+      "dataset_version",
+      "import_batch",
+      "dedup_group_id",
+      "dedup_keep",
+      "qc_status",
+      "qc_notes",
+      "embedding_status_culturemert",
+      "embedding_status_gemini",
+      "drop_reason"
+    ]
+  },
+  "missingness": {
+    "required": {
+      "track_id": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "culture": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "audio_path": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "source_dataset": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "source_split": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "source_index": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "duration_sec": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "sample_rate": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "channels": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "coarse_label": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "era": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "region": {
+        "present": true,
+        "coverage": 1.0
+      }
+    },
+    "recommended": {
+      "fine_label": {
+        "present": true,
+        "coverage": 0.86631
+      },
+      "label": {
+        "present": true,
+        "coverage": 0.86631
+      },
+      "substyle": {
+        "present": true,
+        "coverage": 0.532086
+      },
+      "instrument": {
+        "present": true,
+        "coverage": 0.209447
+      },
+      "instrument_family": {
+        "present": true,
+        "coverage": 0.129234
+      },
+      "language": {
+        "present": true,
+        "coverage": 0.12656
+      },
+      "title": {
+        "present": true,
+        "coverage": 0.710339
+      },
+      "artist": {
+        "present": true,
+        "coverage": 0.64795
+      },
+      "license": {
+        "present": true,
+        "coverage": 0.701426
+      },
+      "license_note": {
+        "present": true,
+        "coverage": 0.710339
+      },
+      "url": {
+        "present": true,
+        "coverage": 0.484848
+      },
+      "is_instrumental": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "recording_condition": {
+        "present": true,
+        "coverage": 0.0
+      }
+    },
+    "governance": {
+      "schema_version": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "dataset_version": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "import_batch": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "dedup_group_id": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "dedup_keep": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "qc_status": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "qc_notes": {
+        "present": true,
+        "coverage": 0.0
+      },
+      "embedding_status_culturemert": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "embedding_status_gemini": {
+        "present": true,
+        "coverage": 1.0
+      },
+      "drop_reason": {
+        "present": true,
+        "coverage": 0.0
+      }
+    },
+    "missing_required": []
+  },
+  "duplicates": {
+    "duplicate_track_id_count": 0,
+    "duplicate_audio_path_count": 0
+  },
+  "source_confound": {
+    "culture_source_matrix": {
+      "china": {
+        "OpenCpop": 50,
+        "ccmusic-database/CTIS": 65,
+        "compmusic_jingju_acappella": 30
+      },
+      "france": {
+        "Free Music Archive": 105
+      },
+      "germany": {
+        "Free Music Archive": 105
+      },
+      "great_britain": {
+        "Free Music Archive": 105
+      },
+      "india": {
+        "saraga_hindustani": 108
+      },
+      "indonesia": {
+        "Free Music Archive": 19,
+        "gamelan_music_dataset": 55
+      },
+      "italy": {
+        "Free Music Archive": 105
+      },
+      "modern_english_pop": {
+        "vtsouval/mtg_jamendo_autotagging": 120
+      },
+      "russia": {
+        "Free Music Archive": 105
+      },
+      "turkey": {
+        "bilal63/turkish_music_emotion_dataset": 150
+      }
+    },
+    "single_source_culture_count": 8,
+    "top_source_share_by_culture": [
+      {
+        "culture": "china",
+        "top_source_dataset": "ccmusic-database/CTIS",
+        "top_source_share": 0.448276,
+        "n_sources": 3,
+        "source_entropy_norm": 0.958288
+      },
+      {
+        "culture": "france",
+        "top_source_dataset": "Free Music Archive",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "germany",
+        "top_source_dataset": "Free Music Archive",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "great_britain",
+        "top_source_dataset": "Free Music Archive",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "india",
+        "top_source_dataset": "saraga_hindustani",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "indonesia",
+        "top_source_dataset": "gamelan_music_dataset",
+        "top_source_share": 0.743243,
+        "n_sources": 2,
+        "source_entropy_norm": 0.821813
+      },
+      {
+        "culture": "italy",
+        "top_source_dataset": "Free Music Archive",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "modern_english_pop",
+        "top_source_dataset": "vtsouval/mtg_jamendo_autotagging",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "russia",
+        "top_source_dataset": "Free Music Archive",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      },
+      {
+        "culture": "turkey",
+        "top_source_dataset": "bilal63/turkish_music_emotion_dataset",
+        "top_source_share": 1.0,
+        "n_sources": 1,
+        "source_entropy_norm": 0.0
+      }
+    ],
+    "top_culture_share_by_source": [
+      {
+        "source_dataset": "Free Music Archive",
+        "top_culture": "france",
+        "top_culture_share": 0.193015,
+        "n_cultures": 6
+      },
+      {
+        "source_dataset": "OpenCpop",
+        "top_culture": "china",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      },
+      {
+        "source_dataset": "bilal63/turkish_music_emotion_dataset",
+        "top_culture": "turkey",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      },
+      {
+        "source_dataset": "ccmusic-database/CTIS",
+        "top_culture": "china",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      },
+      {
+        "source_dataset": "compmusic_jingju_acappella",
+        "top_culture": "china",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      },
+      {
+        "source_dataset": "gamelan_music_dataset",
+        "top_culture": "indonesia",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      },
+      {
+        "source_dataset": "saraga_hindustani",
+        "top_culture": "india",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      },
+      {
+        "source_dataset": "vtsouval/mtg_jamendo_autotagging",
+        "top_culture": "modern_english_pop",
+        "top_culture_share": 1.0,
+        "n_cultures": 1
+      }
+    ],
+    "weighted_source_predictability_from_culture": 0.911765,
+    "weighted_culture_predictability_from_source": 0.608735
+  },
+  "interactions": [
+    {
+      "path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\main\\interactions_synth_single.csv",
+      "n_rows": 9600,
+      "n_users": 240,
+      "n_tracks_observed": 1122,
+      "track_coverage_ratio": 1.0,
+      "unknown_track_ratio": 0.0,
+      "duplicate_user_track_ratio": 0.0,
+      "per_user_interaction_stats": {
+        "min": 40.0,
+        "p25": 40.0,
+        "p50": 40.0,
+        "p75": 40.0,
+        "max": 40.0,
+        "mean": 40.0
+      },
+      "culture_exposure_distribution": [
+        {
+          "culture": "china",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "france",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "germany",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "great_britain",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "india",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "indonesia",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "italy",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "modern_english_pop",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "russia",
+          "count": 960,
+          "ratio": 0.1
+        },
+        {
+          "culture": "turkey",
+          "count": 960,
+          "ratio": 0.1
+        }
+      ]
+    },
+    {
+      "path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\main\\interactions_synth_mixed.csv",
+      "n_rows": 9600,
+      "n_users": 240,
+      "n_tracks_observed": 1122,
+      "track_coverage_ratio": 1.0,
+      "unknown_track_ratio": 0.0,
+      "duplicate_user_track_ratio": 0.0,
+      "per_user_interaction_stats": {
+        "min": 40.0,
+        "p25": 40.0,
+        "p50": 40.0,
+        "p75": 40.0,
+        "max": 40.0,
+        "mean": 40.0
+      },
+      "culture_exposure_distribution": [
+        {
+          "culture": "china",
+          "count": 1074,
+          "ratio": 0.111875
+        },
+        {
+          "culture": "india",
+          "count": 1022,
+          "ratio": 0.106458
+        },
+        {
+          "culture": "russia",
+          "count": 1008,
+          "ratio": 0.105
+        },
+        {
+          "culture": "france",
+          "count": 1000,
+          "ratio": 0.104167
+        },
+        {
+          "culture": "germany",
+          "count": 963,
+          "ratio": 0.100312
+        },
+        {
+          "culture": "modern_english_pop",
+          "count": 942,
+          "ratio": 0.098125
+        },
+        {
+          "culture": "turkey",
+          "count": 914,
+          "ratio": 0.095208
+        },
+        {
+          "culture": "indonesia",
+          "count": 898,
+          "ratio": 0.093542
+        },
+        {
+          "culture": "italy",
+          "count": 891,
+          "ratio": 0.092813
+        },
+        {
+          "culture": "great_britain",
+          "count": 888,
+          "ratio": 0.0925
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "severity": "warn",
+      "code": "metadata.single_source_culture",
+      "message": "8 cultures are backed by a single source dataset"
+    },
+    {
+      "severity": "warn",
+      "code": "metadata.source_confound_high",
+      "message": "culture-to-source predictability is high (0.911765)"
+    }
+  ]
+}

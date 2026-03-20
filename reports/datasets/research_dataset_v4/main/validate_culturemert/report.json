@@ -1,0 +1,121 @@
+{
+  "status": "pass",
+  "summary": {
+    "n_tracks": 1122,
+    "embedding_dim": 768,
+    "n_cultures": 10,
+    "has_interactions": true,
+    "n_interactions": 9600,
+    "n_users": 240,
+    "n_issues": 1,
+    "n_errors": 0,
+    "n_warnings": 0
+  },
+  "tracks": {
+    "path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\main\\tracks_culturemert_mw3.npz",
+    "n_tracks": 1122,
+    "embedding_dim": 768,
+    "duplicate_track_ids": 0,
+    "finite_embedding_ratio": 1.0,
+    "zero_norm_ratio": 0.0,
+    "embedding_norm_stats": {
+      "min": 3.752898,
+      "p25": 4.160336,
+      "p50": 4.298404,
+      "p75": 4.494794,
+      "max": 6.707825,
+      "mean": 4.388764,
+      "std": 0.370486
+    },
+    "culture_distribution": [
+      {
+        "culture": "turkey",
+        "count": 150,
+        "ratio": 0.13369
+      },
+      {
+        "culture": "china",
+        "count": 145,
+        "ratio": 0.129234
+      },
+      {
+        "culture": "modern_english_pop",
+        "count": 120,
+        "ratio": 0.106952
+      },
+      {
+        "culture": "india",
+        "count": 108,
+        "ratio": 0.096257
+      },
+      {
+        "culture": "france",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "germany",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "great_britain",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "italy",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "russia",
+        "count": 105,
+        "ratio": 0.093583
+      },
+      {
+        "culture": "indonesia",
+        "count": 74,
+        "ratio": 0.065954
+      }
+    ],
+    "culture_imbalance_ratio": 2.027027,
+    "affect": {
+      "present": false
+    }
+  },
+  "interactions": {
+    "path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\main\\interactions_synth_mixed_culturemert_mw3.csv",
+    "n_interactions": 9600,
+    "n_users": 240,
+    "unknown_track_count": 0,
+    "unknown_track_ratio": 0.0,
+    "duplicate_user_track_count": 0,
+    "duplicate_user_track_ratio": 0.0,
+    "invalid_weight_count": 0,
+    "non_positive_weight_count": 0,
+    "non_positive_weight_ratio": 0.0,
+    "track_coverage_ratio": 1.0,
+    "user_activity_stats": {
+      "min": 40,
+      "max": 40,
+      "mean": 40.0,
+      "median": 40.0
+    }
+  },
+  "thresholds": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "code": "tracks.affect_missing",
+      "message": "affect_label is absent (allowed, but limits affect-related evaluation)"
+    }
+  ]
+}

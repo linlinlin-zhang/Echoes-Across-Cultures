@@ -1,0 +1,1008 @@
+{
+  "generated_at": "2026-03-20T02:15:11.9802445+08:00",
+  "git_status": [
+    "## feature/research-v2-platform-and-results...origin/feature/research-v2-platform-and-results [ahead 3]",
+    " D .claude/settings.local.json",
+    " M README.md",
+    " M dcas/embeddings/culturemert.py",
+    " M dcas/scripts/build_tracks_from_audio.py",
+    " M dcas/scripts/run_culturemert_embedding_build.py",
+    "?? configs/embedding/culturemert_v3_main_multiwindow_layerweighted.example.json",
+    "?? dcas/scripts/attach_metadata_to_tracks.py",
+    "?? dcas/scripts/audit_experiment_inventory.py",
+    "?? dcas/scripts/audit_project_state.py",
+    "?? dcas/scripts/generate_project_figures_zh.py",
+    "?? reports/audits/",
+    "?? reports/baseline_comparison/v3_main_culturemert/comparisons/",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_beta_vae__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_beta_vae__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_beta_vae__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_factorvae__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_factorvae__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_factorvae__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_three_factor_dcas__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_three_factor_dcas__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_three_factor_dcas__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_vae__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_vae__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_culturemert/eval_vae__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_gemini/comparisons/",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_beta_vae__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_beta_vae__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_beta_vae__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_factorvae__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_factorvae__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_factorvae__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_three_factor_dcas__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_three_factor_dcas__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_three_factor_dcas__seed_44.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_vae__seed_42.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_vae__seed_43.json",
+    "?? reports/baseline_comparison/v3_main_gemini/eval_vae__seed_44.json",
+    "?? reports/benchmarks/v3_main_culturemert/comparisons/",
+    "?? reports/benchmarks/v3_main_culturemert/eval/",
+    "?? reports/benchmarks/v3_main_culturemert_open_prepal/comparisons/",
+    "?? reports/benchmarks/v3_main_culturemert_open_prepal/eval/",
+    "?? reports/benchmarks/v3_main_culturemert_stage3_lightfmlike/",
+    "?? reports/benchmarks/v3_main_gemini_embedding2/comparisons/",
+    "?? reports/benchmarks/v3_main_gemini_embedding2/eval/",
+    "?? reports/benchmarks/v3_main_gemini_harmonized_open_prepal/",
+    "?? reports/benchmarks/v3_main_gemini_open_prepal/",
+    "?? reports/figures/project_overview_zh_2026-03-20/"
+  ],
+  "embedding_manifests": [
+    {
+      "path": "storage/public/research_dataset_v3/tracks_culturemert_v3_main.npz.manifest.json",
+      "model_id": "ntua-slp/CultureMERT-95M",
+      "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main.csv",
+      "out_tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\tracks_culturemert_v3_main.npz",
+      "n_tracks": 1122,
+      "dim": 768,
+      "max_seconds": 30.0,
+      "window_count": 1,
+      "window_strategy": "single",
+      "window_aggregate": "mean",
+      "n_errors": 0
+    },
+    {
+      "path": "storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz.manifest.json",
+      "model_id": "ntua-slp/CultureMERT-95M",
+      "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main.csv",
+      "out_tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\tracks_culturemert_v3_main_mw3.npz",
+      "n_tracks": 1106,
+      "dim": 768,
+      "max_seconds": 30.0,
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean",
+      "n_errors": 16
+    },
+    {
+      "path": "storage/public/research_dataset_v3/tracks_gemini_embedding2_main.npz.manifest.json",
+      "model_id": "gemini-embedding-2-preview",
+      "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main.csv",
+      "out_tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\tracks_gemini_embedding2_main.npz",
+      "n_tracks": 1122,
+      "dim": 768,
+      "max_seconds": 30.0,
+      "window_count": 1,
+      "window_strategy": "single",
+      "window_aggregate": "mean",
+      "n_errors": 0
+    },
+    {
+      "path": "storage/public/research_dataset_v3/tracks_gemini_embedding2_v3_main_mw3.npz.manifest.json",
+      "model_id": "gemini-embedding-2-preview",
+      "metadata": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\metadata_v3_main_harmonized.csv",
+      "out_tracks": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\tracks_gemini_embedding2_v3_main_mw3.npz",
+      "n_tracks": 1122,
+      "dim": 768,
+      "max_seconds": 30.0,
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean",
+      "n_errors": 0
+    }
+  ],
+  "train_configs": [
+    {
+      "path": "configs/train/train_v3_culturemert_prepal_source.run.json",
+      "data": null,
+      "interactions": null,
+      "constraints": "E:/Desktop/Echo/storage/pal/v3_main_prepal/pseudo_constraints_v1_mw3.jsonl",
+      "out": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_culturemert_open_prepal.pt"
+    },
+    {
+      "path": "configs/train/train_v3_culturemert_stage3.run.json",
+      "data": null,
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "constraints": "E:/Desktop/Echo/storage/pal/v3_main_prepal/pseudo_constraints_v1_mw3.jsonl",
+      "out": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_culturemert_stage3.pt"
+    },
+    {
+      "path": "configs/train/train_v3_gemini_prepal_source.run.json",
+      "data": null,
+      "interactions": null,
+      "constraints": "E:/Desktop/Echo/storage/pal/v3_main_prepal/pseudo_constraints_v1.jsonl",
+      "out": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_gemini_open_prepal.pt"
+    },
+    {
+      "path": "configs/train/train_v3_gemini_prepal_source_harmonized.run.json",
+      "data": null,
+      "interactions": null,
+      "constraints": "E:/Desktop/Echo/storage/pal/v3_main_prepal/pseudo_constraints_v1.jsonl",
+      "out": "E:/Desktop/Echo/storage/models/dcas_full_v3_main_gemini_harmonized_open_prepal.pt"
+    }
+  ],
+  "benchmark_configs": [
+    {
+      "path": "configs/benchmark/log_benchmark_yambda_5b_subset.run.json",
+      "suite_name": "yambda_5b_subset_global_log_benchmark",
+      "tracks": "E:/Desktop/Echo/storage/public/yambda_5b_subset/tracks.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/yambda_5b_subset/interactions.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "bpr",
+        "bpr_tree_hybrid",
+        "bpr_two_stage_hybrid",
+        "cosine",
+        "knn",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_culturemert.example.json",
+      "suite_name": "v2_main_culturemert",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v2/tracks_culturemert_v2_main.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v2/interactions_v2_main.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_culturemert.run.json",
+      "suite_name": "v2_main_culturemert",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v2/tracks_culturemert_v2_main.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v2/interactions_v2_main.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_gemini.example.json",
+      "suite_name": "v2_main_gemini_embedding2",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v2/tracks_gemini_embedding2_main.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v2/interactions_v2_main.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_gemini.run.json",
+      "suite_name": "v2_main_gemini_embedding2",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v2/tracks_gemini_embedding2_main.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v2/interactions_v2_main.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_public_routeA_phase2_cn.run.json",
+      "suite_name": "public_routeA_phase2_cn_lambdamart",
+      "tracks": "E:/Desktop/Echo/storage/public/routeA_phase2_cn/tracks.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/routeA_phase2_cn/interactions.csv",
+      "n_methods": 10,
+      "raw_kinds": [
+        "bpr",
+        "bpr_listwise_hybrid",
+        "bpr_tree_hybrid",
+        "bpr_two_stage_hybrid",
+        "cosine",
+        "knn",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "ot",
+        "ot_calibrated"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_toy.example.json",
+      "suite_name": "toy_small_benchmark",
+      "tracks": "E:/Desktop/Echo/toy_small/tracks.npz",
+      "interactions": "E:/Desktop/Echo/toy_small/interactions.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert.run.json",
+      "suite_name": "v3_main_culturemert",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_open.run.json",
+      "suite_name": "v3_main_culturemert_open_prepal",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 9,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3.run.json",
+      "suite_name": "v3_main_culturemert_stage3",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 9,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_bpr.run.json",
+      "suite_name": "v3_main_culturemert_stage3_bpr",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 10,
+      "raw_kinds": [
+        "bpr",
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_bprhybrid.run.json",
+      "suite_name": "v3_main_culturemert_stage3_bprhybrid",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 8,
+      "raw_kinds": [
+        "bpr",
+        "bpr_two_stage_hybrid",
+        "cosine",
+        "hybrid",
+        "knn",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_bprlistwise.run.json",
+      "suite_name": "v3_main_culturemert_stage3_bprlistwise",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 5,
+      "raw_kinds": [
+        "bpr",
+        "bpr_listwise_hybrid",
+        "bpr_two_stage_hybrid"
+      ],
+      "dcas_kinds": [
+        "ot_calibrated"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_bprlistwise_tuned.run.json",
+      "suite_name": "v3_main_culturemert_stage3_bprlistwise_tuned",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 5,
+      "raw_kinds": [
+        "bpr",
+        "bpr_listwise_hybrid",
+        "bpr_two_stage_hybrid"
+      ],
+      "dcas_kinds": [
+        "ot_calibrated"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_dcascal.run.json",
+      "suite_name": "v3_main_culturemert_stage3_dcascal",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 5,
+      "raw_kinds": [
+        "bpr",
+        "bpr_two_stage_hybrid"
+      ],
+      "dcas_kinds": [
+        "ot",
+        "ot_calibrated"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_lambdamart.run.json",
+      "suite_name": "v3_main_culturemert_stage3_lambdamart",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 6,
+      "raw_kinds": [
+        "bpr",
+        "bpr_listwise_hybrid",
+        "bpr_tree_hybrid",
+        "bpr_two_stage_hybrid"
+      ],
+      "dcas_kinds": [
+        "ot_calibrated"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_lightfmlike.run.json",
+      "suite_name": "v3_main_culturemert_stage3_lightfmlike",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 10,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "lightfm_like",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_culturemert_stage3_stronghybrid.run.json",
+      "suite_name": "v3_main_culturemert_stage3_stronghybrid",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_culturemert_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed_mw3.csv",
+      "n_methods": 10,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity",
+        "two_stage_hybrid"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_gemini.run.json",
+      "suite_name": "v3_main_gemini_embedding2",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_gemini_embedding2_main.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main.csv",
+      "n_methods": 7,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "ot"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_gemini_harmonized_open.run.json",
+      "suite_name": "v3_main_gemini_harmonized_open_prepal",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_gemini_embedding2_v3_main_harmonized.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed.csv",
+      "n_methods": 9,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    },
+    {
+      "path": "configs/benchmark/recommender_benchmark_v3_gemini_open.run.json",
+      "suite_name": "v3_main_gemini_open_prepal",
+      "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v3/tracks_gemini_embedding2_v3_main_mw3.npz",
+      "interactions": "E:/Desktop/Echo/storage/public/research_dataset_v3/interactions_v3_main_mixed.csv",
+      "n_methods": 9,
+      "raw_kinds": [
+        "cosine",
+        "hybrid",
+        "knn",
+        "mlp",
+        "popularity"
+      ],
+      "dcas_kinds": [
+        "knn",
+        "knn_open",
+        "ot",
+        "ot_open"
+      ]
+    }
+  ],
+  "benchmark_reports": [
+    {
+      "path": "reports/benchmarks/public_routeA_phase2_cn_lambdamart",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_lambdamart_hybrid",
+        "bpr_listwise_hybrid",
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "cosine",
+        "dcas_full_ot",
+        "dcas_full_ot_calibrated_minor",
+        "dcas_full_ot_calibrated_target",
+        "knn",
+        "popularity"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/toy_small",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_ot",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v2_main_culturemert",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_ot",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v2_main_gemini_embedding2",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_ot",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_ot",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_open_prepal",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_bpr",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_mf",
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_bprhybrid",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_ot",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_bprlistwise",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_listwise_hybrid",
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "dcas_full_ot_calibrated_minor",
+        "dcas_full_ot_calibrated_target"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_bprlistwise_tuned",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_listwise_hybrid",
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "dcas_full_ot_calibrated_minor",
+        "dcas_full_ot_calibrated_target"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_dcascal",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "dcas_full_ot",
+        "dcas_full_ot_calibrated_minor",
+        "dcas_full_ot_calibrated_target"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_lambdamart",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_lambdamart_hybrid",
+        "bpr_listwise_hybrid",
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "dcas_full_ot_calibrated_minor",
+        "dcas_full_ot_calibrated_target"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_lightfmlike",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "lightfm_like_hybrid",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_culturemert_stage3_stronghybrid",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp",
+        "two_stage_hybrid_ranker"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_gemini_embedding2",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_ot",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_gemini_harmonized_open_prepal",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/v3_main_gemini_open_prepal",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "cosine",
+        "dcas_full_knn",
+        "dcas_full_knn_open",
+        "dcas_full_ot",
+        "dcas_full_ot_open",
+        "hybrid_content_popularity_diversity",
+        "knn",
+        "popularity",
+        "shallow_mlp"
+      ]
+    },
+    {
+      "path": "reports/benchmarks/yambda_5b_subset_global_log_benchmark",
+      "has_summary": true,
+      "has_table": true,
+      "methods": [
+        "bpr_lambdamart_hybrid",
+        "bpr_mf",
+        "bpr_two_stage_hybrid",
+        "cosine",
+        "dcas_log_ot",
+        "knn",
+        "popularity"
+      ]
+    }
+  ],
+  "model_checkpoints": [
+    "storage/models/bpr_lambdamart_hybrid_public_routeA_phase2_cn.pkl",
+    "storage/models/bpr_lambdamart_hybrid_v3_main_culturemert_stage3.pkl",
+    "storage/models/bpr_listwise_hybrid_public_routeA_phase2_cn.pt",
+    "storage/models/bpr_listwise_hybrid_v3_main_culturemert_stage3.pt",
+    "storage/models/bpr_mf_public_routeA_phase2_cn.pt",
+    "storage/models/bpr_mf_v3_main_culturemert_stage3.pt",
+    "storage/models/bpr_mf_yambda_5b_subset.pt",
+    "storage/models/bpr_tree_hybrid_yambda_5b_subset.pkl",
+    "storage/models/bpr_two_stage_hybrid_public_routeA_phase2_cn.pt",
+    "storage/models/bpr_two_stage_hybrid_v3_main_culturemert_stage3.pt",
+    "storage/models/bpr_two_stage_hybrid_yambda_5b_subset.pt",
+    "storage/models/dcas_full_v2_main_culturemert.pt",
+    "storage/models/dcas_full_v2_main_gemini.pt",
+    "storage/models/dcas_full_v3_main_culturemert.pt",
+    "storage/models/dcas_full_v3_main_culturemert_open_prepal.pt",
+    "storage/models/dcas_full_v3_main_culturemert_stage3.pt",
+    "storage/models/dcas_full_v3_main_gemini.pt",
+    "storage/models/dcas_full_v3_main_gemini_harmonized_open_prepal.pt",
+    "storage/models/dcas_full_v3_main_gemini_open_prepal.pt",
+    "storage/models/dcas_log_yambda_5b_subset.pt",
+    "storage/models/lightfm_like_v3_main_culturemert_stage3.pt",
+    "storage/models/shallow_ranker_v2_main_culturemert.pt",
+    "storage/models/shallow_ranker_v2_main_gemini.pt",
+    "storage/models/shallow_ranker_v3_main_culturemert.pt",
+    "storage/models/shallow_ranker_v3_main_culturemert_open.pt",
+    "storage/models/shallow_ranker_v3_main_gemini.pt",
+    "storage/models/shallow_ranker_v3_main_gemini_harmonized_open.pt",
+    "storage/models/shallow_ranker_v3_main_gemini_open.pt",
+    "storage/models/two_stage_hybrid_v3_main_culturemert_stage3.pt",
+    "storage/models/two_stage_hybrid_v3_main_culturemert_stage3_v2.pt"
+  ],
+  "coverage": {
+    "missing_expected_gemini_files": [
+      "train_v3_gemini_stage3.run.json",
+      "recommender_benchmark_v3_gemini_stage3.run.json",
+      "recommender_benchmark_v3_gemini_stage3_bpr.run.json",
+      "recommender_benchmark_v3_gemini_stage3_bprhybrid.run.json",
+      "recommender_benchmark_v3_gemini_stage3_bprlistwise.run.json",
+      "recommender_benchmark_v3_gemini_stage3_dcascal.run.json",
+      "recommender_benchmark_v3_gemini_stage3_lambdamart.run.json",
+      "recommender_benchmark_v3_gemini_stage3_lightfmlike.run.json",
+      "recommender_benchmark_v3_gemini_stage3_stronghybrid.run.json",
+      "recommender_benchmark_public_routeA_phase2_cn_gemini.run.json"
+    ],
+    "has_any_routeA_gemini_benchmark": false,
+    "culturemert_stage3_benchmark_configs": [
+      "recommender_benchmark_v3_culturemert_stage3.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_bpr.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_bprhybrid.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_bprlistwise.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_bprlistwise_tuned.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_dcascal.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_lambdamart.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_lightfmlike.run.json",
+      "recommender_benchmark_v3_culturemert_stage3_stronghybrid.run.json"
+    ],
+    "gemini_benchmark_configs": [
+      "recommender_benchmark_gemini.example.json",
+      "recommender_benchmark_gemini.run.json",
+      "recommender_benchmark_v3_gemini.run.json",
+      "recommender_benchmark_v3_gemini_harmonized_open.run.json",
+      "recommender_benchmark_v3_gemini_open.run.json"
+    ],
+    "culturemert_stage3_report_dirs": [
+      "v3_main_culturemert_stage3",
+      "v3_main_culturemert_stage3_bpr",
+      "v3_main_culturemert_stage3_bprhybrid",
+      "v3_main_culturemert_stage3_bprlistwise",
+      "v3_main_culturemert_stage3_bprlistwise_tuned",
+      "v3_main_culturemert_stage3_dcascal",
+      "v3_main_culturemert_stage3_lambdamart",
+      "v3_main_culturemert_stage3_lightfmlike",
+      "v3_main_culturemert_stage3_stronghybrid"
+    ],
+    "gemini_report_dirs": [
+      "v2_main_gemini_embedding2",
+      "v3_main_gemini_embedding2",
+      "v3_main_gemini_harmonized_open_prepal",
+      "v3_main_gemini_open_prepal"
+    ]
+  },
+  "culturemert_mw3_drop_profile": {
+    "n_dropped": 16,
+    "by_culture": {
+      "france": 3,
+      "germany": 4,
+      "great_britain": 2,
+      "india": 3,
+      "italy": 1,
+      "russia": 3
+    },
+    "by_source_dataset": {
+      "Free Music Archive": 13,
+      "saraga_hindustani": 3
+    },
+    "examples": [
+      {
+        "track_id": "india_saraga_0082",
+        "culture": "india",
+        "source_dataset": "saraga_hindustani",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\india\\audio\\india_saraga_0082.mp3"
+      },
+      {
+        "track_id": "india_saraga_0087",
+        "culture": "india",
+        "source_dataset": "saraga_hindustani",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\india\\audio\\india_saraga_0087.mp3"
+      },
+      {
+        "track_id": "india_saraga_0088",
+        "culture": "india",
+        "source_dataset": "saraga_hindustani",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\india\\audio\\india_saraga_0088.mp3"
+      },
+      {
+        "track_id": "germany_0019",
+        "culture": "germany",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\germany\\audio\\germany_0019.mp3"
+      },
+      {
+        "track_id": "germany_0027",
+        "culture": "germany",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\germany\\audio\\germany_0027.mp3"
+      },
+      {
+        "track_id": "germany_0054",
+        "culture": "germany",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\germany\\audio\\germany_0054.mp3"
+      },
+      {
+        "track_id": "germany_0076",
+        "culture": "germany",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\germany\\audio\\germany_0076.mp3"
+      },
+      {
+        "track_id": "france_0020",
+        "culture": "france",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\france\\audio\\france_0020.mp3"
+      },
+      {
+        "track_id": "france_0067",
+        "culture": "france",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\france\\audio\\france_0067.mp3"
+      },
+      {
+        "track_id": "france_0099",
+        "culture": "france",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\france\\audio\\france_0099.mp3"
+      },
+      {
+        "track_id": "italy_0019",
+        "culture": "italy",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\italy\\audio\\italy_0019.mp3"
+      },
+      {
+        "track_id": "great_britain_0042",
+        "culture": "great_britain",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\great_britain\\audio\\great_britain_0042.mp3"
+      },
+      {
+        "track_id": "great_britain_0097",
+        "culture": "great_britain",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\great_britain\\audio\\great_britain_0097.mp3"
+      },
+      {
+        "track_id": "russia_0022",
+        "culture": "russia",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\russia\\audio\\russia_0022.mp3"
+      },
+      {
+        "track_id": "russia_0060",
+        "culture": "russia",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\russia\\audio\\russia_0060.mp3"
+      },
+      {
+        "track_id": "russia_0068",
+        "culture": "russia",
+        "source_dataset": "Free Music Archive",
+        "audio_path": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v3\\russia\\audio\\russia_0068.mp3"
+      }
+    ]
+  },
+  "topline_findings": [
+    "Gemini 线缺少 stage3 与 public RouteA 对应配置，当前无法与 CultureMERT stage3 做对称对照。",
+    "CultureMERT mw3 embedding 构建存在 16 条失败记录，需要在 V4 前修复或单独解释。",
+    "CultureMERT mw3 对齐后丢失 16 条 track，存在选择性掉样本风险。"
+  ]
+}

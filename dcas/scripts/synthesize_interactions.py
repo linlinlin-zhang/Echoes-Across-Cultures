@@ -70,6 +70,22 @@ def synthesize_interactions(
         idx = rng.choice(len(candidate), size=n_take, replace=False)
         return [candidate[int(j)] for j in idx.tolist()]
 
+    def _extend_unique(
+        selected: list[dict[str, str]],
+        fallback_pool: list[dict[str, str]],
+        target_size: int,
+    ) -> list[dict[str, str]]:
+        if len(selected) >= target_size or not fallback_pool:
+            return selected
+        seen = {str(row.get("track_id", "")).strip() for row in selected}
+        extras = [row for row in fallback_pool if str(row.get("track_id", "")).strip() not in seen]
+        if not extras:
+            return selected
+        need = min(int(target_size - len(selected)), len(extras))
+        idx = rng.choice(len(extras), size=need, replace=False)
+        selected.extend(extras[int(j)] for j in idx.tolist())
+        return selected
+
     with open(out_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["user_id", "track_id", "weight"])
         writer.writeheader()
@@ -96,11 +112,13 @@ def synthesize_interactions(
                     home_n = int(round(float(total_pick) * float(np.clip(home_share, 0.0, 1.0))))
                     other_n = max(0, total_pick - home_n)
                     selected_rows = _pick_rows(pool=pool, n_pick=home_n, preferred_genre=preferred_genre)
+                    fallback_pools: list[list[dict[str, str]]] = [pool]
                     if picked_others and other_n > 0:
                         splits = np.full((len(picked_others),), other_n // len(picked_others), dtype=np.int64)
                         splits[: other_n % len(picked_others)] += 1
                         for other_culture, n_take in zip(picked_others, splits.tolist()):
                             other_pool = by_culture.get(str(other_culture), [])
+                            fallback_pools.append(other_pool)
                             other_genres = sorted(
                                 {
                                     str(x.get(genre_column, "")).strip()
@@ -112,8 +130,13 @@ def synthesize_interactions(
                             if has_genre and other_genres:
                                 other_pref = str(rng.choice(np.array(other_genres, dtype=object)))
                             selected_rows.extend(_pick_rows(pool=other_pool, n_pick=int(n_take), preferred_genre=other_pref))
+                    for fallback_pool in fallback_pools:
+                        selected_rows = _extend_unique(selected_rows, fallback_pool, total_pick)
+                        if len(selected_rows) >= total_pick:
+                            break
                 else:
                     selected_rows = _pick_rows(pool=pool, n_pick=int(tracks_per_user), preferred_genre=preferred_genre)
+                    selected_rows = _extend_unique(selected_rows, pool, int(tracks_per_user))
                 for row in selected_rows:
                     tid = str(row["track_id"])
                     pair = (uid, tid)

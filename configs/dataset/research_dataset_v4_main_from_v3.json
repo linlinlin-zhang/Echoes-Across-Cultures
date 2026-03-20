@@ -1,0 +1,120 @@
+{
+  "dataset_name": "research_dataset_v4",
+  "dataset_version": "v4_main_seed_from_v3_2026-03-20",
+  "schema_version": "v4.0",
+  "root_out_dir": "storage/public/research_dataset_v4/main",
+  "sources": [
+    {
+      "dataset_id": "research_dataset_v3/china",
+      "local_metadata": "storage/public/research_dataset_v3/china/metadata.csv",
+      "culture": "china"
+    },
+    {
+      "dataset_id": "research_dataset_v3/france",
+      "local_metadata": "storage/public/research_dataset_v3/france/metadata.csv",
+      "culture": "france"
+    },
+    {
+      "dataset_id": "research_dataset_v3/germany",
+      "local_metadata": "storage/public/research_dataset_v3/germany/metadata.csv",
+      "culture": "germany"
+    },
+    {
+      "dataset_id": "research_dataset_v3/great_britain",
+      "local_metadata": "storage/public/research_dataset_v3/great_britain/metadata.csv",
+      "culture": "great_britain"
+    },
+    {
+      "dataset_id": "research_dataset_v3/india",
+      "local_metadata": "storage/public/research_dataset_v3/india/metadata.csv",
+      "culture": "india"
+    },
+    {
+      "dataset_id": "research_dataset_v3/indonesia",
+      "local_metadata": "storage/public/research_dataset_v3/indonesia/metadata.csv",
+      "culture": "indonesia"
+    },
+    {
+      "dataset_id": "research_dataset_v3/italy",
+      "local_metadata": "storage/public/research_dataset_v3/italy/metadata.csv",
+      "culture": "italy"
+    },
+    {
+      "dataset_id": "research_dataset_v3/modern_english_pop",
+      "local_metadata": "storage/public/research_dataset_v3/modern_english_pop/metadata.csv",
+      "culture": "modern_english_pop"
+    },
+    {
+      "dataset_id": "research_dataset_v3/russia",
+      "local_metadata": "storage/public/research_dataset_v3/russia/metadata.csv",
+      "culture": "russia"
+    },
+    {
+      "dataset_id": "research_dataset_v3/turkey",
+      "local_metadata": "storage/public/research_dataset_v3/turkey/metadata.csv",
+      "culture": "turkey"
+    }
+  ],
+  "merge": {
+    "strategy": "dedup",
+    "dedup_key": "track_id"
+  },
+  "harmonize": {
+    "label_source": "coarse_label",
+    "language_normalize": true,
+    "fill_is_instrumental": true
+  },
+  "interaction_protocol": {
+    "single": {
+      "enabled": true,
+      "users_per_culture": 24,
+      "tracks_per_user": 40,
+      "genre_column": "coarse_label",
+      "mode": "single_culture",
+      "seed": 42
+    },
+    "mixed": {
+      "enabled": true,
+      "users_per_culture": 24,
+      "tracks_per_user": 40,
+      "genre_column": "coarse_label",
+      "mode": "mixed_culture",
+      "secondary_cultures": 2,
+      "home_share": 0.6,
+      "seed": 42
+    }
+  },
+  "embeddings": {
+    "culturemert": {
+      "enabled": true,
+      "model_id": "ntua-slp/CultureMERT-95M",
+      "pooling": "mean",
+      "layer_indices": [-4, -3, -2, -1],
+      "layer_weights": null,
+      "max_seconds": 30.0,
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean",
+      "skip_errors": false
+    },
+    "gemini": {
+      "enabled": true,
+      "model_id": "gemini-embedding-2-preview",
+      "api_key_file": "E:/Desktop/Echo/configs/embedding/gemini_api_key.local.txt",
+      "output_dimensionality": 768,
+      "max_seconds": 30.0,
+      "window_count": 3,
+      "window_strategy": "uniform",
+      "window_aggregate": "mean",
+      "skip_errors": false
+    }
+  },
+  "validation": {
+    "min_tracks_per_culture": 30,
+    "max_culture_imbalance_ratio": 20.0,
+    "max_unknown_track_ratio": 0.01,
+    "max_duplicate_user_track_ratio": 0.05,
+    "max_zero_norm_ratio": 0.05,
+    "min_interactions_per_user": 5
+  }
+}
