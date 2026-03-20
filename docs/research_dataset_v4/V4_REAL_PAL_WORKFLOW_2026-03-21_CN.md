@@ -116,6 +116,36 @@ E:\Desktop\Echo\.venv-gpu\Scripts\python.exe -m dcas.scripts.run_pal_platform `
 2. 训练带真人 PAL 约束的新模型
 3. 生成 baseline vs real PAL 的评测对比
 
+## 6.5 多位标注员怎么分发表
+
+如果你准备把首轮 `200` 对任务发给多位标注员，可以直接使用：
+
+- `dcas/scripts/split_pal_annotation_sheet.py`
+
+示例：
+
+```powershell
+E:\Desktop\Echo\.venv-gpu\Scripts\python.exe -m dcas.scripts.split_pal_annotation_sheet `
+  --tasks E:\Desktop\Echo\storage\pal\v4_main_culturemert_real\tasks_round1_200.jsonl `
+  --sheet E:\Desktop\Echo\storage\pal\v4_main_culturemert_real\tasks_round1_200_annotation.csv `
+  --out_dir E:\Desktop\Echo\storage\pal\v4_main_culturemert_real\annotator_packets `
+  --annotators annotator_A annotator_B annotator_C annotator_D
+```
+
+默认建议是 `4` 位标注员，每人 `50` 对。
+
+如果当前 `200` 对任务仍按 `10` 个文化各 `20` 对均衡抽样，那么这样切分后，每位标注员大致会拿到：
+
+- 总量：`50` 对
+- 每个文化：`5` 对
+
+脚本会生成：
+
+- 每位标注员自己的 CSV
+- 一份总分配表
+- 一份分配汇总 JSON
+- 一份可直接转发的 `ANNOTATION_QUICK_GUIDE_CN.md`
+
 ## 7. 当前建议
 
 如果只选一条主线做人类标注，优先级建议是：
