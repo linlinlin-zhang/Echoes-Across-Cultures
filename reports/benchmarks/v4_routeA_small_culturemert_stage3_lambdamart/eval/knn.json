@@ -1,0 +1,3545 @@
+{
+  "summary": {
+    "method_name": "knn",
+    "n_users": 96,
+    "n_cultures": 4,
+    "n_user_culture_evals": 384,
+    "n_skipped": 0,
+    "serendipity_mean": 0.44518172144596485,
+    "serendipity_ci95_low": 0.42354337692747324,
+    "serendipity_ci95_high": 0.4680147860649694,
+    "cultural_calibration_kl_mean": 1.1741739531556707,
+    "cultural_calibration_kl_ci95_low": 1.1567617824971275,
+    "cultural_calibration_kl_ci95_high": 1.1904434158991808,
+    "target_culture_prob_mean": 0.41695414506830275,
+    "user_culture_alignment_kl_mean": 0.15244868287727023,
+    "minority_exposure_at_k_mean": 0.24244791666666668,
+    "minority_exposure_at_k_ci95_low": 0.23632486979166667,
+    "minority_exposure_at_k_ci95_high": 0.25001953125000004
+  },
+  "per_target_culture": {
+    "china": {
+      "n": 96,
+      "serendipity_mean": 0.36726189773110823,
+      "serendipity_ci95_low": 0.3214273923563146,
+      "serendipity_ci95_high": 0.40462935231156566,
+      "cultural_calibration_kl_mean": 0.9107351891442935,
+      "cultural_calibration_kl_ci95_low": 0.8894133520743364,
+      "cultural_calibration_kl_ci95_high": 0.9306807426801902,
+      "target_culture_prob_mean": 0.477238613491257,
+      "user_culture_alignment_kl_mean": 0.3048428473058045,
+      "minority_exposure_at_k_mean": 0.2328125,
+      "minority_exposure_at_k_ci95_low": 0.22498697916666668,
+      "minority_exposure_at_k_ci95_high": 0.2401171875
+    },
+    "india": {
+      "n": 96,
+      "serendipity_mean": 0.4588271510563847,
+      "serendipity_ci95_low": 0.41989732061445584,
+      "serendipity_ci95_high": 0.5075602593444581,
+      "cultural_calibration_kl_mean": 1.226159941239638,
+      "cultural_calibration_kl_ci95_low": 1.2125425391187097,
+      "cultural_calibration_kl_ci95_high": 1.2360446036297277,
+      "target_culture_prob_mean": 0.3968074005097151,
+      "user_culture_alignment_kl_mean": 0.07384238842528747,
+      "minority_exposure_at_k_mean": 0.21041666666666667,
+      "minority_exposure_at_k_ci95_low": 0.2020833333333333,
+      "minority_exposure_at_k_ci95_high": 0.2182291666666667
+    },
+    "turkey": {
+      "n": 96,
+      "serendipity_mean": 0.457338702899473,
+      "serendipity_ci95_low": 0.4168483444236807,
+      "serendipity_ci95_high": 0.5030637805886626,
+      "cultural_calibration_kl_mean": 1.2610830886860356,
+      "cultural_calibration_kl_ci95_low": 1.2469761971495883,
+      "cultural_calibration_kl_ci95_high": 1.2775974903526728,
+      "target_culture_prob_mean": 0.40412388152132434,
+      "user_culture_alignment_kl_mean": 0.12702004929002542,
+      "minority_exposure_at_k_mean": 0.24166666666666667,
+      "minority_exposure_at_k_ci95_low": 0.23436197916666668,
+      "minority_exposure_at_k_ci95_high": 0.25
+    },
+    "west": {
+      "n": 96,
+      "serendipity_mean": 0.49729913409689336,
+      "serendipity_ci95_low": 0.4562351258943646,
+      "serendipity_ci95_high": 0.5392132459924157,
+      "cultural_calibration_kl_mean": 1.2987175935527155,
+      "cultural_calibration_kl_ci95_low": 1.287982120860043,
+      "cultural_calibration_kl_ci95_high": 1.3085409121313591,
+      "target_culture_prob_mean": 0.3896466847509146,
+      "user_culture_alignment_kl_mean": 0.1040894464879635,
+      "minority_exposure_at_k_mean": 0.28489583333333335,
+      "minority_exposure_at_k_ci95_low": 0.2630078125,
+      "minority_exposure_at_k_ci95_high": 0.3083463541666666
+    }
+  },
+  "rows": [
+    {
+      "user_id": "china_u000",
+      "target_culture": "china",
+      "serendipity": 0.2910896940636233,
+      "cultural_calibration_kl": 0.6909850044632359,
+      "target_culture_prob_mean": 0.5531517863273621,
+      "user_culture_alignment_kl": 0.08652980225006744,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u000",
+      "target_culture": "india",
+      "serendipity": 0.2282638831116254,
+      "cultural_calibration_kl": 1.1565422167426442,
+      "target_culture_prob_mean": 0.4043271541595459,
+      "user_culture_alignment_kl": 0.14841684243837142,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u000",
+      "target_culture": "turkey",
+      "serendipity": 0.7440285161534702,
+      "cultural_calibration_kl": 1.4201426918175342,
+      "target_culture_prob_mean": 0.3549785017967224,
+      "user_culture_alignment_kl": 0.28830779341063956,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u000",
+      "target_culture": "west",
+      "serendipity": 0.2831665621609779,
+      "cultural_calibration_kl": 1.2997001744447483,
+      "target_culture_prob_mean": 0.38110262155532837,
+      "user_culture_alignment_kl": 0.24641596658441145,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "china_u001",
+      "target_culture": "china",
+      "serendipity": 0.2616548358371764,
+      "cultural_calibration_kl": 0.7319367992807347,
+      "target_culture_prob_mean": 0.537717878818512,
+      "user_culture_alignment_kl": 0.08740258819370103,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u001",
+      "target_culture": "india",
+      "serendipity": 0.2533021055536355,
+      "cultural_calibration_kl": 1.1910316315038258,
+      "target_culture_prob_mean": 0.39631325006484985,
+      "user_culture_alignment_kl": 0.15739794125078943,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u001",
+      "target_culture": "turkey",
+      "serendipity": 0.323989341257122,
+      "cultural_calibration_kl": 1.2594135420590322,
+      "target_culture_prob_mean": 0.40069103240966797,
+      "user_culture_alignment_kl": 0.28670156234205024,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u001",
+      "target_culture": "west",
+      "serendipity": 0.7106196730867674,
+      "cultural_calibration_kl": 1.3120192708508702,
+      "target_culture_prob_mean": 0.37923115491867065,
+      "user_culture_alignment_kl": 0.24672579215887153,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u002",
+      "target_culture": "china",
+      "serendipity": 0.27533699029322395,
+      "cultural_calibration_kl": 0.7532164351645232,
+      "target_culture_prob_mean": 0.5302670001983643,
+      "user_culture_alignment_kl": 0.09892138587405991,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u002",
+      "target_culture": "india",
+      "serendipity": 0.8158861026972991,
+      "cultural_calibration_kl": 1.224876657938824,
+      "target_culture_prob_mean": 0.3894802927970886,
+      "user_culture_alignment_kl": 0.16901769990942003,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u002",
+      "target_culture": "turkey",
+      "serendipity": 0.2937136892287763,
+      "cultural_calibration_kl": 1.230541062182164,
+      "target_culture_prob_mean": 0.4106667637825012,
+      "user_culture_alignment_kl": 0.2749627049688131,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u002",
+      "target_culture": "west",
+      "serendipity": 0.32845039114481284,
+      "cultural_calibration_kl": 1.2572465840207956,
+      "target_culture_prob_mean": 0.39690205454826355,
+      "user_culture_alignment_kl": 0.23769345246293372,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u003",
+      "target_culture": "china",
+      "serendipity": 0.3456789611211902,
+      "cultural_calibration_kl": 0.7725848104138823,
+      "target_culture_prob_mean": 0.5235404372215271,
+      "user_culture_alignment_kl": 0.08547311773732089,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u003",
+      "target_culture": "india",
+      "serendipity": 0.2228615381621196,
+      "cultural_calibration_kl": 1.1748407788797057,
+      "target_culture_prob_mean": 0.40226513147354126,
+      "user_culture_alignment_kl": 0.14611183890647522,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u003",
+      "target_culture": "turkey",
+      "serendipity": 0.6283233636801968,
+      "cultural_calibration_kl": 1.305934194181006,
+      "target_culture_prob_mean": 0.38847655057907104,
+      "user_culture_alignment_kl": 0.28080933802823704,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u003",
+      "target_culture": "west",
+      "serendipity": 0.2955918448421767,
+      "cultural_calibration_kl": 1.2993124043000281,
+      "target_culture_prob_mean": 0.38463905453681946,
+      "user_culture_alignment_kl": 0.23540920966303433,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u004",
+      "target_culture": "china",
+      "serendipity": 0.46613172307536666,
+      "cultural_calibration_kl": 0.7343509705738726,
+      "target_culture_prob_mean": 0.536966860294342,
+      "user_culture_alignment_kl": 0.09135200988595596,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u004",
+      "target_culture": "india",
+      "serendipity": 0.6140019087373856,
+      "cultural_calibration_kl": 1.1824462745360533,
+      "target_culture_prob_mean": 0.3980942666530609,
+      "user_culture_alignment_kl": 0.13580254546493098,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u004",
+      "target_culture": "turkey",
+      "serendipity": 0.87309503440007,
+      "cultural_calibration_kl": 1.3066800847685158,
+      "target_culture_prob_mean": 0.3873678147792816,
+      "user_culture_alignment_kl": 0.2846867912223875,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u004",
+      "target_culture": "west",
+      "serendipity": 0.41649690054641725,
+      "cultural_calibration_kl": 1.249491697336521,
+      "target_culture_prob_mean": 0.39491695165634155,
+      "user_culture_alignment_kl": 0.22869712227874012,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u005",
+      "target_culture": "china",
+      "serendipity": 0.26969612248044195,
+      "cultural_calibration_kl": 0.7023441753283469,
+      "target_culture_prob_mean": 0.5491456985473633,
+      "user_culture_alignment_kl": 0.10435180741751887,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u005",
+      "target_culture": "india",
+      "serendipity": 0.8293806880079115,
+      "cultural_calibration_kl": 1.163303871584311,
+      "target_culture_prob_mean": 0.404399573802948,
+      "user_culture_alignment_kl": 0.1683254958874263,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u005",
+      "target_culture": "turkey",
+      "serendipity": 0.3484410618121153,
+      "cultural_calibration_kl": 1.2706816393947649,
+      "target_culture_prob_mean": 0.39795976877212524,
+      "user_culture_alignment_kl": 0.27950574334864875,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u005",
+      "target_culture": "west",
+      "serendipity": 0.3204704810525415,
+      "cultural_calibration_kl": 1.2924624891109264,
+      "target_culture_prob_mean": 0.3857883810997009,
+      "user_culture_alignment_kl": 0.24378486814091133,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u006",
+      "target_culture": "china",
+      "serendipity": 0.32368757356336514,
+      "cultural_calibration_kl": 0.6417569188782521,
+      "target_culture_prob_mean": 0.571355402469635,
+      "user_culture_alignment_kl": 0.11479324858649108,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "china_u006",
+      "target_culture": "india",
+      "serendipity": 0.8002225183497377,
+      "cultural_calibration_kl": 1.1981671513178782,
+      "target_culture_prob_mean": 0.3934316039085388,
+      "user_culture_alignment_kl": 0.16865540892732175,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u006",
+      "target_culture": "turkey",
+      "serendipity": 0.2880877659927742,
+      "cultural_calibration_kl": 1.266276256455841,
+      "target_culture_prob_mean": 0.3996202349662781,
+      "user_culture_alignment_kl": 0.29415073852843276,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u006",
+      "target_culture": "west",
+      "serendipity": 0.40550992993361357,
+      "cultural_calibration_kl": 1.2455826610535268,
+      "target_culture_prob_mean": 0.3967128396034241,
+      "user_culture_alignment_kl": 0.25035546681712695,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u007",
+      "target_culture": "china",
+      "serendipity": 0.43849948008546313,
+      "cultural_calibration_kl": 0.8124063136535185,
+      "target_culture_prob_mean": 0.5094380378723145,
+      "user_culture_alignment_kl": 0.08366518296537015,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u007",
+      "target_culture": "india",
+      "serendipity": 0.7687354657121191,
+      "cultural_calibration_kl": 1.2039809376693136,
+      "target_culture_prob_mean": 0.3944564163684845,
+      "user_culture_alignment_kl": 0.15854643579974928,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u007",
+      "target_culture": "turkey",
+      "serendipity": 0.31520251343069117,
+      "cultural_calibration_kl": 1.2631597202195326,
+      "target_culture_prob_mean": 0.4016669690608978,
+      "user_culture_alignment_kl": 0.2665421284954502,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u007",
+      "target_culture": "west",
+      "serendipity": 0.3113542773061844,
+      "cultural_calibration_kl": 1.281803823963736,
+      "target_culture_prob_mean": 0.38966211676597595,
+      "user_culture_alignment_kl": 0.23288398680331715,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u008",
+      "target_culture": "china",
+      "serendipity": 0.3477299012212661,
+      "cultural_calibration_kl": 0.6974785632070475,
+      "target_culture_prob_mean": 0.5512074828147888,
+      "user_culture_alignment_kl": 0.09271320693253554,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u008",
+      "target_culture": "india",
+      "serendipity": 0.19469202663308552,
+      "cultural_calibration_kl": 1.1336546964908312,
+      "target_culture_prob_mean": 0.41442981362342834,
+      "user_culture_alignment_kl": 0.17570013811186797,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u008",
+      "target_culture": "turkey",
+      "serendipity": 0.25936894086792806,
+      "cultural_calibration_kl": 1.2911938917542247,
+      "target_culture_prob_mean": 0.39247286319732666,
+      "user_culture_alignment_kl": 0.30003198700031114,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u008",
+      "target_culture": "west",
+      "serendipity": 0.8274697114648889,
+      "cultural_calibration_kl": 1.3129918368942213,
+      "target_culture_prob_mean": 0.37956106662750244,
+      "user_culture_alignment_kl": 0.25975002797821833,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u009",
+      "target_culture": "china",
+      "serendipity": 0.35602651225044485,
+      "cultural_calibration_kl": 0.7770178831681587,
+      "target_culture_prob_mean": 0.5216944217681885,
+      "user_culture_alignment_kl": 0.07622636824606548,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u009",
+      "target_culture": "india",
+      "serendipity": 0.2630644725233573,
+      "cultural_calibration_kl": 1.2059439889634183,
+      "target_culture_prob_mean": 0.3909481167793274,
+      "user_culture_alignment_kl": 0.12847245829972417,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u009",
+      "target_culture": "turkey",
+      "serendipity": 0.7758870123459458,
+      "cultural_calibration_kl": 1.3312054293830486,
+      "target_culture_prob_mean": 0.38097459077835083,
+      "user_culture_alignment_kl": 0.29091471547861164,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "china_u009",
+      "target_culture": "west",
+      "serendipity": 0.3907282518280263,
+      "cultural_calibration_kl": 1.255893589407667,
+      "target_culture_prob_mean": 0.3922256529331207,
+      "user_culture_alignment_kl": 0.22752961451874057,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u010",
+      "target_culture": "china",
+      "serendipity": 0.24623319804760993,
+      "cultural_calibration_kl": 0.718905839326741,
+      "target_culture_prob_mean": 0.5431501865386963,
+      "user_culture_alignment_kl": 0.08094892585438783,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u010",
+      "target_culture": "india",
+      "serendipity": 0.2575004390867297,
+      "cultural_calibration_kl": 1.219644693063974,
+      "target_culture_prob_mean": 0.38720884919166565,
+      "user_culture_alignment_kl": 0.15018011446426105,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u010",
+      "target_culture": "turkey",
+      "serendipity": 0.7992699798627089,
+      "cultural_calibration_kl": 1.3212813601171067,
+      "target_culture_prob_mean": 0.383683979511261,
+      "user_culture_alignment_kl": 0.30782434296653904,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "china_u010",
+      "target_culture": "west",
+      "serendipity": 0.4120187256687444,
+      "cultural_calibration_kl": 1.2392991710038206,
+      "target_culture_prob_mean": 0.3973051905632019,
+      "user_culture_alignment_kl": 0.2514518002917699,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "china_u011",
+      "target_culture": "china",
+      "serendipity": 0.344943122552011,
+      "cultural_calibration_kl": 0.7996446948652305,
+      "target_culture_prob_mean": 0.514264702796936,
+      "user_culture_alignment_kl": 0.08359859510992487,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u011",
+      "target_culture": "india",
+      "serendipity": 0.28808646120754733,
+      "cultural_calibration_kl": 1.137532260243681,
+      "target_culture_prob_mean": 0.41084057092666626,
+      "user_culture_alignment_kl": 0.1312116961066423,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u011",
+      "target_culture": "turkey",
+      "serendipity": 0.33068987327593957,
+      "cultural_calibration_kl": 1.2921586633809357,
+      "target_culture_prob_mean": 0.391287237405777,
+      "user_culture_alignment_kl": 0.2634984569667199,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u011",
+      "target_culture": "west",
+      "serendipity": 0.7632382453007043,
+      "cultural_calibration_kl": 1.2870135921381016,
+      "target_culture_prob_mean": 0.3871919512748718,
+      "user_culture_alignment_kl": 0.2332277547114291,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u012",
+      "target_culture": "china",
+      "serendipity": 0.1451843808355328,
+      "cultural_calibration_kl": 0.701939574400182,
+      "target_culture_prob_mean": 0.54926997423172,
+      "user_culture_alignment_kl": 0.09370587541623931,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u012",
+      "target_culture": "india",
+      "serendipity": 0.33831144912510996,
+      "cultural_calibration_kl": 1.160036539296641,
+      "target_culture_prob_mean": 0.40408748388290405,
+      "user_culture_alignment_kl": 0.13953920084037208,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u012",
+      "target_culture": "turkey",
+      "serendipity": 0.868448094757723,
+      "cultural_calibration_kl": 1.3382105768772694,
+      "target_culture_prob_mean": 0.3777145445346832,
+      "user_culture_alignment_kl": 0.2915687524805267,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u012",
+      "target_culture": "west",
+      "serendipity": 0.38063278562644354,
+      "cultural_calibration_kl": 1.2976533721231431,
+      "target_culture_prob_mean": 0.38093775510787964,
+      "user_culture_alignment_kl": 0.23069365133327868,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u013",
+      "target_culture": "china",
+      "serendipity": 0.30344811549250233,
+      "cultural_calibration_kl": 0.7283268784039532,
+      "target_culture_prob_mean": 0.5389242172241211,
+      "user_culture_alignment_kl": 0.09739188562584697,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u013",
+      "target_culture": "india",
+      "serendipity": 0.28007685545414956,
+      "cultural_calibration_kl": 1.1627307861303617,
+      "target_culture_prob_mean": 0.40556883811950684,
+      "user_culture_alignment_kl": 0.15494633418783726,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u013",
+      "target_culture": "turkey",
+      "serendipity": 0.32243754516060996,
+      "cultural_calibration_kl": 1.2469307600231596,
+      "target_culture_prob_mean": 0.4050828516483307,
+      "user_culture_alignment_kl": 0.2811272073172599,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u013",
+      "target_culture": "west",
+      "serendipity": 0.8333829089036389,
+      "cultural_calibration_kl": 1.293589660456181,
+      "target_culture_prob_mean": 0.38655832409858704,
+      "user_culture_alignment_kl": 0.2501121872925271,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "china_u014",
+      "target_culture": "china",
+      "serendipity": 0.2527459528075201,
+      "cultural_calibration_kl": 0.781918400897168,
+      "target_culture_prob_mean": 0.5203262567520142,
+      "user_culture_alignment_kl": 0.09177854285309792,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u014",
+      "target_culture": "india",
+      "serendipity": 0.8076683894646319,
+      "cultural_calibration_kl": 1.1600745726494746,
+      "target_culture_prob_mean": 0.40671253204345703,
+      "user_culture_alignment_kl": 0.15932984913508377,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u014",
+      "target_culture": "turkey",
+      "serendipity": 0.28218788616924007,
+      "cultural_calibration_kl": 1.2471040924521102,
+      "target_culture_prob_mean": 0.40642428398132324,
+      "user_culture_alignment_kl": 0.27429979340136323,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u014",
+      "target_culture": "west",
+      "serendipity": 0.3200242069210151,
+      "cultural_calibration_kl": 1.2932447866819499,
+      "target_culture_prob_mean": 0.386771023273468,
+      "user_culture_alignment_kl": 0.23087849438509034,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u015",
+      "target_culture": "china",
+      "serendipity": 0.2009643909470094,
+      "cultural_calibration_kl": 0.7842204930019516,
+      "target_culture_prob_mean": 0.5195249319076538,
+      "user_culture_alignment_kl": 0.09253412176183742,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u015",
+      "target_culture": "india",
+      "serendipity": 0.8560665494660537,
+      "cultural_calibration_kl": 1.2277698114173792,
+      "target_culture_prob_mean": 0.38701140880584717,
+      "user_culture_alignment_kl": 0.14724894722201742,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u015",
+      "target_culture": "turkey",
+      "serendipity": 0.2813281811759747,
+      "cultural_calibration_kl": 1.253691171931749,
+      "target_culture_prob_mean": 0.4040554463863373,
+      "user_culture_alignment_kl": 0.26952505368913243,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u015",
+      "target_culture": "west",
+      "serendipity": 0.40157439964086183,
+      "cultural_calibration_kl": 1.2226123942552274,
+      "target_culture_prob_mean": 0.402068555355072,
+      "user_culture_alignment_kl": 0.2143805154628359,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u016",
+      "target_culture": "china",
+      "serendipity": 0.3591920832632332,
+      "cultural_calibration_kl": 0.6385743763676961,
+      "target_culture_prob_mean": 0.572466254234314,
+      "user_culture_alignment_kl": 0.11541828887195461,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u016",
+      "target_culture": "india",
+      "serendipity": 0.8594606367699595,
+      "cultural_calibration_kl": 1.2196440302657017,
+      "target_culture_prob_mean": 0.38829630613327026,
+      "user_culture_alignment_kl": 0.16766877585146145,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u016",
+      "target_culture": "turkey",
+      "serendipity": 0.30899988821590774,
+      "cultural_calibration_kl": 1.2326029625247983,
+      "target_culture_prob_mean": 0.4087911546230316,
+      "user_culture_alignment_kl": 0.2980943875195332,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u016",
+      "target_culture": "west",
+      "serendipity": 0.38972632084231806,
+      "cultural_calibration_kl": 1.282593939687552,
+      "target_culture_prob_mean": 0.3870953917503357,
+      "user_culture_alignment_kl": 0.250036584486186,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u017",
+      "target_culture": "china",
+      "serendipity": 0.25081953274576413,
+      "cultural_calibration_kl": 0.6199947429178506,
+      "target_culture_prob_mean": 0.5797282457351685,
+      "user_culture_alignment_kl": 0.11555026765874549,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u017",
+      "target_culture": "india",
+      "serendipity": 0.2573698741966724,
+      "cultural_calibration_kl": 1.2180654353129863,
+      "target_culture_prob_mean": 0.38809677958488464,
+      "user_culture_alignment_kl": 0.16120780656339762,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u017",
+      "target_culture": "turkey",
+      "serendipity": 0.3049605580365162,
+      "cultural_calibration_kl": 1.2660546415547846,
+      "target_culture_prob_mean": 0.39807742834091187,
+      "user_culture_alignment_kl": 0.29655546697778884,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u017",
+      "target_culture": "west",
+      "serendipity": 0.8592854936582086,
+      "cultural_calibration_kl": 1.3105259008321317,
+      "target_culture_prob_mean": 0.37894338369369507,
+      "user_culture_alignment_kl": 0.2569312275770753,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u018",
+      "target_culture": "china",
+      "serendipity": 0.26952249931066075,
+      "cultural_calibration_kl": 0.7583492975498565,
+      "target_culture_prob_mean": 0.5286585092544556,
+      "user_culture_alignment_kl": 0.09131638800274114,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u018",
+      "target_culture": "india",
+      "serendipity": 0.6702888136901628,
+      "cultural_calibration_kl": 1.148458092419359,
+      "target_culture_prob_mean": 0.4083137512207031,
+      "user_culture_alignment_kl": 0.13836242628457188,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u018",
+      "target_culture": "turkey",
+      "serendipity": 0.26997341330808744,
+      "cultural_calibration_kl": 1.3302535958706678,
+      "target_culture_prob_mean": 0.38007867336273193,
+      "user_culture_alignment_kl": 0.2596726213574763,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u018",
+      "target_culture": "west",
+      "serendipity": 0.6779806785515718,
+      "cultural_calibration_kl": 1.34381363751261,
+      "target_culture_prob_mean": 0.37138429284095764,
+      "user_culture_alignment_kl": 0.2308676895752545,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u019",
+      "target_culture": "china",
+      "serendipity": 0.3570507187166086,
+      "cultural_calibration_kl": 0.7010775871127238,
+      "target_culture_prob_mean": 0.5495901107788086,
+      "user_culture_alignment_kl": 0.10709673597321642,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u019",
+      "target_culture": "india",
+      "serendipity": 0.8055767865370103,
+      "cultural_calibration_kl": 1.1510051196221818,
+      "target_culture_prob_mean": 0.40948963165283203,
+      "user_culture_alignment_kl": 0.1660948887576892,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u019",
+      "target_culture": "turkey",
+      "serendipity": 0.33103529121111214,
+      "cultural_calibration_kl": 1.3351624943562859,
+      "target_culture_prob_mean": 0.37926429510116577,
+      "user_culture_alignment_kl": 0.26479786257219756,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u019",
+      "target_culture": "west",
+      "serendipity": 0.33415174193573766,
+      "cultural_calibration_kl": 1.3541390068480066,
+      "target_culture_prob_mean": 0.37011247873306274,
+      "user_culture_alignment_kl": 0.23706089778276107,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "china_u020",
+      "target_culture": "china",
+      "serendipity": 0.3411329324201054,
+      "cultural_calibration_kl": 0.6780357491808036,
+      "target_culture_prob_mean": 0.5579320192337036,
+      "user_culture_alignment_kl": 0.07516155344259542,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u020",
+      "target_culture": "india",
+      "serendipity": 0.33174006820026486,
+      "cultural_calibration_kl": 1.138201088999231,
+      "target_culture_prob_mean": 0.4120473861694336,
+      "user_culture_alignment_kl": 0.20098620571885056,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u020",
+      "target_culture": "turkey",
+      "serendipity": 0.2925362959137235,
+      "cultural_calibration_kl": 1.2874247810816646,
+      "target_culture_prob_mean": 0.39319759607315063,
+      "user_culture_alignment_kl": 0.33384915433114837,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u020",
+      "target_culture": "west",
+      "serendipity": 0.7105955540735391,
+      "cultural_calibration_kl": 1.3316202495112743,
+      "target_culture_prob_mean": 0.37401363253593445,
+      "user_culture_alignment_kl": 0.291744139570269,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u021",
+      "target_culture": "china",
+      "serendipity": 0.25510736991837185,
+      "cultural_calibration_kl": 0.7552975734519343,
+      "target_culture_prob_mean": 0.5293365120887756,
+      "user_culture_alignment_kl": 0.09043939689199769,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "china_u021",
+      "target_culture": "india",
+      "serendipity": 0.803368386247382,
+      "cultural_calibration_kl": 1.2120887514629524,
+      "target_culture_prob_mean": 0.38972747325897217,
+      "user_culture_alignment_kl": 0.14954354694298871,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u021",
+      "target_culture": "turkey",
+      "serendipity": 0.2683239819221749,
+      "cultural_calibration_kl": 1.269811192916048,
+      "target_culture_prob_mean": 0.39770370721817017,
+      "user_culture_alignment_kl": 0.27170045635818024,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u021",
+      "target_culture": "west",
+      "serendipity": 0.3119281117394923,
+      "cultural_calibration_kl": 1.2631760272215342,
+      "target_culture_prob_mean": 0.39212939143180847,
+      "user_culture_alignment_kl": 0.22998860997300835,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u022",
+      "target_culture": "china",
+      "serendipity": 0.27377321131897275,
+      "cultural_calibration_kl": 0.819564323546186,
+      "target_culture_prob_mean": 0.5069596767425537,
+      "user_culture_alignment_kl": 0.0844890443063189,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u022",
+      "target_culture": "india",
+      "serendipity": 0.2726520708104298,
+      "cultural_calibration_kl": 1.1745237398433157,
+      "target_culture_prob_mean": 0.4005202651023865,
+      "user_culture_alignment_kl": 0.13187402813473081,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u022",
+      "target_culture": "turkey",
+      "serendipity": 0.33756242500286204,
+      "cultural_calibration_kl": 1.247741376839853,
+      "target_culture_prob_mean": 0.4045972228050232,
+      "user_culture_alignment_kl": 0.2591235519220436,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u022",
+      "target_culture": "west",
+      "serendipity": 0.7244745916725778,
+      "cultural_calibration_kl": 1.2848618769872988,
+      "target_culture_prob_mean": 0.3863491415977478,
+      "user_culture_alignment_kl": 0.21943811504715033,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u023",
+      "target_culture": "china",
+      "serendipity": 0.4382571886523553,
+      "cultural_calibration_kl": 0.8592777712586848,
+      "target_culture_prob_mean": 0.49348974227905273,
+      "user_culture_alignment_kl": 0.0539283893176026,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "china_u023",
+      "target_culture": "india",
+      "serendipity": 0.7280344504535946,
+      "cultural_calibration_kl": 1.1965831583115878,
+      "target_culture_prob_mean": 0.3938464820384979,
+      "user_culture_alignment_kl": 0.13772103937630906,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "china_u023",
+      "target_culture": "turkey",
+      "serendipity": 0.7751393798106707,
+      "cultural_calibration_kl": 1.3110132182602168,
+      "target_culture_prob_mean": 0.38720908761024475,
+      "user_culture_alignment_kl": 0.294660280132078,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "china_u023",
+      "target_culture": "west",
+      "serendipity": 0.7756105890647393,
+      "cultural_calibration_kl": 1.2125428435845227,
+      "target_culture_prob_mean": 0.40434327721595764,
+      "user_culture_alignment_kl": 0.23810090951241564,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u000",
+      "target_culture": "china",
+      "serendipity": 0.12852227789154044,
+      "cultural_calibration_kl": 0.9279710431154837,
+      "target_culture_prob_mean": 0.4708579182624817,
+      "user_culture_alignment_kl": 0.21506123542127328,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u000",
+      "target_culture": "india",
+      "serendipity": 0.33615757813244557,
+      "cultural_calibration_kl": 1.1972759618382192,
+      "target_culture_prob_mean": 0.4058744013309479,
+      "user_culture_alignment_kl": 0.05705774958009785,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u000",
+      "target_culture": "turkey",
+      "serendipity": 0.8278777140694077,
+      "cultural_calibration_kl": 1.3719674109039213,
+      "target_culture_prob_mean": 0.37332817912101746,
+      "user_culture_alignment_kl": 0.12724382324685965,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u000",
+      "target_culture": "west",
+      "serendipity": 0.32291050393362375,
+      "cultural_calibration_kl": 1.2866342544072826,
+      "target_culture_prob_mean": 0.39005813002586365,
+      "user_culture_alignment_kl": 0.09433424022320418,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u001",
+      "target_culture": "china",
+      "serendipity": 0.17422249371560738,
+      "cultural_calibration_kl": 0.8902687093254422,
+      "target_culture_prob_mean": 0.4835628867149353,
+      "user_culture_alignment_kl": 0.2255465348344651,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u001",
+      "target_culture": "india",
+      "serendipity": 0.4611171819610679,
+      "cultural_calibration_kl": 1.1216313619248495,
+      "target_culture_prob_mean": 0.4262772500514984,
+      "user_culture_alignment_kl": 0.055706770229720204,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u001",
+      "target_culture": "turkey",
+      "serendipity": 0.7506134794767297,
+      "cultural_calibration_kl": 1.459069634925292,
+      "target_culture_prob_mean": 0.34820908308029175,
+      "user_culture_alignment_kl": 0.11715397654122298,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u001",
+      "target_culture": "west",
+      "serendipity": 0.2550943135601117,
+      "cultural_calibration_kl": 1.426782055396615,
+      "target_culture_prob_mean": 0.3545331358909607,
+      "user_culture_alignment_kl": 0.0941932093298136,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "india_u002",
+      "target_culture": "china",
+      "serendipity": 0.12458240129843548,
+      "cultural_calibration_kl": 0.9325057691794467,
+      "target_culture_prob_mean": 0.4693862795829773,
+      "user_culture_alignment_kl": 0.277145363600873,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u002",
+      "target_culture": "india",
+      "serendipity": 0.5900068605971348,
+      "cultural_calibration_kl": 1.165960456151672,
+      "target_culture_prob_mean": 0.41684430837631226,
+      "user_culture_alignment_kl": 0.04769047924172977,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u002",
+      "target_culture": "turkey",
+      "serendipity": 0.30349455506055845,
+      "cultural_calibration_kl": 1.3028034089537963,
+      "target_culture_prob_mean": 0.3923405408859253,
+      "user_culture_alignment_kl": 0.0969846505764965,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u002",
+      "target_culture": "west",
+      "serendipity": 0.7696832588871396,
+      "cultural_calibration_kl": 1.4035243736237255,
+      "target_culture_prob_mean": 0.36291342973709106,
+      "user_culture_alignment_kl": 0.07708349669778868,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u003",
+      "target_culture": "china",
+      "serendipity": 0.6165714223865452,
+      "cultural_calibration_kl": 0.9781935717913839,
+      "target_culture_prob_mean": 0.454329252243042,
+      "user_culture_alignment_kl": 0.5485080121583538,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u003",
+      "target_culture": "india",
+      "serendipity": 0.4119954994512531,
+      "cultural_calibration_kl": 1.2258573782223092,
+      "target_culture_prob_mean": 0.40167203545570374,
+      "user_culture_alignment_kl": 0.013332681157155947,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u003",
+      "target_culture": "turkey",
+      "serendipity": 0.2243181350940607,
+      "cultural_calibration_kl": 1.2950822360104919,
+      "target_culture_prob_mean": 0.39541882276535034,
+      "user_culture_alignment_kl": 0.03246932394626083,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u003",
+      "target_culture": "west",
+      "serendipity": 0.25607730163652886,
+      "cultural_calibration_kl": 1.3474846912093286,
+      "target_culture_prob_mean": 0.37870728969573975,
+      "user_culture_alignment_kl": 0.019932762266795842,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "india_u004",
+      "target_culture": "china",
+      "serendipity": 0.6440136877347927,
+      "cultural_calibration_kl": 0.9279709934810558,
+      "target_culture_prob_mean": 0.4708579182624817,
+      "user_culture_alignment_kl": 0.25889449246529206,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u004",
+      "target_culture": "india",
+      "serendipity": 0.398612908488648,
+      "cultural_calibration_kl": 1.16741261654632,
+      "target_culture_prob_mean": 0.4153900146484375,
+      "user_culture_alignment_kl": 0.04677453016493979,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u004",
+      "target_culture": "turkey",
+      "serendipity": 0.8671263553135757,
+      "cultural_calibration_kl": 1.3609248889923808,
+      "target_culture_prob_mean": 0.37661081552505493,
+      "user_culture_alignment_kl": 0.1108428204839508,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u004",
+      "target_culture": "west",
+      "serendipity": 0.29760270365591046,
+      "cultural_calibration_kl": 1.351078782676488,
+      "target_culture_prob_mean": 0.3750070631504059,
+      "user_culture_alignment_kl": 0.07955488753139053,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u005",
+      "target_culture": "china",
+      "serendipity": 0.5929279733948143,
+      "cultural_calibration_kl": 0.9781935783811533,
+      "target_culture_prob_mean": 0.454329252243042,
+      "user_culture_alignment_kl": 0.5299030715115918,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u005",
+      "target_culture": "india",
+      "serendipity": 0.4076413151456465,
+      "cultural_calibration_kl": 1.2294023712607192,
+      "target_culture_prob_mean": 0.40078407526016235,
+      "user_culture_alignment_kl": 0.012719745336737334,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "india_u005",
+      "target_culture": "turkey",
+      "serendipity": 0.30561839791098305,
+      "cultural_calibration_kl": 1.2691179618912778,
+      "target_culture_prob_mean": 0.40258654952049255,
+      "user_culture_alignment_kl": 0.04014763613554871,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "india_u005",
+      "target_culture": "west",
+      "serendipity": 0.41123773953963416,
+      "cultural_calibration_kl": 1.3179018721660745,
+      "target_culture_prob_mean": 0.388082355260849,
+      "user_culture_alignment_kl": 0.02941769720078198,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u006",
+      "target_culture": "china",
+      "serendipity": 0.13463544976484457,
+      "cultural_calibration_kl": 0.9216493290249477,
+      "target_culture_prob_mean": 0.4729118347167969,
+      "user_culture_alignment_kl": 0.2117215410312372,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u006",
+      "target_culture": "india",
+      "serendipity": 0.4419109838276173,
+      "cultural_calibration_kl": 1.1416623002781678,
+      "target_culture_prob_mean": 0.4221356511116028,
+      "user_culture_alignment_kl": 0.062278557485368424,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u006",
+      "target_culture": "turkey",
+      "serendipity": 0.7383476842077528,
+      "cultural_calibration_kl": 1.4306477882284323,
+      "target_culture_prob_mean": 0.3560807406902313,
+      "user_culture_alignment_kl": 0.11839924351644648,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u006",
+      "target_culture": "west",
+      "serendipity": 0.3255253153262676,
+      "cultural_calibration_kl": 1.3911008882794014,
+      "target_culture_prob_mean": 0.36429592967033386,
+      "user_culture_alignment_kl": 0.09851318493386269,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u007",
+      "target_culture": "china",
+      "serendipity": 0.5866940877363959,
+      "cultural_calibration_kl": 0.9216494682965138,
+      "target_culture_prob_mean": 0.4729117751121521,
+      "user_culture_alignment_kl": 0.24802358193093976,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u007",
+      "target_culture": "india",
+      "serendipity": 0.3193266127056819,
+      "cultural_calibration_kl": 1.1392213430995735,
+      "target_culture_prob_mean": 0.42190131545066833,
+      "user_culture_alignment_kl": 0.05144565229949709,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u007",
+      "target_culture": "turkey",
+      "serendipity": 0.23284616210564185,
+      "cultural_calibration_kl": 1.3346610885031844,
+      "target_culture_prob_mean": 0.38300490379333496,
+      "user_culture_alignment_kl": 0.10873036785335338,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u007",
+      "target_culture": "west",
+      "serendipity": 0.7467357440634375,
+      "cultural_calibration_kl": 1.3624101330436718,
+      "target_culture_prob_mean": 0.3725709319114685,
+      "user_culture_alignment_kl": 0.08905644491745918,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u008",
+      "target_culture": "china",
+      "serendipity": 0.688766338502851,
+      "cultural_calibration_kl": 0.9781935717913839,
+      "target_culture_prob_mean": 0.454329252243042,
+      "user_culture_alignment_kl": 0.5652644082834264,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u008",
+      "target_culture": "india",
+      "serendipity": 0.5039987263407892,
+      "cultural_calibration_kl": 1.1833432243529582,
+      "target_culture_prob_mean": 0.41313499212265015,
+      "user_culture_alignment_kl": 0.013046389602524112,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u008",
+      "target_culture": "turkey",
+      "serendipity": 0.2825968498723128,
+      "cultural_calibration_kl": 1.2791199310193726,
+      "target_culture_prob_mean": 0.40006184577941895,
+      "user_culture_alignment_kl": 0.040070004928555863,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "india_u008",
+      "target_culture": "west",
+      "serendipity": 0.2804520151281287,
+      "cultural_calibration_kl": 1.3607674532184995,
+      "target_culture_prob_mean": 0.3748232126235962,
+      "user_culture_alignment_kl": 0.017737857180862265,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u009",
+      "target_culture": "china",
+      "serendipity": 0.21945229813332046,
+      "cultural_calibration_kl": 0.9216493538897912,
+      "target_culture_prob_mean": 0.4729118347167969,
+      "user_culture_alignment_kl": 0.23154569258168964,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u009",
+      "target_culture": "india",
+      "serendipity": 0.35177863493045736,
+      "cultural_calibration_kl": 1.147795745961497,
+      "target_culture_prob_mean": 0.420672744512558,
+      "user_culture_alignment_kl": 0.05923331005901545,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u009",
+      "target_culture": "turkey",
+      "serendipity": 0.3506526545105751,
+      "cultural_calibration_kl": 1.3079840265937484,
+      "target_culture_prob_mean": 0.3913649022579193,
+      "user_culture_alignment_kl": 0.12408197198794411,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u009",
+      "target_culture": "west",
+      "serendipity": 0.8217160849510166,
+      "cultural_calibration_kl": 1.3760462051149924,
+      "target_culture_prob_mean": 0.3694992661476135,
+      "user_culture_alignment_kl": 0.09895522124419265,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u010",
+      "target_culture": "china",
+      "serendipity": 0.20299903427007288,
+      "cultural_calibration_kl": 0.9115822519861823,
+      "target_culture_prob_mean": 0.4765087962150574,
+      "user_culture_alignment_kl": 0.2515622922976669,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u010",
+      "target_culture": "india",
+      "serendipity": 0.35258884191616685,
+      "cultural_calibration_kl": 1.152580173221147,
+      "target_culture_prob_mean": 0.41779622435569763,
+      "user_culture_alignment_kl": 0.047537416090496006,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u010",
+      "target_culture": "turkey",
+      "serendipity": 0.7615069533360618,
+      "cultural_calibration_kl": 1.4023171877596554,
+      "target_culture_prob_mean": 0.3646846413612366,
+      "user_culture_alignment_kl": 0.10845269832900166,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u010",
+      "target_culture": "west",
+      "serendipity": 0.3255525893260709,
+      "cultural_calibration_kl": 1.3852165787014123,
+      "target_culture_prob_mean": 0.3666185736656189,
+      "user_culture_alignment_kl": 0.08347593813602885,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u011",
+      "target_culture": "china",
+      "serendipity": 0.1226789245626374,
+      "cultural_calibration_kl": 0.9324819439293548,
+      "target_culture_prob_mean": 0.4694752097129822,
+      "user_culture_alignment_kl": 0.23905397627725944,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u011",
+      "target_culture": "india",
+      "serendipity": 0.563119074052037,
+      "cultural_calibration_kl": 1.0955504069235342,
+      "target_culture_prob_mean": 0.43299776315689087,
+      "user_culture_alignment_kl": 0.04395753040433155,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u011",
+      "target_culture": "turkey",
+      "serendipity": 0.6744942208242375,
+      "cultural_calibration_kl": 1.4906114514850093,
+      "target_culture_prob_mean": 0.33980196714401245,
+      "user_culture_alignment_kl": 0.09746910591714467,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u011",
+      "target_culture": "west",
+      "serendipity": 0.27447193156414934,
+      "cultural_calibration_kl": 1.4177148757570948,
+      "target_culture_prob_mean": 0.35751861333847046,
+      "user_culture_alignment_kl": 0.08024435127264448,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u012",
+      "target_culture": "china",
+      "serendipity": 0.7104647748992343,
+      "cultural_calibration_kl": 0.9781935717913839,
+      "target_culture_prob_mean": 0.454329252243042,
+      "user_culture_alignment_kl": 0.5698712871990778,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u012",
+      "target_culture": "india",
+      "serendipity": 0.38264043236370127,
+      "cultural_calibration_kl": 1.158351371271678,
+      "target_culture_prob_mean": 0.4189794063568115,
+      "user_culture_alignment_kl": 0.01306729792697102,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u012",
+      "target_culture": "turkey",
+      "serendipity": 0.32206998025102107,
+      "cultural_calibration_kl": 1.3785374648201414,
+      "target_culture_prob_mean": 0.37182125449180603,
+      "user_culture_alignment_kl": 0.025823967144697924,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u012",
+      "target_culture": "west",
+      "serendipity": 0.3273949781343714,
+      "cultural_calibration_kl": 1.3696138134641467,
+      "target_culture_prob_mean": 0.3715505599975586,
+      "user_culture_alignment_kl": 0.0162485998932178,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u013",
+      "target_culture": "china",
+      "serendipity": 0.11894691898326075,
+      "cultural_calibration_kl": 0.9050167169872505,
+      "target_culture_prob_mean": 0.4786970019340515,
+      "user_culture_alignment_kl": 0.2653165147556873,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u013",
+      "target_culture": "india",
+      "serendipity": 0.4098875393499397,
+      "cultural_calibration_kl": 1.1500357261954695,
+      "target_culture_prob_mean": 0.41857805848121643,
+      "user_culture_alignment_kl": 0.04270213389485545,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u013",
+      "target_culture": "turkey",
+      "serendipity": 0.7355291437052766,
+      "cultural_calibration_kl": 1.4216992907428156,
+      "target_culture_prob_mean": 0.359308123588562,
+      "user_culture_alignment_kl": 0.10519085728245778,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u013",
+      "target_culture": "west",
+      "serendipity": 0.3432945848265347,
+      "cultural_calibration_kl": 1.343044890317327,
+      "target_culture_prob_mean": 0.3762426972389221,
+      "user_culture_alignment_kl": 0.07676547936804773,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u014",
+      "target_culture": "china",
+      "serendipity": 0.6406048785667753,
+      "cultural_calibration_kl": 0.9976432273722462,
+      "target_culture_prob_mean": 0.4480944275856018,
+      "user_culture_alignment_kl": 0.544105158519756,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u014",
+      "target_culture": "india",
+      "serendipity": 0.4925953323548816,
+      "cultural_calibration_kl": 1.1772481874265048,
+      "target_culture_prob_mean": 0.4141671061515808,
+      "user_culture_alignment_kl": 0.014526557577035266,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u014",
+      "target_culture": "turkey",
+      "serendipity": 0.23349177232454235,
+      "cultural_calibration_kl": 1.2793564153228716,
+      "target_culture_prob_mean": 0.39982980489730835,
+      "user_culture_alignment_kl": 0.036003418837093175,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u014",
+      "target_culture": "west",
+      "serendipity": 0.34890005319612544,
+      "cultural_calibration_kl": 1.354073260532508,
+      "target_culture_prob_mean": 0.37638384103775024,
+      "user_culture_alignment_kl": 0.019855322731972158,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u015",
+      "target_culture": "china",
+      "serendipity": 0.1513103782044612,
+      "cultural_calibration_kl": 0.9781935717913839,
+      "target_culture_prob_mean": 0.454329252243042,
+      "user_culture_alignment_kl": 0.23276217239800523,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u015",
+      "target_culture": "india",
+      "serendipity": 0.3623882770811714,
+      "cultural_calibration_kl": 1.142690523135291,
+      "target_culture_prob_mean": 0.4207621216773987,
+      "user_culture_alignment_kl": 0.04560189461114872,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u015",
+      "target_culture": "turkey",
+      "serendipity": 0.8330888203826594,
+      "cultural_calibration_kl": 1.4366021417826094,
+      "target_culture_prob_mean": 0.3552014231681824,
+      "user_culture_alignment_kl": 0.09515078902639122,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u015",
+      "target_culture": "west",
+      "serendipity": 0.6192266297301325,
+      "cultural_calibration_kl": 1.3554305773196222,
+      "target_culture_prob_mean": 0.37512534856796265,
+      "user_culture_alignment_kl": 0.0817665190899858,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "india_u016",
+      "target_culture": "china",
+      "serendipity": 0.6586234975035875,
+      "cultural_calibration_kl": 0.9929661406693802,
+      "target_culture_prob_mean": 0.4494679570198059,
+      "user_culture_alignment_kl": 0.48523083738689066,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u016",
+      "target_culture": "india",
+      "serendipity": 0.33616713677572313,
+      "cultural_calibration_kl": 1.2226751013139165,
+      "target_culture_prob_mean": 0.4018875062465668,
+      "user_culture_alignment_kl": 0.014730431467795978,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u016",
+      "target_culture": "turkey",
+      "serendipity": 0.3358447604757664,
+      "cultural_calibration_kl": 1.3069261122987927,
+      "target_culture_prob_mean": 0.39188581705093384,
+      "user_culture_alignment_kl": 0.03956357663119779,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u016",
+      "target_culture": "west",
+      "serendipity": 0.28729090413236263,
+      "cultural_calibration_kl": 1.329960219299763,
+      "target_culture_prob_mean": 0.38312196731567383,
+      "user_culture_alignment_kl": 0.024457041735642643,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u017",
+      "target_culture": "china",
+      "serendipity": 0.1751093184142503,
+      "cultural_calibration_kl": 0.8872393947808804,
+      "target_culture_prob_mean": 0.4844394624233246,
+      "user_culture_alignment_kl": 0.243025894182946,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u017",
+      "target_culture": "india",
+      "serendipity": 0.4812531559477402,
+      "cultural_calibration_kl": 1.1363620769086014,
+      "target_culture_prob_mean": 0.4229514002799988,
+      "user_culture_alignment_kl": 0.05417250044445334,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u017",
+      "target_culture": "turkey",
+      "serendipity": 0.6994424119530664,
+      "cultural_calibration_kl": 1.4405155679936983,
+      "target_culture_prob_mean": 0.3541242778301239,
+      "user_culture_alignment_kl": 0.11274848217946369,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u017",
+      "target_culture": "west",
+      "serendipity": 0.5174375479636856,
+      "cultural_calibration_kl": 1.377736828610385,
+      "target_culture_prob_mean": 0.36950236558914185,
+      "user_culture_alignment_kl": 0.10212835192187329,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u018",
+      "target_culture": "china",
+      "serendipity": 0.16177867373515964,
+      "cultural_calibration_kl": 0.9247037761226553,
+      "target_culture_prob_mean": 0.47203516960144043,
+      "user_culture_alignment_kl": 0.2506029703498206,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u018",
+      "target_culture": "india",
+      "serendipity": 0.4461435094212024,
+      "cultural_calibration_kl": 1.1482387646408965,
+      "target_culture_prob_mean": 0.4193088114261627,
+      "user_culture_alignment_kl": 0.05522075947692525,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u018",
+      "target_culture": "turkey",
+      "serendipity": 0.28500008911260283,
+      "cultural_calibration_kl": 1.2967424980987978,
+      "target_culture_prob_mean": 0.3940582871437073,
+      "user_culture_alignment_kl": 0.10795081077164796,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u018",
+      "target_culture": "west",
+      "serendipity": 0.806863895289891,
+      "cultural_calibration_kl": 1.3837207077174285,
+      "target_culture_prob_mean": 0.3674874007701874,
+      "user_culture_alignment_kl": 0.08933696098712951,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u019",
+      "target_culture": "china",
+      "serendipity": 0.3961768002585724,
+      "cultural_calibration_kl": 0.9279710431154837,
+      "target_culture_prob_mean": 0.4708579182624817,
+      "user_culture_alignment_kl": 0.23502601320003702,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u019",
+      "target_culture": "india",
+      "serendipity": 0.4510661354617477,
+      "cultural_calibration_kl": 1.1613305100181877,
+      "target_culture_prob_mean": 0.4168868660926819,
+      "user_culture_alignment_kl": 0.05235121281196112,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u019",
+      "target_culture": "turkey",
+      "serendipity": 0.6942011929494785,
+      "cultural_calibration_kl": 1.4017585533911392,
+      "target_culture_prob_mean": 0.36464589834213257,
+      "user_culture_alignment_kl": 0.11270654284989871,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u019",
+      "target_culture": "west",
+      "serendipity": 0.2928035379417958,
+      "cultural_calibration_kl": 1.3524727218712012,
+      "target_culture_prob_mean": 0.37487053871154785,
+      "user_culture_alignment_kl": 0.09131733409536041,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u020",
+      "target_culture": "china",
+      "serendipity": 0.39321357095928783,
+      "cultural_calibration_kl": 0.9216494682965138,
+      "target_culture_prob_mean": 0.4729117751121521,
+      "user_culture_alignment_kl": 0.23011284404994736,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u020",
+      "target_culture": "india",
+      "serendipity": 0.5162881399322823,
+      "cultural_calibration_kl": 1.106599317890814,
+      "target_culture_prob_mean": 0.4311045706272125,
+      "user_culture_alignment_kl": 0.05745076176570718,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u020",
+      "target_culture": "turkey",
+      "serendipity": 0.3473737547638843,
+      "cultural_calibration_kl": 1.3543866653274985,
+      "target_culture_prob_mean": 0.37756040692329407,
+      "user_culture_alignment_kl": 0.11600848534453886,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u020",
+      "target_culture": "west",
+      "serendipity": 0.6863990292530423,
+      "cultural_calibration_kl": 1.3769246584532289,
+      "target_culture_prob_mean": 0.3678043484687805,
+      "user_culture_alignment_kl": 0.09258848473216041,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u021",
+      "target_culture": "china",
+      "serendipity": 0.13089550329975955,
+      "cultural_calibration_kl": 0.9503706157990441,
+      "target_culture_prob_mean": 0.4636121392250061,
+      "user_culture_alignment_kl": 0.2537023101131213,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u021",
+      "target_culture": "india",
+      "serendipity": 0.309732622306061,
+      "cultural_calibration_kl": 1.2041083847006742,
+      "target_culture_prob_mean": 0.40555548667907715,
+      "user_culture_alignment_kl": 0.048014874282946915,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u021",
+      "target_culture": "turkey",
+      "serendipity": 0.3293649914341197,
+      "cultural_calibration_kl": 1.3077336184410673,
+      "target_culture_prob_mean": 0.39068639278411865,
+      "user_culture_alignment_kl": 0.09998273850653532,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u021",
+      "target_culture": "west",
+      "serendipity": 0.6906713566383473,
+      "cultural_calibration_kl": 1.3762353596931012,
+      "target_culture_prob_mean": 0.36945441365242004,
+      "user_culture_alignment_kl": 0.08208892112426913,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u022",
+      "target_culture": "china",
+      "serendipity": 0.4407737473264195,
+      "cultural_calibration_kl": 0.9503706157990441,
+      "target_culture_prob_mean": 0.4636121392250061,
+      "user_culture_alignment_kl": 0.23861760914281746,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u022",
+      "target_culture": "india",
+      "serendipity": 0.4553617748787956,
+      "cultural_calibration_kl": 1.1327644178308054,
+      "target_culture_prob_mean": 0.42431220412254333,
+      "user_culture_alignment_kl": 0.04772319079490233,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u022",
+      "target_culture": "turkey",
+      "serendipity": 0.7061557851612639,
+      "cultural_calibration_kl": 1.3906432850672208,
+      "target_culture_prob_mean": 0.36794111132621765,
+      "user_culture_alignment_kl": 0.10965134707715635,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u022",
+      "target_culture": "west",
+      "serendipity": 0.3814685732212453,
+      "cultural_calibration_kl": 1.3234993438898361,
+      "target_culture_prob_mean": 0.3820347189903259,
+      "user_culture_alignment_kl": 0.08726667462226781,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u023",
+      "target_culture": "china",
+      "serendipity": 0.14402481646574875,
+      "cultural_calibration_kl": 0.9324819439293548,
+      "target_culture_prob_mean": 0.4694752097129822,
+      "user_culture_alignment_kl": 0.23105419213500206,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "india_u023",
+      "target_culture": "india",
+      "serendipity": 0.362941886573674,
+      "cultural_calibration_kl": 1.1513326625113725,
+      "target_culture_prob_mean": 0.4186055660247803,
+      "user_culture_alignment_kl": 0.052689570921099924,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "india_u023",
+      "target_culture": "turkey",
+      "serendipity": 0.7583580810336794,
+      "cultural_calibration_kl": 1.3370769176037602,
+      "target_culture_prob_mean": 0.3824581801891327,
+      "user_culture_alignment_kl": 0.11683222640347497,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "india_u023",
+      "target_culture": "west",
+      "serendipity": 0.824875426249446,
+      "cultural_calibration_kl": 1.4293197470427579,
+      "target_culture_prob_mean": 0.3557097315788269,
+      "user_culture_alignment_kl": 0.0939675418978482,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u000",
+      "target_culture": "china",
+      "serendipity": 0.1835480606070631,
+      "cultural_calibration_kl": 0.9683473248501542,
+      "target_culture_prob_mean": 0.4573940634727478,
+      "user_culture_alignment_kl": 0.2958282685978813,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u000",
+      "target_culture": "india",
+      "serendipity": 0.82094907110319,
+      "cultural_calibration_kl": 1.3272792074606328,
+      "target_culture_prob_mean": 0.374662846326828,
+      "user_culture_alignment_kl": 0.08194389372258115,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "turkey_u000",
+      "target_culture": "turkey",
+      "serendipity": 0.3559925822632031,
+      "cultural_calibration_kl": 1.106576475383149,
+      "target_culture_prob_mean": 0.4495505392551422,
+      "user_culture_alignment_kl": 0.08106987587526432,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u000",
+      "target_culture": "west",
+      "serendipity": 0.2936716012395663,
+      "cultural_calibration_kl": 1.3070601387011402,
+      "target_culture_prob_mean": 0.39234665036201477,
+      "user_culture_alignment_kl": 0.08039039670709691,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "turkey_u001",
+      "target_culture": "china",
+      "serendipity": 0.17045906724654908,
+      "cultural_calibration_kl": 0.9748038866490611,
+      "target_culture_prob_mean": 0.4553402066230774,
+      "user_culture_alignment_kl": 0.2743887173851087,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u001",
+      "target_culture": "india",
+      "serendipity": 0.27357959209663824,
+      "cultural_calibration_kl": 1.2435564164386137,
+      "target_culture_prob_mean": 0.3965817391872406,
+      "user_culture_alignment_kl": 0.0706002025153884,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u001",
+      "target_culture": "turkey",
+      "serendipity": 0.34953543164273154,
+      "cultural_calibration_kl": 1.176257976469942,
+      "target_culture_prob_mean": 0.42977651953697205,
+      "user_culture_alignment_kl": 0.08818181823096391,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u001",
+      "target_culture": "west",
+      "serendipity": 0.8252236205884957,
+      "cultural_calibration_kl": 1.3167125416978562,
+      "target_culture_prob_mean": 0.3900773823261261,
+      "user_culture_alignment_kl": 0.0899715587730043,
+      "minority_exposure_at_k": 0.5
+    },
+    {
+      "user_id": "turkey_u002",
+      "target_culture": "china",
+      "serendipity": 0.6768873519628203,
+      "cultural_calibration_kl": 1.023284746304929,
+      "target_culture_prob_mean": 0.43982094526290894,
+      "user_culture_alignment_kl": 0.659999169803876,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u002",
+      "target_culture": "india",
+      "serendipity": 0.25856288113051723,
+      "cultural_calibration_kl": 1.2833987618705143,
+      "target_culture_prob_mean": 0.3868493437767029,
+      "user_culture_alignment_kl": 0.0403194364364404,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u002",
+      "target_culture": "turkey",
+      "serendipity": 0.4558810611317619,
+      "cultural_calibration_kl": 1.1805482421531335,
+      "target_culture_prob_mean": 0.428609699010849,
+      "user_culture_alignment_kl": 0.010863777119345877,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u002",
+      "target_culture": "west",
+      "serendipity": 0.2525448927520092,
+      "cultural_calibration_kl": 1.2978838323117567,
+      "target_culture_prob_mean": 0.3944585919380188,
+      "user_culture_alignment_kl": 0.015046737034928523,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "turkey_u003",
+      "target_culture": "china",
+      "serendipity": 0.81582613426029,
+      "cultural_calibration_kl": 0.9929660887727038,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.6805244591734838,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u003",
+      "target_culture": "india",
+      "serendipity": 0.3332449058744317,
+      "cultural_calibration_kl": 1.312287282510027,
+      "target_culture_prob_mean": 0.3786202073097229,
+      "user_culture_alignment_kl": 0.029279127956781975,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u003",
+      "target_culture": "turkey",
+      "serendipity": 0.359851075675097,
+      "cultural_calibration_kl": 1.1391892452162,
+      "target_culture_prob_mean": 0.4412720799446106,
+      "user_culture_alignment_kl": 0.01584484945166422,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u003",
+      "target_culture": "west",
+      "serendipity": 0.3482536833086739,
+      "cultural_calibration_kl": 1.31045914656369,
+      "target_culture_prob_mean": 0.3899495601654053,
+      "user_culture_alignment_kl": 0.019728224935144603,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "turkey_u004",
+      "target_culture": "china",
+      "serendipity": 0.7583572287814881,
+      "cultural_calibration_kl": 1.023284746304929,
+      "target_culture_prob_mean": 0.43982094526290894,
+      "user_culture_alignment_kl": 0.6473010069673396,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u004",
+      "target_culture": "india",
+      "serendipity": 0.24405341643270137,
+      "cultural_calibration_kl": 1.2526722587801706,
+      "target_culture_prob_mean": 0.39452436566352844,
+      "user_culture_alignment_kl": 0.037968309191904484,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u004",
+      "target_culture": "turkey",
+      "serendipity": 0.40031509816983013,
+      "cultural_calibration_kl": 1.1656218610695637,
+      "target_culture_prob_mean": 0.43345633149147034,
+      "user_culture_alignment_kl": 0.017499773834931776,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u004",
+      "target_culture": "west",
+      "serendipity": 0.25244508636911334,
+      "cultural_calibration_kl": 1.2758707818756925,
+      "target_culture_prob_mean": 0.40109577775001526,
+      "user_culture_alignment_kl": 0.016593387899860798,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "turkey_u005",
+      "target_culture": "china",
+      "serendipity": 0.632034933038714,
+      "cultural_calibration_kl": 1.023284746304929,
+      "target_culture_prob_mean": 0.43982094526290894,
+      "user_culture_alignment_kl": 0.6686145601058435,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u005",
+      "target_culture": "india",
+      "serendipity": 0.30758696585099327,
+      "cultural_calibration_kl": 1.2734513666895424,
+      "target_culture_prob_mean": 0.3889603018760681,
+      "user_culture_alignment_kl": 0.03891288983159871,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u005",
+      "target_culture": "turkey",
+      "serendipity": 0.3796216056231799,
+      "cultural_calibration_kl": 1.1809489593655174,
+      "target_culture_prob_mean": 0.4290446639060974,
+      "user_culture_alignment_kl": 0.014033661444467566,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "turkey_u005",
+      "target_culture": "west",
+      "serendipity": 0.3066083231588658,
+      "cultural_calibration_kl": 1.2854239332693262,
+      "target_culture_prob_mean": 0.3998025059700012,
+      "user_culture_alignment_kl": 0.014286517516108446,
+      "minority_exposure_at_k": 0.45
+    },
+    {
+      "user_id": "turkey_u006",
+      "target_culture": "china",
+      "serendipity": 0.7166619385689332,
+      "cultural_calibration_kl": 1.0232847638705889,
+      "target_culture_prob_mean": 0.43982094526290894,
+      "user_culture_alignment_kl": 0.621153227970989,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u006",
+      "target_culture": "india",
+      "serendipity": 0.2203452140537454,
+      "cultural_calibration_kl": 1.2847892649662196,
+      "target_culture_prob_mean": 0.38594335317611694,
+      "user_culture_alignment_kl": 0.033438044414312564,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "turkey_u006",
+      "target_culture": "turkey",
+      "serendipity": 0.4136084229415654,
+      "cultural_calibration_kl": 1.1541910250304475,
+      "target_culture_prob_mean": 0.4367855191230774,
+      "user_culture_alignment_kl": 0.020129004764846234,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u006",
+      "target_culture": "west",
+      "serendipity": 0.3382993141289846,
+      "cultural_calibration_kl": 1.28433875514873,
+      "target_culture_prob_mean": 0.3998771607875824,
+      "user_culture_alignment_kl": 0.01742061890567781,
+      "minority_exposure_at_k": 0.5
+    },
+    {
+      "user_id": "turkey_u007",
+      "target_culture": "china",
+      "serendipity": 0.19873925287412403,
+      "cultural_calibration_kl": 0.9781934938316859,
+      "target_culture_prob_mean": 0.45432931184768677,
+      "user_culture_alignment_kl": 0.32872769831944615,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u007",
+      "target_culture": "india",
+      "serendipity": 0.7785751274916033,
+      "cultural_calibration_kl": 1.2684553424992415,
+      "target_culture_prob_mean": 0.38940128684043884,
+      "user_culture_alignment_kl": 0.07024780373865366,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u007",
+      "target_culture": "turkey",
+      "serendipity": 0.3347433919569055,
+      "cultural_calibration_kl": 1.1750335534992087,
+      "target_culture_prob_mean": 0.43033266067504883,
+      "user_culture_alignment_kl": 0.06531418978431701,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u007",
+      "target_culture": "west",
+      "serendipity": 0.3432542082683192,
+      "cultural_calibration_kl": 1.2936413527897719,
+      "target_culture_prob_mean": 0.39759963750839233,
+      "user_culture_alignment_kl": 0.06911844322352474,
+      "minority_exposure_at_k": 0.45
+    },
+    {
+      "user_id": "turkey_u008",
+      "target_culture": "china",
+      "serendipity": 0.16496879887075927,
+      "cultural_calibration_kl": 0.9637203463198372,
+      "target_culture_prob_mean": 0.45876771211624146,
+      "user_culture_alignment_kl": 0.3057516599783084,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u008",
+      "target_culture": "india",
+      "serendipity": 0.8317102330518674,
+      "cultural_calibration_kl": 1.2977748624199228,
+      "target_culture_prob_mean": 0.3817177414894104,
+      "user_culture_alignment_kl": 0.0697228751044511,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u008",
+      "target_culture": "turkey",
+      "serendipity": 0.41829327130470306,
+      "cultural_calibration_kl": 1.1499611426864482,
+      "target_culture_prob_mean": 0.438099205493927,
+      "user_culture_alignment_kl": 0.07991996824911811,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u008",
+      "target_culture": "west",
+      "serendipity": 0.37710839698912585,
+      "cultural_calibration_kl": 1.2881368151472095,
+      "target_culture_prob_mean": 0.39577776193618774,
+      "user_culture_alignment_kl": 0.07284517495918855,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u009",
+      "target_culture": "china",
+      "serendipity": 0.6006950292413209,
+      "cultural_calibration_kl": 0.9929661065286632,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.2965318676628186,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u009",
+      "target_culture": "india",
+      "serendipity": 0.2844400035815605,
+      "cultural_calibration_kl": 1.2612080326288397,
+      "target_culture_prob_mean": 0.3916561007499695,
+      "user_culture_alignment_kl": 0.0556306491343739,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u009",
+      "target_culture": "turkey",
+      "serendipity": 0.38841130666990964,
+      "cultural_calibration_kl": 1.1560403784271767,
+      "target_culture_prob_mean": 0.4357084333896637,
+      "user_culture_alignment_kl": 0.08053892840979496,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u009",
+      "target_culture": "west",
+      "serendipity": 0.8642407461973439,
+      "cultural_calibration_kl": 1.3280885706855965,
+      "target_culture_prob_mean": 0.38601112365722656,
+      "user_culture_alignment_kl": 0.07231779034021538,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "turkey_u010",
+      "target_culture": "china",
+      "serendipity": 0.18574943171478112,
+      "cultural_calibration_kl": 0.9929661406693802,
+      "target_culture_prob_mean": 0.4494679570198059,
+      "user_culture_alignment_kl": 0.3158332729026355,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u010",
+      "target_culture": "india",
+      "serendipity": 0.7825508327201881,
+      "cultural_calibration_kl": 1.2380144507031685,
+      "target_culture_prob_mean": 0.39852088689804077,
+      "user_culture_alignment_kl": 0.06155755574539022,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u010",
+      "target_culture": "turkey",
+      "serendipity": 0.3981812474574607,
+      "cultural_calibration_kl": 1.1949943864414818,
+      "target_culture_prob_mean": 0.42354264855384827,
+      "user_culture_alignment_kl": 0.06548455091208555,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u010",
+      "target_culture": "west",
+      "serendipity": 0.34939573055993195,
+      "cultural_calibration_kl": 1.3403740598155869,
+      "target_culture_prob_mean": 0.3800741136074066,
+      "user_culture_alignment_kl": 0.059164830591618346,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u011",
+      "target_culture": "china",
+      "serendipity": 0.16835732164541808,
+      "cultural_calibration_kl": 0.9929661761813,
+      "target_culture_prob_mean": 0.4494679570198059,
+      "user_culture_alignment_kl": 0.30951819852657375,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u011",
+      "target_culture": "india",
+      "serendipity": 0.7052526677830775,
+      "cultural_calibration_kl": 1.3106362002573375,
+      "target_culture_prob_mean": 0.37884145975112915,
+      "user_culture_alignment_kl": 0.06462994065785549,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u011",
+      "target_culture": "turkey",
+      "serendipity": 0.35017930122163865,
+      "cultural_calibration_kl": 1.1519771373089311,
+      "target_culture_prob_mean": 0.4363759160041809,
+      "user_culture_alignment_kl": 0.06998738855880932,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u011",
+      "target_culture": "west",
+      "serendipity": 0.7408853442536688,
+      "cultural_calibration_kl": 1.306385841411653,
+      "target_culture_prob_mean": 0.39236849546432495,
+      "user_culture_alignment_kl": 0.06747212308867837,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "turkey_u012",
+      "target_culture": "china",
+      "serendipity": 0.6706180567643473,
+      "cultural_calibration_kl": 0.9929660887727038,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.6658736172448378,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u012",
+      "target_culture": "india",
+      "serendipity": 0.3221120977156891,
+      "cultural_calibration_kl": 1.2402103763884709,
+      "target_culture_prob_mean": 0.39826124906539917,
+      "user_culture_alignment_kl": 0.03804936463006575,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u012",
+      "target_culture": "turkey",
+      "serendipity": 0.396684378271731,
+      "cultural_calibration_kl": 1.1626301419872251,
+      "target_culture_prob_mean": 0.43392032384872437,
+      "user_culture_alignment_kl": 0.01617719358555922,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u012",
+      "target_culture": "west",
+      "serendipity": 0.2687099168617285,
+      "cultural_calibration_kl": 1.328369088750623,
+      "target_culture_prob_mean": 0.38656312227249146,
+      "user_culture_alignment_kl": 0.016885166131501136,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "turkey_u013",
+      "target_culture": "china",
+      "serendipity": 0.1387756910580925,
+      "cultural_calibration_kl": 0.9747712132186825,
+      "target_culture_prob_mean": 0.4552421569824219,
+      "user_culture_alignment_kl": 0.2974603716395273,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u013",
+      "target_culture": "india",
+      "serendipity": 0.24071628980752946,
+      "cultural_calibration_kl": 1.3169771389095075,
+      "target_culture_prob_mean": 0.37644803524017334,
+      "user_culture_alignment_kl": 0.0567704035286458,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "turkey_u013",
+      "target_culture": "turkey",
+      "serendipity": 0.31454364066589957,
+      "cultural_calibration_kl": 1.156071981049143,
+      "target_culture_prob_mean": 0.43560099601745605,
+      "user_culture_alignment_kl": 0.07985007373763439,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u013",
+      "target_culture": "west",
+      "serendipity": 0.8132520041950373,
+      "cultural_calibration_kl": 1.3174886847330485,
+      "target_culture_prob_mean": 0.39035993814468384,
+      "user_culture_alignment_kl": 0.08362791389037649,
+      "minority_exposure_at_k": 0.45
+    },
+    {
+      "user_id": "turkey_u014",
+      "target_culture": "china",
+      "serendipity": 0.12166117029640952,
+      "cultural_calibration_kl": 0.9929661406693802,
+      "target_culture_prob_mean": 0.4494679570198059,
+      "user_culture_alignment_kl": 0.2775770504209124,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u014",
+      "target_culture": "india",
+      "serendipity": 0.25289738869197176,
+      "cultural_calibration_kl": 1.309878451977103,
+      "target_culture_prob_mean": 0.3790344297885895,
+      "user_culture_alignment_kl": 0.062354158500435644,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u014",
+      "target_culture": "turkey",
+      "serendipity": 0.41570664063720064,
+      "cultural_calibration_kl": 1.1575905952448111,
+      "target_culture_prob_mean": 0.4352706968784332,
+      "user_culture_alignment_kl": 0.08416035854509285,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u014",
+      "target_culture": "west",
+      "serendipity": 0.7569985523117065,
+      "cultural_calibration_kl": 1.3145197743097148,
+      "target_culture_prob_mean": 0.3912731409072876,
+      "user_culture_alignment_kl": 0.08559336002987294,
+      "minority_exposure_at_k": 0.5
+    },
+    {
+      "user_id": "turkey_u015",
+      "target_culture": "china",
+      "serendipity": 0.13232752686219293,
+      "cultural_calibration_kl": 0.9747207353395598,
+      "target_culture_prob_mean": 0.455331027507782,
+      "user_culture_alignment_kl": 0.27761295649924894,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "turkey_u015",
+      "target_culture": "india",
+      "serendipity": 0.4610759366297229,
+      "cultural_calibration_kl": 1.3080837385054966,
+      "target_culture_prob_mean": 0.37940412759780884,
+      "user_culture_alignment_kl": 0.06692921589790975,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u015",
+      "target_culture": "turkey",
+      "serendipity": 0.40142608592747286,
+      "cultural_calibration_kl": 1.147890127923748,
+      "target_culture_prob_mean": 0.4370196461677551,
+      "user_culture_alignment_kl": 0.08494616402182785,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u015",
+      "target_culture": "west",
+      "serendipity": 0.8496333568582946,
+      "cultural_calibration_kl": 1.3045265162763426,
+      "target_culture_prob_mean": 0.3938320279121399,
+      "user_culture_alignment_kl": 0.09175771361313191,
+      "minority_exposure_at_k": 0.45
+    },
+    {
+      "user_id": "turkey_u016",
+      "target_culture": "china",
+      "serendipity": 0.6092893159296543,
+      "cultural_calibration_kl": 1.0232847638705889,
+      "target_culture_prob_mean": 0.43982094526290894,
+      "user_culture_alignment_kl": 0.27374129337855263,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u016",
+      "target_culture": "india",
+      "serendipity": 0.19384187545291165,
+      "cultural_calibration_kl": 1.3429420833014083,
+      "target_culture_prob_mean": 0.3694257438182831,
+      "user_culture_alignment_kl": 0.053975389041560316,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "turkey_u016",
+      "target_culture": "turkey",
+      "serendipity": 0.4394515254234849,
+      "cultural_calibration_kl": 1.129467439372129,
+      "target_culture_prob_mean": 0.4433668255805969,
+      "user_culture_alignment_kl": 0.08319479006532973,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u016",
+      "target_culture": "west",
+      "serendipity": 0.7430956532279542,
+      "cultural_calibration_kl": 1.2986529067749069,
+      "target_culture_prob_mean": 0.39632633328437805,
+      "user_culture_alignment_kl": 0.08212343566759156,
+      "minority_exposure_at_k": 0.5
+    },
+    {
+      "user_id": "turkey_u017",
+      "target_culture": "china",
+      "serendipity": 0.13428695580221625,
+      "cultural_calibration_kl": 0.9637205479788659,
+      "target_culture_prob_mean": 0.4587675929069519,
+      "user_culture_alignment_kl": 0.2743208918191668,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u017",
+      "target_culture": "india",
+      "serendipity": 0.1951378661526358,
+      "cultural_calibration_kl": 1.2657070259540946,
+      "target_culture_prob_mean": 0.39095181226730347,
+      "user_culture_alignment_kl": 0.06879016315986446,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u017",
+      "target_culture": "turkey",
+      "serendipity": 0.36870203018292447,
+      "cultural_calibration_kl": 1.141432596111672,
+      "target_culture_prob_mean": 0.4394899308681488,
+      "user_culture_alignment_kl": 0.09273141261114753,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u017",
+      "target_culture": "west",
+      "serendipity": 0.8296363992031663,
+      "cultural_calibration_kl": 1.327684666868737,
+      "target_culture_prob_mean": 0.38625237345695496,
+      "user_culture_alignment_kl": 0.09035190627070469,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "turkey_u018",
+      "target_culture": "china",
+      "serendipity": 0.6946560930685692,
+      "cultural_calibration_kl": 0.9929661065286632,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.6821375234365981,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u018",
+      "target_culture": "india",
+      "serendipity": 0.2117146753831464,
+      "cultural_calibration_kl": 1.3101931943242784,
+      "target_culture_prob_mean": 0.37931007146835327,
+      "user_culture_alignment_kl": 0.030062666221644635,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u018",
+      "target_culture": "turkey",
+      "serendipity": 0.48040326090423485,
+      "cultural_calibration_kl": 1.131119181684206,
+      "target_culture_prob_mean": 0.4436360001564026,
+      "user_culture_alignment_kl": 0.018724370985851436,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u018",
+      "target_culture": "west",
+      "serendipity": 0.3239842233780851,
+      "cultural_calibration_kl": 1.3028144849650936,
+      "target_culture_prob_mean": 0.3944926857948303,
+      "user_culture_alignment_kl": 0.01766691643023756,
+      "minority_exposure_at_k": 0.5
+    },
+    {
+      "user_id": "turkey_u019",
+      "target_culture": "china",
+      "serendipity": 0.6539232558343955,
+      "cultural_calibration_kl": 0.9929660887727038,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.6373301772478744,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u019",
+      "target_culture": "india",
+      "serendipity": 0.20452757539821795,
+      "cultural_calibration_kl": 1.321070995773658,
+      "target_culture_prob_mean": 0.3765086531639099,
+      "user_culture_alignment_kl": 0.024645921129731574,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "turkey_u019",
+      "target_culture": "turkey",
+      "serendipity": 0.3651408662436547,
+      "cultural_calibration_kl": 1.1317938633730398,
+      "target_culture_prob_mean": 0.44341331720352173,
+      "user_culture_alignment_kl": 0.023597070283361693,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u019",
+      "target_culture": "west",
+      "serendipity": 0.3378462380630924,
+      "cultural_calibration_kl": 1.3159543976497654,
+      "target_culture_prob_mean": 0.3903769850730896,
+      "user_culture_alignment_kl": 0.01794999647012574,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "turkey_u020",
+      "target_culture": "china",
+      "serendipity": 0.6725246390532174,
+      "cultural_calibration_kl": 1.023284746304929,
+      "target_culture_prob_mean": 0.43982094526290894,
+      "user_culture_alignment_kl": 0.5747100113263561,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u020",
+      "target_culture": "india",
+      "serendipity": 0.19863690126890082,
+      "cultural_calibration_kl": 1.2955515200394907,
+      "target_culture_prob_mean": 0.38279029726982117,
+      "user_culture_alignment_kl": 0.03309717961338077,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u020",
+      "target_culture": "turkey",
+      "serendipity": 0.37121181625495187,
+      "cultural_calibration_kl": 1.1525335520886117,
+      "target_culture_prob_mean": 0.4369255006313324,
+      "user_culture_alignment_kl": 0.02006452259534481,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u020",
+      "target_culture": "west",
+      "serendipity": 0.36585572173276365,
+      "cultural_calibration_kl": 1.2711688655352629,
+      "target_culture_prob_mean": 0.3993953764438629,
+      "user_culture_alignment_kl": 0.022971069986188475,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "turkey_u021",
+      "target_culture": "china",
+      "serendipity": 0.22373048067134887,
+      "cultural_calibration_kl": 0.989561450158063,
+      "target_culture_prob_mean": 0.4504789412021637,
+      "user_culture_alignment_kl": 0.3195308195060656,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u021",
+      "target_culture": "india",
+      "serendipity": 0.19644030091906917,
+      "cultural_calibration_kl": 1.3255644038229975,
+      "target_culture_prob_mean": 0.3744678199291229,
+      "user_culture_alignment_kl": 0.05653673387648584,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u021",
+      "target_culture": "turkey",
+      "serendipity": 0.4570722246084832,
+      "cultural_calibration_kl": 1.117031380959331,
+      "target_culture_prob_mean": 0.4470702111721039,
+      "user_culture_alignment_kl": 0.07160130834216309,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u021",
+      "target_culture": "west",
+      "serendipity": 0.7484769439220779,
+      "cultural_calibration_kl": 1.3052389609869512,
+      "target_culture_prob_mean": 0.39339980483055115,
+      "user_culture_alignment_kl": 0.07070904786747194,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "turkey_u022",
+      "target_culture": "china",
+      "serendipity": 0.6919488425410006,
+      "cultural_calibration_kl": 0.9929661065286632,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.6514661449431155,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u022",
+      "target_culture": "india",
+      "serendipity": 0.24107496359431085,
+      "cultural_calibration_kl": 1.334299735859703,
+      "target_culture_prob_mean": 0.3723306953907013,
+      "user_culture_alignment_kl": 0.030918417739165264,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "turkey_u022",
+      "target_culture": "turkey",
+      "serendipity": 0.34548539345312984,
+      "cultural_calibration_kl": 1.1148058879380813,
+      "target_culture_prob_mean": 0.4487273693084717,
+      "user_culture_alignment_kl": 0.02117724010308991,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u022",
+      "target_culture": "west",
+      "serendipity": 0.26256401543756536,
+      "cultural_calibration_kl": 1.2743372692761328,
+      "target_culture_prob_mean": 0.4033970236778259,
+      "user_culture_alignment_kl": 0.019778655730915445,
+      "minority_exposure_at_k": 0.5
+    },
+    {
+      "user_id": "turkey_u023",
+      "target_culture": "china",
+      "serendipity": 0.5791616202409224,
+      "cultural_calibration_kl": 0.9929660887727038,
+      "target_culture_prob_mean": 0.4494679868221283,
+      "user_culture_alignment_kl": 0.6175628603543665,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u023",
+      "target_culture": "india",
+      "serendipity": 0.2241736253373575,
+      "cultural_calibration_kl": 1.2447292657298865,
+      "target_culture_prob_mean": 0.39705726504325867,
+      "user_culture_alignment_kl": 0.032143326499883725,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "turkey_u023",
+      "target_culture": "turkey",
+      "serendipity": 0.4364423315104383,
+      "cultural_calibration_kl": 1.1965179714291767,
+      "target_culture_prob_mean": 0.42392492294311523,
+      "user_culture_alignment_kl": 0.0198297308719634,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "turkey_u023",
+      "target_culture": "west",
+      "serendipity": 0.3107564481062496,
+      "cultural_calibration_kl": 1.3238490252077915,
+      "target_culture_prob_mean": 0.3880607485771179,
+      "user_culture_alignment_kl": 0.01677350790658874,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "west_u000",
+      "target_culture": "china",
+      "serendipity": 0.16439597715726187,
+      "cultural_calibration_kl": 1.0002099568301648,
+      "target_culture_prob_mean": 0.4470667243003845,
+      "user_culture_alignment_kl": 0.2657508168357644,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u000",
+      "target_culture": "india",
+      "serendipity": 0.6746668652438277,
+      "cultural_calibration_kl": 1.3184257110872022,
+      "target_culture_prob_mean": 0.37263500690460205,
+      "user_culture_alignment_kl": 0.0518805151451315,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u000",
+      "target_culture": "turkey",
+      "serendipity": 0.28422905726015013,
+      "cultural_calibration_kl": 1.2303189679292066,
+      "target_culture_prob_mean": 0.4132811427116394,
+      "user_culture_alignment_kl": 0.09234281763504651,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u000",
+      "target_culture": "west",
+      "serendipity": 0.5182807110601741,
+      "cultural_calibration_kl": 1.1886118906219933,
+      "target_culture_prob_mean": 0.41628941893577576,
+      "user_culture_alignment_kl": 0.05477821727569233,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u001",
+      "target_culture": "china",
+      "serendipity": 0.11829069880049517,
+      "cultural_calibration_kl": 1.0002098346276111,
+      "target_culture_prob_mean": 0.4470667839050293,
+      "user_culture_alignment_kl": 0.2667745561842161,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u001",
+      "target_culture": "india",
+      "serendipity": 0.24155939892568518,
+      "cultural_calibration_kl": 1.2620012438322574,
+      "target_culture_prob_mean": 0.38807424902915955,
+      "user_culture_alignment_kl": 0.03997760799414901,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u001",
+      "target_culture": "turkey",
+      "serendipity": 0.8167033283632922,
+      "cultural_calibration_kl": 1.2144151136370271,
+      "target_culture_prob_mean": 0.4179914891719818,
+      "user_culture_alignment_kl": 0.10748992932474813,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u001",
+      "target_culture": "west",
+      "serendipity": 0.5507845344159213,
+      "cultural_calibration_kl": 1.2391812682469463,
+      "target_culture_prob_mean": 0.4037807583808899,
+      "user_culture_alignment_kl": 0.05736247569708702,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u002",
+      "target_culture": "china",
+      "serendipity": 0.16377374293872635,
+      "cultural_calibration_kl": 0.9746457645110812,
+      "target_culture_prob_mean": 0.4552251398563385,
+      "user_culture_alignment_kl": 0.2850025485554094,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u002",
+      "target_culture": "india",
+      "serendipity": 0.7973821172738287,
+      "cultural_calibration_kl": 1.3016210695305488,
+      "target_culture_prob_mean": 0.3785439133644104,
+      "user_culture_alignment_kl": 0.0542821607633745,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u002",
+      "target_culture": "turkey",
+      "serendipity": 0.24512017841003003,
+      "cultural_calibration_kl": 1.1899694749431458,
+      "target_culture_prob_mean": 0.42489880323410034,
+      "user_culture_alignment_kl": 0.09381057150374837,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u002",
+      "target_culture": "west",
+      "serendipity": 0.46306075363990684,
+      "cultural_calibration_kl": 1.219333825486764,
+      "target_culture_prob_mean": 0.40931716561317444,
+      "user_culture_alignment_kl": 0.05643396056077891,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u003",
+      "target_culture": "china",
+      "serendipity": 0.602418379896842,
+      "cultural_calibration_kl": 0.9748038804066416,
+      "target_culture_prob_mean": 0.4553402364253998,
+      "user_culture_alignment_kl": 0.2890913425353806,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u003",
+      "target_culture": "india",
+      "serendipity": 0.8703576209753306,
+      "cultural_calibration_kl": 1.2858572855909245,
+      "target_culture_prob_mean": 0.38166138529777527,
+      "user_culture_alignment_kl": 0.05493241481894913,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u003",
+      "target_culture": "turkey",
+      "serendipity": 0.2571864196769026,
+      "cultural_calibration_kl": 1.2174105382450835,
+      "target_culture_prob_mean": 0.4165577292442322,
+      "user_culture_alignment_kl": 0.08847832144357337,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u003",
+      "target_culture": "west",
+      "serendipity": 0.637551435705402,
+      "cultural_calibration_kl": 1.2229771285127797,
+      "target_culture_prob_mean": 0.4077173173427582,
+      "user_culture_alignment_kl": 0.05316561409540306,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u004",
+      "target_culture": "china",
+      "serendipity": 0.11435627830790154,
+      "cultural_calibration_kl": 0.9781935783811533,
+      "target_culture_prob_mean": 0.454329252243042,
+      "user_culture_alignment_kl": 0.3042685346490055,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u004",
+      "target_culture": "india",
+      "serendipity": 0.8665095640344924,
+      "cultural_calibration_kl": 1.245494289929157,
+      "target_culture_prob_mean": 0.3955930471420288,
+      "user_culture_alignment_kl": 0.06661029905717408,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u004",
+      "target_culture": "turkey",
+      "serendipity": 0.25278940799847155,
+      "cultural_calibration_kl": 1.2570386137991394,
+      "target_culture_prob_mean": 0.40678471326828003,
+      "user_culture_alignment_kl": 0.07849087682602085,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u004",
+      "target_culture": "west",
+      "serendipity": 0.46401471413517204,
+      "cultural_calibration_kl": 1.2631810248720323,
+      "target_culture_prob_mean": 0.4047859311103821,
+      "user_culture_alignment_kl": 0.06556920298218955,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "west_u005",
+      "target_culture": "china",
+      "serendipity": 0.1764038911340548,
+      "cultural_calibration_kl": 0.9603580001869922,
+      "target_culture_prob_mean": 0.45977863669395447,
+      "user_culture_alignment_kl": 0.30990931689317,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u005",
+      "target_culture": "india",
+      "serendipity": 0.8079939611102182,
+      "cultural_calibration_kl": 1.2942577059247329,
+      "target_culture_prob_mean": 0.38208824396133423,
+      "user_culture_alignment_kl": 0.06867052309544958,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u005",
+      "target_culture": "turkey",
+      "serendipity": 0.302488972793439,
+      "cultural_calibration_kl": 1.2032779126171766,
+      "target_culture_prob_mean": 0.42265114188194275,
+      "user_culture_alignment_kl": 0.08430837148218903,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u005",
+      "target_culture": "west",
+      "serendipity": 0.5265006084373182,
+      "cultural_calibration_kl": 1.2526362990782776,
+      "target_culture_prob_mean": 0.4081316888332367,
+      "user_culture_alignment_kl": 0.06687198577190004,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "west_u006",
+      "target_culture": "china",
+      "serendipity": 0.5193415705185904,
+      "cultural_calibration_kl": 0.9637205607670081,
+      "target_culture_prob_mean": 0.4587675929069519,
+      "user_culture_alignment_kl": 0.30597281648398,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u006",
+      "target_culture": "india",
+      "serendipity": 0.8797811055788791,
+      "cultural_calibration_kl": 1.2646376796281191,
+      "target_culture_prob_mean": 0.3903430700302124,
+      "user_culture_alignment_kl": 0.06359320298154228,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u006",
+      "target_culture": "turkey",
+      "serendipity": 0.2713369176712409,
+      "cultural_calibration_kl": 1.2297028169699735,
+      "target_culture_prob_mean": 0.41409507393836975,
+      "user_culture_alignment_kl": 0.08020350789980617,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u006",
+      "target_culture": "west",
+      "serendipity": 0.43629644599980166,
+      "cultural_calibration_kl": 1.287362545353335,
+      "target_culture_prob_mean": 0.3976612687110901,
+      "user_culture_alignment_kl": 0.06550035303491475,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "west_u007",
+      "target_culture": "china",
+      "serendipity": 0.16199723171075903,
+      "cultural_calibration_kl": 0.9603580989623219,
+      "target_culture_prob_mean": 0.4597786068916321,
+      "user_culture_alignment_kl": 0.28248945567870737,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u007",
+      "target_culture": "india",
+      "serendipity": 0.8054347921148632,
+      "cultural_calibration_kl": 1.3058326154672193,
+      "target_culture_prob_mean": 0.3769546151161194,
+      "user_culture_alignment_kl": 0.06065053357815339,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u007",
+      "target_culture": "turkey",
+      "serendipity": 0.2992210099044323,
+      "cultural_calibration_kl": 1.1931089386482154,
+      "target_culture_prob_mean": 0.4239855408668518,
+      "user_culture_alignment_kl": 0.09646534181315203,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u007",
+      "target_culture": "west",
+      "serendipity": 0.5881427865505922,
+      "cultural_calibration_kl": 1.1914347139280346,
+      "target_culture_prob_mean": 0.4155190885066986,
+      "user_culture_alignment_kl": 0.056779191438457846,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u008",
+      "target_culture": "china",
+      "serendipity": 0.272969241812686,
+      "cultural_calibration_kl": 0.9183097068180597,
+      "target_culture_prob_mean": 0.4739227890968323,
+      "user_culture_alignment_kl": 0.22995178170631675,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u008",
+      "target_culture": "india",
+      "serendipity": 0.1793002469731298,
+      "cultural_calibration_kl": 1.257174537286873,
+      "target_culture_prob_mean": 0.38787370920181274,
+      "user_culture_alignment_kl": 0.06068996422319554,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u008",
+      "target_culture": "turkey",
+      "serendipity": 0.836201006405104,
+      "cultural_calibration_kl": 1.2823831293315964,
+      "target_culture_prob_mean": 0.3976898789405823,
+      "user_culture_alignment_kl": 0.12950455762623644,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u008",
+      "target_culture": "west",
+      "serendipity": 0.5214639294884619,
+      "cultural_calibration_kl": 1.1984427690701271,
+      "target_culture_prob_mean": 0.4127669334411621,
+      "user_culture_alignment_kl": 0.0810803997603675,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u009",
+      "target_culture": "china",
+      "serendipity": 0.5568553553922542,
+      "cultural_calibration_kl": 0.9748038599519755,
+      "target_culture_prob_mean": 0.4553402364253998,
+      "user_culture_alignment_kl": 0.63377239372854,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u009",
+      "target_culture": "india",
+      "serendipity": 0.33365109328755266,
+      "cultural_calibration_kl": 1.240669710000562,
+      "target_culture_prob_mean": 0.39528796076774597,
+      "user_culture_alignment_kl": 0.027399680289203254,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u009",
+      "target_culture": "turkey",
+      "serendipity": 0.29393614631466364,
+      "cultural_calibration_kl": 1.231070000889026,
+      "target_culture_prob_mean": 0.4140598773956299,
+      "user_culture_alignment_kl": 0.0350621298466774,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u009",
+      "target_culture": "west",
+      "serendipity": 0.5852989253697198,
+      "cultural_calibration_kl": 1.2269673280634255,
+      "target_culture_prob_mean": 0.40694659948349,
+      "user_culture_alignment_kl": 0.006884433621588318,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u010",
+      "target_culture": "china",
+      "serendipity": 0.6360341248186785,
+      "cultural_calibration_kl": 0.9713375249156071,
+      "target_culture_prob_mean": 0.45634204149246216,
+      "user_culture_alignment_kl": 0.2810996657934276,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u010",
+      "target_culture": "india",
+      "serendipity": 0.1929120390051772,
+      "cultural_calibration_kl": 1.2373174615175437,
+      "target_culture_prob_mean": 0.3961206078529358,
+      "user_culture_alignment_kl": 0.04664526002553898,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u010",
+      "target_culture": "turkey",
+      "serendipity": 0.8131132865627375,
+      "cultural_calibration_kl": 1.3538525677635795,
+      "target_culture_prob_mean": 0.37891215085983276,
+      "user_culture_alignment_kl": 0.0867568646958982,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u010",
+      "target_culture": "west",
+      "serendipity": 0.4468352249982508,
+      "cultural_calibration_kl": 1.266761996177281,
+      "target_culture_prob_mean": 0.4027990698814392,
+      "user_culture_alignment_kl": 0.07803972939690335,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "west_u011",
+      "target_culture": "china",
+      "serendipity": 0.177615967637753,
+      "cultural_calibration_kl": 0.9701641420639717,
+      "target_culture_prob_mean": 0.4567137658596039,
+      "user_culture_alignment_kl": 0.328776882302785,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u011",
+      "target_culture": "india",
+      "serendipity": 0.7793490082034091,
+      "cultural_calibration_kl": 1.3093746377006608,
+      "target_culture_prob_mean": 0.37938326597213745,
+      "user_culture_alignment_kl": 0.06363764955659738,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u011",
+      "target_culture": "turkey",
+      "serendipity": 0.24911896873087597,
+      "cultural_calibration_kl": 1.2097979691572216,
+      "target_culture_prob_mean": 0.42083901166915894,
+      "user_culture_alignment_kl": 0.07579672213050537,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u011",
+      "target_culture": "west",
+      "serendipity": 0.48451972187631914,
+      "cultural_calibration_kl": 1.252876978217742,
+      "target_culture_prob_mean": 0.4087084233760834,
+      "user_culture_alignment_kl": 0.06103894504177778,
+      "minority_exposure_at_k": 0.45
+    },
+    {
+      "user_id": "west_u012",
+      "target_culture": "china",
+      "serendipity": 0.5653686122936887,
+      "cultural_calibration_kl": 0.9637204599374849,
+      "target_culture_prob_mean": 0.4587676525115967,
+      "user_culture_alignment_kl": 0.3098178327059804,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u012",
+      "target_culture": "india",
+      "serendipity": 0.8405405320487628,
+      "cultural_calibration_kl": 1.2480338888153732,
+      "target_culture_prob_mean": 0.3934241235256195,
+      "user_culture_alignment_kl": 0.05997003162159966,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u012",
+      "target_culture": "turkey",
+      "serendipity": 0.726256396591904,
+      "cultural_calibration_kl": 1.2438242532864052,
+      "target_culture_prob_mean": 0.4108431339263916,
+      "user_culture_alignment_kl": 0.08467644544037103,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u012",
+      "target_culture": "west",
+      "serendipity": 0.5145582156180841,
+      "cultural_calibration_kl": 1.2608475147141798,
+      "target_culture_prob_mean": 0.4053838849067688,
+      "user_culture_alignment_kl": 0.06573846805526398,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "west_u013",
+      "target_culture": "china",
+      "serendipity": 0.2255678848926145,
+      "cultural_calibration_kl": 1.0002099744883195,
+      "target_culture_prob_mean": 0.4470667243003845,
+      "user_culture_alignment_kl": 0.29677925863107424,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u013",
+      "target_culture": "india",
+      "serendipity": 0.26435551599378115,
+      "cultural_calibration_kl": 1.275840258358012,
+      "target_culture_prob_mean": 0.38427847623825073,
+      "user_culture_alignment_kl": 0.03081861510940683,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u013",
+      "target_culture": "turkey",
+      "serendipity": 0.7531153335321412,
+      "cultural_calibration_kl": 1.258615150778073,
+      "target_culture_prob_mean": 0.40480971336364746,
+      "user_culture_alignment_kl": 0.0933379544043066,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u013",
+      "target_culture": "west",
+      "serendipity": 0.5101766493500001,
+      "cultural_calibration_kl": 1.203438031093404,
+      "target_culture_prob_mean": 0.4126914441585541,
+      "user_culture_alignment_kl": 0.047487193986297346,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u014",
+      "target_culture": "china",
+      "serendipity": 0.6279105894746525,
+      "cultural_calibration_kl": 1.0002099568301648,
+      "target_culture_prob_mean": 0.4470667243003845,
+      "user_culture_alignment_kl": 0.5767655499373588,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u014",
+      "target_culture": "india",
+      "serendipity": 0.44971045828467704,
+      "cultural_calibration_kl": 1.308754143653925,
+      "target_culture_prob_mean": 0.3772936761379242,
+      "user_culture_alignment_kl": 0.01752528773919207,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u014",
+      "target_culture": "turkey",
+      "serendipity": 0.3150662397266951,
+      "cultural_calibration_kl": 1.230769698649599,
+      "target_culture_prob_mean": 0.4135262072086334,
+      "user_culture_alignment_kl": 0.03652051264500165,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u014",
+      "target_culture": "west",
+      "serendipity": 0.5671185073160199,
+      "cultural_calibration_kl": 1.2269650757499329,
+      "target_culture_prob_mean": 0.406821072101593,
+      "user_culture_alignment_kl": 0.008828397018957441,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u015",
+      "target_culture": "china",
+      "serendipity": 0.2112495388419963,
+      "cultural_calibration_kl": 0.9748039109205332,
+      "target_culture_prob_mean": 0.4553402066230774,
+      "user_culture_alignment_kl": 0.24834231646756816,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u015",
+      "target_culture": "india",
+      "serendipity": 0.22934107627121403,
+      "cultural_calibration_kl": 1.2531284591360308,
+      "target_culture_prob_mean": 0.39001116156578064,
+      "user_culture_alignment_kl": 0.04633220952522377,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "west_u015",
+      "target_culture": "turkey",
+      "serendipity": 0.7334916994785319,
+      "cultural_calibration_kl": 1.301848255671819,
+      "target_culture_prob_mean": 0.39259520173072815,
+      "user_culture_alignment_kl": 0.10747100037602049,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u015",
+      "target_culture": "west",
+      "serendipity": 0.5861473075716356,
+      "cultural_calibration_kl": 1.2289339498730105,
+      "target_culture_prob_mean": 0.4054895341396332,
+      "user_culture_alignment_kl": 0.0647647933978346,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u016",
+      "target_culture": "china",
+      "serendipity": 0.13263343794512478,
+      "cultural_calibration_kl": 0.9701641356480972,
+      "target_culture_prob_mean": 0.4567137658596039,
+      "user_culture_alignment_kl": 0.23892309453933486,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u016",
+      "target_culture": "india",
+      "serendipity": 0.2702278934071257,
+      "cultural_calibration_kl": 1.256275328550533,
+      "target_culture_prob_mean": 0.3907308280467987,
+      "user_culture_alignment_kl": 0.061206537123921115,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u016",
+      "target_culture": "turkey",
+      "serendipity": 0.7839429985374669,
+      "cultural_calibration_kl": 1.2423287750365029,
+      "target_culture_prob_mean": 0.4102059006690979,
+      "user_culture_alignment_kl": 0.12138514484835086,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "west_u016",
+      "target_culture": "west",
+      "serendipity": 0.3787486771992422,
+      "cultural_calibration_kl": 1.2700106698433182,
+      "target_culture_prob_mean": 0.4021226465702057,
+      "user_culture_alignment_kl": 0.09308763169924483,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "west_u017",
+      "target_culture": "china",
+      "serendipity": 0.8024587114558626,
+      "cultural_calibration_kl": 1.0002098522857648,
+      "target_culture_prob_mean": 0.4470667839050293,
+      "user_culture_alignment_kl": 0.6063870034788202,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u017",
+      "target_culture": "india",
+      "serendipity": 0.2791903413842342,
+      "cultural_calibration_kl": 1.2839196702802764,
+      "target_culture_prob_mean": 0.3839365839958191,
+      "user_culture_alignment_kl": 0.01932771342224291,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u017",
+      "target_culture": "turkey",
+      "serendipity": 0.2982904421901923,
+      "cultural_calibration_kl": 1.251321073255183,
+      "target_culture_prob_mean": 0.4072639048099518,
+      "user_culture_alignment_kl": 0.029920561617262545,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u017",
+      "target_culture": "west",
+      "serendipity": 0.5679381620896731,
+      "cultural_calibration_kl": 1.2175804449869054,
+      "target_culture_prob_mean": 0.40958213806152344,
+      "user_culture_alignment_kl": 0.009814875841708467,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u018",
+      "target_culture": "china",
+      "serendipity": 0.6526913759338588,
+      "cultural_calibration_kl": 0.9793697682997617,
+      "target_culture_prob_mean": 0.4539574980735779,
+      "user_culture_alignment_kl": 0.6864314234402554,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u018",
+      "target_culture": "india",
+      "serendipity": 0.19267250029998778,
+      "cultural_calibration_kl": 1.244732146342399,
+      "target_culture_prob_mean": 0.3967778980731964,
+      "user_culture_alignment_kl": 0.03606843178891828,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u018",
+      "target_culture": "turkey",
+      "serendipity": 0.26547558370382346,
+      "cultural_calibration_kl": 1.2591914203848023,
+      "target_culture_prob_mean": 0.4064401686191559,
+      "user_culture_alignment_kl": 0.019333062205126997,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u018",
+      "target_culture": "west",
+      "serendipity": 0.5728991716512202,
+      "cultural_calibration_kl": 1.296443932864619,
+      "target_culture_prob_mean": 0.39493411779403687,
+      "user_culture_alignment_kl": 0.007015800337931331,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "west_u019",
+      "target_culture": "china",
+      "serendipity": 0.5747822949792202,
+      "cultural_calibration_kl": 0.9603580325240741,
+      "target_culture_prob_mean": 0.4597786068916321,
+      "user_culture_alignment_kl": 0.3164118415761221,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u019",
+      "target_culture": "india",
+      "serendipity": 0.2273865375819978,
+      "cultural_calibration_kl": 1.2495355333752531,
+      "target_culture_prob_mean": 0.39340901374816895,
+      "user_culture_alignment_kl": 0.04410436774189969,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u019",
+      "target_culture": "turkey",
+      "serendipity": 0.8894243067525137,
+      "cultural_calibration_kl": 1.2617077349081278,
+      "target_culture_prob_mean": 0.40495556592941284,
+      "user_culture_alignment_kl": 0.08877229404378599,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "west_u019",
+      "target_culture": "west",
+      "serendipity": 0.5108640764098047,
+      "cultural_calibration_kl": 1.2694791987552576,
+      "target_culture_prob_mean": 0.4029294550418854,
+      "user_culture_alignment_kl": 0.0685893536329506,
+      "minority_exposure_at_k": 0.4
+    },
+    {
+      "user_id": "west_u020",
+      "target_culture": "china",
+      "serendipity": 0.7259597949322261,
+      "cultural_calibration_kl": 0.9701641420639717,
+      "target_culture_prob_mean": 0.4567137658596039,
+      "user_culture_alignment_kl": 0.6524317333346428,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u020",
+      "target_culture": "india",
+      "serendipity": 0.6167466303980068,
+      "cultural_calibration_kl": 1.2504726571941265,
+      "target_culture_prob_mean": 0.39486220479011536,
+      "user_culture_alignment_kl": 0.03616265252541512,
+      "minority_exposure_at_k": 0.15
+    },
+    {
+      "user_id": "west_u020",
+      "target_culture": "turkey",
+      "serendipity": 0.2335809016361646,
+      "cultural_calibration_kl": 1.2163573942343597,
+      "target_culture_prob_mean": 0.4188787043094635,
+      "user_culture_alignment_kl": 0.027977072148957206,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u020",
+      "target_culture": "west",
+      "serendipity": 0.519341256384287,
+      "cultural_calibration_kl": 1.2546446350140492,
+      "target_culture_prob_mean": 0.4072292447090149,
+      "user_culture_alignment_kl": 0.011768968797597944,
+      "minority_exposure_at_k": 0.35
+    },
+    {
+      "user_id": "west_u021",
+      "target_culture": "china",
+      "serendipity": 0.13549534249397419,
+      "cultural_calibration_kl": 0.929121805964509,
+      "target_culture_prob_mean": 0.4704861640930176,
+      "user_culture_alignment_kl": 0.2662297459694155,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u021",
+      "target_culture": "india",
+      "serendipity": 0.21994490269547695,
+      "cultural_calibration_kl": 1.2438977238320947,
+      "target_culture_prob_mean": 0.39310139417648315,
+      "user_culture_alignment_kl": 0.05613775018155355,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u021",
+      "target_culture": "turkey",
+      "serendipity": 0.8531045518284177,
+      "cultural_calibration_kl": 1.322565564193289,
+      "target_culture_prob_mean": 0.38774847984313965,
+      "user_culture_alignment_kl": 0.10987689659854921,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u021",
+      "target_culture": "west",
+      "serendipity": 0.4591526128233568,
+      "cultural_calibration_kl": 1.236906269939368,
+      "target_culture_prob_mean": 0.41034096479415894,
+      "user_culture_alignment_kl": 0.09068551704649302,
+      "minority_exposure_at_k": 0.3
+    },
+    {
+      "user_id": "west_u022",
+      "target_culture": "china",
+      "serendipity": 0.4130817110604976,
+      "cultural_calibration_kl": 0.9748038599519755,
+      "target_culture_prob_mean": 0.4553402364253998,
+      "user_culture_alignment_kl": 0.2555734953234504,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u022",
+      "target_culture": "india",
+      "serendipity": 0.7301204326002202,
+      "cultural_calibration_kl": 1.2988063447624532,
+      "target_culture_prob_mean": 0.37871092557907104,
+      "user_culture_alignment_kl": 0.06280366252961124,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u022",
+      "target_culture": "turkey",
+      "serendipity": 0.27572511942174877,
+      "cultural_calibration_kl": 1.2007209981200253,
+      "target_culture_prob_mean": 0.42225122451782227,
+      "user_culture_alignment_kl": 0.10235275994366357,
+      "minority_exposure_at_k": 0.25
+    },
+    {
+      "user_id": "west_u022",
+      "target_culture": "west",
+      "serendipity": 0.5436014344367887,
+      "cultural_calibration_kl": 1.2400161551296263,
+      "target_culture_prob_mean": 0.4036826491355896,
+      "user_culture_alignment_kl": 0.06699001182180714,
+      "minority_exposure_at_k": 0.1
+    },
+    {
+      "user_id": "west_u023",
+      "target_culture": "china",
+      "serendipity": 0.15840647179384768,
+      "cultural_calibration_kl": 0.9748038599519755,
+      "target_culture_prob_mean": 0.4553402364253998,
+      "user_culture_alignment_kl": 0.29801937439281273,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u023",
+      "target_culture": "india",
+      "serendipity": 0.8237393600052352,
+      "cultural_calibration_kl": 1.2859862111078257,
+      "target_culture_prob_mean": 0.38165199756622314,
+      "user_culture_alignment_kl": 0.04952488749194246,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u023",
+      "target_culture": "turkey",
+      "serendipity": 0.23626923639527822,
+      "cultural_calibration_kl": 1.2112001026391754,
+      "target_culture_prob_mean": 0.4186513423919678,
+      "user_culture_alignment_kl": 0.08609923662655966,
+      "minority_exposure_at_k": 0.2
+    },
+    {
+      "user_id": "west_u023",
+      "target_culture": "west",
+      "serendipity": 0.4865121945477931,
+      "cultural_calibration_kl": 1.2209896426836155,
+      "target_culture_prob_mean": 0.4074210524559021,
+      "user_culture_alignment_kl": 0.049322241019638904,
+      "minority_exposure_at_k": 0.15
+    }
+  ],
+  "skipped": [],
+  "config": {
+    "k": 20,
+    "bootstrap_samples": 200,
+    "bootstrap_seed": 42,
+    "minority_quantile": 0.25,
+    "minority_popularity_threshold": 5.294385012117082,
+    "minority_catalog_ratio": 0.25
+  }
+}

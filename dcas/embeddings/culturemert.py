@@ -23,6 +23,8 @@ class CultureMERTConfig:
     model_id: str = "ntua-slp/CultureMERT-95M"
     device: str | None = None
     pooling: str = "mean"
+    layer_indices: list[int] | None = None
+    layer_weights: list[float] | None = None
     max_seconds: float | None = 30.0
     window_count: int = 1
     window_strategy: str = "single"
@@ -62,6 +64,46 @@ class CultureMERTEmbedder:
 
         sr = getattr(self.feature_extractor, "sampling_rate", None)
         self.sampling_rate = int(sr) if sr is not None else 24_000
+
+    def _pool_hidden(self, hidden: torch.Tensor, mask: torch.Tensor | None) -> torch.Tensor:
+        if self.cfg.pooling == "cls":
+            return hidden[:, 0, :]
+        if mask is not None and (mask.ndim != 2 or mask.shape[1] != hidden.shape[1]):
+            mask = None
+        return _masked_mean(hidden=hidden, mask=mask)
+
+    def _resolve_layer_indices(self, n_layers: int) -> list[int]:
+        raw = self.cfg.layer_indices
+        if not raw:
+            return [n_layers - 1]
+        resolved: list[int] = []
+        for idx in raw:
+            pos = int(idx)
+            if pos < 0:
+                pos += int(n_layers)
+            if pos < 0 or pos >= int(n_layers):
+                raise ValueError(f"layer index out of range: {idx} for n_layers={n_layers}")
+            if pos not in resolved:
+                resolved.append(pos)
+        if not resolved:
+            raise ValueError("layer_indices resolved to an empty selection")
+        return resolved
+
+    def _aggregate_layers(self, pooled_layers: list[torch.Tensor]) -> torch.Tensor:
+        if len(pooled_layers) == 1:
+            return pooled_layers[0]
+        stack = torch.stack(pooled_layers, dim=0)
+        weights = self.cfg.layer_weights
+        if weights:
+            if len(weights) != len(pooled_layers):
+                raise ValueError(
+                    f"layer_weights length {len(weights)} does not match selected layers {len(pooled_layers)}"
+                )
+            w = torch.tensor([float(x) for x in weights], dtype=stack.dtype, device=stack.device)
+            denom = w.sum().clamp_min(1e-6)
+            w = w / denom
+            return (stack * w[:, None]).sum(dim=0)
+        return stack.mean(dim=0)
 
     def _window_plan(self, path: str | Path) -> list[tuple[int, int | None]]:
         audio_path = Path(path)
@@ -135,18 +177,19 @@ class CultureMERTEmbedder:
             return_tensors="pt",
         )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        need_hidden_states = bool(self.cfg.layer_indices)
         with torch.no_grad():
-            out = self.model(**inputs)
-            hidden = out.last_hidden_state
-            if self.cfg.pooling == "cls":
-                emb = hidden[:, 0, :]
+            out = self.model(**inputs, output_hidden_states=need_hidden_states)
+            mask = inputs.get("attention_mask")
+            if need_hidden_states:
+                hidden_states = getattr(out, "hidden_states", None)
+                if hidden_states is None:
+                    raise RuntimeError("model did not return hidden_states for layer aggregation")
+                selected = self._resolve_layer_indices(n_layers=len(hidden_states))
+                pooled_layers = [self._pool_hidden(hidden=hidden_states[idx], mask=mask).squeeze(0) for idx in selected]
+                emb = self._aggregate_layers(pooled_layers).unsqueeze(0)
             else:
-                # Some models provide sample-level masks that do not match hidden sequence length.
-                # In that case, fall back to unmasked mean pooling for compatibility.
-                mask = inputs.get("attention_mask")
-                if mask is not None and (mask.ndim != 2 or mask.shape[1] != hidden.shape[1]):
-                    mask = None
-                emb = _masked_mean(hidden=hidden, mask=mask)
+                emb = self._pool_hidden(hidden=out.last_hidden_state, mask=mask)
         return emb.squeeze(0).detach().cpu().numpy().astype(np.float32)
 
     def embed_file(self, path: str | Path) -> np.ndarray:

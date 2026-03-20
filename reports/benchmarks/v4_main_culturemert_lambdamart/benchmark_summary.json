@@ -1,0 +1,116 @@
+{
+  "suite_name": "v4_main_culturemert_lambdamart",
+  "tracks": "E:/Desktop/Echo/storage/public/research_dataset_v4/main/tracks_culturemert_mw3.npz",
+  "interactions": "E:\\Desktop\\Echo\\storage\\public\\research_dataset_v4\\main\\interactions_synth_mixed_culturemert_mw3.csv",
+  "methods": {
+    "bpr_mf": {
+      "serendipity_mean": 0.5372616785779207,
+      "cultural_calibration_kl_mean": 2.1138557933334794,
+      "minority_exposure_at_k_mean": 0.16154166666666667,
+      "target_culture_prob_mean": 0.1657200843716661
+    },
+    "bpr_two_stage_hybrid": {
+      "serendipity_mean": 0.5605093003025627,
+      "cultural_calibration_kl_mean": 2.100527171435394,
+      "minority_exposure_at_k_mean": 0.26527083333333334,
+      "target_culture_prob_mean": 0.16936358626000583
+    },
+    "bpr_listwise_hybrid": {
+      "serendipity_mean": 0.5671048575020833,
+      "cultural_calibration_kl_mean": 2.0963945230746703,
+      "minority_exposure_at_k_mean": 0.2775,
+      "target_culture_prob_mean": 0.17071924812781314
+    },
+    "bpr_lambdamart_hybrid": {
+      "serendipity_mean": 0.5593675914128324,
+      "cultural_calibration_kl_mean": 2.093686574772851,
+      "minority_exposure_at_k_mean": 0.2723125,
+      "target_culture_prob_mean": 0.17121744349288442
+    },
+    "dcas_full_ot_calibrated_target": {
+      "serendipity_mean": 0.8110557967576578,
+      "cultural_calibration_kl_mean": 2.049207427016869,
+      "minority_exposure_at_k_mean": 0.3998125,
+      "target_culture_prob_mean": 0.18320847493285933
+    },
+    "dcas_full_ot_calibrated_minor": {
+      "serendipity_mean": 0.8075922131493775,
+      "cultural_calibration_kl_mean": 2.0618796243640505,
+      "minority_exposure_at_k_mean": 0.5060625,
+      "target_culture_prob_mean": 0.17989699798325698
+    }
+  },
+  "reference_method": "dcas_full_ot_calibrated_target",
+  "comparisons_vs_reference": {
+    "bpr_mf": {
+      "serendipity": {
+        "delta_mean": 0.27379411817973703,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.06464836631661026,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.23827083333333335,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "bpr_two_stage_hybrid": {
+      "serendipity": {
+        "delta_mean": 0.2505464964550951,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.051319744418524715,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.13454166666666667,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "bpr_listwise_hybrid": {
+      "serendipity": {
+        "delta_mean": 0.2439509392555745,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.04718709605780118,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.1223125,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "bpr_lambdamart_hybrid": {
+      "serendipity": {
+        "delta_mean": 0.25168820534482544,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.0444791477559822,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": 0.1275,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    },
+    "dcas_full_ot_calibrated_minor": {
+      "serendipity": {
+        "delta_mean": 0.003463583608280366,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "cultural_calibration_kl": {
+        "delta_mean": -0.012672197347181632,
+        "p_value_two_sided": 0.004975124378109453
+      },
+      "minority_exposure_at_k": {
+        "delta_mean": -0.10625,
+        "p_value_two_sided": 0.004975124378109453
+      }
+    }
+  }
+}

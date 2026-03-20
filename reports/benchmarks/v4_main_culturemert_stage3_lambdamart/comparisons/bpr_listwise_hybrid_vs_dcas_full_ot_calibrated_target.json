@@ -1,0 +1,361 @@
+{
+  "base_eval_path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v4_main_culturemert_stage3_lambdamart\\eval\\bpr_listwise_hybrid.json",
+  "candidate_eval_path": "E:\\Desktop\\Echo\\reports\\benchmarks\\v4_main_culturemert_stage3_lambdamart\\eval\\dcas_full_ot_calibrated_target.json",
+  "config": {
+    "metrics": [
+      "serendipity",
+      "cultural_calibration_kl",
+      "minority_exposure_at_k"
+    ],
+    "bootstrap_samples": 200,
+    "permutation_samples": 200,
+    "seed": 143,
+    "used_metrics": [
+      "serendipity",
+      "cultural_calibration_kl",
+      "minority_exposure_at_k"
+    ]
+  },
+  "metrics": {
+    "serendipity": {
+      "n_pairs": 2400,
+      "base_mean": 0.561399865759137,
+      "candidate_mean": 0.8315641066075367,
+      "delta_mean": 0.2701642408483995,
+      "delta_std": 0.14881235600469023,
+      "delta_ci95_low": 0.26257240568539314,
+      "delta_ci95_high": 0.27547264082723066,
+      "p_value_two_sided": 0.004975124378109453,
+      "cohen_d_paired": 1.8154691458542902,
+      "per_target_culture": {
+        "china": {
+          "n_pairs": 240,
+          "base_mean": 0.4510610388143876,
+          "candidate_mean": 0.7858204571799976,
+          "delta_mean": 0.33475941836560985,
+          "delta_ci95_low": 0.31922053892815644,
+          "delta_ci95_high": 0.35071713167727997,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 2.5485039031688252
+        },
+        "france": {
+          "n_pairs": 240,
+          "base_mean": 0.5586671989844803,
+          "candidate_mean": 0.8674825384917473,
+          "delta_mean": 0.30881533950726703,
+          "delta_ci95_low": 0.28584266947062736,
+          "delta_ci95_high": 0.3271468625171399,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.9867050239095132
+        },
+        "germany": {
+          "n_pairs": 240,
+          "base_mean": 0.5310603794168656,
+          "candidate_mean": 0.8310093052496074,
+          "delta_mean": 0.29994892583274185,
+          "delta_ci95_low": 0.2826462436748273,
+          "delta_ci95_high": 0.3184452258355833,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.9116306218915922
+        },
+        "great_britain": {
+          "n_pairs": 240,
+          "base_mean": 0.5586454588563493,
+          "candidate_mean": 0.8084059523222525,
+          "delta_mean": 0.24976049346590326,
+          "delta_ci95_low": 0.23270687390501857,
+          "delta_ci95_high": 0.2661439847826943,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.862777159980515
+        },
+        "india": {
+          "n_pairs": 240,
+          "base_mean": 0.6227703603616399,
+          "candidate_mean": 0.8712887142292699,
+          "delta_mean": 0.2485183538676301,
+          "delta_ci95_low": 0.23036706396887052,
+          "delta_ci95_high": 0.27109011995081533,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.5191516964240976
+        },
+        "indonesia": {
+          "n_pairs": 240,
+          "base_mean": 0.5479406874008134,
+          "candidate_mean": 0.8284971046764166,
+          "delta_mean": 0.2805564172756031,
+          "delta_ci95_low": 0.26161230105328115,
+          "delta_ci95_high": 0.3008689364758561,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.9311421982544912
+        },
+        "italy": {
+          "n_pairs": 240,
+          "base_mean": 0.5709788800373307,
+          "candidate_mean": 0.8060984417301267,
+          "delta_mean": 0.23511956169279596,
+          "delta_ci95_low": 0.21976098629425478,
+          "delta_ci95_high": 0.25119605184340454,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.7689995226876811
+        },
+        "modern_english_pop": {
+          "n_pairs": 240,
+          "base_mean": 0.6347603752524787,
+          "candidate_mean": 0.872004849259262,
+          "delta_mean": 0.23724447400678325,
+          "delta_ci95_low": 0.2188393291110114,
+          "delta_ci95_high": 0.25400864391366124,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.670663810708504
+        },
+        "russia": {
+          "n_pairs": 240,
+          "base_mean": 0.5287156226741339,
+          "candidate_mean": 0.7853676312191689,
+          "delta_mean": 0.256652008545035,
+          "delta_ci95_low": 0.24062943771286394,
+          "delta_ci95_high": 0.27591516369456726,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.7155803588288072
+        },
+        "turkey": {
+          "n_pairs": 240,
+          "base_mean": 0.6093986557928918,
+          "candidate_mean": 0.8596660717175177,
+          "delta_mean": 0.2502674159246259,
+          "delta_ci95_low": 0.23407683592869094,
+          "delta_ci95_high": 0.2697424834710633,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.7825466978355744
+        }
+      }
+    },
+    "cultural_calibration_kl": {
+      "n_pairs": 2400,
+      "base_mean": 2.095752783359745,
+      "candidate_mean": 2.0296378082698836,
+      "delta_mean": -0.06611497508986197,
+      "delta_std": 0.13200371360991991,
+      "delta_ci95_low": -0.07049611764804486,
+      "delta_ci95_high": -0.06012978299797802,
+      "p_value_two_sided": 0.004975124378109453,
+      "cohen_d_paired": -0.5008569325953683,
+      "per_target_culture": {
+        "china": {
+          "n_pairs": 240,
+          "base_mean": 1.808797366955411,
+          "candidate_mean": 1.6356144494854326,
+          "delta_mean": -0.1731829174699785,
+          "delta_ci95_low": -0.19345454979055396,
+          "delta_ci95_high": -0.14945756410219035,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -0.9916128857758691
+        },
+        "france": {
+          "n_pairs": 240,
+          "base_mean": 2.2601267807945757,
+          "candidate_mean": 2.2452119978895526,
+          "delta_mean": -0.0149147829050231,
+          "delta_ci95_low": -0.015629273471680055,
+          "delta_ci95_high": -0.014136929314080582,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -2.116461597350147
+        },
+        "germany": {
+          "n_pairs": 240,
+          "base_mean": 2.265266578683175,
+          "candidate_mean": 2.247832927169015,
+          "delta_mean": -0.01743365151415981,
+          "delta_ci95_low": -0.01910632902395509,
+          "delta_ci95_high": -0.015873219367822735,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -1.3066984285086845
+        },
+        "great_britain": {
+          "n_pairs": 240,
+          "base_mean": 2.268033522940052,
+          "candidate_mean": 2.265315469470748,
+          "delta_mean": -0.0027180534693045932,
+          "delta_ci95_low": -0.003682528459218642,
+          "delta_ci95_high": -0.0017313667481620404,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -0.38472728080824403
+        },
+        "india": {
+          "n_pairs": 240,
+          "base_mean": 2.0260993982343902,
+          "candidate_mean": 2.0194474312497728,
+          "delta_mean": -0.006651966984617572,
+          "delta_ci95_low": -0.009785685123680351,
+          "delta_ci95_high": -0.0035410422689098513,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -0.2574940496514166
+        },
+        "indonesia": {
+          "n_pairs": 240,
+          "base_mean": 1.8851689513654681,
+          "candidate_mean": 1.6313982432694538,
+          "delta_mean": -0.2537707080960142,
+          "delta_ci95_low": -0.28956540950806925,
+          "delta_ci95_high": -0.22200796280459126,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -0.9591631505446764
+        },
+        "italy": {
+          "n_pairs": 240,
+          "base_mean": 2.2670117571439308,
+          "candidate_mean": 2.266010604313723,
+          "delta_mean": -0.0010011528302072026,
+          "delta_ci95_low": -0.0024696739448447453,
+          "delta_ci95_high": 0.0006223789615721583,
+          "p_value_two_sided": 0.24875621890547264,
+          "cohen_d_paired": -0.07558617196454956
+        },
+        "modern_english_pop": {
+          "n_pairs": 240,
+          "base_mean": 1.8676065531620685,
+          "candidate_mean": 1.840810449860328,
+          "delta_mean": -0.026796103301740416,
+          "delta_ci95_low": -0.03334154440673326,
+          "delta_ci95_high": -0.02099728691258571,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -0.4850017897163649
+        },
+        "russia": {
+          "n_pairs": 240,
+          "base_mean": 2.216572119188581,
+          "candidate_mean": 2.1061383036352415,
+          "delta_mean": -0.11043381555333938,
+          "delta_ci95_low": -0.11604180223882167,
+          "delta_ci95_high": -0.104687850672842,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -2.50700552032629
+        },
+        "turkey": {
+          "n_pairs": 240,
+          "base_mean": 2.092844805129801,
+          "candidate_mean": 2.038598206355566,
+          "delta_mean": -0.05424659877423483,
+          "delta_ci95_low": -0.05803709335045952,
+          "delta_ci95_high": -0.050655640829039554,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -1.8135940300435802
+        }
+      }
+    },
+    "minority_exposure_at_k": {
+      "n_pairs": 2400,
+      "base_mean": 0.27829166666666666,
+      "candidate_mean": 0.4023333333333333,
+      "delta_mean": 0.12404166666666666,
+      "delta_std": 0.17383902496267117,
+      "delta_ci95_low": 0.11710416666666668,
+      "delta_ci95_high": 0.13029791666666668,
+      "p_value_two_sided": 0.004975124378109453,
+      "cohen_d_paired": 0.7135432719626815,
+      "per_target_culture": {
+        "china": {
+          "n_pairs": 240,
+          "base_mean": 0.38583333333333336,
+          "candidate_mean": 0.33020833333333327,
+          "delta_mean": -0.05562500000000001,
+          "delta_ci95_low": -0.08356770833333334,
+          "delta_ci95_high": -0.02747916666666667,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": -0.24445448841045436
+        },
+        "france": {
+          "n_pairs": 240,
+          "base_mean": 0.24624999999999997,
+          "candidate_mean": 0.3847916666666667,
+          "delta_mean": 0.13854166666666667,
+          "delta_ci95_low": 0.11666145833333334,
+          "delta_ci95_high": 0.1573385416666667,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 0.9037872526953821
+        },
+        "germany": {
+          "n_pairs": 240,
+          "base_mean": 0.13395833333333335,
+          "candidate_mean": 0.2197916666666667,
+          "delta_mean": 0.08583333333333334,
+          "delta_ci95_low": 0.07604166666666666,
+          "delta_ci95_high": 0.09668229166666668,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 0.9547069880077619
+        },
+        "great_britain": {
+          "n_pairs": 240,
+          "base_mean": 0.2997916666666667,
+          "candidate_mean": 0.5079166666666667,
+          "delta_mean": 0.208125,
+          "delta_ci95_low": 0.18894270833333338,
+          "delta_ci95_high": 0.23105208333333335,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.1224723251579922
+        },
+        "india": {
+          "n_pairs": 240,
+          "base_mean": 0.145625,
+          "candidate_mean": 0.37875,
+          "delta_mean": 0.233125,
+          "delta_ci95_low": 0.2201875,
+          "delta_ci95_high": 0.245,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 2.717287505306653
+        },
+        "indonesia": {
+          "n_pairs": 240,
+          "base_mean": 0.24229166666666668,
+          "candidate_mean": 0.3637499999999999,
+          "delta_mean": 0.12145833333333332,
+          "delta_ci95_low": 0.10665104166666665,
+          "delta_ci95_high": 0.140234375,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 0.840406557864353
+        },
+        "italy": {
+          "n_pairs": 240,
+          "base_mean": 0.21458333333333332,
+          "candidate_mean": 0.24916666666666665,
+          "delta_mean": 0.034583333333333334,
+          "delta_ci95_low": 0.01978125,
+          "delta_ci95_high": 0.04901041666666668,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 0.2930737093082483
+        },
+        "modern_english_pop": {
+          "n_pairs": 240,
+          "base_mean": 0.3304166666666667,
+          "candidate_mean": 0.43937500000000007,
+          "delta_mean": 0.10895833333333334,
+          "delta_ci95_low": 0.08915104166666667,
+          "delta_ci95_high": 0.12773958333333338,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 0.6685482365728227
+        },
+        "russia": {
+          "n_pairs": 240,
+          "base_mean": 0.195625,
+          "candidate_mean": 0.3216666666666666,
+          "delta_mean": 0.12604166666666666,
+          "delta_ci95_low": 0.11122395833333332,
+          "delta_ci95_high": 0.13833854166666665,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.1959199894599248
+        },
+        "turkey": {
+          "n_pairs": 240,
+          "base_mean": 0.5885416666666666,
+          "candidate_mean": 0.8279166666666666,
+          "delta_mean": 0.239375,
+          "delta_ci95_low": 0.217265625,
+          "delta_ci95_high": 0.26042708333333336,
+          "p_value_two_sided": 0.004975124378109453,
+          "cohen_d_paired": 1.3598884890232474
+        }
+      }
+    }
+  },
+  "n_pairs": 2400
+}

@@ -27,6 +27,8 @@ def main() -> None:
         model_id=cfg.get("model_id", "ntua-slp/CultureMERT-95M"),
         device=cfg.get("device"),
         pooling=str(cfg.get("pooling", "mean")),
+        layer_indices=cfg.get("layer_indices"),
+        layer_weights=cfg.get("layer_weights"),
         max_seconds=cfg.get("max_seconds", 30.0),
         window_count=int(cfg.get("window_count", 1)),
         window_strategy=str(cfg.get("window_strategy", "single")),

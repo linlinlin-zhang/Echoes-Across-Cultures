@@ -1,0 +1,12 @@
+# Recommender Run Comparison (Paired Bootstrap + Permutation Test)
+
+- base: `E:\Desktop\Echo\reports\benchmarks\v4_routeA_small_culturemert_stage3_lambdamart\eval\popularity.json`
+- candidate: `E:\Desktop\Echo\reports\benchmarks\v4_routeA_small_culturemert_stage3_lambdamart\eval\dcas_full_ot_calibrated_target.json`
+- paired samples: `384`
+
+| metric | base_mean | candidate_mean | delta_mean | 95% CI (delta) | p_value(two-sided) | cohen_d(paired) |
+|---|---:|---:|---:|---:|---:|---:|
+| serendipity | 0.3865871045 | 0.8406298893 | +0.4540427848 | [0.429788, 0.475198] | 0.004975 | 2.156148 |
+| cultural_calibration_kl | 1.1207042194 | 1.0212990236 | -0.0994051958 | [-0.109598, -0.088633] | 0.004975 | -1.003762 |
+| minority_exposure_at_k | 0.0000000000 | 0.5095052083 | +0.5095052083 | [0.500104, 0.519661] | 0.004975 | 5.624569 |
+

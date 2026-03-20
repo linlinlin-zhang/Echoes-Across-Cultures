@@ -113,6 +113,90 @@ def _negative_candidate(a: dict[str, str], b: dict[str, str]) -> tuple[float, st
     return score, "pseudo-negative: " + "; ".join(reasons)
 
 
+def _positive_candidate_with_threshold(
+    a: dict[str, str],
+    b: dict[str, str],
+    min_score: float,
+) -> tuple[float, str] | None:
+    if a["track_id"] == b["track_id"]:
+        return None
+
+    score = 0.0
+    reasons: list[str] = []
+
+    if a["coarse_label"] != "" and a["coarse_label"] == b["coarse_label"]:
+        score += 3.0
+        reasons.append(f"same coarse_label={a['coarse_label']}")
+    else:
+        return None
+
+    if a["era"] != "" and a["era"] == b["era"]:
+        score += 2.0
+        reasons.append(f"same era={a['era']}")
+    if a["is_instrumental"] != "" and a["is_instrumental"] == b["is_instrumental"]:
+        score += 1.5
+        reasons.append(f"same is_instrumental={a['is_instrumental']}")
+    if a["instrument_family"] != "" and a["instrument_family"] == b["instrument_family"]:
+        score += 1.0
+        reasons.append(f"same instrument_family={a['instrument_family']}")
+    if a["language"] != "" and a["language"] == b["language"]:
+        score += 1.0
+        reasons.append(f"same language={a['language']}")
+    if a["substyle"] != "" and a["substyle"] == b["substyle"]:
+        score += 1.0
+        reasons.append(f"same substyle={a['substyle']}")
+    if a["culture"] != "" and a["culture"] != b["culture"]:
+        score += 1.0
+        reasons.append(f"cross_culture={a['culture']}->{b['culture']}")
+    if a["source_dataset"] != "" and a["source_dataset"] != b["source_dataset"]:
+        score += 1.5
+        reasons.append("cross_source")
+    if a["language"] != "" and b["language"] != "" and a["language"] != b["language"]:
+        score -= 0.5
+    if a["is_instrumental"] != "" and b["is_instrumental"] != "" and a["is_instrumental"] != b["is_instrumental"]:
+        return None
+
+    if score < float(min_score):
+        return None
+    return score, "pseudo-positive: " + "; ".join(reasons)
+
+
+def _negative_candidate_with_threshold(
+    a: dict[str, str],
+    b: dict[str, str],
+    min_score: float,
+) -> tuple[float, str] | None:
+    if a["track_id"] == b["track_id"]:
+        return None
+
+    score = 0.0
+    reasons: list[str] = []
+    if a["coarse_label"] != "" and b["coarse_label"] != "" and a["coarse_label"] != b["coarse_label"]:
+        score += 3.0
+        reasons.append(f"coarse_label {a['coarse_label']} vs {b['coarse_label']}")
+    if a["era"] != "" and b["era"] != "" and a["era"] != b["era"]:
+        score += 2.0
+        reasons.append(f"era {a['era']} vs {b['era']}")
+    if a["is_instrumental"] != "" and b["is_instrumental"] != "" and a["is_instrumental"] != b["is_instrumental"]:
+        score += 2.0
+        reasons.append(f"is_instrumental {a['is_instrumental']} vs {b['is_instrumental']}")
+    if a["instrument_family"] != "" and b["instrument_family"] != "" and a["instrument_family"] != b["instrument_family"]:
+        score += 1.0
+        reasons.append(f"instrument_family {a['instrument_family']} vs {b['instrument_family']}")
+    if a["language"] != "" and b["language"] != "" and a["language"] != b["language"]:
+        score += 1.0
+        reasons.append(f"language {a['language']} vs {b['language']}")
+    if a["culture"] != "" and b["culture"] != "" and a["culture"] != b["culture"]:
+        score += 0.5
+        reasons.append(f"cross_culture={a['culture']}->{b['culture']}")
+    if a["source_dataset"] != "" and b["source_dataset"] != "" and a["source_dataset"] != b["source_dataset"]:
+        score += 0.25
+
+    if score < float(min_score):
+        return None
+    return score, "pseudo-negative: " + "; ".join(reasons)
+
+
 def _select_pairs(
     candidates: list[tuple[float, PairwiseConstraint]],
     limit: int,
@@ -143,6 +227,8 @@ def build_pseudo_constraints(
     n_positive: int = 800,
     n_negative: int = 800,
     per_track_cap: int = 6,
+    positive_min_score: float = 5.0,
+    negative_min_score: float = 5.0,
 ) -> dict[str, Any]:
     rows = [_row_view(r) for r in _load_rows(metadata_csv)]
     rows = [r for r in rows if r["track_id"] and r["culture"]]
@@ -160,7 +246,7 @@ def build_pseudo_constraints(
             culture_key = "|".join(sorted([a["culture"], b["culture"]]))
             culture_pair_counts[culture_key] += 1
 
-            pos = _positive_candidate(a, b)
+            pos = _positive_candidate_with_threshold(a, b, min_score=float(positive_min_score))
             if pos is not None:
                 score, rationale = pos
                 positive_candidates.append(
@@ -175,7 +261,7 @@ def build_pseudo_constraints(
                     )
                 )
 
-            neg = _negative_candidate(a, b)
+            neg = _negative_candidate_with_threshold(a, b, min_score=float(negative_min_score))
             if neg is not None:
                 score, rationale = neg
                 negative_candidates.append(
@@ -217,6 +303,8 @@ def build_pseudo_constraints(
         "n_negative_selected": int(len(negative)),
         "n_constraints": int(len(constraints)),
         "per_track_cap": int(per_track_cap),
+        "positive_min_score": float(positive_min_score),
+        "negative_min_score": float(negative_min_score),
         "culture_pair_candidates_top20": [
             {"culture_pair": key, "count": int(count)}
             for key, count in sorted(culture_pair_counts.items(), key=lambda x: (-x[1], x[0]))[:20]
@@ -241,6 +329,8 @@ def main() -> None:
     ap.add_argument("--n_positive", type=int, default=800)
     ap.add_argument("--n_negative", type=int, default=800)
     ap.add_argument("--per_track_cap", type=int, default=6)
+    ap.add_argument("--positive_min_score", type=float, default=5.0)
+    ap.add_argument("--negative_min_score", type=float, default=5.0)
     args = ap.parse_args()
 
     rep = build_pseudo_constraints(
@@ -249,6 +339,8 @@ def main() -> None:
         n_positive=int(args.n_positive),
         n_negative=int(args.n_negative),
         per_track_cap=int(args.per_track_cap),
+        positive_min_score=float(args.positive_min_score),
+        negative_min_score=float(args.negative_min_score),
     )
     print(json.dumps(rep, ensure_ascii=False))
 

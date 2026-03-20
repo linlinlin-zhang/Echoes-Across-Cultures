@@ -23,6 +23,8 @@ def build_tracks_from_audio(
     model_id: str = "ntua-slp/CultureMERT-95M",
     device: str | None = None,
     pooling: str = "mean",
+    layer_indices: list[int] | None = None,
+    layer_weights: list[float] | None = None,
     max_seconds: float | None = 30.0,
     window_count: int = 1,
     window_strategy: str = "single",
@@ -38,6 +40,8 @@ def build_tracks_from_audio(
         model_id=model_id,
         device=device,
         pooling=pooling,
+        layer_indices=layer_indices,
+        layer_weights=layer_weights,
         max_seconds=max_seconds,
         window_count=window_count,
         window_strategy=window_strategy,
@@ -137,6 +141,8 @@ def build_tracks_from_audio(
         "out_tracks": str(out_path.resolve()),
         "model_id": model_id,
         "pooling": pooling,
+        "layer_indices": layer_indices,
+        "layer_weights": layer_weights,
         "device": device or "auto",
         "max_seconds": max_seconds,
         "window_count": int(window_count),
@@ -170,6 +176,8 @@ def main() -> None:
     ap.add_argument("--model_id", default="ntua-slp/CultureMERT-95M")
     ap.add_argument("--device", default=None, help="cpu/cuda, default auto")
     ap.add_argument("--pooling", default="mean", choices=["mean", "cls"], help="Embedding pooling strategy")
+    ap.add_argument("--layer_indices", nargs="*", type=int, default=None, help="Optional layer indices to aggregate")
+    ap.add_argument("--layer_weights", nargs="*", type=float, default=None, help="Optional normalized or unnormalized weights for selected layers")
     ap.add_argument("--max_seconds", type=float, default=30.0, help="Trim each track to this duration before embedding")
     ap.add_argument("--window_count", type=int, default=1, help="Number of windows to sample and aggregate per track")
     ap.add_argument("--window_strategy", default="single", help="Window sampling strategy: single or uniform")
@@ -184,6 +192,8 @@ def main() -> None:
         model_id=args.model_id,
         device=args.device,
         pooling=args.pooling,
+        layer_indices=args.layer_indices,
+        layer_weights=args.layer_weights,
         max_seconds=args.max_seconds,
         window_count=int(args.window_count),
         window_strategy=str(args.window_strategy),

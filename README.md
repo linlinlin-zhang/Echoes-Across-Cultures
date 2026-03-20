@@ -7,6 +7,27 @@
 - 参与式主动学习：用不确定性采样挑样本给专家，并把专家的成对约束回灌训练
 - 评估：用 Serendipity（意外性×相关性）与文化公平性指标评估，而不只看准确率
 
+## Figure Pack 与实验总览
+
+项目当前的图表和汇总入口不在根目录，而在下面两个位置：
+
+- 图表目录总览：`reports/figures/project_overview_2026-03-19/README.md`
+- 图表浏览 notebook：`output/jupyter-notebook/project-figure-pack-tour.ipynb`
+- 中文图表包：`reports/figures/project_overview_zh_2026-03-20/README.md`
+
+常用图表文件包括：
+
+- `reports/figures/project_overview_2026-03-19/v3_main_culturemert_stage3_lambdamart_metric_grid.png`
+- `reports/figures/project_overview_2026-03-19/public_routeA_phase2_cn_lambdamart_metric_grid.png`
+- `reports/figures/project_overview_2026-03-19/yambda_5b_subset_global_log_benchmark_metric_grid.png`
+- `reports/figures/project_overview_2026-03-19/pal_round_metric_trajectory.png`
+- `reports/figures/project_overview_2026-03-19/pal_constraint_flow.png`
+
+说明：
+
+- `V3` 和 `public routeA` 是当前跨文化推荐主线实验。
+- `Yambda-5B subset` 是外部公开日志补充线，用来说明方法在标准排序 benchmark 上的表现边界，不替代主线 cross-cultural 评测。
+
 ## 快速开始（玩具数据）
 
 1) 安装依赖
@@ -174,6 +195,10 @@ API 同步提供：
 为避免“论文主张超出实现证据”的风险，本仓库提供主张对齐矩阵：
 
 - [docs/PAPER_CLAIM_ALIGNMENT.md](docs/PAPER_CLAIM_ALIGNMENT.md)
+- [docs/EXPERIMENT_INDEX.md](docs/EXPERIMENT_INDEX.md)
+- [docs/PROJECT_SELF_AUDIT_AND_V4_EXECUTION_PLAN_2026-03-20_CN.md](docs/PROJECT_SELF_AUDIT_AND_V4_EXECUTION_PLAN_2026-03-20_CN.md)
+- [docs/research_dataset_v4/README.md](docs/research_dataset_v4/README.md)
+- [reports/audits/project_self_audit_2026-03-20/audit_report.md](reports/audits/project_self_audit_2026-03-20/audit_report.md)
 
 当前状态摘要：
 
@@ -330,3 +355,24 @@ See detailed guide: `docs/EVAL_SUITE_GUIDE.md`.
 Calibration metric note:
 - `cultural_calibration_kl` now uses a smoothed target-culture prior in style latent (`zs`) space, avoiding the previous fixed-value degeneration under single-target recommendation.
 - `cultural_calibration_kl_legacy` is kept for backward compatibility with historical reports.
+
+## V4 Dataset Workstream
+
+Current V4 skeleton entrypoints:
+- `python -m dcas.scripts.audit_dataset_manifest --manifest ./configs/dataset/research_dataset_v4_main_from_v3.json`
+- `python -m dcas.scripts.build_research_dataset_v4 --manifest ./configs/dataset/research_dataset_v4_main_from_v3.json`
+- `python -m dcas.scripts.build_research_dataset_v4 --manifest ./configs/dataset/research_dataset_v4_routeA_small.json`
+
+Key files:
+- `configs/dataset/research_dataset_v4_main_from_v3.json`
+- `configs/dataset/research_dataset_v4_routeA_small.json`
+- `dcas/scripts/harmonize_v4_metadata.py`
+- `dcas/scripts/audit_dataset_v4.py`
+- `dcas/scripts/build_research_dataset_v4.py`
+- `docs/research_dataset_v4/README.md`
+
+Current generated outputs:
+- `storage/public/research_dataset_v4/main/`
+- `storage/public/research_dataset_v4/routeA_small/`
+- `reports/datasets/research_dataset_v4/main/dataset_profile.md`
+- `reports/datasets/research_dataset_v4/routeA_small/dataset_profile.md`
