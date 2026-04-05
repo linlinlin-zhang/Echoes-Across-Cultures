@@ -1,0 +1,119 @@
+{
+  "current_mainline_version": "v4",
+  "primary_evidence_track": "V4 main dataset",
+  "sanity_check_track": "routeA_small",
+  "recommended_paper_entry": "E:/Desktop/Echo/paper/ismir2026_draft.tex",
+  "stages": [
+    {
+      "stage": "dataset_contract",
+      "purpose": "Build and audit the unified V4 dataset interface.",
+      "primary_paths": [
+        "E:/Desktop/Echo/configs/dataset/research_dataset_v4_main_from_v3.json",
+        "E:/Desktop/Echo/configs/dataset/research_dataset_v4_routeA_small.json",
+        "E:/Desktop/Echo/storage/public/research_dataset_v4/main",
+        "E:/Desktop/Echo/storage/public/research_dataset_v4/routeA_small",
+        "E:/Desktop/Echo/docs/research_dataset_v4/V4_DATA_CONTRACT_2026-03-20_CN.md",
+        "E:/Desktop/Echo/docs/research_dataset_v4/README.md"
+      ]
+    },
+    {
+      "stage": "backbone_embeddings",
+      "purpose": "Consume frozen CultureMERT and Gemini embeddings under the shared V4 interface.",
+      "primary_paths": [
+        "E:/Desktop/Echo/storage/public/research_dataset_v4/main/tracks_culturemert_mw3.npz",
+        "E:/Desktop/Echo/storage/public/research_dataset_v4/main/tracks_gemini_embedding2_mw3.npz",
+        "E:/Desktop/Echo/storage/public/research_dataset_v4/routeA_small/tracks_culturemert_mw3.npz",
+        "E:/Desktop/Echo/storage/public/research_dataset_v4/routeA_small/tracks_gemini_embedding2_mw3.npz"
+      ]
+    },
+    {
+      "stage": "stage3_training",
+      "purpose": "Train the latest DCAS stage-3 models on V4 main and routeA_small.",
+      "primary_paths": [
+        "E:/Desktop/Echo/configs/train/train_v4_main_culturemert_stage3.run.json",
+        "E:/Desktop/Echo/configs/train/train_v4_main_gemini_stage3.run.json",
+        "E:/Desktop/Echo/configs/train/train_v4_routeA_small_culturemert_stage3.run.json",
+        "E:/Desktop/Echo/configs/train/train_v4_routeA_small_gemini_stage3.run.json",
+        "E:/Desktop/Echo/storage/models/dcas_full_v4_main_culturemert_stage3.pt",
+        "E:/Desktop/Echo/storage/models/dcas_full_v4_main_gemini_stage3.pt"
+      ]
+    },
+    {
+      "stage": "benchmarking",
+      "purpose": "Run mainline stage-3 benchmark comparisons against the strongest hybrid baseline.",
+      "primary_paths": [
+        "E:/Desktop/Echo/configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_lambdamart.run.json",
+        "E:/Desktop/Echo/configs/benchmark/recommender_benchmark_v4_main_gemini_stage3_lambdamart.run.json",
+        "E:/Desktop/Echo/reports/benchmarks/v4_main_culturemert_stage3_lambdamart",
+        "E:/Desktop/Echo/reports/benchmarks/v4_main_gemini_stage3_lambdamart",
+        "E:/Desktop/Echo/docs/research_dataset_v4/V4_CULTUREMERT_STAGE3_BENCHMARK_RESULTS_2026-03-20_CN.md",
+        "E:/Desktop/Echo/docs/research_dataset_v4/V4_GEMINI_STAGE3_BENCHMARK_RESULTS_2026-03-20_CN.md"
+      ]
+    },
+    {
+      "stage": "calibration_sweep",
+      "purpose": "Characterize the controllable calibration-exposure-serendipity trade-off.",
+      "primary_paths": [
+        "E:/Desktop/Echo/configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_calibration_sweep.run.json",
+        "E:/Desktop/Echo/reports/hparam/v4_main_culturemert_stage3_calibration_sweep",
+        "E:/Desktop/Echo/reports/hparam/v4_routeA_small_culturemert_stage3_calibration_sweep",
+        "E:/Desktop/Echo/reports/hparam/v4_routeA_small_gemini_stage3_calibration_sweep",
+        "E:/Desktop/Echo/docs/research_dataset_v4/V4_CALIBRATION_HPARAM_SWEEP_RESULTS_2026-03-21_CN.md"
+      ]
+    },
+    {
+      "stage": "pal_ready_workflow",
+      "purpose": "Prepare expert-feedback bundles and warm-start retraining hooks without overclaiming completed real PAL results.",
+      "primary_paths": [
+        "E:/Desktop/Echo/configs/pal/pal_v4_main_culturemert_prepare.run.json",
+        "E:/Desktop/Echo/configs/pal/pal_v4_main_culturemert_real.run.json",
+        "E:/Desktop/Echo/docs/research_dataset_v4/V4_REAL_PAL_WORKFLOW_2026-03-21_CN.md"
+      ]
+    },
+    {
+      "stage": "audits_and_manuscript",
+      "purpose": "Connect diagnostics, academic archaeology, manuscript assets, and the current ISMIR draft.",
+      "primary_paths": [
+        "E:/Desktop/Echo/reports/audits/phase1_workspace_scan_2026-03-21",
+        "E:/Desktop/Echo/reports/audits/phase2_academic_archaeology_2026-03-21",
+        "E:/Desktop/Echo/docs/manuscript",
+        "E:/Desktop/Echo/paper/ismir2026_draft.tex"
+      ]
+    }
+  ],
+  "non_mainline_but_keep": [
+    {
+      "lane": "v3",
+      "reason": "Useful for historical baseline comparison, stage-3 transition evidence, and appendix material.",
+      "paths": [
+        "E:/Desktop/Echo/docs/research_dataset_v3",
+        "E:/Desktop/Echo/reports/baseline_comparison",
+        "E:/Desktop/Echo/reports/benchmarks/v3_main_culturemert_stage3_lambdamart"
+      ]
+    },
+    {
+      "lane": "v2",
+      "reason": "Useful for source audit history, early Gemini/PAL platform context, and data-access notes.",
+      "paths": [
+        "E:/Desktop/Echo/docs/research_dataset_v2",
+        "E:/Desktop/Echo/reports/research_dataset_v2"
+      ]
+    },
+    {
+      "lane": "routeA_legacy",
+      "reason": "Useful as a public/small-line experimental history, but should not be confused with the V4 main evidence track.",
+      "paths": [
+        "E:/Desktop/Echo/storage/public/routeA_phase1",
+        "E:/Desktop/Echo/storage/public/routeA_phase2",
+        "E:/Desktop/Echo/storage/public/routeA_phase2_cn",
+        "E:/Desktop/Echo/reports/routeA_phase3_ablation_cn",
+        "E:/Desktop/Echo/reports/routeA_phase3_pal_cn"
+      ]
+    }
+  ],
+  "scratch_or_tmp": [
+    "E:/Desktop/Echo/configs/embedding/gemini_embedding2_v3_main.api_smoke.tmp.json",
+    "E:/Desktop/Echo/tmp",
+    "E:/Desktop/Echo/output"
+  ]
+}

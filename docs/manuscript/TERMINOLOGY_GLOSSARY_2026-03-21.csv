@@ -1,0 +1,14 @@
+concept,preferred_paper_term,aliases_to_avoid_or_limit,source_anchor,usage_note
+DCAS,"DCAS framework","three-factor VAE; disentangled model","E:/Desktop/Echo/dcas/models/dcas_vae.py","Prefer framework wording over claiming a single novel architecture."
+stage3,"stage-3 curriculum training","full retraining; final stage only","E:/Desktop/Echo/dcas/pipelines.py","Explain that stage3 means delayed constraints plus delayed ranking, not just extra epochs."
+calibrated_target,"target-calibrated operating point","target mode","E:/Desktop/Echo/configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_lambdamart.run.json","Use as the default balanced operating point in the paper."
+calibrated_minor,"minority-oriented operating point","minor mode","E:/Desktop/Echo/configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_lambdamart.run.json","Use when emphasizing fairness or exposure."
+target_affinity,"target-culture affinity","culture match score","E:/Desktop/Echo/dcas/recommender.py","Keep distinct from general relevance."
+minority_exposure_at_k,"minority exposure at k","fairness score","E:/Desktop/Echo/dcas/scripts/run_recommender_benchmarks.py","Name the exact metric in tables."
+source_confound,"source confound","source bias only","E:/Desktop/Echo/docs/research_dataset_v4/README.md","Use when discussing culture-source predictability risk."
+V4 main,"V4 main dataset","main split only","E:/Desktop/Echo/storage/public/research_dataset_v4/main","Treat as the primary evidence track."
+routeA_small,"V4 routeA_small sanity-check track","public mini benchmark","E:/Desktop/Echo/storage/public/research_dataset_v4/routeA_small","Useful but lower evidential weight than V4 main."
+PAL,"participatory active learning","active learning loop only","E:/Desktop/Echo/docs/research_dataset_v4/V4_REAL_PAL_WORKFLOW_2026-03-21_CN.md","Stress expert-in-the-loop and executable workflow."
+pseudo constraints,"pseudo-PAL constraints","weak labels","E:/Desktop/Echo/storage/pal/v4_main_prepal","Describe as pre-PAL or pseudo-constraint signal, not as human labels."
+backbone-agnostic,"backbone-agnostic downstream pipeline","model-agnostic everywhere","E:/Desktop/Echo/docs/EXPERIMENT_INDEX.md","Keep the claim limited to supported backbones and dataset contract."
+

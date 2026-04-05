@@ -1,0 +1,118 @@
+% Method Module A: Problem Formulation
+% This snippet is designed to be pasted into the Method section after user confirmation.
+
+\subsection{Problem Formulation}
+
+We treat cross-cultural recommendation as a structured downstream learning problem built on top of frozen backbone embeddings rather than as direct nearest-neighbor retrieval in the raw embedding space.
+The training catalog is represented as
+%
+% code map: dcas/data/npz_tracks.py:10-15, 33-53
+\begin{align}
+\mathcal{D}_{\mathrm{trk}}
+=
+\left\{
+\left(
+t_i,
+c_i,
+\mathbf{e}_i,
+y_i^{\mathrm{aff}},
+s_i
+\right)
+\right\}_{i=1}^{N},
+\end{align}
+%
+where $t_i$ is the track identifier, $c_i \in \mathcal{C}$ is the culture label, $\mathbf{e}_i \in \mathbb{R}^{D}$ is the frozen backbone embedding, $y_i^{\mathrm{aff}}$ is an optional affect label, and $s_i$ is an optional source-dataset label. In the implementation, these fields correspond directly to `track_id`, `culture`, `embedding`, `affect_label`, and `source_dataset` in the `Tracks` container.
+
+During optimization, the loader converts the catalog into mini-batches
+%
+% code map: dcas/utils.py:24-30; dcas/data/torch_dataset.py:57-82; dcas/data/batch.py:10-33
+\begin{align}
+\mathcal{B}
+=
+\left(
+\mathbf{X},
+\mathbf{c},
+\mathbf{r},
+\mathbf{y}^{\mathrm{aff}},
+\mathbf{s}
+\right),
+\end{align}
+%
+where $\mathbf{X} \in \mathbb{R}^{B \times D}$ is the batch embedding matrix, $\mathbf{c} \in \{1,\dots,|\mathcal{C}|\}^{B}$ is the culture index vector, $\mathbf{r}$ stores track indices, and $\mathbf{y}^{\mathrm{aff}}$ and $\mathbf{s}$ are optional affect and source labels. In code, these are the tensors `batch.x`, `batch.culture`, `batch.track_index`, `batch.affect_label`, and `batch.source_label`.
+
+The downstream model learns a factorized latent map
+%
+% code map: dcas/models/dcas_vae.py:24-47, 49-145
+\begin{align}
+f_{\theta} : \mathbf{e}_i \mapsto
+\left(
+\mathbf{z}^{c}_{i},
+\mathbf{z}^{s}_{i},
+\mathbf{z}^{a}_{i}
+\right),
+\end{align}
+%
+with $\mathbf{z}^{c}_{i} \in \mathbb{R}^{d_c}$, $\mathbf{z}^{s}_{i} \in \mathbb{R}^{d_s}$, and $\mathbf{z}^{a}_{i} \in \mathbb{R}^{d_a}$ denoting content, style, and affective-functional latent variables, respectively.
+For the current V4 main operating point, the default dimensions are $(d_c,d_s,d_a)=(32,32,16)$, matching the code parameters `zc_dim`, `zs_dim`, and `za_dim` in `DCASConfig`.
+
+The recommendation problem is defined over a user history
+%
+% code map: dcas/pipelines.py:47-110, 229-276
+\begin{align}
+H_u = \{(i, w_{ui})\}_{i \in \mathcal{I}_u},
+\end{align}
+%
+where $\mathcal{I}_u$ is the set of tracks observed for user $u$ and $w_{ui}$ is the interaction weight read from the synthesized interaction log. Given a target culture $c^\star \in \mathcal{C}$, the candidate set is
+\begin{align}
+\mathcal{X}(c^\star) = \{ i \mid c_i = c^\star \},
+\end{align}
+and the goal is to return a ranked list from $\mathcal{X}(c^\star)$ that remains behaviorally relevant while improving cross-cultural discovery and calibrated minority exposure.
+
+The full training objective is stage-dependent. We first define the base representation objective
+%
+% code map: dcas/models/dcas_vae.py:165-203
+\begin{align}
+\mathcal{L}_{\mathrm{base}}
+&=
+\mathcal{L}_{\mathrm{recon}}
+ + \beta_{\mathrm{KL}} \mathcal{L}_{\mathrm{KL}}
+ + \lambda_{\mathrm{dom}}\, g_{\mathrm{dom}}(t)\, \mathcal{L}_{\mathrm{dom}}
+ + \lambda_{\mathrm{con}}\, g_{\mathrm{con}}(t)\, \mathcal{L}_{\mathrm{con}} \nonumber\\
+&\quad
+ + \lambda_{\mathrm{cov}}\, g_{\mathrm{cov}}(t)\, \mathcal{L}_{\mathrm{cov}}
+ + \lambda_{\mathrm{tc}}\, g_{\mathrm{tc}}(t)\, \mathcal{L}_{\mathrm{tc}}
+ + \lambda_{\mathrm{hsic}}\, g_{\mathrm{hsic}}(t)\, \mathcal{L}_{\mathrm{hsic}} \nonumber\\
+&\quad
+ + \lambda_{\mathrm{aff}}\, g_{\mathrm{aff}}(t)\, \mathcal{L}_{\mathrm{aff}}
+ + \lambda_{\mathrm{src}}\, g_{\mathrm{src}}(t)\, \mathcal{L}_{\mathrm{src}},
+\end{align}
+%
+where $\mathcal{L}_{\mathrm{recon}}$ is the reconstruction loss, $\mathcal{L}_{\mathrm{KL}}$ is the sum of three standard-normal KL terms, $\mathcal{L}_{\mathrm{dom}}$ is the culture-adversarial loss on $\mathbf{z}^a$, $\mathcal{L}_{\mathrm{con}}$ is the augmentation-based InfoNCE loss on $\mathbf{z}^c$, $\mathcal{L}_{\mathrm{cov}}$ penalizes off-diagonal covariance, $\mathcal{L}_{\mathrm{tc}}$ penalizes Gaussian total correlation, $\mathcal{L}_{\mathrm{hsic}}$ discourages dependence across latent factors, $\mathcal{L}_{\mathrm{aff}}$ is the optional affect classification loss, and $\mathcal{L}_{\mathrm{src}}$ is the optional source-adversarial loss. The multiplicative factors $g_{\bullet}(t) \in [0,1]$ denote the epoch-dependent warmup scales implemented through `reg_scales`.
+
+On top of the base objective, stage-3 training introduces two delayed auxiliary terms:
+%
+% code map: dcas/pipelines.py:239-257, 258-276, 307-363
+\begin{align}
+\mathcal{L}_{\mathrm{total}}(t)
+=
+\mathcal{L}_{\mathrm{base}}
+ + \lambda_{\mathrm{pair}}\, \gamma_{\mathrm{pair}}(t)\, \mathcal{L}_{\mathrm{pair}}
+ + \lambda_{\mathrm{rank}}\, \gamma_{\mathrm{rank}}(t)\, \mathcal{L}_{\mathrm{rank}},
+\end{align}
+%
+where $\gamma_{\mathrm{pair}}(t)$ and $\gamma_{\mathrm{rank}}(t)$ are stage activation functions determined by `constraint_start_epoch`, `constraint_warmup_epochs`, `rank_start_epoch`, and `rank_warmup_epochs`.
+The pairwise term refines $\mathbf{z}^a$ using pseudo-PAL or human PAL constraints, while the ranking term uses interaction-derived rank examples with sampled negatives.
+
+This hierarchy matters for faithful writing. In the implementation, reconstruction and KL terms are the primary optimization backbone, disentanglement and invariance terms are regularizers, and pairwise/ranking terms are late-stage auxiliary supervision rather than co-equal losses from epoch one. Accordingly, the method should be described as a curriculum-based approximate optimization procedure trained with AdamW, not as a globally optimal joint solver.
+
+For the current `V4 main + CultureMERT` stage-3 setting, the nonzero high-level weights are
+%
+% code map: configs/train/train_v4_main_culturemert_stage3.run.json:11-31
+\begin{align}
+(\lambda_{\mathrm{pair}}, \lambda_{\mathrm{rank}}, \lambda_{\mathrm{dom}}, \lambda_{\mathrm{con}}, \lambda_{\mathrm{cov}}, \lambda_{\mathrm{tc}}, \lambda_{\mathrm{hsic}}, \lambda_{\mathrm{src}}, \beta_{\mathrm{KL}})
+=
+(0.15, 0.12, 0.50, 0.20, 0.05, 0.05, 0.02, 0.10, 1.0).
+\end{align}
+%
+We report these values here because they are explicit design choices rather than framework defaults, and because later ablation and sensitivity sections interpret their effect on the quality-fairness trade-off.
+
