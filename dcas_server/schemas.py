@@ -118,3 +118,24 @@ class PalRequest(BaseModel):
     out_name: str = Field(default="pal_tasks.jsonl")
     n: int = Field(default=100, ge=1, le=2000)
     prefer_cuda: bool = Field(default=False)
+
+
+class PrototypeRegisterRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    email: str = Field(min_length=3, max_length=200)
+    role: str = Field(default="听众", min_length=1, max_length=40)
+
+
+class PrototypeAnalyzeRequest(BaseModel):
+    upload_id: str
+    mode: str = Field(default="bridge")
+    lens: str = Field(default="rhythm")
+    top_k: int = Field(default=3, ge=1, le=6)
+
+
+class PrototypeFeedbackRequest(BaseModel):
+    track: str = Field(min_length=1, max_length=240)
+    recommendation_id: str | None = Field(default=None, max_length=120)
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(default="", max_length=2000)
+    profile_id: str | None = Field(default=None, max_length=120)

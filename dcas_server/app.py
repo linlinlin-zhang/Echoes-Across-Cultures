@@ -20,6 +20,7 @@ from dcas.pipelines import (
 )
 
 from .paths import Storage
+from .prototype_api import create_prototype_router
 from .schemas import (
     DatasetBuildRequest,
     OntologyAnnotationCreateRequest,
@@ -54,7 +55,9 @@ def create_app() -> FastAPI:
     storage.ensure_dir("pal")
     storage.ensure_dir("style")
     storage.ensure_dir("ontology")
+    storage.ensure_dir("prototype")
     ontology = OntologyStore(storage.resolve_rel("ontology/state.json"))
+    app.include_router(create_prototype_router(storage))
 
     @app.get("/api/health")
     def health():
@@ -332,7 +335,15 @@ def create_app() -> FastAPI:
 
     dist = Path("web/dist")
     dist.mkdir(parents=True, exist_ok=True)
-    app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
+    prototype_dir = Path("web_prototype")
+    if prototype_dir.exists():
+        app.mount("/prototype", StaticFiles(directory=str(prototype_dir), html=True), name="prototype")
+    if (dist / "index.html").exists():
+        app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
+    elif prototype_dir.exists():
+        app.mount("/", StaticFiles(directory=str(prototype_dir), html=True), name="prototype-root")
+    else:
+        app.mount("/", StaticFiles(directory=str(dist), html=True), name="web-empty")
 
     return app
 
