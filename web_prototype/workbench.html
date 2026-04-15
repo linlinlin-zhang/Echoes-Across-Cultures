@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo 回声桥 | 工作台</title>
+  <meta
+    name="description"
+    content="上传本地音乐，使用 Echo 推荐引擎或外部大模型接口进行跨文化音乐推荐，并导出结果。"
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-workbench" data-page="workbench" data-scene="intake">
+  <div class="page-glow page-glow-left" aria-hidden="true"></div>
+  <div class="page-glow page-glow-right" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark">E</span>
+      <span class="brand-text">Echo 回声桥</span>
+    </a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="./index.html">首页</a>
+      <a class="is-active" href="./workbench.html">工作台</a>
+      <a href="./about.html">介绍</a>
+    </nav>
+    <div class="topbar-actions">
+      <a class="pill-button pill-button-light" href="./about.html">查看方法</a>
+      <a class="pill-button pill-button-dark" href="./workbench.html">工作台</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section-shell workbench-hero-shell">
+      <div class="workbench-hero-grid">
+        <div class="workbench-hero-copy">
+          <p class="eyebrow">Music Workbench</p>
+          <h1 class="workbench-title">把一段熟悉的音乐，变成可试听、可解释、可带走的跨文化推荐。</h1>
+          <div class="workbench-chip-row">
+            <span class="live-chip live-chip-strong" id="heroModeLabel">桥接发现（Bridge）</span>
+            <span class="live-chip" id="heroTrackLabel">等待上传本地音乐</span>
+          </div>
+          <p class="workbench-hero-copy-note" id="heroSignalDescription">
+            系统会从你的音频里提取节奏、音色与情绪线索，再把推荐理由一起交给你。
+          </p>
+          <div class="hero-actions">
+            <button class="pill-button pill-button-dark" id="heroPlayButton" type="button">立即运行</button>
+            <a class="pill-button pill-button-light" href="./about.html">查看介绍</a>
+          </div>
+        </div>
+
+        <article class="card-surface workbench-signal-stage">
+          <div class="signal-stage-top">
+            <span class="panel-code">Live Cockpit</span>
+            <span class="status-pill">实时变化</span>
+          </div>
+          <div class="signal-orbit-field" aria-hidden="true">
+            <canvas class="ambient-canvas ambient-canvas-orbit" data-ambient-canvas="orbit"></canvas>
+            <div class="signal-orb signal-orb-main">
+              <span class="signal-orb-core"></span>
+            </div>
+            <div class="signal-orb signal-orb-lilac"></div>
+            <div class="signal-orb signal-orb-green"></div>
+            <div class="signal-wave-trace"></div>
+            <div class="signal-dust"></div>
+          </div>
+          <div class="workbench-kpi-strip">
+            <article>
+              <span>嵌入维度</span>
+              <strong id="heroEmbeddingDim">1024</strong>
+            </article>
+            <article>
+              <span>桥接强度</span>
+              <strong id="heroBridgeScore">0.81</strong>
+            </article>
+            <article>
+              <span>反馈样本</span>
+              <strong id="heroFeedbackCount">0</strong>
+            </article>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-shell lab-shell workbench-shell">
+      <div class="lab-grid lab-grid-workbench">
+        <article class="card-surface control-panel control-panel-wide control-panel-expanded">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow eyebrow-tight">输入（Input）</p>
+              <h3>音乐推荐工作台</h3>
+            </div>
+            <span class="panel-code">Live Recommendation</span>
+          </div>
+
+          <div class="control-top-grid">
+            <div class="control-primary-stack">
+              <label class="upload-dropzone" for="audioInput">
+                <input id="audioInput" type="file" accept="audio/*" multiple>
+                <span class="dropzone-title">拖入本地音频，或点击这里上传</span>
+                <span class="dropzone-caption">上传之后可以直接试听、分析并导出结果。</span>
+              </label>
+
+              <div class="control-row control-row-3">
+                <label class="field">
+                  <span>推荐模式</span>
+                  <select id="modeSelect">
+                    <option value="bridge">桥接发现（Bridge）</option>
+                    <option value="novelty">新颖探索（Novelty）</option>
+                    <option value="precision">精准邻近（Precision）</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>解释视角</span>
+                  <select id="lensSelect">
+                    <option value="rhythm">节奏（Rhythm）</option>
+                    <option value="timbre">音色（Timbre）</option>
+                    <option value="emotion">情绪（Emotion）</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>推荐引擎</span>
+                  <select id="engineSelect">
+                    <option value="echo">Echo 引擎（算法 + 小模型）</option>
+                    <option value="llm">外部大模型接口（LLM）</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="button-row button-row-wrap">
+                <button class="pill-button pill-button-dark" id="runDemoButton" type="button">开始推荐</button>
+                <button class="pill-button pill-button-light" id="useSampleButton" type="button">使用示例音轨</button>
+                <button class="pill-button pill-button-light" id="exportJsonButton" type="button">导出 JSON</button>
+                <button class="pill-button pill-button-light" id="exportCsvButton" type="button">导出 CSV</button>
+              </div>
+
+              <p class="inline-status inline-status-compact" id="backendStatus">正在等待后端连接状态。</p>
+            </div>
+
+            <aside class="runtime-console card-surface">
+              <div class="runtime-console-head">
+                <div>
+                  <p class="eyebrow eyebrow-tight">运行状态</p>
+                  <h4>当前流程进度</h4>
+                </div>
+                <strong class="runtime-progress-value" id="progressPercent">00%</strong>
+              </div>
+
+              <div class="progress-rail progress-rail-runtime">
+                <div class="progress-rail-fill" id="progressFill"></div>
+              </div>
+
+              <div class="runtime-stage-row">
+                <article class="runtime-stage-item is-active" data-runtime-stage="0">
+                  <span>01</span>
+                  <strong>接收</strong>
+                </article>
+                <article class="runtime-stage-item" data-runtime-stage="1">
+                  <span>02</span>
+                  <strong>嵌入</strong>
+                </article>
+                <article class="runtime-stage-item" data-runtime-stage="2">
+                  <span>03</span>
+                  <strong>桥接</strong>
+                </article>
+                <article class="runtime-stage-item" data-runtime-stage="3">
+                  <span>04</span>
+                  <strong>重排</strong>
+                </article>
+                <article class="runtime-stage-item" data-runtime-stage="4">
+                  <span>05</span>
+                  <strong>解释</strong>
+                </article>
+              </div>
+
+              <div class="runtime-log-shell">
+                <div class="list-header">
+                  <span>实时处理日志</span>
+                  <strong id="logStatus">待命</strong>
+                </div>
+                <div class="log-list runtime-log-list" id="logList"></div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="workbench-monitor-grid">
+            <div class="waveform-card">
+              <div class="list-header">
+                <span>源轨试听与波形</span>
+                <strong id="waveformLabel">尚未载入</strong>
+              </div>
+              <audio id="sourceAudioPlayer" controls preload="none"></audio>
+              <div class="waveform-shell" aria-hidden="true">
+                <div class="waveform-bars" id="waveformBars"></div>
+              </div>
+            </div>
+
+            <div class="uploaded-list-shell">
+              <div class="list-header">
+                <span>已选音轨</span>
+                <strong id="uploadCount">0 个文件</strong>
+              </div>
+              <div class="uploaded-list" id="uploadedList">
+                <p class="empty-state">还没有选择音乐。你可以上传本地文件，或者直接用示例音轨启动推荐。</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-shell journey-shell" id="journey-flow">
+      <div class="journey-heading">
+        <p class="eyebrow">流程白板（Bridge Flow）</p>
+        <h2>像在一张会横向流动的白板上，看见推荐怎样一步步成立。</h2>
+        <p>它不是操作区，而是一段更轻、更直观的流程叙事：你的音频怎样被整理、比较、桥接，再变成可试听、可导出的推荐结果。</p>
+      </div>
+
+      <div class="journey-scroll-shell" data-flow-journey>
+        <div class="journey-sticky">
+          <div class="journey-topbar">
+            <span class="panel-code">横向流动（Horizontal Story）</span>
+            <span class="journey-progress-pill">上传源轨 · 01 / 05</span>
+          </div>
+
+          <div class="journey-stage-shell">
+            <canvas class="ambient-canvas ambient-canvas-journey" data-ambient-canvas="journey"></canvas>
+            <div class="journey-grid"></div>
+            <div class="journey-vignette journey-vignette-warm" aria-hidden="true"></div>
+            <div class="journey-vignette journey-vignette-cool" aria-hidden="true"></div>
+            <div class="journey-focus-halo" aria-hidden="true"></div>
+            <div class="journey-floaters" aria-hidden="true">
+              <div class="journey-floater journey-floater-avatar journey-floater-a" data-anchor-stage="0" id="journeyFloaterUser">YOU</div>
+              <div class="journey-floater journey-floater-note journey-floater-b" data-anchor-stage="0">
+                <span>当前源轨</span>
+                <strong id="journeyFloaterTrack">等待本地音轨</strong>
+              </div>
+              <div class="journey-floater journey-floater-note journey-floater-c" data-anchor-stage="2">
+                <span>桥接轴（Bridge Axis）</span>
+                <strong id="journeyFloaterAxis">等待桥接轴生成</strong>
+              </div>
+              <div class="journey-floater journey-floater-chip journey-floater-d" data-anchor-stage="3" id="journeyFloaterEngine">Echo 引擎</div>
+              <div class="journey-floater journey-floater-chip journey-floater-e" data-anchor-stage="2">文化连线（Cultural Route）</div>
+              <div class="journey-floater journey-floater-note journey-floater-f" data-anchor-stage="4">
+                <span>候选池（Candidate Pool）</span>
+                <strong id="journeyFloaterPool">真实候选池载入中</strong>
+              </div>
+              <div class="journey-floater journey-floater-chip journey-floater-g" data-anchor-stage="4">反馈回流（Feedback Loop）</div>
+            </div>
+            <div class="journey-track">
+              <svg class="journey-network" viewBox="0 0 2520 760" aria-hidden="true">
+                <defs>
+                  <linearGradient id="journeyWarmPath" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ffb07e" stop-opacity="0.12"></stop>
+                    <stop offset="52%" stop-color="#ffb07e" stop-opacity="0.92"></stop>
+                    <stop offset="100%" stop-color="#ffb07e" stop-opacity="0.22"></stop>
+                  </linearGradient>
+                  <linearGradient id="journeyCoolPath" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#99aaff" stop-opacity="0.16"></stop>
+                    <stop offset="52%" stop-color="#99aaff" stop-opacity="0.88"></stop>
+                    <stop offset="100%" stop-color="#99aaff" stop-opacity="0.2"></stop>
+                  </linearGradient>
+                  <linearGradient id="journeyLightPath" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0"></stop>
+                    <stop offset="48%" stop-color="#ffffff" stop-opacity="0.86"></stop>
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
+                  </linearGradient>
+                  <filter id="journeyPathGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="7" result="glow"></feGaussianBlur>
+                    <feMerge>
+                      <feMergeNode in="glow"></feMergeNode>
+                      <feMergeNode in="SourceGraphic"></feMergeNode>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path class="journey-line journey-line-base" d="M152 504 C 310 438, 420 388, 612 390 S 916 454, 1092 472 S 1428 520, 1650 454 S 2026 356, 2310 424"></path>
+                <path class="journey-line journey-line-warm" d="M160 492 C 344 414, 490 380, 662 394 S 956 460, 1134 470 S 1470 512, 1700 446 S 2054 370, 2308 430"></path>
+                <path class="journey-line journey-line-cool" d="M146 522 C 280 470, 426 448, 608 446 S 930 418, 1116 446 S 1458 540, 1664 506 S 1964 414, 2304 460"></path>
+                <path class="journey-line journey-line-light" d="M170 468 C 364 406, 514 366, 688 392 S 1006 454, 1180 452 S 1506 500, 1728 432 S 2072 334, 2320 394"></path>
+                <path class="journey-line journey-line-dashed" d="M172 500 C 356 432, 492 398, 648 404 S 944 464, 1136 478 S 1472 526, 1704 458 S 2060 374, 2314 430"></path>
+                <circle class="journey-node journey-node-warm" cx="314" cy="440" r="12"></circle>
+                <circle class="journey-node journey-node-cool" cx="760" cy="414" r="10"></circle>
+                <circle class="journey-node journey-node-warm" cx="1210" cy="472" r="14"></circle>
+                <circle class="journey-node journey-node-cool" cx="1658" cy="434" r="10"></circle>
+                <circle class="journey-node journey-node-warm" cx="2114" cy="392" r="12"></circle>
+                <circle class="journey-node-ring" cx="1210" cy="472" r="28"></circle>
+                <circle class="journey-node-ring" cx="2114" cy="392" r="24"></circle>
+              </svg>
+              <div class="journey-tracer" aria-hidden="true">
+                <span class="journey-tracer-ring journey-tracer-ring-a"></span>
+                <span class="journey-tracer-ring journey-tracer-ring-b"></span>
+                <span class="journey-tracer-core"></span>
+                <span class="journey-tracer-label">Live Signal</span>
+              </div>
+              <div class="journey-aura journey-aura-a" aria-hidden="true"></div>
+              <div class="journey-aura journey-aura-b" aria-hidden="true"></div>
+              <div class="journey-aura journey-aura-c" aria-hidden="true"></div>
+              <div class="journey-ornament journey-ornament-notes" aria-hidden="true">
+                <span>♪</span>
+                <span>♩</span>
+                <span>♫</span>
+              </div>
+              <div class="journey-ornament journey-ornament-globe" aria-hidden="true">
+                <span class="journey-globe-ring journey-globe-ring-a"></span>
+                <span class="journey-globe-ring journey-globe-ring-b"></span>
+                <span class="journey-globe-arc journey-globe-arc-a"></span>
+                <span class="journey-globe-arc journey-globe-arc-b"></span>
+              </div>
+              <svg class="journey-ornament journey-ornament-wave" viewBox="0 0 320 120" aria-hidden="true">
+                <path d="M6 64 C 42 40, 72 90, 110 66 S 176 38, 214 64 S 274 90, 314 52"></path>
+                <path d="M8 84 C 48 60, 74 104, 112 82 S 180 56, 216 82 S 278 104, 314 72"></path>
+              </svg>
+              <div class="journey-scenic journey-scenic-upload" data-anchor-stage="0" aria-hidden="true">
+                <div class="journey-scenic-ticket">
+                  <span>Live Capture</span>
+                  <strong id="journeyScenicTrack">等待本地音轨</strong>
+                </div>
+                <div class="journey-scenic-waveboard">
+                  <span></span><span></span><span></span><span></span><span></span>
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="journey-scenic-vinyl">
+                  <span class="journey-scenic-vinyl-core"></span>
+                  <span class="journey-scenic-vinyl-ring journey-scenic-vinyl-ring-a"></span>
+                  <span class="journey-scenic-vinyl-ring journey-scenic-vinyl-ring-b"></span>
+                </div>
+                <svg class="journey-scenic-strings" viewBox="0 0 280 120">
+                  <path d="M10 18 C 86 30, 144 18, 270 28"></path>
+                  <path d="M10 42 C 84 58, 150 44, 270 52"></path>
+                  <path d="M10 66 C 86 84, 150 68, 270 74"></path>
+                  <path d="M10 90 C 84 106, 148 92, 270 98"></path>
+                </svg>
+              </div>
+              <div class="journey-scenic journey-scenic-embedding" data-anchor-stage="1" aria-hidden="true">
+                <div class="journey-scenic-matrix"></div>
+                <div class="journey-scenic-points">
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="journey-scenic-spectrum">
+                  <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="journey-scenic journey-scenic-bridge" data-anchor-stage="2" aria-hidden="true">
+                <div class="journey-scenic-world"></div>
+                <div class="journey-scenic-city journey-scenic-city-a" id="journeyScenicSourceCulture">源文化</div>
+                <div class="journey-scenic-city journey-scenic-city-b" id="journeyScenicTargetCulture">目标文化</div>
+                <div class="journey-scenic-route journey-scenic-route-a"></div>
+                <div class="journey-scenic-route journey-scenic-route-b"></div>
+                <div class="journey-scenic-route journey-scenic-route-c"></div>
+                <svg class="journey-scenic-instrument" viewBox="0 0 140 180">
+                  <path d="M70 16 C 84 22, 88 38, 82 54 C 76 72, 74 92, 78 116 C 82 138, 74 154, 58 162 C 44 168, 30 160, 24 146 C 18 132, 22 118, 36 106 C 50 94, 58 80, 58 62 C 58 40, 60 24, 70 16 Z"></path>
+                  <path d="M74 20 L96 144"></path>
+                  <path d="M66 24 L88 148"></path>
+                </svg>
+                <div class="journey-scenic-note-swarm">
+                  <span>♪</span><span>♬</span><span>♩</span>
+                </div>
+              </div>
+              <div class="journey-scenic journey-scenic-engines" data-anchor-stage="3" aria-hidden="true">
+                <div class="journey-scenic-console">
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="journey-scenic-engine-chip" id="journeyScenicEngine">Echo + LLM</div>
+              </div>
+              <div class="journey-scenic journey-scenic-output" data-anchor-stage="4" aria-hidden="true">
+                <div class="journey-scenic-sheet journey-scenic-sheet-a"></div>
+                <div class="journey-scenic-sheet journey-scenic-sheet-b"></div>
+                <div class="journey-scenic-stars">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="journey-scenic-wave-ribbon">
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+              <article class="journey-step journey-step-upload is-active" data-stage="0" data-stage-label="上传源轨">
+                <div class="journey-card-top">
+                  <span class="journey-step-index">01</span>
+                  <span class="journey-card-chip">上传（Upload）</span>
+                </div>
+                <div class="journey-preview journey-preview-upload" aria-hidden="true">
+                  <div class="journey-preview-head">
+                    <span>源轨（Source Clip）</span>
+                    <span id="journeyUploadMeta">等待文件</span>
+                  </div>
+                  <div class="journey-upload-orb"></div>
+                  <div class="journey-wave-mini">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-wave-ghost">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-upload-meter">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-file-pill">.wav</div>
+                </div>
+                <h3>上传一段熟悉的音乐</h3>
+                <p>从你的本地音轨开始，而不是先学习一整套系统规则。</p>
+              </article>
+              <article class="journey-step journey-step-embedding" data-stage="1" data-stage-label="生成共享表示">
+                <div class="journey-card-top">
+                  <span class="journey-step-index">02</span>
+                  <span class="journey-card-chip">嵌入（Embedding）</span>
+                </div>
+                <div class="journey-preview journey-preview-embedding" aria-hidden="true">
+                  <div class="journey-preview-head">
+                    <span>共享表示（Shared Space）</span>
+                    <span id="journeyEmbeddingMeta">768-d</span>
+                  </div>
+                  <div class="journey-embedding-grid"></div>
+                  <div class="journey-dot-cluster">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-axis-lines"><span></span><span></span><span></span></div>
+                  <div class="journey-code-pill">Embedding</div>
+                </div>
+                <h3>生成共享表示</h3>
+                <p>系统先把旋律、节奏与音色映射到可比较的表示空间。</p>
+              </article>
+              <article class="journey-step journey-step-bridge" data-stage="2" data-stage-label="寻找桥接轴">
+                <div class="journey-card-top">
+                  <span class="journey-step-index">03</span>
+                  <span class="journey-card-chip">桥接（Bridge）</span>
+                </div>
+                <div class="journey-preview journey-preview-bridge" aria-hidden="true">
+                  <div class="journey-preview-head">
+                    <span>桥接轴（Bridge Axis）</span>
+                    <span id="journeyBridgeMeta">Explainable</span>
+                  </div>
+                  <div class="journey-bridge-atlas">
+                    <span class="journey-bridge-continent journey-bridge-continent-a"></span>
+                    <span class="journey-bridge-continent journey-bridge-continent-b"></span>
+                    <span class="journey-bridge-route journey-bridge-route-a"></span>
+                    <span class="journey-bridge-route journey-bridge-route-b"></span>
+                  </div>
+                  <span class="journey-bridge-tag journey-bridge-tag-left" id="journeyBridgeLeft">Source</span>
+                  <span class="journey-bridge-link"></span>
+                  <span class="journey-bridge-tag journey-bridge-tag-right" id="journeyBridgeRight">Target</span>
+                  <div class="journey-bridge-rings">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+                <h3>寻找文化桥接轴</h3>
+                <p>不是只找最近邻，而是找一条能讲得通的跨文化连接线。</p>
+              </article>
+              <article class="journey-step journey-step-engines" data-stage="3" data-stage-label="双引擎重排">
+                <div class="journey-card-top">
+                  <span class="journey-step-index">04</span>
+                  <span class="journey-card-chip">引擎（Engines）</span>
+                </div>
+                <div class="journey-preview journey-preview-engines" aria-hidden="true">
+                  <div class="journey-preview-head">
+                    <span>双引擎（Multi-engine）</span>
+                    <span id="journeyEngineMeta">Echo 引擎</span>
+                  </div>
+                  <div class="journey-engine-column">
+                    <strong>Echo</strong>
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-engine-divider"></div>
+                  <div class="journey-engine-column journey-engine-column-llm">
+                    <strong>LLM</strong>
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-engine-console">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-engine-status">
+                    <span id="journeyEngineScore">Echo 0.92</span>
+                    <span id="journeyEngineStatus">理由就绪</span>
+                  </div>
+                </div>
+                <h3>双引擎给出结果</h3>
+                <p>可以用 Echo 引擎，也可以切到外部大模型接口重排并补充理由。</p>
+              </article>
+              <article class="journey-step journey-step-output" data-stage="4" data-stage-label="输出与反馈">
+                <div class="journey-card-top">
+                  <span class="journey-step-index">05</span>
+                  <span class="journey-card-chip">输出（Output）</span>
+                </div>
+                <div class="journey-preview journey-preview-output" aria-hidden="true">
+                  <div class="journey-preview-head">
+                    <span>结果（Live Output）</span>
+                    <span id="journeyOutputMeta">3 条推荐</span>
+                  </div>
+                  <div class="journey-output-stack">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="journey-output-sheet"></div>
+                  <div class="journey-export-badges">
+                    <span>JSON</span>
+                    <span>CSV</span>
+                  </div>
+                  <div class="journey-feedback-row">
+                    <span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+                <h3>输出、导出与反馈</h3>
+                <p>试听、解释、导出和评分会连成一个完整的体验闭环。</p>
+              </article>
+            </div>
+            <div class="journey-mini-map" aria-hidden="true">
+              <div class="journey-mini-rail">
+                <span class="journey-mini-progress-line"></span>
+              </div>
+              <div class="journey-mini-steps">
+                <article class="journey-mini-step is-active" data-mini-stage="0">
+                  <span>01</span>
+                  <strong>上传</strong>
+                </article>
+                <article class="journey-mini-step" data-mini-stage="1">
+                  <span>02</span>
+                  <strong>嵌入</strong>
+                </article>
+                <article class="journey-mini-step" data-mini-stage="2">
+                  <span>03</span>
+                  <strong>桥接</strong>
+                </article>
+                <article class="journey-mini-step" data-mini-stage="3">
+                  <span>04</span>
+                  <strong>重排</strong>
+                </article>
+                <article class="journey-mini-step" data-mini-stage="4">
+                  <span>05</span>
+                  <strong>输出</strong>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell results-shell">
+      <div class="section-heading">
+        <p class="eyebrow">推荐结果</p>
+        <h2>结果会跟着你的选择一起变化</h2>
+        <p>同一段音乐，切换解释视角或推荐引擎后，会得到不同的桥接路径。</p>
+      </div>
+
+      <div class="results-summary card-surface">
+        <article>
+          <span>源轨画像</span>
+          <strong id="summaryTrack">当前源轨：等待输入</strong>
+          <p id="summaryTrackMeta">上传音乐后，这里会显示系统整理出的音频描述。</p>
+        </article>
+        <article>
+          <span>当前模式</span>
+          <strong id="summaryMode">桥接发现（Bridge）</strong>
+          <p id="summaryLens">视角：节奏（Rhythm）</p>
+        </article>
+        <article>
+          <span>主桥接轴</span>
+          <strong id="summaryAxis">等待生成主桥接轴</strong>
+          <p id="summaryAxisMeta">这里会显示这次推荐最明显的一条连接轴。</p>
+        </article>
+      </div>
+
+      <div class="recommendation-grid" id="recommendationGrid"></div>
+
+      <article class="card-surface detail-panel">
+        <div class="detail-header">
+          <div>
+            <p class="eyebrow eyebrow-tight">已选推荐</p>
+            <h3 id="detailTitle">等待生成推荐结果</h3>
+          </div>
+          <span class="status-pill" id="detailBadge">待生成</span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-visual-shell">
+            <div class="detail-orbit-stage" id="detailOrbStage" aria-hidden="true">
+              <canvas class="ambient-canvas ambient-canvas-detail" data-ambient-canvas="detail"></canvas>
+              <div class="detail-orbit-glow detail-orbit-glow-a"></div>
+              <div class="detail-orbit-glow detail-orbit-glow-b"></div>
+              <div class="detail-orbit-disc">
+                <span class="detail-orbit-score" id="detailOrbScore">--</span>
+              </div>
+              <span class="detail-origin-pill" id="detailOrigin">等待来源地区</span>
+              <span class="detail-axis-pill" id="detailAxis">等待桥接轴</span>
+            </div>
+            <div class="detail-spectrum" id="detailSpectrum" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          <div class="detail-copy">
+            <p id="detailReason">
+              上传音频并运行推荐之后，这里会显示当前条目的推荐原因。
+            </p>
+            <div class="tag-row" id="detailTags"></div>
+            <div class="detail-audio">
+              <span>推荐试听</span>
+              <audio id="recommendationAudioPlayer" controls preload="none"></audio>
+            </div>
+          </div>
+          <div class="detail-data">
+            <div class="detail-metric">
+              <span>向量余弦</span>
+              <strong id="detailSimilarity">0.00</strong>
+            </div>
+            <div class="detail-metric">
+              <span>桥接得分</span>
+              <strong id="detailBridge">0.00</strong>
+            </div>
+            <div class="detail-metric">
+              <span>新颖增益</span>
+              <strong id="detailNovelty">0%</strong>
+            </div>
+            <div class="detail-metric">
+              <span>BPM 对照</span>
+              <strong id="detailBpm">--</strong>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section-shell analysis-shell">
+      <div class="map-grid">
+        <article class="card-surface latent-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow eyebrow-tight">结果分析</p>
+              <h3>可视化桥接路径</h3>
+            </div>
+            <span class="panel-code">Latent Map</span>
+          </div>
+
+          <div class="latent-map" id="latentMap">
+            <span class="map-node map-node-source" id="sourceNode">源轨</span>
+            <span class="map-node map-node-rec" data-node="0">候选 A</span>
+            <span class="map-node map-node-rec" data-node="1">候选 B</span>
+            <span class="map-node map-node-rec" data-node="2">候选 C</span>
+            <svg class="map-svg" viewBox="0 0 520 320" preserveAspectRatio="none" aria-hidden="true">
+              <path id="bridgePath" d="M120 160 C210 70, 300 70, 390 160"></path>
+            </svg>
+          </div>
+
+          <div class="insight-grid">
+            <article>
+              <span>节奏邻近</span>
+              <strong id="insightRhythm">0.77</strong>
+            </article>
+            <article>
+              <span>音色桥接</span>
+              <strong id="insightTimbre">0.81</strong>
+            </article>
+            <article>
+              <span>新颖增益</span>
+              <strong id="insightNovelty">+24%</strong>
+            </article>
+            <article>
+              <span>置信度</span>
+              <strong id="insightConfidence">89%</strong>
+            </article>
+          </div>
+        </article>
+
+        <article class="card-surface dataset-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow eyebrow-tight">证据面板</p>
+              <h3>为什么推荐这些音乐</h3>
+            </div>
+            <span class="panel-code">Evidence</span>
+          </div>
+
+          <div class="factor-stack">
+            <div class="factor-bar">
+              <div class="factor-meta">
+                <span>向量相似度</span>
+                <strong id="factorSimilarity">0.84</strong>
+              </div>
+              <div class="factor-track"><span id="factorSimilarityBar"></span></div>
+            </div>
+            <div class="factor-bar">
+              <div class="factor-meta">
+                <span>文化桥接得分</span>
+                <strong id="factorBridge">0.81</strong>
+              </div>
+              <div class="factor-track"><span id="factorBridgeBar"></span></div>
+            </div>
+            <div class="factor-bar">
+              <div class="factor-meta">
+                <span>新颖度控制</span>
+                <strong id="factorNovelty">0.63</strong>
+              </div>
+              <div class="factor-track"><span id="factorNoveltyBar"></span></div>
+            </div>
+            <div class="factor-bar">
+              <div class="factor-meta">
+                <span>用户适配置信度</span>
+                <strong id="factorConfidence">0.89</strong>
+              </div>
+              <div class="factor-track"><span id="factorConfidenceBar"></span></div>
+            </div>
+          </div>
+
+          <div class="evidence-note" id="evidenceNote">
+            推荐解释会同时展示向量近邻、节奏结构、乐器纹理、文化迁移跨度和用户偏好权重。
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-shell feedback-shell">
+      <div class="feedback-grid">
+        <article class="card-surface form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow eyebrow-tight">注册（Registration）</p>
+              <h3>创建听众档案</h3>
+            </div>
+            <span class="panel-code">Profile</span>
+          </div>
+
+          <form id="registerForm" class="stack-form">
+            <label class="field">
+              <span>姓名</span>
+              <input type="text" name="name" placeholder="例如：Lin" required>
+            </label>
+            <label class="field">
+              <span>邮箱</span>
+              <input type="email" name="email" placeholder="listener@example.com" required>
+            </label>
+            <label class="field">
+              <span>身份</span>
+              <select name="role">
+                <option value="listener">听众</option>
+                <option value="researcher">研究者</option>
+                <option value="curator">策展人</option>
+                <option value="artist">创作者</option>
+              </select>
+            </label>
+            <button class="pill-button pill-button-dark" type="submit">保存档案</button>
+          </form>
+          <p class="inline-status" id="registerStatus">创建一个听众档案后，推荐和反馈会更容易连续起来。</p>
+        </article>
+
+        <article class="card-surface form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow eyebrow-tight">评价（Evaluation）</p>
+              <h3>记录推荐反馈</h3>
+            </div>
+            <span class="panel-code">Feedback</span>
+          </div>
+
+          <form id="feedbackForm" class="stack-form">
+            <label class="field">
+              <span>当前推荐</span>
+              <input type="text" id="selectedTrackInput" name="track" readonly>
+            </label>
+            <label class="field">
+              <span>评分</span>
+              <input type="range" id="ratingInput" name="rating" min="1" max="5" value="4">
+            </label>
+            <div class="range-readout">
+              <span>用户评分</span>
+              <strong id="ratingValue">4 / 5</strong>
+            </div>
+            <label class="field">
+              <span>评论</span>
+              <textarea name="comment" rows="4" placeholder="这次推荐最让你惊喜或最让你困惑的地方是什么？"></textarea>
+            </label>
+            <button class="pill-button pill-button-warm" type="submit">保存反馈</button>
+          </form>
+          <p class="inline-status" id="feedbackStatus">请先运行一次推荐流程，再提交反馈。</p>
+        </article>
+      </div>
+
+      <article class="card-surface feedback-log-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow eyebrow-tight">已捕获信号</p>
+            <h3>最近反馈记录</h3>
+          </div>
+          <span class="panel-code" id="feedbackAggregate">平均评分：--</span>
+        </div>
+        <div class="feedback-list" id="feedbackList">
+          <p class="empty-state">你的评分和评论会显示在这里，方便回看和继续探索。</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <template id="recommendationTemplate">
+    <article class="recommendation-card card-surface">
+      <div class="rec-visual" aria-hidden="true">
+        <div class="rec-disc"></div>
+        <div class="rec-spectrum">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span class="rec-axis"></span>
+      </div>
+      <div class="recommendation-head">
+        <div>
+          <span class="card-tag rec-origin"></span>
+          <h3 class="rec-title"></h3>
+        </div>
+        <strong class="rec-score"></strong>
+      </div>
+      <p class="rec-summary"></p>
+      <div class="rec-stats">
+        <div>
+          <span>桥接</span>
+          <strong class="rec-bridge"></strong>
+        </div>
+        <div>
+          <span>新颖</span>
+          <strong class="rec-novelty"></strong>
+        </div>
+        <div>
+          <span>BPM</span>
+          <strong class="rec-bpm"></strong>
+        </div>
+      </div>
+      <div class="tag-row rec-tags"></div>
+      <button class="pill-button pill-button-light rec-select" type="button">查看推荐</button>
+    </article>
+  </template>
+
+  <template id="feedbackItemTemplate">
+    <article class="feedback-item">
+      <div class="feedback-item-head">
+        <strong class="feedback-track"></strong>
+        <span class="feedback-rating"></span>
+      </div>
+      <p class="feedback-comment"></p>
+      <span class="feedback-meta"></span>
+    </article>
+  </template>
+
+  <script src="vendor/lenis.min.js" defer></script>
+  <script src="vendor/gsap.min.js" defer></script>
+  <script src="vendor/ScrollTrigger.min.js" defer></script>
+  <script src="site.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

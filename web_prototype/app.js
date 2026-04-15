@@ -26,9 +26,9 @@ const sceneNotes = {
 
 const fallbackTrack = {
   id: "sample-local",
-  name: "夜市弦影（Night Market Strings）.wav",
-  size_mb: 15.4,
-  descriptor: "拨弦乐器、手鼓脉冲、装饰性旋律线",
+  name: "本地示例音轨（Local Sample Clip）.wav",
+  size_mb: 12.8,
+  descriptor: "用于演示上传、嵌入和跨文化桥接推荐的本地样例",
   waveform: buildFallbackWaveform(),
   audio_url: "",
 };
@@ -88,8 +88,11 @@ const refs = {
   audioInput: document.querySelector("#audioInput"),
   modeSelect: document.querySelector("#modeSelect"),
   lensSelect: document.querySelector("#lensSelect"),
+  engineSelect: document.querySelector("#engineSelect"),
   runDemoButton: document.querySelector("#runDemoButton"),
   useSampleButton: document.querySelector("#useSampleButton"),
+  exportJsonButton: document.querySelector("#exportJsonButton"),
+  exportCsvButton: document.querySelector("#exportCsvButton"),
   heroPlayButton: document.querySelector("#heroPlayButton"),
   showcaseTabs: [...document.querySelectorAll(".showcase-tabs button")],
   backendStatus: document.querySelector("#backendStatus"),
@@ -102,12 +105,14 @@ const refs = {
   recommendationAudioPlayer: document.querySelector("#recommendationAudioPlayer"),
   progressFill: document.querySelector("#progressFill"),
   progressPercent: document.querySelector("#progressPercent"),
-  stageList: [...document.querySelectorAll(".stage-item")],
+  stageList: [...document.querySelectorAll(".journey-step")],
+  runtimeStageItems: [...document.querySelectorAll(".runtime-stage-item")],
   logList: document.querySelector("#logList"),
   logStatus: document.querySelector("#logStatus"),
   recommendationGrid: document.querySelector("#recommendationGrid"),
   recommendationTemplate: document.querySelector("#recommendationTemplate"),
   feedbackItemTemplate: document.querySelector("#feedbackItemTemplate"),
+  detailPanel: document.querySelector(".detail-panel"),
   detailTitle: document.querySelector("#detailTitle"),
   detailBadge: document.querySelector("#detailBadge"),
   detailReason: document.querySelector("#detailReason"),
@@ -116,6 +121,11 @@ const refs = {
   detailBridge: document.querySelector("#detailBridge"),
   detailNovelty: document.querySelector("#detailNovelty"),
   detailBpm: document.querySelector("#detailBpm"),
+  detailOrbStage: document.querySelector("#detailOrbStage"),
+  detailOrbScore: document.querySelector("#detailOrbScore"),
+  detailOrigin: document.querySelector("#detailOrigin"),
+  detailAxis: document.querySelector("#detailAxis"),
+  detailSpectrumBars: [...document.querySelectorAll("#detailSpectrum span")],
   summaryTrack: document.querySelector("#summaryTrack"),
   summaryTrackMeta: document.querySelector("#summaryTrackMeta"),
   summaryMode: document.querySelector("#summaryMode"),
@@ -144,6 +154,24 @@ const refs = {
   heroEmbeddingDim: document.querySelector("#heroEmbeddingDim"),
   heroBridgeScore: document.querySelector("#heroBridgeScore"),
   heroFeedbackCount: document.querySelector("#heroFeedbackCount"),
+  journeyFloaterUser: document.querySelector("#journeyFloaterUser"),
+  journeyFloaterTrack: document.querySelector("#journeyFloaterTrack"),
+  journeyFloaterAxis: document.querySelector("#journeyFloaterAxis"),
+  journeyFloaterEngine: document.querySelector("#journeyFloaterEngine"),
+  journeyFloaterPool: document.querySelector("#journeyFloaterPool"),
+  journeyScenicTrack: document.querySelector("#journeyScenicTrack"),
+  journeyScenicSourceCulture: document.querySelector("#journeyScenicSourceCulture"),
+  journeyScenicTargetCulture: document.querySelector("#journeyScenicTargetCulture"),
+  journeyScenicEngine: document.querySelector("#journeyScenicEngine"),
+  journeyUploadMeta: document.querySelector("#journeyUploadMeta"),
+  journeyEmbeddingMeta: document.querySelector("#journeyEmbeddingMeta"),
+  journeyBridgeMeta: document.querySelector("#journeyBridgeMeta"),
+  journeyBridgeLeft: document.querySelector("#journeyBridgeLeft"),
+  journeyBridgeRight: document.querySelector("#journeyBridgeRight"),
+  journeyEngineMeta: document.querySelector("#journeyEngineMeta"),
+  journeyEngineScore: document.querySelector("#journeyEngineScore"),
+  journeyEngineStatus: document.querySelector("#journeyEngineStatus"),
+  journeyOutputMeta: document.querySelector("#journeyOutputMeta"),
   registerForm: document.querySelector("#registerForm"),
   registerStatus: document.querySelector("#registerStatus"),
   feedbackForm: document.querySelector("#feedbackForm"),
@@ -158,9 +186,11 @@ const refs = {
 const state = {
   usingApi: false,
   providerMode: "local-fallback",
+  llmProviderMode: "local-fallback",
   scene: "intake",
   mode: "bridge",
   lens: "rhythm",
+  engine: "echo",
   profile: loadLocal("echoPrototypeProfile", null),
   feedback: loadLocal("echoPrototypeFeedback", []),
   uploads: [],
@@ -169,6 +199,10 @@ const state = {
   analysis: null,
   recommendations: fallbackRecommendations,
   selectedRecommendation: fallbackRecommendations[0],
+  catalogSize: fallbackRecommendations.length,
+  catalogVectorDim: 768,
+  catalogSource: "local-demo",
+  catalogOrigins: [],
   stats: {
     uploads: 0,
     analyses: 0,
@@ -182,6 +216,9 @@ const state = {
 initialize();
 
 async function initialize() {
+  if (refs.engineSelect) {
+    refs.engineSelect.value = state.engine;
+  }
   bindEvents();
   hydrateLocalProfile();
   attachWaveformAudioEffects();
@@ -217,6 +254,12 @@ function bindEvents() {
     updateSummaries();
   });
 
+  refs.engineSelect?.addEventListener("change", () => {
+    state.engine = refs.engineSelect.value;
+    updateHero();
+    updateSummaries();
+  });
+
   refs.runDemoButton?.addEventListener("click", () => {
     runDemoFlow();
   });
@@ -227,6 +270,14 @@ function bindEvents() {
 
   refs.useSampleButton?.addEventListener("click", async () => {
     await useSampleTrack();
+  });
+
+  refs.exportJsonButton?.addEventListener("click", () => {
+    exportCurrentResults("json");
+  });
+
+  refs.exportCsvButton?.addEventListener("click", () => {
+    exportCurrentResults("csv");
   });
 
   refs.showcaseTabs.forEach((button) => {
@@ -278,7 +329,12 @@ async function bootstrapFromServer() {
     const payload = await getJson(api.bootstrap);
     state.usingApi = true;
     state.providerMode = payload.provider || "local-fallback";
+    state.llmProviderMode = payload.llm_provider || "local-fallback";
     state.stats = mergeStats(payload.stats);
+    state.catalogSize = payload.catalog_size || state.catalogSize;
+    state.catalogVectorDim = payload.catalog_vector_dim || state.catalogVectorDim;
+    state.catalogSource = payload.catalog_source || state.catalogSource;
+    state.catalogOrigins = Array.isArray(payload.catalog_origins) ? payload.catalog_origins : [];
 
     if (payload.profile) {
       state.profile = {
@@ -312,8 +368,8 @@ async function bootstrapFromServer() {
 
     refs.backendStatus.textContent =
       state.providerMode === "external-configured"
-        ? "系统已连接真实后端，当前可调用外部嵌入服务并保存注册与反馈。"
-        : "系统已连接后端，当前使用本地回退嵌入逻辑；你仍然可以完整上传、分析、试听和反馈。";
+        ? `系统已连接真实后端，当前可调用外部嵌入服务；候选池来自 ${state.catalogSource}。`
+        : `系统已连接后端，当前使用本地回退嵌入逻辑；候选池来自 ${state.catalogSource}。`;
   } catch (error) {
     state.usingApi = false;
     refs.backendStatus.textContent = "当前未连接后端，页面会用演示数据完成同样的体验流程。";
@@ -388,6 +444,7 @@ async function useSampleTrack() {
       const uploaded = await uploadFileToApi(file);
       uploaded.name = state.sampleTrack.title;
       uploaded.descriptor = state.sampleTrack.descriptor;
+      uploaded.origin = state.sampleTrack.origin;
       state.activeUpload = uploaded;
       state.uploads = dedupeUploads([uploaded, ...state.uploads]);
       renderWaveform(uploaded.waveform);
@@ -419,6 +476,7 @@ async function runDemoFlow() {
 
   state.mode = refs.modeSelect?.value || state.mode;
   state.lens = refs.lensSelect?.value || state.lens;
+  state.engine = refs.engineSelect?.value || state.engine;
   updateHero();
   updateSummaries();
 
@@ -432,7 +490,9 @@ async function runDemoFlow() {
 
   state.isRunning = true;
   refs.runDemoButton.disabled = true;
-  refs.heroPlayButton.disabled = true;
+  if (refs.heroPlayButton) {
+    refs.heroPlayButton.disabled = true;
+  }
   refs.logStatus.textContent = "处理中";
   refs.logList.innerHTML = "";
   resetProgress();
@@ -445,12 +505,17 @@ async function runDemoFlow() {
         mode: state.mode,
         lens: state.lens,
         top_k: 3,
+        engine: state.engine,
       });
-      refs.backendStatus.textContent = payload.analysis.provider_warning
-        ? `已完成分析，当前使用回退嵌入逻辑：${payload.analysis.provider_warning}`
-        : "分析完成，推荐结果已经准备好。";
+      if (payload.analysis.engine_warning) {
+        refs.backendStatus.textContent = payload.analysis.engine_warning;
+      } else if (payload.analysis.provider_warning) {
+        refs.backendStatus.textContent = `已完成分析，当前使用回退嵌入逻辑：${payload.analysis.provider_warning}`;
+      } else {
+        refs.backendStatus.textContent = "分析完成，推荐结果已经准备好。";
+      }
     } else {
-      payload = buildLocalAnalysis(state.activeUpload, state.mode, state.lens);
+      payload = buildLocalAnalysis(state.activeUpload, state.mode, state.lens, state.engine);
       refs.backendStatus.textContent = "演示分析完成，已生成桥接推荐结果。";
     }
 
@@ -473,7 +538,9 @@ async function runDemoFlow() {
   } finally {
     state.isRunning = false;
     refs.runDemoButton.disabled = false;
-    refs.heroPlayButton.disabled = false;
+    if (refs.heroPlayButton) {
+      refs.heroPlayButton.disabled = false;
+    }
   }
 }
 
@@ -565,6 +632,44 @@ async function handleFeedback(formData) {
   }
 }
 
+function exportCurrentResults(format) {
+  if (!state.analysis || !state.selectedRecommendation) {
+    refs.backendStatus.textContent = "请先运行一次推荐，再导出当前结果。";
+    return;
+  }
+
+  const exportPayload = {
+    exported_at: formatNow(),
+    engine: state.engine,
+    mode: state.mode,
+    lens: state.lens,
+    analysis: state.analysis,
+    source_track: {
+      id: state.activeUpload?.id || null,
+      name: state.activeUpload?.name || null,
+      descriptor: state.activeUpload?.descriptor || null,
+    },
+    recommendations: state.recommendations,
+    selected_recommendation: state.selectedRecommendation,
+  };
+
+  if (format === "csv") {
+    const csv = buildRecommendationsCsv(exportPayload);
+    downloadBlob(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+      `echo-recommendations-${Date.now()}.csv`,
+    );
+    refs.backendStatus.textContent = "当前推荐结果已导出为 CSV。";
+    return;
+  }
+
+  downloadBlob(
+    new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" }),
+    `echo-recommendations-${Date.now()}.json`,
+  );
+  refs.backendStatus.textContent = "当前推荐结果已导出为 JSON。";
+}
+
 function renderWaveform(points) {
   const values = Array.isArray(points) && points.length ? points : buildFallbackWaveform();
   refs.waveformBars.innerHTML = "";
@@ -627,7 +732,7 @@ function renderRecommendations(recommendations) {
   refs.recommendationGrid.innerHTML = "";
   const items = Array.isArray(recommendations) && recommendations.length ? recommendations : fallbackRecommendations;
 
-  items.forEach((recommendation) => {
+  items.forEach((recommendation, index) => {
     const node = refs.recommendationTemplate.content.firstElementChild.cloneNode(true);
     node.dataset.recommendationId = recommendation.id;
     node.querySelector(".rec-origin").textContent = recommendation.origin;
@@ -637,6 +742,8 @@ function renderRecommendations(recommendations) {
     node.querySelector(".rec-bridge").textContent = decimal(recommendation.bridge);
     node.querySelector(".rec-novelty").textContent = decimal(recommendation.novelty);
     node.querySelector(".rec-bpm").textContent = recommendation.bpm;
+    node.querySelector(".rec-axis").textContent = recommendation.axis;
+    applyRecommendationVisual(node, recommendation, index);
 
     const tagRow = node.querySelector(".rec-tags");
     recommendation.tags.forEach((tag) => {
@@ -687,6 +794,15 @@ function selectRecommendation(recommendationId, options = {}) {
   refs.detailNovelty.textContent = `${Math.round(recommendation.novelty * 100)}%`;
   refs.detailBpm.textContent = `${state.analysis?.source_bpm || 92} vs ${recommendation.bpm}`;
   refs.selectedTrackInput.value = recommendation.title;
+  if (refs.detailOrbScore) {
+    refs.detailOrbScore.textContent = `${recommendation.score}`;
+  }
+  if (refs.detailOrigin) {
+    refs.detailOrigin.textContent = recommendation.origin;
+  }
+  if (refs.detailAxis) {
+    refs.detailAxis.textContent = recommendation.axis;
+  }
 
   refs.detailTags.innerHTML = "";
   recommendation.tags.forEach((tag) => {
@@ -712,6 +828,7 @@ function selectRecommendation(recommendationId, options = {}) {
   refs.insightConfidence.textContent = `${Math.round(recommendation.confidence * 100)}%`;
 
   syncRecommendationAudio(recommendation.audio_url);
+  updateDetailVisual(recommendation);
   updateLatentMap();
   updateHero();
   updateSummaries();
@@ -743,12 +860,101 @@ function renderFeedback() {
 }
 
 function updateHero() {
-  refs.heroModeLabel.textContent = modeLabels[state.mode];
-  refs.heroTrackLabel.textContent = state.activeUpload?.name || state.sampleTrack?.title || "等待上传本地音乐";
-  refs.heroSignalDescription.textContent = `${sceneNotes[state.scene]} 当前偏好是 ${lensLabels[state.lens]} 视角。`;
-  refs.heroEmbeddingDim.textContent = String(state.analysis?.embedding_dim || 1024);
-  refs.heroBridgeScore.textContent = decimal(state.selectedRecommendation?.bridge || state.analysis?.bridge_score || 0.81);
-  refs.heroFeedbackCount.textContent = String(state.stats.feedback_count || 0);
+  if (refs.heroModeLabel) {
+    refs.heroModeLabel.textContent = modeLabels[state.mode];
+  }
+  if (refs.heroTrackLabel) {
+    refs.heroTrackLabel.textContent = state.activeUpload?.name || state.sampleTrack?.title || "等待上传本地音乐";
+  }
+  if (refs.heroSignalDescription) {
+    refs.heroSignalDescription.textContent = `${sceneNotes[state.scene]} 当前偏好是 ${lensLabels[state.lens]} 视角。`;
+  }
+  if (refs.heroEmbeddingDim) {
+    refs.heroEmbeddingDim.textContent = String(state.analysis?.embedding_dim || state.catalogVectorDim || 768);
+  }
+  if (refs.heroBridgeScore) {
+    refs.heroBridgeScore.textContent = decimal(state.selectedRecommendation?.bridge || state.analysis?.bridge_score || 0.81);
+  }
+  if (refs.heroFeedbackCount) {
+    refs.heroFeedbackCount.textContent = String(state.stats.feedback_count || 0);
+  }
+
+  updateJourneyStory();
+}
+
+function updateJourneyStory() {
+  const currentTrack = state.activeUpload?.id === fallbackTrack.id && state.sampleTrack
+    ? state.sampleTrack
+    : (state.activeUpload || state.sampleTrack || fallbackTrack);
+  const currentRecommendation = state.selectedRecommendation || state.recommendations?.[0] || null;
+  const currentOrigin = currentRecommendation?.origin || state.catalogOrigins?.[0] || "跨文化候选池";
+  const bridgeAxis = currentRecommendation?.axis || "等待桥接轴生成";
+  const engineLabel = state.engine === "llm" ? "外部大模型重排（LLM Re-rank）" : "Echo 引擎";
+  const trackName = cropLabel(currentTrack?.name || currentTrack?.title || "等待本地音轨", 24);
+  const uploadMeta = currentTrack?.size_mb ? `${currentTrack.size_mb} MB` : "等待文件";
+  const recommendationCount = Array.isArray(state.recommendations) && state.recommendations.length
+    ? `${state.recommendations.length} 条推荐`
+    : "等待推荐";
+  const poolLabel = state.catalogSize ? `${state.catalogSize} 首真实候选` : "候选池载入中";
+
+  if (refs.journeyFloaterUser) {
+    refs.journeyFloaterUser.textContent = state.profile?.name ? cropLabel(state.profile.name, 6) : "YOU";
+  }
+  if (refs.journeyFloaterTrack) {
+    refs.journeyFloaterTrack.textContent = trackName;
+  }
+  if (refs.journeyFloaterAxis) {
+    refs.journeyFloaterAxis.textContent = bridgeAxis;
+  }
+  if (refs.journeyFloaterEngine) {
+    refs.journeyFloaterEngine.textContent = engineLabel;
+  }
+  if (refs.journeyFloaterPool) {
+    refs.journeyFloaterPool.textContent = poolLabel;
+  }
+  if (refs.journeyScenicTrack) {
+    refs.journeyScenicTrack.textContent = trackName;
+  }
+  if (refs.journeyScenicSourceCulture) {
+    refs.journeyScenicSourceCulture.textContent = currentTrack?.origin || "你的音轨";
+  }
+  if (refs.journeyScenicTargetCulture) {
+    refs.journeyScenicTargetCulture.textContent = currentOrigin;
+  }
+  if (refs.journeyScenicEngine) {
+    refs.journeyScenicEngine.textContent = state.engine === "llm" ? "Echo + 外部大模型" : "Echo + 规则重排";
+  }
+  if (refs.journeyUploadMeta) {
+    refs.journeyUploadMeta.textContent = uploadMeta;
+  }
+  if (refs.journeyEmbeddingMeta) {
+    refs.journeyEmbeddingMeta.textContent = `${state.analysis?.embedding_dim || state.catalogVectorDim || 768}-d`;
+  }
+  if (refs.journeyBridgeMeta) {
+    refs.journeyBridgeMeta.textContent = currentRecommendation ? "Explainable" : "Waiting";
+  }
+  if (refs.journeyBridgeLeft) {
+    refs.journeyBridgeLeft.textContent = lensLabels[state.lens].split("（")[0];
+  }
+  if (refs.journeyBridgeRight) {
+    refs.journeyBridgeRight.textContent = cropLabel(currentOrigin, 8);
+  }
+  if (refs.journeyEngineMeta) {
+    refs.journeyEngineMeta.textContent = state.engine === "llm" ? "Echo + LLM" : "Echo Only";
+  }
+  if (refs.journeyEngineScore) {
+    refs.journeyEngineScore.textContent = currentRecommendation
+      ? `${state.engine === "llm" ? "LLM" : "Echo"} ${decimal(currentRecommendation.bridge)}`
+      : "Echo 0.00";
+  }
+  if (refs.journeyEngineStatus) {
+    refs.journeyEngineStatus.textContent = currentRecommendation
+      ? `理由对齐 ${Math.round((currentRecommendation.confidence || 0) * 100)}%`
+      : "理由准备中";
+  }
+  if (refs.journeyOutputMeta) {
+    refs.journeyOutputMeta.textContent = recommendationCount;
+  }
 }
 
 function updateSummaries() {
@@ -757,7 +963,7 @@ function updateSummaries() {
     : "当前源轨：等待输入";
   refs.summaryTrackMeta.textContent = state.activeUpload?.descriptor || "上传音乐后，这里会显示系统整理出的音频描述。";
   refs.summaryMode.textContent = modeLabels[state.mode];
-  refs.summaryLens.textContent = `视角：${lensLabels[state.lens]}`;
+  refs.summaryLens.textContent = `视角：${lensLabels[state.lens]} · 引擎：${state.engine === "llm" ? "外部大模型接口" : "Echo 引擎"}`;
   refs.summaryAxis.textContent = state.selectedRecommendation?.axis || "等待生成主桥接轴";
   refs.summaryAxisMeta.textContent = state.selectedRecommendation
     ? `系统把你带向 ${state.selectedRecommendation.origin}，并保留了可解释的桥接线索。`
@@ -784,9 +990,7 @@ function setScene(scene) {
     recommend: [3, 4],
   }[scene] || [0];
 
-  refs.stageList.forEach((item, index) => {
-    item.classList.toggle("is-active", activeIndexes.includes(index));
-  });
+  updateStageIndicators(activeIndexes, null);
 
   updateHero();
 }
@@ -802,10 +1006,7 @@ async function playStages(stages) {
     refs.logStatus.textContent = stage.label;
     setScene(stage.scene);
 
-    refs.stageList.forEach((item, stageIndex) => {
-      item.classList.toggle("is-complete", stageIndex < index);
-      item.classList.toggle("is-active", stageIndex === index);
-    });
+    updateStageIndicators([index], index);
 
     const log = document.createElement("article");
     log.className = "log-entry";
@@ -852,6 +1053,54 @@ function updateLatentMap() {
       `M120 160 C220 ${Math.max(40, targetTop - 70)}, 300 ${Math.max(60, targetTop - 36)}, ${targetLeft - 12} ${targetTop + 20}`,
     );
   }
+}
+
+function applyRecommendationVisual(node, recommendation, index) {
+  const palette = paletteForRecommendation(recommendation, index);
+  node.style.setProperty("--rec-accent-a", palette[0]);
+  node.style.setProperty("--rec-accent-b", palette[1]);
+  node.style.setProperty("--rec-accent-c", palette[2]);
+
+  [...node.querySelectorAll(".rec-spectrum span")].forEach((bar, barIndex) => {
+    const height = buildSpectrumHeight(recommendation, barIndex, 14, 44);
+    bar.style.height = `${height}px`;
+    bar.style.animationDelay = `${barIndex * 0.09}s`;
+    bar.style.animationDuration = `${1.8 + (barIndex % 3) * 0.18}s`;
+  });
+}
+
+function updateDetailVisual(recommendation) {
+  const palette = paletteForRecommendation(recommendation, 0);
+  refs.detailPanel?.style.setProperty("--rec-accent-a", palette[0]);
+  refs.detailPanel?.style.setProperty("--rec-accent-b", palette[1]);
+  refs.detailPanel?.style.setProperty("--rec-accent-c", palette[2]);
+  refs.detailOrbStage?.style.setProperty("--rec-accent-a", palette[0]);
+  refs.detailOrbStage?.style.setProperty("--rec-accent-b", palette[1]);
+  refs.detailOrbStage?.style.setProperty("--rec-accent-c", palette[2]);
+
+  refs.detailSpectrumBars.forEach((bar, barIndex) => {
+    const height = buildSpectrumHeight(recommendation, barIndex, 18, 62);
+    bar.style.height = `${height}px`;
+    bar.style.animationDelay = `${barIndex * 0.08}s`;
+    bar.style.animationDuration = `${1.4 + (barIndex % 4) * 0.16}s`;
+  });
+}
+
+function paletteForRecommendation(recommendation, index) {
+  const palettes = [
+    ["rgba(142, 135, 255, 0.96)", "rgba(255, 205, 150, 0.96)", "rgba(255, 243, 237, 0.98)"],
+    ["rgba(255, 118, 148, 0.96)", "rgba(255, 185, 112, 0.96)", "rgba(241, 232, 255, 0.98)"],
+    ["rgba(104, 136, 79, 0.96)", "rgba(255, 171, 95, 0.96)", "rgba(222, 239, 255, 0.98)"],
+  ];
+  const paletteIndex = (index + Math.round((recommendation.novelty || 0.5) * 10)) % palettes.length;
+  return palettes[paletteIndex];
+}
+
+function buildSpectrumHeight(recommendation, index, minHeight, range) {
+  const seed = hashString(`${recommendation.id}|${recommendation.axis}|${index}`);
+  const blend = recommendation.bridge * 0.42 + recommendation.novelty * 0.26 + recommendation.similarity * 0.32;
+  const jitter = seededValue(seed) * 0.22;
+  return Math.round(minHeight + clampNumber(blend + jitter, 0.18, 1) * range);
 }
 
 function syncSourceAudio(audioUrl) {
@@ -922,8 +1171,8 @@ async function createLocalTrackFromFile(file) {
   };
 }
 
-function buildLocalAnalysis(upload, mode, lens) {
-  const sourceSeed = hashString(`${upload.name}|${mode}|${lens}|${upload.descriptor}`);
+function buildLocalAnalysis(upload, mode, lens, engine) {
+  const sourceSeed = hashString(`${upload.name}|${mode}|${lens}|${engine}|${upload.descriptor}`);
   const recommendations = fallbackRecommendations
     .map((item, index) => {
       const jitter = seededValue(sourceSeed + index * 19);
@@ -953,10 +1202,11 @@ function buildLocalAnalysis(upload, mode, lens) {
       id: `local-analysis-${Date.now()}`,
       mode,
       lens,
+      engine,
       embedding_dim: 1024,
       bridge_score: recommendations[0].bridge,
       source_bpm: 86 + Math.round(seededValue(sourceSeed) * 22),
-      provider: "local-fallback",
+      provider: engine === "llm" ? "llm-fallback" : "local-fallback",
     },
     upload: {
       ...upload,
@@ -1010,9 +1260,29 @@ function buildLocalStages(sourceName, mode, lens) {
 function resetProgress() {
   refs.progressFill.style.width = "0%";
   refs.progressPercent.textContent = "00%";
+  updateStageIndicators([0], 0, { resetComplete: true });
+}
+
+function updateStageIndicators(activeIndexes, currentIndex, options = {}) {
+  const { resetComplete = false } = options;
+  const activeSet = new Set(activeIndexes || []);
+
   refs.stageList.forEach((item, index) => {
-    item.classList.remove("is-complete");
-    item.classList.toggle("is-active", index === 0);
+    if (resetComplete) {
+      item.classList.remove("is-complete");
+    } else if (currentIndex !== null && currentIndex !== undefined) {
+      item.classList.toggle("is-complete", index < currentIndex);
+    }
+    item.classList.toggle("is-active", activeSet.has(index));
+  });
+
+  refs.runtimeStageItems.forEach((item, index) => {
+    if (resetComplete) {
+      item.classList.remove("is-complete");
+    } else if (currentIndex !== null && currentIndex !== undefined) {
+      item.classList.toggle("is-complete", index < currentIndex);
+    }
+    item.classList.toggle("is-active", activeSet.has(index));
   });
 }
 
@@ -1155,6 +1425,66 @@ function dedupeUploads(items) {
     seen.add(key);
     return true;
   });
+}
+
+function buildRecommendationsCsv(payload) {
+  const header = [
+    "exported_at",
+    "engine",
+    "mode",
+    "lens",
+    "source_name",
+    "source_descriptor",
+    "recommendation_id",
+    "title",
+    "origin",
+    "score",
+    "similarity",
+    "bridge",
+    "novelty",
+    "confidence",
+    "axis",
+    "reason",
+  ];
+
+  const rows = payload.recommendations.map((item) => [
+    payload.exported_at,
+    payload.engine,
+    payload.mode,
+    payload.lens,
+    payload.source_track.name || "",
+    payload.source_track.descriptor || "",
+    item.id,
+    item.title,
+    item.origin,
+    item.score,
+    item.similarity,
+    item.bridge,
+    item.novelty,
+    item.confidence,
+    item.axis,
+    item.reason,
+  ]);
+
+  return [header, ...rows]
+    .map((row) => row.map(csvCell).join(","))
+    .join("\n");
+}
+
+function csvCell(value) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function averageRating(items) {
