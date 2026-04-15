@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import ast
 import csv
 import hashlib
 import json
@@ -15,6 +16,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+import numpy as np
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
@@ -48,6 +50,7 @@ def create_prototype_router(storage: Storage) -> APIRouter:
             upload_id=req.upload_id,
             mode=req.mode,
             lens=req.lens,
+            engine=req.engine,
             top_k=req.top_k,
         )
 
@@ -89,7 +92,13 @@ class PrototypeService:
         self.prototype_dir = storage.ensure_dir("prototype")
         self.upload_dir = storage.ensure_dir("prototype/uploads")
         self.db_path = storage.resolve_rel("prototype/prototype.sqlite3")
-        self.catalog_path = storage.resolve_rel("public/research_dataset_v4/main/metadata_release.csv")
+        self.catalog_path, self.embedding_path, self.catalog_source = resolve_catalog_sources(storage)
+        self.catalog_vector_dim = 768
+        self._embedding_lookup = load_embedding_lookup(self.embedding_path)
+        if self._embedding_lookup:
+            first_vector = next(iter(self._embedding_lookup.values()))
+            if first_vector:
+                self.catalog_vector_dim = len(first_vector)
         self._ensure_db()
         self.catalog = self._load_catalog(limit=84)
 
@@ -100,7 +109,11 @@ class PrototypeService:
             "feedback": self._recent_feedback(limit=8),
             "stats": self._stats(),
             "catalog_size": len(self.catalog),
+            "catalog_source": self.catalog_source,
+            "catalog_vector_dim": self.catalog_vector_dim,
+            "catalog_origins": list(dict.fromkeys(item["origin"] for item in self.catalog))[:10],
             "provider": self._provider_mode(),
+            "llm_provider": self._llm_provider_mode(),
             "sample_track": {
                 "id": sample_track["id"],
                 "title": sample_track["title"],
@@ -197,7 +210,7 @@ class PrototypeService:
             "message": "音频已上传，可以开始生成嵌入与推荐结果。",
         }
 
-    def analyze_upload(self, upload_id: str, mode: str, lens: str, top_k: int) -> dict[str, Any]:
+    def analyze_upload(self, upload_id: str, mode: str, lens: str, engine: str, top_k: int) -> dict[str, Any]:
         upload = self._get_upload(upload_id)
         if upload is None:
             raise HTTPException(status_code=404, detail="upload not found")
@@ -205,12 +218,21 @@ class PrototypeService:
         audio_path = self.storage.resolve_rel(upload["stored_relpath"])
         audio_bytes = audio_path.read_bytes()
         embedding_result = self._build_embedding(audio_bytes, upload["original_name"], upload["descriptor"])
-        recommendations = self._recommend(
+        base_recommendations = self._recommend(
             source_name=upload["original_name"],
             source_descriptor=upload["descriptor"],
             source_embedding=embedding_result["vector"],
             mode=mode,
             lens=lens,
+            top_k=max(top_k, 8),
+        )
+        recommendations, engine_warning = self._rerank_recommendations(
+            engine=engine,
+            upload_name=upload["original_name"],
+            upload_descriptor=upload["descriptor"],
+            mode=mode,
+            lens=lens,
+            recommendations=base_recommendations,
             top_k=top_k,
         )
         top_recommendation = recommendations[0]
@@ -249,11 +271,13 @@ class PrototypeService:
                 "id": analysis_id,
                 "mode": mode,
                 "lens": lens,
+                "engine": engine,
                 "embedding_dim": embedding_result["reported_dim"],
                 "bridge_score": top_recommendation["bridge"],
                 "source_bpm": source_bpm,
                 "provider": embedding_result["provider"],
                 "provider_warning": embedding_result.get("warning"),
+                "engine_warning": engine_warning,
             },
             "upload": {
                 "id": upload["id"],
@@ -331,52 +355,54 @@ class PrototypeService:
         return path
 
     def _load_catalog(self, limit: int) -> list[dict[str, Any]]:
-        if not self.catalog_path.exists():
-            return build_fallback_catalog()
+        if not self.catalog_path or not self.catalog_path.exists() or not self._embedding_lookup:
+            return build_fallback_catalog(self.catalog_vector_dim)
 
         selected: list[dict[str, Any]] = []
         per_culture: dict[str, int] = {}
         with self.catalog_path.open("r", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
             for row in reader:
+                track_id = (row.get("track_id") or "").strip()
                 audio_path = (row.get("audio_path") or "").strip()
                 culture = (row.get("culture") or "").strip()
-                if not audio_path or not culture:
+                if not track_id or not audio_path or not culture:
                     continue
                 if row.get("dedup_keep") not in {"1", "", None}:
-                    continue
-                path_obj = Path(audio_path)
-                if not path_obj.exists():
                     continue
                 if per_culture.get(culture, 0) >= 12:
                     continue
 
-                title = humanize_title(
-                    row.get("title")
-                    or row.get("notes")
-                    or row.get("substyle")
-                    or row.get("track_id")
-                    or "Untitled"
-                )
+                path_obj = Path(audio_path)
+                if not path_obj.exists():
+                    continue
+                vector = self._embedding_lookup.get(track_id)
+                if not vector:
+                    continue
+
                 descriptor = build_catalog_descriptor(row)
                 item = {
-                    "id": row["track_id"],
-                    "title": title,
-                    "origin": format_origin_label(culture, row.get("region") or culture),
+                    "id": track_id,
+                    "title": build_catalog_title(row),
+                    "origin": format_origin_label(culture, row.get("region") or row.get("source_dataset") or culture),
                     "culture": culture,
-                    "artist": humanize_title(row.get("artist") or "未知录音者"),
+                    "artist": humanize_title(
+                        first_metadata_term(row, "artist")
+                        or first_metadata_term(row, "source_dataset")
+                        or format_origin_label(culture, culture)
+                    ),
                     "audio_path": audio_path,
                     "tags": build_catalog_tags(row),
                     "descriptor": descriptor,
-                    "vector": deterministic_vector(f"{row['track_id']}|{descriptor}|{culture}", 96),
-                    "bpm": 72 + int(seeded_value(hash_string(row["track_id"])) * 54),
+                    "vector": vector,
+                    "bpm": 72 + int(seeded_value(hash_string(track_id)) * 54),
                 }
                 selected.append(item)
                 per_culture[culture] = per_culture.get(culture, 0) + 1
                 if len(selected) >= limit:
                     break
 
-        return selected or build_fallback_catalog()
+        return selected or build_fallback_catalog(self.catalog_vector_dim)
 
     def _recommend(
         self,
@@ -438,26 +464,73 @@ class PrototypeService:
                 break
         return picked if picked else scored[:top_k]
 
+    def _rerank_recommendations(
+        self,
+        engine: str,
+        upload_name: str,
+        upload_descriptor: str,
+        mode: str,
+        lens: str,
+        recommendations: list[dict[str, Any]],
+        top_k: int,
+    ) -> tuple[list[dict[str, Any]], str | None]:
+        if engine != "llm":
+            return recommendations[:top_k], None
+
+        provider_url = os.environ.get("ECHO_LLM_RECOMMENDER_URL")
+        api_key = os.environ.get("ECHO_LLM_RECOMMENDER_API_KEY")
+        if not provider_url:
+            return recommendations[:top_k], "外部大模型推荐接口尚未配置，已自动回退到 Echo 引擎。"
+
+        try:
+            reranked = request_external_llm_recommendations(
+                provider_url=provider_url,
+                api_key=api_key,
+                upload_name=upload_name,
+                upload_descriptor=upload_descriptor,
+                mode=mode,
+                lens=lens,
+                recommendations=recommendations[:12],
+                top_k=top_k,
+            )
+        except RuntimeError as exc:
+            return recommendations[:top_k], str(exc)
+        merged = reranked[:]
+        used_ids = {item["id"] for item in merged}
+        for item in recommendations:
+            if item["id"] in used_ids:
+                continue
+            merged.append(item)
+            if len(merged) >= top_k:
+                break
+        return merged[:top_k], None
+
     def _build_embedding(self, audio_bytes: bytes, filename: str, descriptor: str) -> dict[str, Any]:
         provider_url = os.environ.get("ECHO_EMBEDDING_API_URL")
         api_key = os.environ.get("ECHO_EMBEDDING_API_KEY")
         if provider_url:
             try:
-                return request_external_embedding(
+                result = request_external_embedding(
                     provider_url=provider_url,
                     api_key=api_key,
                     filename=filename,
                     descriptor=descriptor,
                     audio_bytes=audio_bytes,
                 )
+                result["vector"] = align_vector_dim(result["vector"], self.catalog_vector_dim)
+                result["reported_dim"] = self.catalog_vector_dim
+                return result
             except RuntimeError as exc:
-                local = local_embedding(audio_bytes, filename, descriptor)
+                local = local_embedding(audio_bytes, filename, descriptor, self.catalog_vector_dim)
                 local["warning"] = str(exc)
                 return local
-        return local_embedding(audio_bytes, filename, descriptor)
+        return local_embedding(audio_bytes, filename, descriptor, self.catalog_vector_dim)
 
     def _provider_mode(self) -> str:
         return "external-configured" if os.environ.get("ECHO_EMBEDDING_API_URL") else "local-fallback"
+
+    def _llm_provider_mode(self) -> str:
+        return "external-configured" if os.environ.get("ECHO_LLM_RECOMMENDER_URL") else "local-fallback"
 
     def _stats(self) -> dict[str, Any]:
         with self._connect() as conn:
@@ -599,6 +672,58 @@ class PrototypeService:
         return conn
 
 
+def resolve_catalog_sources(storage: Storage) -> tuple[Path | None, Path | None, str]:
+    candidates = [
+        (
+            "public/research_dataset_v2/metadata_v2_main_clean.csv",
+            "public/research_dataset_v2/tracks_culturemert_v2_main.npz",
+            "research_dataset_v2_clean",
+        ),
+        (
+            "public/research_dataset_v2/metadata_v2_main.csv",
+            "public/research_dataset_v2/tracks_culturemert_v2_main.npz",
+            "research_dataset_v2",
+        ),
+        (
+            "public/research_dataset_v1/metadata_merged.csv",
+            "public/research_dataset_v1/tracks.npz",
+            "research_dataset_v1",
+        ),
+        (
+            "public/research_dataset_v4/main/metadata_release.csv",
+            "public/research_dataset_v4/main/tracks_release.npz",
+            "research_dataset_v4",
+        ),
+    ]
+
+    for metadata_rel, embedding_rel, source_name in candidates:
+        metadata_path = storage.resolve_rel(metadata_rel)
+        embedding_path = storage.resolve_rel(embedding_rel)
+        if metadata_path.exists() and embedding_path.exists():
+            return metadata_path, embedding_path, source_name
+
+    return None, None, "fallback-demo"
+
+
+def load_embedding_lookup(npz_path: Path | None) -> dict[str, list[float]]:
+    if npz_path is None or not npz_path.exists():
+        return {}
+
+    data = np.load(npz_path, allow_pickle=True)
+    track_ids = data.get("track_id")
+    embeddings = data.get("embedding")
+    if track_ids is None or embeddings is None:
+        return {}
+
+    lookup: dict[str, list[float]] = {}
+    for track_id, vector in zip(track_ids, embeddings):
+        key = str(track_id).strip()
+        if not key:
+            continue
+        lookup[key] = align_vector_dim(np.asarray(vector, dtype=float).tolist(), int(len(vector)))
+    return lookup
+
+
 def request_external_embedding(
     provider_url: str,
     api_key: str | None,
@@ -639,12 +764,74 @@ def request_external_embedding(
     }
 
 
-def local_embedding(audio_bytes: bytes, filename: str, descriptor: str) -> dict[str, Any]:
+def request_external_llm_recommendations(
+    provider_url: str,
+    api_key: str | None,
+    upload_name: str,
+    upload_descriptor: str,
+    mode: str,
+    lens: str,
+    recommendations: list[dict[str, Any]],
+    top_k: int,
+) -> list[dict[str, Any]]:
+    payload = {
+        "upload_name": upload_name,
+        "upload_descriptor": upload_descriptor,
+        "mode": mode,
+        "lens": lens,
+        "top_k": top_k,
+        "candidates": recommendations,
+    }
+    request = Request(
+        provider_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    if api_key:
+        request.add_header("Authorization", f"Bearer {api_key}")
+
+    try:
+        with urlopen(request, timeout=35) as response:
+            content = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raise RuntimeError(f"外部大模型推荐接口返回错误：HTTP {exc.code}，已回退到 Echo 引擎。") from exc
+    except URLError as exc:
+        raise RuntimeError(f"无法连接外部大模型推荐接口：{exc.reason}，已回退到 Echo 引擎。") from exc
+
+    items = content.get("recommendations")
+    if not isinstance(items, list) or not items:
+        raise RuntimeError("外部大模型推荐接口没有返回合法结果，已回退到 Echo 引擎。")
+
+    by_id = {item["id"]: item for item in recommendations}
+    reranked: list[dict[str, Any]] = []
+    for external in items:
+        item_id = external.get("id")
+        if item_id not in by_id:
+            continue
+        merged = dict(by_id[item_id])
+        if isinstance(external.get("reason"), str) and external["reason"].strip():
+            merged["reason"] = external["reason"].strip()
+        if isinstance(external.get("summary"), str) and external["summary"].strip():
+            merged["summary"] = external["summary"].strip()
+        if external.get("score") is not None:
+            try:
+                merged["score"] = int(external["score"])
+            except (TypeError, ValueError):
+                pass
+        reranked.append(merged)
+
+    if not reranked:
+        raise RuntimeError("外部大模型推荐接口没有返回可匹配的候选结果，已回退到 Echo 引擎。")
+    return reranked
+
+
+def local_embedding(audio_bytes: bytes, filename: str, descriptor: str, dim: int) -> dict[str, Any]:
     seed = hash_string(f"{filename}|{descriptor}|{hashlib.sha1(audio_bytes).hexdigest()}")
     return {
         "provider": "local-fallback",
-        "reported_dim": 1024,
-        "vector": deterministic_vector(f"{seed}|{descriptor}", 96),
+        "reported_dim": dim,
+        "vector": deterministic_vector(f"{seed}|{descriptor}", dim),
     }
 
 
@@ -655,6 +842,19 @@ def deterministic_vector(text: str, dim: int) -> list[float]:
         digest = hashlib.sha1(token).digest()
         value = int.from_bytes(digest[:4], "big") / 0xFFFFFFFF
         values.append((value * 2.0) - 1.0)
+    norm = math.sqrt(sum(value * value for value in values)) or 1.0
+    return [value / norm for value in values]
+
+
+def align_vector_dim(vector: list[float], target_dim: int) -> list[float]:
+    values = [float(value) for value in vector]
+    if target_dim <= 0:
+        return values
+    if len(values) > target_dim:
+        values = values[:target_dim]
+    elif len(values) < target_dim:
+        values = values + ([0.0] * (target_dim - len(values)))
+
     norm = math.sqrt(sum(value * value for value in values)) or 1.0
     return [value / norm for value in values]
 
@@ -728,31 +928,58 @@ def guess_descriptor(filename: str) -> str:
     return "适合进入嵌入流程的本地音乐输入"
 
 
+def parse_metadata_terms(value: Any) -> list[str]:
+    raw = str(value or "").strip()
+    if not raw:
+        return []
+
+    if raw.startswith("[") and raw.endswith("]"):
+        try:
+            parsed = ast.literal_eval(raw)
+        except (ValueError, SyntaxError):
+            parsed = None
+        if isinstance(parsed, (list, tuple, set)):
+            return [humanize_title(str(item)) for item in parsed if str(item).strip()]
+
+    return [humanize_title(raw)]
+
+
+def first_metadata_term(row: dict[str, Any], key: str) -> str:
+    values = parse_metadata_terms(row.get(key) or "")
+    return values[0] if values else ""
+
+
+def build_catalog_title(row: dict[str, Any]) -> str:
+    for key in ("title", "cname", "instrument", "label"):
+        value = first_metadata_term(row, key)
+        if value and value != "未知":
+            return value
+    return humanize_title(row.get("track_id") or "Untitled")
+
+
 def build_catalog_descriptor(row: dict[str, Any]) -> str:
     parts = [
-        humanize_title(row.get("substyle") or ""),
-        humanize_title(row.get("instrument_family") or ""),
-        humanize_title(row.get("coarse_label") or ""),
-        humanize_title(row.get("region") or ""),
-        humanize_title(row.get("notes") or ""),
+        first_metadata_term(row, "title"),
+        first_metadata_term(row, "cname"),
+        first_metadata_term(row, "instrument"),
+        first_metadata_term(row, "label"),
+        first_metadata_term(row, "mood_theme"),
+        first_metadata_term(row, "source_dataset"),
     ]
     clean = [part for part in parts if part and part != "未知"]
     return " / ".join(clean[:4]) or "跨文化音乐候选条目"
 
 
 def build_catalog_tags(row: dict[str, Any]) -> list[str]:
-    tags = [
-        translate_token(row.get("instrument_family") or ""),
-        translate_token(row.get("substyle") or ""),
-        translate_token(row.get("coarse_label") or ""),
-        translate_token(row.get("language") or ""),
-        translate_token(row.get("era") or ""),
-    ]
+    tags: list[str] = []
+    for key in ("title", "cname", "instrument", "label", "mood_theme", "language", "culture"):
+        for term in parse_metadata_terms(row.get(key) or ""):
+            tags.append(translate_token(term))
     output: list[str] = []
     for tag in tags:
         if tag and tag not in output:
             output.append(tag)
-    return output or ["文化候选"]
+    return output[:6] or ["文化候选"]
 
 
 def lens_bonus(item: dict[str, Any], lens: str) -> float:
@@ -808,6 +1035,9 @@ def format_origin_label(culture: str, region: str) -> str:
         "west": "西方",
         "europe": "欧洲",
         "georgia": "格鲁吉亚",
+        "germany": "德国",
+        "anglo_pop": "英语流行",
+        "kazakhstan": "哈萨克斯坦",
     }
     return culture_map.get(culture.lower(), humanize_title(region) or humanize_title(culture))
 
@@ -826,11 +1056,17 @@ def translate_token(value: str) -> str:
         "traditional_vocal": "传统声乐",
         "turkish makam": "土耳其马卡姆",
         "makam": "马卡姆",
+        "china": "中国",
+        "india": "印度",
+        "germany": "德国",
+        "kazakhstan": "哈萨克斯坦",
+        "anglo pop": "英语流行",
+        "anglo_pop": "英语流行",
     }
     return mapping.get(token, humanize_title(value))
 
 
-def build_fallback_catalog() -> list[dict[str, Any]]:
+def build_fallback_catalog(dim: int) -> list[dict[str, Any]]:
     seeds = [
         ("fallback_china", "京剧片段", "中国", "声腔纹理 / 戏曲装饰音", ["人声", "传统声乐", "戏曲"], 92),
         ("fallback_turkey", "安纳托利亚鲁特琴", "土耳其", "拨弦音色 / 马卡姆旋律", ["拨弦", "马卡姆", "旋律"], 104),
@@ -848,7 +1084,7 @@ def build_fallback_catalog() -> list[dict[str, Any]]:
                 "audio_path": "",
                 "tags": tags,
                 "descriptor": descriptor,
-                "vector": deterministic_vector(f"{track_id}|{descriptor}|{origin}", 96),
+                "vector": deterministic_vector(f"{track_id}|{descriptor}|{origin}", dim),
                 "bpm": bpm,
             }
         )

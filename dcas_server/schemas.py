@@ -130,6 +130,7 @@ class PrototypeAnalyzeRequest(BaseModel):
     upload_id: str
     mode: str = Field(default="bridge")
     lens: str = Field(default="rhythm")
+    engine: str = Field(default="echo")
     top_k: int = Field(default=3, ge=1, le=6)
 
 
