@@ -15,7 +15,7 @@
 | OT/Sinkhorn 跨文化推荐 | 已实现 | `dcas/ot/sinkhorn.py`, `dcas/recommender.py` | 2026-02-27 已修复候选分数退化问题（基于平均传输代价排序）；2026-03-19 已在 `CultureMERT` 主线下推进到 `DCAS + calibrated closed-set rerank`。 |
 | PAL 不确定性选样 | 已实现 | `dcas/pal/uncertainty.py`, `dcas/cli/pal_loop.py` | 可表述为“实现了 entropy-based PAL 原型”。 |
 | 专家成对约束回灌训练 | 已实现（原型） | `dcas/pal/constraints.py`, `dcas/cli/train.py`, `dcas/pipelines.py` | 可表述为“支持 pairwise constraints 的训练增强”。 |
-| 全栈交互流程（数据/训练/推荐/PAL） | 已实现 | `dcas_server/app.py`, `web/src/App.tsx` | 可表述为“提供实验原型系统，不等同生产部署”。 |
+| 全栈交互流程（数据/训练/推荐/PAL） | 已实现 | `dcas_server/app.py`, `web_prototype/app.js` | 可表述为“提供实验原型系统，不等同生产部署”。 |
 | CultureMERT 特征提取接入 | 已实现（embedding 级） | `dcas/embeddings/culturemert.py`, `dcas/scripts/build_tracks_from_audio.py`, `dcas_server/app.py` | 可写“已支持 CultureMERT embedding 构建数据集”；不可写“已完成持续预训练(CPT)”。 |
 | 分层 VAE + TC（严格 FactorVAE 级别） | 部分实现 | `dcas/models/dcas_vae.py`, `dcas/models/losses.py` | 当前为 KL + 协方差去相关近似，不应宣称“完整 TC 实现”。 |
 | 风格迁移生成模块 | 部分实现（embedding + 波形基线） | `dcas/style_transfer.py`, `dcas/cli/style_transfer.py`, `dcas/waveform_style_transfer.py`, `dcas/cli/style_transfer_wave.py`, `dcas_server/app.py` | 已实现 embedding 反事实与波形基线（频谱统计迁移）；不可写成“高保真可训练生成器已完成”。 |
@@ -56,5 +56,5 @@
 
 ## 与路线图衔接
 后续实现优先级请参考：
-- `NEXT_STEPS_ROADMAP.md`
+- `docs/workspace_index/NEXT_STEPS_ROADMAP_2026-02-27.md`
 - `docs/technical_notes/point1_ot_ranking_end.md`

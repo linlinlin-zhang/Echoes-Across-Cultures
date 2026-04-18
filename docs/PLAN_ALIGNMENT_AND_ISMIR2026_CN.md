@@ -6,7 +6,7 @@
 
 本文件回答四个问题：
 
-1. 最初写在 `声音.txt` 里的研究计划，现在完成到了哪一步。
+1. 最初写在 `archive/reference_sources/original_idea_notes/声音.txt` 里的研究计划，现在完成到了哪一步。
 2. 哪些模块已经落地，哪些还只是概念、接口或部分实现。
 3. 当前项目有没有偏离最初计划，如果有，偏离在哪里、偏离程度多大。
 4. 如果目标是投稿 ISMIR 2026，现在应该如何收缩题目、补实验、调整论文叙事。
@@ -51,7 +51,7 @@
 
 ### 4.1 理论框架：DDRL / 三因子潜变量
 
-原计划在 `声音.txt` 中最核心的变化，是废弃“五维启发式”，改为三因子潜变量 `zc/zs/za` 的深度解纠缠框架。
+原计划在 `archive/reference_sources/original_idea_notes/声音.txt` 中最核心的变化，是废弃“五维启发式”，改为三因子潜变量 `zc/zs/za` 的深度解纠缠框架。
 
 当前状态：
 
@@ -663,12 +663,12 @@
 
 仓库内部主要参考：
 
-- `声音.txt`
+- `archive/reference_sources/original_idea_notes/声音.txt`
 - `README.md`
 - `docs/PAPER_CLAIM_ALIGNMENT.md`
 - `docs/ROUTE_A_PHASE3_RUNBOOK.md`
 - `docs/technical_notes/point2_missing_parts_end.md`
-- `NEXT_STEPS_ROADMAP.md`
+- `docs/workspace_index/NEXT_STEPS_ROADMAP_2026-02-27.md`
 - `reports/routeA_recommender_compare_phase4_cn.md`
 - `reports/routeA_disentanglement_sharedfactors_compare_phase4_cn.md`
 - `reports/eval_suite_phase4_v2/eval_suite_summary.json`

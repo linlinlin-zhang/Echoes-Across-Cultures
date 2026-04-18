@@ -144,4 +144,4 @@
 
 ---
 
-备注：本路线图默认基于当前仓库结构（`dcas/`、`dcas_server/`、`web/`）演进，不做大规模重构。
+备注：本路线图最初默认基于旧仓库结构（`dcas/`、`dcas_server/`、`web/`）演进；当前整理后请以 `dcas/`、`dcas_server/`、`web_prototype/` 和 `PROJECT_SPINE_2026-04-18_CN.md` 为准。
