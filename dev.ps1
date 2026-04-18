@@ -1,5 +1,6 @@
 Set-Location $PSScriptRoot
 
 Start-Process -FilePath "python" -ArgumentList "-m", "dcas_server" -WorkingDirectory $PSScriptRoot
-Start-Process -FilePath "npm" -ArgumentList "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173" -WorkingDirectory (Join-Path $PSScriptRoot "web")
-
+Write-Host "DCAS API started."
+Write-Host "Current prototype frontend is the static web_prototype/ directory."
+Write-Host "The retired web/ development server is no longer launched by this script."
