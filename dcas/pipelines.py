@@ -16,6 +16,7 @@ from dcas.data.torch_dataset import CultureVocab, SourceVocab, TrackDataset, mak
 from dcas.models.dcas_vae import DCASConfig, DCASModel
 from dcas.pal.constraints import PairwiseConstraint, load_constraints
 from dcas.pal.uncertainty import rank_by_uncertainty
+from dcas.pal.wording import PAL_TASK_QUESTION_ZH
 from dcas.recommender import Recommendation, recommend_ot
 from dcas.scripts.build_tracks_from_audio import build_tracks_from_audio
 from dcas.scripts.make_toy_data import generate_toy_data
@@ -144,6 +145,8 @@ def train_model(
     tracks_path: str | Path,
     out_path: str | Path,
     constraints_path: str | Path | None = None,
+    init_checkpoint_path: str | Path | None = None,
+    strict_init: bool = True,
     epochs: int = 10,
     batch_size: int = 256,
     lr: float = 2e-3,
@@ -218,6 +221,18 @@ def train_model(
         shared_encoder=bool(shared_encoder),
     )
     model = DCASModel(cfg).to(device)
+    warm_start_info: dict[str, object] | None = None
+    if init_checkpoint_path is not None:
+        init_model, init_vocab = load_checkpoint(str(init_checkpoint_path), map_location=str(device))
+        if list(init_vocab.id_to_culture) != list(vocab.id_to_culture):
+            raise ValueError("warm-start checkpoint culture vocabulary does not match the current tracks")
+        load_result = model.load_state_dict(init_model.state_dict(), strict=bool(strict_init))
+        warm_start_info = {
+            "init_checkpoint_path": str(init_checkpoint_path),
+            "strict_init": bool(strict_init),
+            "missing_keys": list(getattr(load_result, "missing_keys", [])),
+            "unexpected_keys": list(getattr(load_result, "unexpected_keys", [])),
+        }
     opt = torch.optim.AdamW(model.parameters(), lr=float(lr))
 
     constraints: list[PairwiseConstraint] | None = None
@@ -392,6 +407,7 @@ def train_model(
         "cultures": vocab.id_to_culture,
         "n_constraints": int(len(constraints)) if constraints is not None else 0,
         "n_rank_examples": int(len(rank_examples)) if rank_examples is not None else 0,
+        "warm_start": warm_start_info,
     }
 
 
@@ -540,7 +556,7 @@ def pal_tasks(
                 "uncertainty": float(score),
                 "uncertainty_method": str(uncertainty_method),
                 "compare_to": str(tracks.track_id[nn]),
-                "question": "Do these two tracks feel similar in affective function or listening intent? If yes or no, write one short rationale.",
+                "question": PAL_TASK_QUESTION_ZH,
             }
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 

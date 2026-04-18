@@ -5,6 +5,8 @@ import csv
 import json
 from pathlib import Path
 
+from dcas.pal.wording import PAL_TASK_QUESTION_ZH
+
 
 def _load_metadata(metadata_csv: str) -> dict[str, dict[str, str]]:
     rows: dict[str, dict[str, str]] = {}
@@ -49,7 +51,7 @@ def export_pal_annotation_sheet(tasks_path: str, metadata_csv: str, out_csv: str
                     "source_url_b": mb.get("source_url", ""),
                     "uncertainty": obj.get("uncertainty", ""),
                     "uncertainty_method": obj.get("uncertainty_method", ""),
-                    "question": obj.get("question", ""),
+                    "question": PAL_TASK_QUESTION_ZH,
                     "similar": "",
                     "rationale": "",
                     "annotator": "",

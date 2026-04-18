@@ -8,6 +8,10 @@ This file is the single entry point for mapping each core experiment to its:
 - result directory
 - intended paper usage
 
+## Workspace Orientation
+
+- `docs/workspace_index/PROJECT_SPINE_2026-04-18_CN.md`: current high-level map of the repository, including the paper mainline, PAL line, prototype line, and historical residue.
+
 ## Cross-Cultural Main Line
 
 | tag | dataset | embedding | config | result | paper usage |
@@ -53,11 +57,15 @@ This file is the single entry point for mapping each core experiment to its:
 |---|---|---|
 | real PAL workflow | `docs/research_dataset_v3/V3_REAL_PAL_WORKFLOW_CN.md` | real pilot procedure |
 | V4 real PAL workflow | `docs/research_dataset_v4/V4_REAL_PAL_WORKFLOW_2026-03-21_CN.md` | current V4 CultureMERT human PAL runbook |
+| V4 PAL migration log | `docs/research_dataset_v4/V4_PAL_MIGRATION_AND_ALIGNMENT_2026-04-18_CN.md` | records how `v4_main_annotation` human PAL was aligned to the current V4 main benchmark line |
 | phase3 PAL runner | `dcas/scripts/run_phase3_pal.py` | compare before/after PAL rounds |
 | PAL platform runner | `dcas/scripts/run_pal_platform.py` | annotation workflow |
 | V4 real PAL bundle prep | `dcas/scripts/prepare_real_pal_bundle.py` | generate candidate pool, pilot sheet, and round-1 sheet |
 | V4 PAL prep config | `configs/pal/pal_v4_main_culturemert_prepare.run.json` | build current real PAL bundle |
 | V4 PAL real config | `configs/pal/pal_v4_main_culturemert_real.run.json` | run baseline vs real PAL after annotation returns |
+| V4 PAL migrated stage3 config | `configs/pal/pal_v4_main_culturemert_real_from_v4_main_annotation_stage3.run.json` | benchmark-aligned warm-start real PAL run using `workspace_assets/pal_exports/pal_v4_main_annotation_human_export_200pairs.csv` |
+| V4 PAL migrated calibration sweep | `configs/benchmark/recommender_benchmark_v4_main_culturemert_real_pal_stage3_calibration_sweep.run.json` | searches calibrated rerank operating points for the migrated real PAL checkpoint |
+| V4 PAL ultralight focus benchmark | `configs/benchmark/recommender_benchmark_v4_main_culturemert_real_pal_ultralight_stage3_focus.run.json` | checks whether extra light PAL fine-tuning improves over the best migrated PAL operating points |
 | annotation sheet export | `dcas/scripts/export_pal_annotation_sheet.py` | human labeling |
 
 ## Current Gaps

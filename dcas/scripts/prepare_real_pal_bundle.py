@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from dcas.pal.wording import PAL_README_REMINDER_EN
 from dcas.pipelines import pal_tasks
 from dcas.scripts.export_pal_annotation_sheet import export_pal_annotation_sheet
 from dcas.scripts.select_pal_tasks_stratified import select_pal_tasks_stratified
@@ -45,7 +46,7 @@ def _write_readme(path: Path, manifest: dict[str, Any]) -> None:
         f"- manifest: {path.parent / 'bundle_manifest.json'}",
         "",
         "Annotation reminder:",
-        "- Judge whether the pair feels similar in affective function or listening intent.",
+        f"- {PAL_README_REMINDER_EN}",
         "- Do not decide directly from culture labels, language names, or source names.",
         "- Fill `similar` with yes/no (or 1/0) and add one short rationale.",
         "- Leave difficult cases blank and explain the reason in `notes`.",

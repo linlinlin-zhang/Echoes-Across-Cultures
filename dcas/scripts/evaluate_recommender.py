@@ -12,7 +12,7 @@ import torch
 
 from dcas.data.interactions import load_interactions
 from dcas.data.npz_tracks import load_tracks
-from dcas.recommender import recommend_knn, recommend_ot
+from dcas.recommender import recommend_knn, recommend_knn_calibrated, recommend_ot, recommend_ot_calibrated
 from dcas.serialization import load_checkpoint
 
 
@@ -90,6 +90,12 @@ def evaluate_recommender(
     k: int = 20,
     epsilon: float = 0.1,
     iters: int = 200,
+    relevance_weight: float = 0.62,
+    novelty_weight: float = 0.12,
+    target_affinity_weight: float = 0.14,
+    minority_weight: float = 0.08,
+    source_weight: float = 0.04,
+    diversity_lambda: float = 0.03,
     prefer_cuda: bool = False,
     bootstrap_samples: int = 2000,
     bootstrap_seed: int = 42,
@@ -112,8 +118,8 @@ def evaluate_recommender(
     rows: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
     method = str(method).strip().lower()
-    if method not in {"ot", "knn"}:
-        raise ValueError("method must be one of: ot, knn")
+    if method not in {"ot", "knn", "ot_calibrated", "knn_calibrated"}:
+        raise ValueError("method must be one of: ot, knn, ot_calibrated, knn_calibrated")
     optional_metric_keys = [
         "cultural_calibration_kl_legacy",
         "target_culture_prob_mean",
@@ -134,7 +140,7 @@ def evaluate_recommender(
                         epsilon=float(epsilon),
                         iters=int(iters),
                     )
-                else:
+                elif method == "knn":
                     recs, metrics = recommend_knn(
                         model=model,
                         tracks=tracks,
@@ -143,6 +149,40 @@ def evaluate_recommender(
                         target_culture=c,
                         k=int(k),
                         device=device,
+                    )
+                elif method == "ot_calibrated":
+                    recs, metrics = recommend_ot_calibrated(
+                        model=model,
+                        tracks=tracks,
+                        interactions=interactions,
+                        user_id=u,
+                        target_culture=c,
+                        k=int(k),
+                        device=device,
+                        epsilon=float(epsilon),
+                        iters=int(iters),
+                        relevance_weight=float(relevance_weight),
+                        novelty_weight=float(novelty_weight),
+                        target_affinity_weight=float(target_affinity_weight),
+                        minority_weight=float(minority_weight),
+                        source_weight=float(source_weight),
+                        diversity_lambda=float(diversity_lambda),
+                    )
+                else:
+                    recs, metrics = recommend_knn_calibrated(
+                        model=model,
+                        tracks=tracks,
+                        interactions=interactions,
+                        user_id=u,
+                        target_culture=c,
+                        k=int(k),
+                        device=device,
+                        relevance_weight=float(relevance_weight),
+                        novelty_weight=float(novelty_weight),
+                        target_affinity_weight=float(target_affinity_weight),
+                        minority_weight=float(minority_weight),
+                        source_weight=float(source_weight),
+                        diversity_lambda=float(diversity_lambda),
                     )
                 row = {
                     "user_id": u,
@@ -255,6 +295,17 @@ def evaluate_recommender(
             "minority_catalog_ratio": float(minority_ratio),
         },
     }
+    if method in {"ot_calibrated", "knn_calibrated"}:
+        result["config"].update(
+            {
+                "relevance_weight": float(relevance_weight),
+                "novelty_weight": float(novelty_weight),
+                "target_affinity_weight": float(target_affinity_weight),
+                "minority_weight": float(minority_weight),
+                "source_weight": float(source_weight),
+                "diversity_lambda": float(diversity_lambda),
+            }
+        )
     if legacy:
         result["summary"]["cultural_calibration_kl_legacy_mean"] = _safe_mean(legacy)
         result["summary"]["cultural_calibration_kl_legacy_std"] = (
@@ -286,10 +337,16 @@ def main() -> None:
     ap.add_argument("--tracks", required=True)
     ap.add_argument("--interactions", required=True)
     ap.add_argument("--out_json", default=None)
-    ap.add_argument("--method", default="ot", choices=["ot", "knn"])
+    ap.add_argument("--method", default="ot", choices=["ot", "knn", "ot_calibrated", "knn_calibrated"])
     ap.add_argument("--k", type=int, default=20)
     ap.add_argument("--epsilon", type=float, default=0.1)
     ap.add_argument("--iters", type=int, default=200)
+    ap.add_argument("--relevance_weight", type=float, default=0.62)
+    ap.add_argument("--novelty_weight", type=float, default=0.12)
+    ap.add_argument("--target_affinity_weight", type=float, default=0.14)
+    ap.add_argument("--minority_weight", type=float, default=0.08)
+    ap.add_argument("--source_weight", type=float, default=0.04)
+    ap.add_argument("--diversity_lambda", type=float, default=0.03)
     ap.add_argument("--bootstrap_samples", type=int, default=2000)
     ap.add_argument("--bootstrap_seed", type=int, default=42)
     ap.add_argument("--minority_quantile", type=float, default=0.25)
@@ -305,6 +362,12 @@ def main() -> None:
         k=int(args.k),
         epsilon=float(args.epsilon),
         iters=int(args.iters),
+        relevance_weight=float(args.relevance_weight),
+        novelty_weight=float(args.novelty_weight),
+        target_affinity_weight=float(args.target_affinity_weight),
+        minority_weight=float(args.minority_weight),
+        source_weight=float(args.source_weight),
+        diversity_lambda=float(args.diversity_lambda),
         bootstrap_samples=int(args.bootstrap_samples),
         bootstrap_seed=int(args.bootstrap_seed),
         minority_quantile=float(args.minority_quantile),

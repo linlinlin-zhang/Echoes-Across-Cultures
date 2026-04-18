@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from dcas.data.npz_tracks import load_tracks
+from dcas.pal.wording import PAL_TASK_QUESTION_ZH
 from dcas.pal.uncertainty import rank_by_uncertainty
 from dcas.serialization import load_checkpoint
 
@@ -45,7 +46,7 @@ def main() -> None:
                 "culture": str(tracks.culture[idx]),
                 "uncertainty": float(score),
                 "compare_to": str(tracks.track_id[nn]),
-                "question": "Do these two tracks feel similar in affective function or listening intent? If yes or no, write one short rationale.",
+                "question": PAL_TASK_QUESTION_ZH,
             }
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 

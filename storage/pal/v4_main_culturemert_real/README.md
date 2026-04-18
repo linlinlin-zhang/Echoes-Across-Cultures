@@ -19,7 +19,7 @@ Generated files:
 - manifest: E:\Desktop\Echo\storage\pal\v4_main_culturemert_real\bundle_manifest.json
 
 Annotation reminder:
-- Judge whether the pair feels similar in affective function or listening intent.
+- Judge whether the pair would fit naturally in the same playlist or a similar listening context.
 - Do not decide directly from culture labels, language names, or source names.
 - Fill `similar` with yes/no (or 1/0) and add one short rationale.
 - Leave difficult cases blank and explain the reason in `notes`.

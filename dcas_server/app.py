@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from dcas.ontology import OntologyStore
@@ -333,11 +334,104 @@ def create_app() -> FastAPI:
         result["path"] = storage.relpath(Path(str(result["path"])))
         return result
 
+    # --- PAL Annotation Web UI endpoints ---
+
+    @app.get("/api/pal/tasks")
+    def get_pal_tasks():
+        """Load enriched PAL tasks JSON."""
+        tasks_path = Path("storage/pal/v4_main_annotation/pal_tasks.json")
+        if not tasks_path.exists():
+            raise HTTPException(status_code=404, detail="PAL tasks not found. Run pal_tasks first.")
+        with open(tasks_path, "r", encoding="utf-8") as f:
+            return JSONResponse(content=json.load(f))
+
+    @app.get("/api/pal/audio")
+    def stream_audio(path: str):
+        """Stream an audio file by absolute or relative path."""
+        p = Path(path)
+        if not p.is_absolute():
+            p = Path("E:/Desktop/Echo") / p
+        if not p.exists() or not p.is_file():
+            raise HTTPException(status_code=404, detail=f"audio not found: {path}")
+        ext = p.suffix.lower()
+        media_type = "audio/mpeg" if ext == ".mp3" else "audio/wav" if ext == ".wav" else "audio/octet-stream"
+        return FileResponse(str(p), media_type=media_type, headers={"Accept-Ranges": "bytes"})
+
+    @app.post("/api/pal/annotate")
+    def save_annotation(ann: dict):
+        """Save a single annotation to JSONL file."""
+        out_dir = Path("storage/pal/v4_main_annotation")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / "annotations.jsonl"
+        record = {
+            "task_id": ann.get("task_id", ""),
+            "track_id_a": ann.get("track_id_a", ""),
+            "track_id_b": ann.get("track_id_b", ""),
+            "judgment": ann.get("judgment", ""),  # "a", "b", or "neither"
+            "rationale": ann.get("rationale", ""),
+            "annotator": ann.get("annotator", "web"),
+            "timestamp": time.time(),
+        }
+        with open(out_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return {"ok": True, "saved": int(out_file.stat().st_size > 0)}
+
+    @app.get("/api/pal/progress")
+    def get_pal_progress():
+        """Return how many annotations have been saved."""
+        out_file = Path("storage/pal/v4_main_annotation/annotations.jsonl")
+        if not out_file.exists():
+            return {"count": 0, "total": 60}
+        with open(out_file, "r", encoding="utf-8") as f:
+            count = sum(1 for line in f if line.strip())
+        return {"count": count, "total": 60}
+
+    @app.post("/api/pal/export")
+    def export_annotations():
+        """Export annotations as CSV for constraint building."""
+        out_file = Path("storage/pal/v4_main_annotation/annotations.jsonl")
+        csv_file = Path("storage/pal/v4_main_annotation/annotated.csv")
+        if not out_file.exists():
+            raise HTTPException(status_code=404, detail="no annotations yet")
+
+        import csv as _csv
+        # Load annotations
+        anns = []
+        with open(out_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    anns.append(json.loads(line))
+
+        # Load tasks for enrichment
+        tasks_map = {}
+        tasks_json = Path("storage/pal/v4_main_annotation/pal_tasks.json")
+        if tasks_json.exists():
+            with open(tasks_json, "r", encoding="utf-8") as f:
+                for t in json.load(f):
+                    tasks_map[(t["track_id_a"], t["track_id_b"])] = t
+
+        with open(csv_file, "w", encoding="utf-8-sig", newline="") as f:
+            writer = _csv.writer(f)
+            writer.writerow(["task_id", "track_id_a", "track_id_b", "judgment", "similar", "rationale", "annotator"])
+            for a in anns:
+                judgment = a.get("judgment", "")
+                similar = "yes" if judgment in ("a", "b") else ("no" if judgment == "neither" else "")
+                writer.writerow([
+                    a["task_id"], a["track_id_a"], a["track_id_b"],
+                    judgment, similar, a.get("rationale", ""), a.get("annotator", ""),
+                ])
+        return {"csv": str(csv_file), "count": len(anns)}
+
     dist = Path("web/dist")
     dist.mkdir(parents=True, exist_ok=True)
     prototype_dir = Path("web_prototype")
     if prototype_dir.exists():
         app.mount("/prototype", StaticFiles(directory=str(prototype_dir), html=True), name="prototype")
+    # PAL annotation UI
+    pal_html = dist / "pal.html"
+    if pal_html.exists():
+        app.mount("/pal", StaticFiles(directory=str(pal_html.parent), html=False), name="pal")
     if (dist / "index.html").exists():
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
     elif prototype_dir.exists():
