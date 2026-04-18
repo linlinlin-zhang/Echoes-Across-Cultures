@@ -1,0 +1,16 @@
+flowchart LR
+  M1["dcas.data.npz_tracks"] --> M2["run_recommender_benchmarks.py"]
+  M3["dcas.pipelines"] --> M4["prepare_real_pal_bundle.py"]
+  M3 --> M5["run_pal_platform.py"]
+  M6["dcas.recommender"] --> M2
+  M7["dcas.embedding_recommenders"] --> M2
+  M8["compare_recommender_runs.py"] --> M2
+  M9["build_research_dataset_v4.py"] --> M10["harmonize_v4_metadata.py"]
+  M9 --> M11["build_tracks_from_audio.py"]
+  M9 --> M12["build_tracks_with_gemini.py"]
+  M9 --> M13["synthesize_interactions.py"]
+  T20["dcas.data.npz_tracks\n(in=18)"]
+  T21["dcas.pipelines\n(in=10)"]
+  T22["dcas.serialization\n(in=8)"]
+  T23["dcas.scripts.compare_recommender_runs\n(in=7)"]
+  T24["dcas.data.interactions\n(in=7)"]

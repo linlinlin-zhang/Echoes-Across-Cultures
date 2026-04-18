@@ -1,0 +1,15 @@
+flowchart LR
+  A["Raw Source Imports\n(import_hf_*, import_europeana_*)"] --> B["Metadata Merge/Harmonize\nmerge_metadata*, harmonize_v4_metadata.py"]
+  B --> C["Embedding Build\nbuild_tracks_from_audio.py / build_tracks_with_gemini.py"]
+  B --> D["Interaction Synthesis\nsynthesize_interactions.py"]
+  C --> E["Dataset Artifacts\nstorage/public/research_dataset_v4/*"]
+  D --> E
+  E --> F["Training\nrun_train_from_json.py"]
+  E --> G["Benchmarking\nrun_recommender_benchmarks.py"]
+  F --> G
+  G --> H["Reports\nreports/benchmarks/*"]
+  E --> I["PAL Packet Prep\nprepare_real_pal_bundle.py"]
+  I --> J["Human Annotation CSV"]
+  J --> K["PAL Constraint Build\nbuild_pal_constraints_from_annotations.py"]
+  K --> L["PAL Retraining\nrun_phase3_pal.py"]
+  L --> H

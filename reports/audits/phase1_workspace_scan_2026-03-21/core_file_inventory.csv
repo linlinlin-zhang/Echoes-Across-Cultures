@@ -1,0 +1,27 @@
+path,exists,tracked,bucket,paper_section,rationale
+dcas/models/dcas_vae.py,true,true,core_method,Method,Main disentanglement / recommendation backbone implementation.
+dcas/recommender.py,true,true,core_method,Method,Core recommendation scoring and evaluation-facing inference entry.
+dcas/embedding_recommenders.py,true,true,baseline_family,Method,"Industrial-style embedding, KNN, cosine, BPR and hybrid recommenders."
+dcas/pipelines.py,true,true,pipeline_orchestration,Method,"Shared wiring between data, training, evaluation, and PAL stages."
+dcas/scripts/build_research_dataset_v4.py,true,true,dataset_pipeline,Dataset,End-to-end V4 dataset build orchestration.
+dcas/scripts/harmonize_v4_metadata.py,true,true,dataset_pipeline,Dataset,Metadata normalization and field alignment for V4.
+dcas/scripts/build_tracks_from_audio.py,true,true,embedding_pipeline,Method,Audio-to-embedding builder for CultureMERT and related backbones.
+dcas/scripts/build_tracks_with_gemini.py,true,true,embedding_pipeline,Method,Gemini embedding extraction pipeline with API/window controls.
+dcas/scripts/synthesize_interactions.py,true,true,dataset_pipeline,Dataset,Synthetic interaction generation used by released benchmark datasets.
+dcas/scripts/run_train_from_json.py,true,true,experiment_runner,Appendix,Reusable training entrypoint driven by JSON configs.
+dcas/scripts/run_recommender_benchmarks.py,true,true,experiment_runner,Experiments,Main benchmark runner used for V3/V4 result matrices.
+dcas/scripts/evaluate_recommender.py,true,true,experiment_runner,Experiments,Computes benchmark metrics and comparison outputs.
+dcas/scripts/prepare_real_pal_bundle.py,true,true,pal_human_loop,Method,Builds the real PAL task packet and candidate pool.
+dcas/scripts/run_phase3_pal.py,true,true,pal_human_loop,Method,Closes the PAL feedback loop from constraints to retraining.
+dcas/scripts/build_pal_constraints_from_annotations.py,true,true,pal_human_loop,Method,Transforms human annotation sheets into PAL constraints.
+configs/dataset/research_dataset_v4_main_from_v3.json,true,true,config_primary,Appendix,Primary V4 main dataset contract.
+configs/dataset/research_dataset_v4_routeA_small.json,true,true,config_primary,Appendix,Primary V4 small dataset contract.
+configs/train/train_v4_main_culturemert_stage3.run.json,true,true,config_primary,Appendix,Primary V4 main CultureMERT stage3 training setup.
+configs/train/train_v4_main_gemini_stage3.run.json,true,true,config_primary,Appendix,Primary V4 main Gemini stage3 training setup.
+configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_lambdamart.run.json,true,true,config_primary,Appendix,Primary V4 main CultureMERT benchmark setup.
+configs/benchmark/recommender_benchmark_v4_main_gemini_stage3_lambdamart.run.json,true,true,config_primary,Appendix,Primary V4 main Gemini benchmark setup.
+configs/pal/pal_v4_main_culturemert_prepare.run.json,true,true,config_primary,Appendix,Real PAL packet preparation setup.
+configs/pal/pal_v4_main_culturemert_real.run.json,true,true,config_primary,Appendix,Real PAL round ingestion and retraining setup.
+paper/ismir2026_draft.tex,true,false,paper_target,Paper,Draft paper still needs synchronization with current V4 evidence.
+dcas_server/app.py,true,true,platform_support,Appendix,"Serving/demo layer, not a primary research contribution file."
+web/package.json,true,true,platform_support,Appendix,"Web/demo dependency manifest, auxiliary to the research paper."
