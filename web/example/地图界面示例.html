@@ -1,0 +1,437 @@
+<html lang="ko" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Redpoint Partners — Asia Network</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;display=swap" rel="stylesheet" vid="6">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" vid="7"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" vid="8"></script>
+    <style vid="9">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #f7f4ee;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #map-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #f7f4ee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #map-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #animation-canvas {
+            display: block;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .node-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: rgba(30, 30, 30, 0.5);
+            white-space: nowrap;
+            text-align: center;
+            line-height: 1.4;
+            pointer-events: none;
+            transition: color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .node-label.active {
+            color: rgba(180, 30, 30, 1);
+            opacity: 1 !important;
+        }
+
+        #branding {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            color: rgba(0, 0, 0, 0.25);
+            line-height: 2;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        #explore-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.03);
+            border: 0.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 30px;
+            padding: 8px 24px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            text-transform: uppercase;
+        }
+
+        #loading-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            color: rgba(0, 0, 0, 0.3);
+            background: #f7f4ee;
+            z-index: 100;
+            transition: opacity 0.8s ease;
+        }
+    </style>
+</head>
+<body vid="10">
+
+<div id="app-container" vid="11">
+    <div id="map-wrapper" vid="12">
+        <svg id="map-svg" vid="13"></svg>
+        <canvas id="animation-canvas" vid="14"></canvas>
+        
+        <div id="ui-overlay" vid="15">
+            <div id="branding" vid="16">
+                REDPOINT PARTNERS<br vid="17">
+                ANNUAL REVIEW
+            </div>
+            <div id="explore-hint" vid="18">HOVER A NODE TO EXPLORE</div>
+            
+        </div>
+
+        <div id="loading-screen" vid="19">INITIALIZING NETWORK MAP...</div>
+    </div>
+</div>
+
+<script vid="20">
+    (function() {
+        const wrapper = document.getElementById('map-wrapper');
+        const mapSvg = document.getElementById('map-svg');
+        const canvas = document.getElementById('animation-canvas');
+        const uiOverlay = document.getElementById('ui-overlay');
+        const hint = document.getElementById('explore-hint');
+        const loader = document.getElementById('loading-screen');
+        const dpr = window.devicePixelRatio || 1;
+
+        
+        const ASIA_ISO_IDS = new Set([
+            156, 410, 392, 356, 764, 704, 458, 360, 608, 104, 116, 418, 702, 096, 626, 642, 496, 760, 368, 408, 417, 762, 860, 795, 398, 512
+        ]);
+
+        
+        const NODES = [
+            { id: 'korea', label: 'KOREA', lat: 37.5665, lng: 126.9780 },
+            { id: 'china', label: 'GREATER\nCHINA', lat: 35.8617, lng: 104.1954 },
+            { id: 'se_asia', label: 'SE\nASIA', lat: 13.7563, lng: 100.5018 },
+            { id: 'india', label: 'INDIA', lat: 20.5937, lng: 78.9629 },
+            { id: 'japan', label: 'JAPAN', lat: 36.2048, lng: 138.2529 },
+        ];
+
+        let width, height;
+        let projection, pathGenerator;
+        let labelElements = [];
+        let hoveredIndex = -1;
+        let animationStartTime = 0;
+        
+        
+        const starPhases = NODES.map(() => Math.random() * Math.PI * 2);
+        const starSpeeds = NODES.map(() => 0.4 + Math.random() * 0.4);
+
+        function updateProjection() {
+            
+            projection = d3.geoMercator()
+                .center([110, 25])
+                .scale(Math.min(width, height) * 0.9)
+                .translate([width / 2, height / 2]);
+            
+            pathGenerator = d3.geoPath().projection(projection);
+        }
+
+        async function initMap() {
+            try {
+                const topoData = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+                const countries = topojson.feature(topoData, topoData.objects.countries);
+                
+                const filteredCountries = {
+                    type: 'FeatureCollection',
+                    features: countries.features.filter(f => ASIA_ISO_IDS.has(+f.id))
+                };
+
+                const borders = topojson.mesh(topoData, topoData.objects.countries, (a, b) => 
+                    a !== b && ASIA_ISO_IDS.has(+a.id) && ASIA_ISO_IDS.has(+b.id)
+                );
+
+                const svg = d3.select(mapSvg);
+                svg.selectAll('*').remove();
+
+                const g = svg.append('g');
+
+                
+                g.append('g')
+                    .selectAll('path')
+                    .data(filteredCountries.features)
+                    .join('path')
+                    .attr('d', pathGenerator)
+                    .attr('fill', 'rgba(170,185,200,0.12)')
+                    .attr('stroke', 'none');
+
+                
+                g.append('path')
+                    .datum(borders)
+                    .attr('d', pathGenerator)
+                    .attr('fill', 'none')
+                    .attr('stroke', 'rgba(140,158,178,0.25)')
+                    .attr('stroke-width', '0.7');
+
+                
+                g.append('g')
+                    .selectAll('path')
+                    .data(filteredCountries.features)
+                    .join('path')
+                    .attr('d', pathGenerator)
+                    .attr('fill', 'none')
+                    .attr('stroke', 'rgba(140,158,178,0.15)')
+                    .attr('stroke-width', '0.5');
+
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 800);
+
+            } catch (err) {
+                console.error("Map loading error:", err);
+                loader.textContent = "ERROR LOADING MAP DATA";
+            }
+        }
+
+        function getNodePosition(index) {
+            const node = NODES[index];
+            const [x, y] = projection([node.lng, node.lat]);
+            return { x, y };
+        }
+
+        function createLabels() {
+            uiOverlay.querySelectorAll('.node-label').forEach(el => el.remove());
+            labelElements = [];
+            
+            NODES.forEach((node, i) => {
+                const pos = getNodePosition(i);
+                const label = document.createElement('div');
+                label.className = 'node-label';
+                label.innerHTML = node.label.replace('\n', '<br>');
+                label.style.left = pos.x + 'px';
+                label.style.top = (pos.y + 20) + 'px';
+                uiOverlay.appendChild(label);
+                labelElements.push(label);
+            });
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+
+            updateProjection();
+            initMap(); 
+            createLabels();
+        }
+
+        function drawStar(ctx, x, y, inner, outer, alpha) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            const points = 8;
+            for (let i = 0; i < points; i++) {
+                const angle = (i * Math.PI) / (points / 2) - Math.PI / points;
+                const radius = i % 2 === 0 ? outer : inner;
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#be2323';
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function render(time) {
+            const ctx = canvas.getContext('2d');
+            const elapsed = time * 0.001;
+            
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const positions = NODES.map((_, i) => getNodePosition(i));
+
+            
+            for (let i = 0; i < NODES.length; i++) {
+                for (let j = i + 1; j < NODES.length; j++) {
+                    const isRelatedToHover = hoveredIndex === i || hoveredIndex === j;
+                    let alpha, lineWidth;
+                    
+                    if (hoveredIndex === -1) {
+                        alpha = 0.2 + 0.08 * Math.sin(elapsed * 0.5 + i + j);
+                        lineWidth = 0.8;
+                    } else if (isRelatedToHover) {
+                        alpha = 0.8;
+                        lineWidth = 1.4;
+                    } else {
+                        alpha = 0.05;
+                        lineWidth = 0.5;
+                    }
+
+                    ctx.save();
+                    ctx.setLineDash([4, 8]);
+                    ctx.lineDashOffset = -(elapsed * 25) % 12;
+                    ctx.beginPath();
+                    ctx.moveTo(positions[i].x, positions[i].y);
+                    ctx.lineTo(positions[j].x, positions[j].y);
+                    ctx.strokeStyle = `rgba(195, 40, 40, ${alpha})`;
+                    ctx.lineWidth = lineWidth;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            
+            positions.forEach((p, i) => {
+                const isActive = hoveredIndex === i;
+                const isDimmed = hoveredIndex !== -1 && !isActive;
+                const breath = 0.5 + 0.5 * Math.sin(elapsed * starSpeeds[i] + starPhases[i]);
+                
+                const glowRadius = isActive ? 35 : 12 + breath * 12;
+                const glowAlpha = isActive ? 0.3 : 0.06 + breath * 0.1;
+                const dotRadius = isActive ? 6 : 3 + breath * 1.5;
+
+                ctx.save();
+                ctx.globalAlpha = isDimmed ? 0.2 : 1;
+
+                
+                for (let layer = 0; layer < 3; layer++) {
+                    const radius = glowRadius * (1 + layer * 0.4);
+                    const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+                    gradient.addColorStop(0, `rgba(210, 45, 45, ${glowAlpha / (layer + 1)})`);
+                    gradient.addColorStop(1, 'rgba(210, 45, 45, 0)');
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+
+                
+                drawStar(ctx, p.x, p.y, dotRadius * 0.4, dotRadius * 2.8, isActive ? 0.6 : 0.1 + breath * 0.15);
+
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, dotRadius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(190, 35, 35, ${isActive ? 1 : 0.8 + breath * 0.2})`;
+                ctx.fill();
+
+                ctx.restore();
+
+                
+                const label = labelElements[i];
+                if (label) {
+                    label.classList.toggle('active', isActive);
+                    label.style.opacity = isDimmed ? '0.15' : '1';
+                    label.style.transform = isActive ? 'translateX(-50%) translateY(-2px) scale(1.1)' : 'translateX(-50%) translateY(0) scale(1)';
+                }
+            });
+
+            hint.style.opacity = hoveredIndex !== -1 ? '0' : '1';
+
+            requestAnimationFrame(render);
+        }
+
+        function handleMouseMove(e) {
+            const rect = wrapper.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let foundIdx = -1;
+            for (let i = 0; i < NODES.length; i++) {
+                const pos = getNodePosition(i);
+                const dist = Math.sqrt(Math.pow(mouseX - pos.x, 2) + Math.pow(mouseY - pos.y, 2));
+                if (dist < 35) {
+                    foundIdx = i;
+                    break;
+                }
+            }
+            
+            if (foundIdx !== hoveredIndex) {
+                hoveredIndex = foundIdx;
+                wrapper.style.cursor = hoveredIndex !== -1 ? 'pointer' : 'default';
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        wrapper.addEventListener('mousemove', handleMouseMove);
+        wrapper.addEventListener('mouseleave', () => { hoveredIndex = -1; });
+        
+        
+        wrapper.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                handleMouseMove(e.touches[0]);
+            }
+        }, { passive: true });
+
+        
+        resize();
+        requestAnimationFrame(render);
+
+    })();
+</script>
+
+
+</body></html>

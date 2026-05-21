@@ -1,0 +1,587 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Swiss Data Interface</title>
+    <style vid="5">
+        
+
+        :root {
+            --bg-color: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #8E8E8E; 
+            --border-color: #E0E0E0; 
+            --border-strong: #000000;
+            
+            --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            
+            
+            --text-xs: 10px;
+            --text-sm: 12px;
+            --text-base: 14px;
+            --text-lg: 18px;
+            --text-xl: 24px;
+            --text-xxl: 48px;
+            --text-mega: 8vw; 
+
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 48px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        
+        .font-bold { font-weight: 700; }
+        .font-medium { font-weight: 500; }
+        .font-regular { font-weight: 400; }
+        
+        .text-muted { color: var(--text-secondary); }
+        
+        .label {
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: var(--text-lg);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: var(--space-xl);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .meta-item {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        
+        main {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            flex-grow: 1;
+            overflow: hidden;
+            background-color: var(--border-color); 
+            gap: 1px; 
+        }
+
+        .panel {
+            background-color: var(--bg-color);
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        
+        .metrics-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .metric-card {
+            background-color: var(--bg-color);
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-xl);
+        }
+
+        .metric-value {
+            font-size: var(--text-xxl);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .metric-sub {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin-top: var(--space-xs);
+        }
+
+        
+        .main-vis-container {
+            grid-column: 1 / 9;
+            grid-row: 2;
+        }
+
+        .vis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: var(--space-xl);
+        }
+
+        .vis-title-group h2 {
+            font-size: var(--text-xl);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            
+            display: flex;
+            gap: 0.25em;
+        }
+
+        
+        .topography-vis {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            padding-bottom: var(--space-xl);
+        }
+
+        .topo-bar {
+            flex: 1;
+            background-color: var(--text-primary);
+            border-top: 1px solid var(--text-primary);
+            position: relative;
+            transition: opacity 0.2s ease;
+        }
+
+        .topo-bar:hover {
+            opacity: 0.5;
+        }
+
+        .topo-bar::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        
+        .topo-overlay-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 1px dashed var(--text-secondary);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        
+        .side-vis-container {
+            grid-column: 9 / -1;
+            grid-row: 2;
+            border-left: 1px solid var(--border-color);
+        }
+
+        
+        .radial-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .radial-vis {
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 300px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        
+        .ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid var(--text-primary);
+            border-radius: 50%;
+        }
+        
+        
+        .node {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+        }
+
+        .radial-legend {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-md) 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        
+        .data-table-container {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            padding: 0; 
+            height: 30vh;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+
+        th, td {
+            padding: var(--space-sm) var(--space-lg);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-color);
+            z-index: 10;
+            padding-top: var(--space-md);
+            padding-bottom: var(--space-md);
+            border-bottom: 2px solid var(--text-primary); 
+        }
+
+        .td-numeric {
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+        
+        .th-numeric {
+            text-align: right;
+        }
+
+        tbody tr:hover {
+            background-color: #F9F9F9;
+        }
+
+        
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+    </style>
+</head>
+<body vid="6">
+
+    <header vid="7">
+        <div class="logo" vid="8">SYSTEM®</div>
+        <div class="header-meta" vid="9">
+            <div class="meta-item" vid="10">
+                <span class="text-muted" vid="11">STATUS</span>
+                <span vid="12">ACTIVE_SYNC</span>
+            </div>
+            <div class="meta-item" vid="13">
+                <span class="text-muted" vid="14">NODE</span>
+                <span vid="15">N-0492</span>
+            </div>
+            <div class="meta-item" vid="16">
+                <span class="text-muted" vid="17">TIME</span>
+                <span style="font-variant-numeric: tabular-nums;" vid="18">14:32:09</span>
+            </div>
+        </div>
+    </header>
+
+    <main vid="19">
+        
+        <div class="metrics-row" vid="20">
+            <div class="metric-card" vid="21">
+                <div class="metric-header" vid="22">
+                    <span class="label" vid="23">Volume Index</span>
+                    <span class="label text-muted" vid="24">01</span>
+                </div>
+                <div vid="25">
+                    <div class="metric-value" vid="26">124.8M</div>
+                    <div class="metric-sub" vid="27">+12.4% vs median baseline</div>
+                </div>
+            </div>
+            <div class="metric-card" vid="28">
+                <div class="metric-header" vid="29">
+                    <span class="label" vid="30">Signal Variance</span>
+                    <span class="label text-muted" vid="31">02</span>
+                </div>
+                <div vid="32">
+                    <div class="metric-value" vid="33">0.084</div>
+                    <div class="metric-sub text-muted" vid="34">Nominal threshold maintained</div>
+                </div>
+            </div>
+            <div class="metric-card" vid="35">
+                <div class="metric-header" vid="36">
+                    <span class="label" vid="37">Active Streams</span>
+                    <span class="label text-muted" vid="38">03</span>
+                </div>
+                <div vid="39">
+                    <div class="metric-value" vid="40">8,192</div>
+                    <div class="metric-sub" vid="41">-2 nodes dropped (recovery active)</div>
+                </div>
+            </div>
+            <div class="metric-card" style="background-color: var(--text-primary); color: var(--bg-color);" vid="42">
+                
+                <div class="metric-header" vid="43">
+                    <span class="label" style="color: var(--bg-color);" vid="44">System Load</span>
+                    <span class="label" style="color: var(--text-secondary);" vid="45">04</span>
+                </div>
+                <div vid="46">
+                    <div class="metric-value" vid="47">94%</div>
+                    <div class="metric-sub" style="color: var(--text-secondary);" vid="48">Peak efficiency phase</div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="panel main-vis-container" vid="49">
+            <div class="vis-header" vid="50">
+                <div class="vis-title-group" vid="51">
+                    <span class="label text-muted" style="display: block; margin-bottom: 8px;" vid="52">Macro Observation</span>
+                    <h2 vid="53">
+                        <span vid="54">Data</span>
+                        <span class="text-muted" vid="55">topography.</span>
+                    </h2>
+                </div>
+                <div class="header-meta" vid="56">
+                    <span vid="57">Y: FREQUENCY</span>
+                    <span class="text-muted" vid="58">X: TEMPORAL</span>
+                </div>
+            </div>
+
+            
+            <div class="topography-vis" vid="59">
+                
+                <div class="topo-overlay-line" style="bottom: 25%" vid="60"></div>
+                <div class="topo-overlay-line" style="bottom: 50%" vid="61"></div>
+                <div class="topo-overlay-line" style="bottom: 75%" vid="62"></div>
+
+                
+                <script vid="63">
+                    const container = document.querySelector('.topography-vis');
+                    const numBars = 120; 
+                    
+                    for(let i=0; i<numBars; i++) {
+                        
+                        const wave1 = Math.sin(i * 0.1) * 30;
+                        const wave2 = Math.cos(i * 0.05) * 20;
+                        const noise = Math.random() * 20;
+                        const height = Math.max(5, 40 + wave1 + wave2 + noise);
+                        
+                        
+                        const isSolid = Math.random() > 0.3;
+                        
+                        const bar = document.createElement('div');
+                        bar.className = 'topo-bar';
+                        bar.style.height = `${height}%`;
+                        
+                        if(!isSolid) {
+                            bar.style.backgroundColor = 'transparent';
+                            bar.style.borderRight = '1px solid var(--text-primary)';
+                            bar.style.borderTop = 'none';
+                        } else {
+                            
+                            bar.style.opacity = 0.6 + (Math.random() * 0.4);
+                        }
+
+                        
+                        if (i % 15 === 0) {
+                            bar.style.setProperty('--content', `"${i}"`);
+                            bar.innerHTML = `<span style="position:absolute; bottom:-20px; left:0; font-size:9px; color:var(--text-secondary); font-family:monospace;">${i}s</span>`;
+                        }
+
+                        container.appendChild(bar);
+                    }
+                </script>
+            </div>
+        </div>
+
+        
+        <div class="panel side-vis-container" vid="64">
+            <div class="vis-header" vid="65">
+                <div vid="66">
+                    <span class="label text-muted" style="display: block; margin-bottom: 8px;" vid="67">Micro Distribution</span>
+                    <div style="font-weight: 700; font-size: var(--text-base);" vid="68">Vector Alignments</div>
+                </div>
+            </div>
+
+            
+            <div class="radial-container" vid="69">
+                <div class="radial-vis" id="radialVis" vid="70">
+                    
+                    <div class="ring" style="width: 100%; height: 100%; border-style: solid; opacity: 0.1;" vid="71"></div>
+                    <div class="ring" style="width: 75%; height: 75%; border-style: dashed; opacity: 0.3;" vid="72"></div>
+                    <div class="ring" style="width: 50%; height: 50%; border-style: solid; opacity: 0.5;" vid="73"></div>
+                    <div class="ring" style="width: 25%; height: 25%; border-style: dotted; border-width: 2px;" vid="74"></div>
+                    
+                    
+                    <div class="node" style="width: 8px; height: 8px; transform: translate(-50%, -50%);" vid="75"></div>
+
+                    <script vid="76">
+                        
+                        const radial = document.getElementById('radialVis');
+                        const rings = [25, 50, 75, 100]; 
+                        
+                        rings.forEach(ringSize => {
+                            const radius = ringSize / 2; 
+                            const numNodes = Math.floor(ringSize * 0.4); 
+                            
+                            for(let i=0; i<numNodes; i++) {
+                                const angle = (Math.random() * Math.PI * 2);
+                                
+                                const x = 50 + (radius * Math.cos(angle));
+                                const y = 50 + (radius * Math.sin(angle));
+                                
+                                const node = document.createElement('div');
+                                node.className = 'node';
+                                node.style.left = `${x}%`;
+                                node.style.top = `${y}%`;
+                                
+                                
+                                const size = Math.random() > 0.8 ? 6 : 3;
+                                node.style.width = `${size}px`;
+                                node.style.height = `${size}px`;
+                                node.style.opacity = Math.random() > 0.5 ? 1 : 0.5;
+                                
+                                
+                                if (Math.random() > 0.85) {
+                                     const line = document.createElement('div');
+                                     line.style.position = 'absolute';
+                                     line.style.top = '50%';
+                                     line.style.left = '50%';
+                                     line.style.width = `${radius}%`;
+                                     line.style.height = '1px';
+                                     line.style.backgroundColor = 'var(--border-color)';
+                                     line.style.transformOrigin = '0 0';
+                                     line.style.transform = `rotate(${angle}rad)`;
+                                     line.style.zIndex = '0';
+                                     radial.appendChild(line);
+                                }
+
+                                radial.appendChild(node);
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+            
+            <div class="radial-legend" vid="77">
+                <span class="label text-muted" vid="78">Core</span>
+                <span class="label text-muted" vid="79">Periphery</span>
+            </div>
+        </div>
+
+        
+        <div class="panel data-table-container" vid="80">
+            <table vid="81">
+                <thead vid="82">
+                    <tr vid="83">
+                        <th class="label" vid="84">Timestamp</th>
+                        <th class="label" vid="85">Event ID</th>
+                        <th class="label" vid="86">Source Vector</th>
+                        <th class="label" vid="87">Classification</th>
+                        <th class="label th-numeric" vid="88">Magnitude</th>
+                        <th class="label th-numeric" vid="89">Variance (Δ)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" vid="90">
+                    
+                </tbody>
+            </table>
+            
+            <script vid="91">
+                const tbody = document.getElementById('tableBody');
+                const classifications = ['Alpha-Prime', 'Beta-Secondary', 'Gamma-Null', 'Delta-Void'];
+                const sources = ['SYS.A1', 'NET.04', 'EXT.99', 'INT.00'];
+
+                for(let i=0; i<30; i++) {
+                    const tr = document.createElement('tr');
+                    
+                    
+                    const time = `14:${Math.floor(Math.random()*60).toString().padStart(2,'0')}:${Math.floor(Math.random()*60).toString().padStart(2,'0')}.${Math.floor(Math.random()*999).toString().padStart(3,'0')}`;
+                    const id = `EVT-${Math.floor(Math.random()*10000).toString().padStart(4,'0')}`;
+                    const source = sources[Math.floor(Math.random()*sources.length)];
+                    const classification = classifications[Math.floor(Math.random()*classifications.length)];
+                    const mag = (Math.random() * 1000).toFixed(4);
+                    const isPositive = Math.random() > 0.5;
+                    const variance = (Math.random() * 2).toFixed(3);
+                    
+                    tr.innerHTML = `
+                        <td class="font-medium">${time}</td>
+                        <td class="text-muted">${id}</td>
+                        <td>${source}</td>
+                        <td>${classification}</td>
+                        <td class="td-numeric font-medium">${mag}</td>
+                        <td class="td-numeric ${isPositive ? '' : 'text-muted'}">${isPositive ? '+' : '-'}${variance}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            </script>
+        </div>
+
+    </main>
+
+</body></html>

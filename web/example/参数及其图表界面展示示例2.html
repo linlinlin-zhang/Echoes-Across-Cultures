@@ -1,0 +1,479 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Swiss Data Interface - Network Topology</title>
+    <style vid="5">
+        :root {
+            --bg-color: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #8E8E8E; 
+            --border-color: #E0E0E0; 
+            --border-strong: #000000;
+            --accent-alert: #000000;
+            
+            --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            
+            --text-xs: 10px;
+            --text-sm: 12px;
+            --text-base: 14px;
+            --text-lg: 18px;
+            --text-xl: 24px;
+            --text-xxl: 48px;
+
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 48px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.4;
+            height: 900px;
+            width: 1440px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .label {
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: var(--text-lg);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: var(--space-xl);
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        .meta-item {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            flex-grow: 1;
+            overflow: hidden;
+            background-color: var(--border-color); 
+            gap: 1px; 
+        }
+
+        .panel {
+            background-color: var(--bg-color);
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .metrics-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .metric-card {
+            background-color: var(--bg-color);
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-xl);
+        }
+
+        .metric-value {
+            font-size: var(--text-xxl);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .metric-sub {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin-top: var(--space-xs);
+        }
+
+        
+        .main-vis-container {
+            grid-column: 1 / 9;
+            grid-row: 2;
+            position: relative;
+        }
+
+        .topology-canvas {
+            flex-grow: 1;
+            position: relative;
+            background-image: 
+                radial-gradient(var(--border-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .node-element {
+            position: absolute;
+            background: var(--bg-color);
+            border: 1.5px solid var(--text-primary);
+            width: 10px;
+            height: 10px;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .node-element.active-node {
+            width: 16px;
+            height: 16px;
+            background: var(--text-primary);
+        }
+
+        .node-element.dropped {
+            border-color: var(--text-secondary);
+            background: var(--bg-color);
+        }
+
+        .node-element.dropped::after {
+            content: '×';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .edge-line {
+            position: absolute;
+            height: 1px;
+            background-color: var(--text-primary);
+            transform-origin: 0 50%;
+            z-index: 1;
+            opacity: 0.2;
+        }
+
+        .edge-weight {
+            position: absolute;
+            font-size: 9px;
+            color: var(--text-secondary);
+            font-family: monospace;
+            background: var(--bg-color);
+            padding: 0 2px;
+            z-index: 3;
+            transform: translate(-50%, -50%);
+        }
+
+        .node-label {
+            position: absolute;
+            font-size: 9px;
+            font-weight: 700;
+            margin-top: 12px;
+            white-space: nowrap;
+            transform: translateX(-50%);
+        }
+
+        
+        .side-vis-container {
+            grid-column: 9 / -1;
+            grid-row: 2;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .radial-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .radial-vis {
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 300px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid var(--text-primary);
+            border-radius: 50%;
+        }
+
+        
+        .data-table-container {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            height: 280px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+
+        th, td {
+            padding: var(--space-sm) var(--space-lg);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-color);
+            z-index: 10;
+            padding-top: var(--space-md);
+            padding-bottom: var(--space-md);
+            border-bottom: 2px solid var(--text-primary); 
+        }
+
+        .td-numeric { font-variant-numeric: tabular-nums; text-align: right; }
+        .th-numeric { text-align: right; }
+        .text-muted { color: var(--text-secondary); }
+    </style>
+</head>
+<body vid="6">
+
+    <header vid="7">
+        <div class="logo" vid="8">SYSTEM®</div>
+        <div class="header-meta" vid="9">
+            <div class="meta-item" vid="10">
+                <span class="text-muted" vid="11">STATUS</span>
+                <span vid="12">ACTIVE_SYNC</span>
+            </div>
+            <div class="meta-item" vid="13">
+                <span class="text-muted" vid="14">NODE</span>
+                <span vid="15">N-0492</span>
+            </div>
+            <div class="meta-item" vid="16">
+                <span class="text-muted" vid="17">TIME</span>
+                <span style="font-variant-numeric: tabular-nums;" vid="18">14:32:09</span>
+            </div>
+        </div>
+    </header>
+
+    <main vid="19">
+        <div class="metrics-row" vid="20">
+            <div class="metric-card" vid="21">
+                <div class="metric-header" vid="22">
+                    <span class="label" vid="23">Volume Index</span>
+                    <span class="label text-muted" vid="24">01</span>
+                </div>
+                <div vid="25">
+                    <div class="metric-value" vid="26">124.8M</div>
+                    <div class="metric-sub" vid="27">+12.4% vs median baseline</div>
+                </div>
+            </div>
+            <div class="metric-card" vid="28">
+                <div class="metric-header" vid="29">
+                    <span class="label" vid="30">Signal Variance</span>
+                    <span class="label text-muted" vid="31">02</span>
+                </div>
+                <div vid="32">
+                    <div class="metric-value" vid="33">0.084</div>
+                    <div class="metric-sub text-muted" vid="34">Nominal threshold maintained</div>
+                </div>
+            </div>
+            <div class="metric-card" vid="35">
+                <div class="metric-header" vid="36">
+                    <span class="label" vid="37">Active Streams</span>
+                    <span class="label text-muted" vid="38">03</span>
+                </div>
+                <div vid="39">
+                    <div class="metric-value" vid="40">8,192</div>
+                    <div class="metric-sub" vid="41">-2 nodes dropped (recovery active)</div>
+                </div>
+            </div>
+            <div class="metric-card" style="background-color: var(--text-primary); color: var(--bg-color);" vid="42">
+                <div class="metric-header" vid="43">
+                    <span class="label" style="color: var(--bg-color);" vid="44">System Load</span>
+                    <span class="label" style="color: var(--text-secondary);" vid="45">04</span>
+                </div>
+                <div vid="46">
+                    <div class="metric-value" vid="47">94%</div>
+                    <div class="metric-sub" style="color: var(--text-secondary);" vid="48">Peak efficiency phase</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel main-vis-container" vid="49">
+            <div class="vis-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-md);" vid="50">
+                <div vid="51">
+                    <span class="label text-muted" style="display: block; margin-bottom: 8px;" vid="52">Network Topology</span>
+                    <h2 style="font-size: var(--text-xl); font-weight: 700;" vid="53">Node <span class="text-muted" vid="54">interconnect.</span></h2>
+                </div>
+                <div class="header-meta" vid="55">
+                    <span vid="56">GRID: 40px²</span>
+                    <span class="text-muted" vid="57">COORD: CARTESIAN_REF</span>
+                </div>
+            </div>
+
+            <div class="topology-canvas" id="topoCanvas" vid="58">
+                
+            </div>
+        </div>
+
+        <div class="panel side-vis-container" vid="59">
+            <div class="vis-header" vid="60">
+                <div vid="61">
+                    <span class="label text-muted" style="display: block; margin-bottom: 8px;" vid="62">Micro Distribution</span>
+                    <div style="font-weight: 700; font-size: var(--text-base);" vid="63">Vector Alignments</div>
+                </div>
+            </div>
+            <div class="radial-container" vid="64">
+                <div class="radial-vis" vid="65">
+                    <div class="ring" style="width: 100%; height: 100%; border-style: solid; opacity: 0.1;" vid="66"></div>
+                    <div class="ring" style="width: 75%; height: 75%; border-style: dashed; opacity: 0.3;" vid="67"></div>
+                    <div class="ring" style="width: 50%; height: 50%; border-style: solid; opacity: 0.5;" vid="68"></div>
+                    <div class="ring" style="width: 25%; height: 25%; border-style: dotted; border-width: 2px;" vid="69"></div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: var(--space-md) 0; border-top: 1px solid var(--border-color);" vid="70">
+                <span class="label text-muted" vid="71">Core</span>
+                <span class="label text-muted" vid="72">Periphery</span>
+            </div>
+        </div>
+
+        <div class="panel data-table-container" vid="73">
+            <table vid="74">
+                <thead vid="75">
+                    <tr vid="76">
+                        <th class="label" vid="77">Node ID</th>
+                        <th class="label" vid="78">Status</th>
+                        <th class="label" vid="79">Upstream</th>
+                        <th class="label th-numeric" vid="80">Latency (ms)</th>
+                        <th class="label th-numeric" vid="81">Load Factor</th>
+                        <th class="label th-numeric" vid="82">Drift</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" vid="83">
+                    
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script vid="84">
+        const canvas = document.getElementById('topoCanvas');
+        const nodes = [
+            { id: 'N-0492', x: 50, y: 50, main: true },
+            { id: 'N-0211', x: 20, y: 30 },
+            { id: 'N-0884', x: 80, y: 25 },
+            { id: 'N-0102', x: 15, y: 70 },
+            { id: 'N-0339', x: 75, y: 80 },
+            { id: 'N-0912', x: 45, y: 15 },
+            { id: 'N-0552', x: 90, y: 60 },
+            { id: 'N-0771', x: 30, y: 85, dropped: true },
+            { id: 'N-0643', x: 60, y: 20, dropped: true }
+        ];
+
+        
+        nodes.forEach((node, i) => {
+            if (node.main) return;
+            const mainNode = nodes[0];
+            
+            const dx = node.x - mainNode.x;
+            const dy = node.y - mainNode.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            const edge = document.createElement('div');
+            edge.className = 'edge-line';
+            edge.style.width = `${distance}%`;
+            edge.style.left = `${mainNode.x}%`;
+            edge.style.top = `${mainNode.y}%`;
+            edge.style.transform = `rotate(${angle}deg)`;
+            if(node.dropped) edge.style.borderTop = '1px dashed var(--text-secondary)';
+            canvas.appendChild(edge);
+
+            const weight = document.createElement('div');
+            weight.className = 'edge-weight';
+            weight.style.left = `${(mainNode.x + node.x)/2}%`;
+            weight.style.top = `${(mainNode.y + node.y)/2}%`;
+            weight.innerText = node.dropped ? 'LOST' : `${(Math.random()*40 + 10).toFixed(1)}ms`;
+            canvas.appendChild(weight);
+        });
+
+        
+        nodes.forEach(node => {
+            const el = document.createElement('div');
+            el.className = `node-element ${node.main ? 'active-node' : ''} ${node.dropped ? 'dropped' : ''}`;
+            el.style.left = `${node.x}%`;
+            el.style.top = `${node.y}%`;
+            
+            const label = document.createElement('div');
+            label.className = 'node-label';
+            label.innerText = node.id;
+            el.appendChild(label);
+            
+            canvas.appendChild(el);
+        });
+
+        
+        const tbody = document.getElementById('tableBody');
+        nodes.forEach(node => {
+            const tr = document.createElement('tr');
+            const latency = node.dropped ? '--' : (Math.random()*45 + 5).toFixed(2);
+            const load = node.dropped ? '0.00' : (Math.random()*0.9).toFixed(2);
+            const drift = node.dropped ? '--' : (Math.random()*0.05).toFixed(4);
+            
+            tr.innerHTML = `
+                <td class="font-medium">${node.id} ${node.main ? '(PRIMARY)' : ''}</td>
+                <td class="${node.dropped ? 'text-muted' : ''}">${node.dropped ? 'OFFLINE' : 'SYNCHRONIZED'}</td>
+                <td>${node.main ? 'ROOT' : 'N-0492'}</td>
+                <td class="td-numeric">${latency}</td>
+                <td class="td-numeric">${load}</td>
+                <td class="td-numeric text-muted">${drift}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    </script>
+
+</body></html>

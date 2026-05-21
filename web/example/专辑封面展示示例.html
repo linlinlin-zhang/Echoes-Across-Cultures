@@ -1,0 +1,432 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Gallery Waitlist</title>
+    <style vid="5">
+        :root {
+            --bg-color: #F0F2F4;
+            --text-main: #1a1a1a;
+            --text-sub: #888888;
+            --font-stack: 'Courier New', Courier, monospace; 
+            --curve-intensity: 600px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 100;
+            pointer-events: none; 
+            mix-blend-mode: multiply;
+        }
+
+        .brand {
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .meta {
+            text-align: right;
+            font-size: 10px;
+            color: var(--text-sub);
+            line-height: 1.4;
+        }
+
+        
+        .gallery-viewport {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            height: 40vh;
+            perspective: 1200px; 
+            overflow: visible;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-viewport:active {
+            cursor: grabbing;
+        }
+
+        .strip-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        
+        .card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px; 
+            height: 260px; 
+            margin-left: -100px; 
+            margin-top: -130px;
+            background: #e0e0e0;
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
+            
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05); 
+            transition: box-shadow 0.4s ease;
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: grayscale(20%) contrast(95%); 
+        }
+
+        .card:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            z-index: 1000 !important; 
+        }
+
+        
+        .waitlist-container {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            z-index: 200;
+            opacity: 0;
+            animation: fadeIn 2s ease 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .waitlist-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 12px;
+            color: var(--text-sub);
+            display: block;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group:focus-within {
+            border-color: #000;
+        }
+
+        input[type="email"] {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-family: var(--font-stack);
+            font-size: 13px;
+            color: var(--text-main);
+            padding-right: 40px;
+        }
+
+        input[type="email"]::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        button.submit-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-stack);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-main);
+            position: absolute;
+            right: 0;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        button.submit-btn:hover {
+            opacity: 1;
+        }
+
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+        }
+        
+        .loader-text {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+    </style>
+</head>
+<body vid="6">
+
+    <header vid="7">
+        <div class="brand" vid="8">LUMIÈRE ARCHIVE</div>
+        <div class="meta" vid="9">
+            ISSUE 01<br vid="10">
+            CURATED SELECTION
+        </div>
+    </header>
+
+    <div class="gallery-viewport" id="viewport" vid="11">
+        <div class="strip-container" id="strip" vid="12">
+            
+        </div>
+    </div>
+
+    <div class="waitlist-container" vid="13">
+        <span class="waitlist-label" vid="14">Request Access</span>
+        <form class="input-group" onsubmit="event.preventDefault(); alert('You have been added to the queue.');" vid="15">
+            <input type="email" placeholder="email address" required="" vid="16">
+            <button type="submit" class="submit-btn" vid="17">Join</button>
+        </form>
+    </div>
+
+    <div class="overlay" id="overlay" vid="18">
+        <div class="loader-text" vid="19">INITIALIZING GALLERY...</div>
+    </div>
+
+    <script vid="20">
+        
+        const imageIds = [
+            "1493246507139-91e8fad9978e", 
+            "1516035069371-29a1b244cc32", 
+            "1507643179173-39db30be83d3", 
+            "1519750783826-e2420f4d687f", 
+            "1494438639946-1ebd1d20bf85", 
+            "1500462918059-b1a0cb512f1d", 
+            "1486718448742-1643916ef44d", 
+            "1493514789931-5f7514745154", 
+            "1530099486328-e021101a494a", 
+            "1496747611176-843222e1e57c", 
+            "1491895200230-24e84424a737", 
+            "1520698115663-8a9d060f606e", 
+            "1449247709948-96350937c885", 
+            "1462331940187-285b04fb854f", 
+            "1464822759023-fed622ff2c3b"  
+        ];
+
+        const strip = document.getElementById('strip');
+        const viewport = document.getElementById('viewport');
+        const overlay = document.getElementById('overlay');
+
+        
+        const cardWidth = 220; 
+        const visibleRange = 2000; 
+        const perspectiveDepth = 800; 
+
+        
+        let currentScroll = 0;
+        let targetScroll = 0;
+        let isDragging = false;
+        let startX = 0;
+        let lastX = 0;
+        let velocity = 0;
+        let rafId;
+
+        
+        imageIds.forEach((id, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            
+            const img = document.createElement('img');
+            img.src = `https://images.unsplash.com/photo-${id}?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80`;
+            
+            card.appendChild(img);
+            strip.appendChild(card);
+            
+            
+            card.dataset.index = index;
+        });
+
+        const cards = document.querySelectorAll('.card');
+        const totalWidth = cards.length * cardWidth;
+
+        
+        const autoScrollSpeed = 0.5;
+
+        
+        function animate() {
+            
+            if (!isDragging) {
+                targetScroll += velocity;
+                velocity *= 0.95;
+                
+                
+                targetScroll += autoScrollSpeed;
+            }
+
+            
+            currentScroll += (targetScroll - currentScroll) * 0.1;
+
+            
+            const center = window.innerWidth / 2;
+
+            cards.forEach(card => {
+                const index = parseInt(card.dataset.index);
+                
+                
+                
+                let virtualIndex = index * cardWidth - currentScroll;
+                
+                
+                const totalSetWidth = imageIds.length * cardWidth;
+                while (virtualIndex < -totalSetWidth / 2) virtualIndex += totalSetWidth;
+                while (virtualIndex > totalSetWidth / 2) virtualIndex -= totalSetWidth;
+
+                
+                if (Math.abs(virtualIndex) < window.innerWidth) {
+                    card.style.display = 'block';
+
+                    
+                    
+                    const progress = virtualIndex / (window.innerWidth / 1.5);
+                    const clampedProgress = Math.max(-1, Math.min(1, progress));
+                    
+                    
+                    const x = virtualIndex;
+                    
+                    
+                    
+                    const z = -Math.pow(Math.abs(progress), 2) * 500;
+
+                    
+                    const rotateY = progress * 45; 
+
+                    card.style.transform = `
+                        translateX(${x}px) 
+                        translateZ(${z}px) 
+                        rotateY(${rotateY}deg)
+                    `;
+
+                    
+                    card.style.opacity = 1 - Math.pow(Math.abs(progress), 3);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            rafId = requestAnimationFrame(animate);
+        }
+
+        
+        viewport.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            lastX = e.clientX;
+            viewport.style.cursor = 'grabbing';
+            
+            velocity = 0;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            viewport.style.cursor = 'grab';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const delta = e.clientX - lastX;
+            lastX = e.clientX;
+            
+            
+            targetScroll -= delta * 1.5;
+            
+            
+            velocity = -delta * 0.5;
+        });
+
+        
+        viewport.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            lastX = e.touches[0].clientX;
+            velocity = 0;
+        });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const x = e.touches[0].clientX;
+            const delta = x - lastX;
+            lastX = x;
+            targetScroll -= delta * 1.5;
+            velocity = -delta * 0.5;
+        });
+
+        
+        setTimeout(() => {
+            overlay.style.opacity = 0;
+            animate();
+        }, 1000);
+
+    </script>
+
+</body></html>
