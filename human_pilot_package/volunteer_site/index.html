@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>跨文化音乐推荐盲听小实验</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">匿名盲听任务 · 约 10-15 分钟</p>
+        <h1>跨文化音乐推荐 A/B 盲听小实验</h1>
+        <p class="intro">
+          每一题会给你一段“参考音乐”和两个候选推荐 A/B。请根据自己的听感判断：
+          哪个更情绪/风格接得上，哪个更有跨文化新鲜感但仍然可听。
+        </p>
+      </section>
+
+      <section id="setupPanel" class="card">
+        <h2>开始前</h2>
+        <p>
+          请输入一个匿名编号，例如 <strong>P01</strong>。不需要填写真实姓名。
+          如果研究者已经给你编号，请直接使用那个编号。
+        </p>
+        <label class="field">
+          <span>匿名编号</span>
+          <input id="participantInput" type="text" placeholder="例如 P01" autocomplete="off" />
+        </label>
+        <button id="startBtn" class="primary">开始任务</button>
+      </section>
+
+      <section id="taskPanel" class="card hidden">
+        <div class="taskTop">
+          <div>
+            <p id="progressText" class="eyebrow">Task</p>
+            <h2 id="taskTitle">任务</h2>
+          </div>
+          <div class="pill" id="saveState">未保存</div>
+        </div>
+
+        <div class="musicBlock seedBlock">
+          <div>
+            <p class="eyebrow">参考音乐 Seed / Context</p>
+            <h3 id="seedTitle">Seed</h3>
+            <p id="seedMeta" class="meta"></p>
+          </div>
+          <audio id="seedAudio" controls preload="metadata"></audio>
+        </div>
+
+        <div class="candidates">
+          <div class="musicBlock">
+            <p class="eyebrow">候选 A</p>
+            <h3 id="aTitle">Candidate A</h3>
+            <p id="aMeta" class="meta"></p>
+            <audio id="aAudio" controls preload="metadata"></audio>
+          </div>
+          <div class="musicBlock">
+            <p class="eyebrow">候选 B</p>
+            <h3 id="bTitle">Candidate B</h3>
+            <p id="bMeta" class="meta"></p>
+            <audio id="bAudio" controls preload="metadata"></audio>
+          </div>
+        </div>
+
+        <form id="answerForm" class="questions">
+          <fieldset>
+            <legend>1. 哪个候选在情绪、风格、节奏能量或听歌场景上更接得上参考音乐？</legend>
+            <label><input type="radio" name="compatible_choice" value="A" /> A</label>
+            <label><input type="radio" name="compatible_choice" value="B" /> B</label>
+            <label><input type="radio" name="compatible_choice" value="Tie" /> 差不多 / 不确定</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>2. 哪个候选更有“跨文化新鲜感”，但仍然不是乱推、仍然可听？</legend>
+            <label><input type="radio" name="discovery_choice" value="A" /> A</label>
+            <label><input type="radio" name="discovery_choice" value="B" /> B</label>
+            <label><input type="radio" name="discovery_choice" value="Tie" /> 差不多 / 不确定</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>3. 如果系统现在要给你推荐一首继续听，你更愿意点哪个？</legend>
+            <label><input type="radio" name="overall_choice" value="A" /> A</label>
+            <label><input type="radio" name="overall_choice" value="B" /> B</label>
+            <label><input type="radio" name="overall_choice" value="Tie" /> 差不多 / 不确定</label>
+          </fieldset>
+
+          <label class="field">
+            <span>你的把握程度：<strong id="confidenceValue">3</strong>/5</span>
+            <input id="confidenceInput" name="confidence" type="range" min="1" max="5" value="3" />
+          </label>
+
+          <label class="field">
+            <span>可选：一句话理由</span>
+            <textarea id="commentInput" name="comment" rows="3" placeholder="例如：A 更像同一个情绪场景；B 更新鲜但有点跳。"></textarea>
+          </label>
+        </form>
+
+        <div class="nav">
+          <button id="prevBtn" class="secondary">上一题</button>
+          <button id="nextBtn" class="primary">保存并下一题</button>
+        </div>
+      </section>
+
+      <section id="finishPanel" class="card hidden">
+        <h2>完成啦</h2>
+        <p>
+          请点击下面按钮导出 CSV，然后把下载的文件发回给研究者。
+          如果之后又修改了答案，可以重新导出一份新的 CSV。
+        </p>
+        <div class="finishActions">
+          <button id="exportBtn" class="primary">导出 CSV</button>
+          <button id="backBtn" class="secondary">返回检查答案</button>
+        </div>
+        <pre id="completionSummary"></pre>
+      </section>
+    </main>
+
+    <script src="tasks.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
