@@ -133,6 +133,7 @@ class JamendoTrackRecord:
             "track_id": self.track_id,
             "culture": self.culture,
             "audio_path": audio_rel_path,
+            "source_dataset": "jamendo",
             "label": self.label,
             "title": self.title,
             "artist": self.artist,
@@ -262,6 +263,7 @@ class JamendoCrawler:
         target_total: int,
         workers: int,
         checkpoint_interval: int,
+        max_per_query: int,
     ):
         self.client_id = client_id
         self.session = session
@@ -271,12 +273,13 @@ class JamendoCrawler:
         self.target_total = target_total
         self.workers = workers
         self.checkpoint_interval = checkpoint_interval
+        self.max_per_query = max(1, int(max_per_query))
 
         self.audio_dir = out_dir / "audio"
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
         self._fieldnames = [
-            "track_id", "culture", "audio_path", "label",
+            "track_id", "culture", "audio_path", "source_dataset", "label",
             "title", "artist", "album", "duration_ms",
             "tags", "jamendo_id", "jamendo_url", "audio_url",
             "image_url", "license_url",
@@ -304,6 +307,10 @@ class JamendoCrawler:
 
         data = self.session.get(JAMENDO_TRACKS_URL, params=params)
         if not data or "results" not in data:
+            return []
+        headers = data.get("headers") or {}
+        if str(headers.get("status", "")).lower() == "failed":
+            print(f"[API ERROR] Jamendo returned failed status: {headers.get('error_message', 'unknown error')}")
             return []
         return list(data["results"])
 
@@ -399,6 +406,12 @@ class JamendoCrawler:
         failed_set = set(state.failed_track_ids)
         existing_meta_ids = self.checkpoint.read_existing_metadata_ids()
         downloaded_set |= existing_meta_ids
+        if resume and state.completed_queries and not downloaded_set and not failed_set:
+            print("[RECOVERY] Existing checkpoint has completed queries but no downloaded/failed tracks; retrying queries.")
+            state.completed_queries.clear()
+            state.total_collected = 0
+            completed_set.clear()
+        seen_set = set(downloaded_set) | set(failed_set)
         print(f"[INIT] {len(downloaded_set)} tracks already in metadata.csv")
 
         query_pool = self._build_query_pool()
@@ -458,15 +471,21 @@ class JamendoCrawler:
                 print(f"[{qidx}/{total_queries}] culture={culture} tags={tags or '(fuzzy)'} fuzzytags={fuzzytags or '(none)'}")
 
                 all_records: list[JamendoTrackRecord] = []
+                remaining = max(0, self.target_total - state.total_collected)
+                query_limit = min(remaining, self.max_per_query)
                 for offset in range(0, 10_000, PAGE_LIMIT):
                     items = self._fetch_page(tags=tags, fuzzytags=fuzzytags, offset=offset)
                     if not items:
                         break
                     for item in items:
                         rec = self._parse_track(item, culture, tags or fuzzytags)
-                        if rec and rec.track_id not in downloaded_set and rec.track_id not in failed_set:
+                        if rec and rec.track_id not in seen_set:
                             all_records.append(rec)
-                            downloaded_set.add(rec.track_id)
+                            seen_set.add(rec.track_id)
+                            if len(all_records) >= query_limit:
+                                break
+                    if len(all_records) >= query_limit:
+                        break
                     if len(items) < PAGE_LIMIT:
                         break
                     time.sleep(0.3)
@@ -486,7 +505,7 @@ class JamendoCrawler:
 
                 completed_set.add(query_key)
                 state.completed_queries.append(query_key)
-                do_checkpoint()
+                do_checkpoint(force=True)
                 time.sleep(0.5)
 
         except KeyboardInterrupt:
@@ -527,6 +546,7 @@ def main() -> None:
     ap.add_argument("--target_total", type=int, default=20_000, help="Target unique tracks")
     ap.add_argument("--workers", type=int, default=6, help="Parallel download workers")
     ap.add_argument("--checkpoint_interval", type=int, default=300, help="Seconds between checkpoints")
+    ap.add_argument("--max_per_query", type=int, default=50, help="Max new tracks downloaded from a single culture/tag query")
     ap.add_argument("--resume", action="store_true", help="Resume from existing checkpoint")
     args = ap.parse_args()
 
@@ -555,8 +575,16 @@ def main() -> None:
             "limit": 1,
         },
     )
-    if not test_data or "results" not in test_data:
-        print("[AUTH/API TEST FAILED] Check your Jamendo Client ID.")
+    test_headers = (test_data or {}).get("headers") or {}
+    if (
+        not test_data
+        or "results" not in test_data
+        or str(test_headers.get("status", "")).lower() == "failed"
+    ):
+        if test_headers.get("error_message"):
+            print(f"[AUTH/API TEST FAILED] {test_headers.get('error_message')}")
+        else:
+            print("[AUTH/API TEST FAILED] Check your Jamendo Client ID.")
         sys.exit(1)
     print(f"[AUTH OK] Jamendo API reachable.")
 
@@ -569,6 +597,7 @@ def main() -> None:
         target_total=args.target_total,
         workers=args.workers,
         checkpoint_interval=args.checkpoint_interval,
+        max_per_query=args.max_per_query,
     )
 
     crawler.run(resume=args.resume)

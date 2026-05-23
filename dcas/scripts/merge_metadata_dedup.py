@@ -16,7 +16,11 @@ def _read_csv(path: Path) -> tuple[list[dict[str, str]], list[str]]:
     return rows, fields
 
 
-def merge_metadata_dedup(inputs: list[str | Path], out_csv: str | Path) -> dict[str, Any]:
+def merge_metadata_dedup(
+    inputs: list[str | Path],
+    out_csv: str | Path,
+    require_audio_exists: bool = False,
+) -> dict[str, Any]:
     in_paths = [Path(p) for p in inputs]
     out_path = Path(out_csv)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -27,8 +31,10 @@ def merge_metadata_dedup(inputs: list[str | Path], out_csv: str | Path) -> dict[
     sources: list[dict[str, Any]] = []
     seen_track_ids: set[str] = set()
     skipped_duplicates = 0
+    skipped_missing_audio = 0
 
     for p in in_paths:
+        metadata_dir = p.parent.absolute()
         rows, fields = _read_csv(p)
         required = {"track_id", "culture", "audio_path"}
         missing = sorted(list(required - set(fields)))
@@ -53,7 +59,10 @@ def merge_metadata_dedup(inputs: list[str | Path], out_csv: str | Path) -> dict[
                 continue
             ap = Path(rel)
             if not ap.is_absolute():
-                ap = (p.parent / ap).resolve()
+                ap = metadata_dir / ap
+            if require_audio_exists and not ap.exists():
+                skipped_missing_audio += 1
+                continue
             rr["audio_path"] = str(ap)
             merged.append(rr)
         sources.append({"path": str(p.resolve()), "rows_before_dedup": len(rows), "rows_after_dedup": int(len(merged) - n_before)})
@@ -77,6 +86,7 @@ def merge_metadata_dedup(inputs: list[str | Path], out_csv: str | Path) -> dict[
         "n_cultures": int(len(culture_counter)),
         "culture_distribution": [{"culture": c, "count": int(v)} for c, v in sorted(culture_counter.items())],
         "skipped_duplicates": int(skipped_duplicates),
+        "skipped_missing_audio": int(skipped_missing_audio),
     }
     rep_path = out_path.with_suffix(out_path.suffix + ".merge_report.json")
     with open(rep_path, "w", encoding="utf-8") as f:
@@ -89,8 +99,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Merge multiple metadata.csv files and deduplicate rows by track_id.")
     ap.add_argument("--inputs", nargs="+", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--require_audio_exists", action="store_true")
     args = ap.parse_args()
-    out = merge_metadata_dedup(inputs=args.inputs, out_csv=args.out)
+    out = merge_metadata_dedup(
+        inputs=args.inputs,
+        out_csv=args.out,
+        require_audio_exists=args.require_audio_exists,
+    )
     print(json.dumps(out, ensure_ascii=False))
 
 

@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo | 音乐台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23111111'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23ffffff' stroke-width='4'/%3E%3Cpath d='M18 32h28' stroke='%23ffffff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #111111;
+      --muted: #646464;
+      --line: rgba(17, 17, 17, 0.14);
+      --line-strong: rgba(17, 17, 17, 0.28);
+      --soft: #f7f7f7;
+      --soft-2: #efefef;
+      --accent: #111111;
+      --alert: #b72727;
+      --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "Courier New", Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-main);
+      overflow-x: hidden;
+    }
+
+    body {
+      background:
+        linear-gradient(90deg, rgba(17, 17, 17, 0.026) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(17, 17, 17, 0.026) 1px, transparent 1px),
+        #ffffff;
+      background-size: 72px 72px;
+    }
+
+    a,
+    button,
+    label {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .station-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: minmax(620px, 1.45fr) minmax(360px, 0.55fr);
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .player-head,
+    .rec-head {
+      min-height: 4.8rem;
+      display: grid;
+      align-items: center;
+      padding: 0.95rem 2rem;
+    }
+
+    .player-head {
+      grid-template-columns: auto minmax(220px, 1fr) auto;
+      gap: 1.35rem;
+      border-right: 1px solid var(--line);
+    }
+
+    .rec-head {
+      justify-content: stretch;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      font-size: clamp(1.4rem, 2vw, 2.1rem);
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .brand-sub,
+    .meta-label,
+    .mono {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .now-playing {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: center;
+      min-width: 0;
+      padding-left: 1.2rem;
+      border-left: 1px solid var(--line);
+    }
+
+    .status-dot {
+      width: 0.7rem;
+      height: 0.7rem;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      background: var(--ink);
+      box-shadow: 0 0 0 0 rgba(17, 17, 17, 0.22);
+      animation: pulse 2.3s ease infinite;
+    }
+
+    .track-kicker {
+      margin-bottom: 0.15rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .track-title-line {
+      display: flex;
+      align-items: baseline;
+      gap: 0.65rem;
+      min-width: 0;
+      font-size: 1rem;
+    }
+
+    .track-title-line strong {
+      max-width: 32vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 400;
+    }
+
+    .track-title-line span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      white-space: nowrap;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.3rem;
+      padding: 0.65rem 1.1rem;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+      white-space: nowrap;
+    }
+
+    .pill:hover,
+    .pill.is-active {
+      background: var(--ink);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .upload-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .station-shell {
+      width: min(100%, 1680px);
+      margin: 0 auto;
+      min-height: calc(100vh - 73px);
+      display: grid;
+      grid-template-columns: minmax(620px, 1.45fr) minmax(360px, 0.55fr);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+
+    .console {
+      display: grid;
+      grid-template-rows: auto minmax(420px, 1fr) auto;
+      min-height: calc(100vh - 73px);
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .console-top {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding: 1.35rem 1.45rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .readout {
+      min-width: 0;
+    }
+
+    .meta-label {
+      margin-bottom: 0.35rem;
+      color: var(--muted);
+      font-size: 0.66rem;
+    }
+
+    .readout strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+
+    .map-stage {
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
+        #ffffff;
+      background-size: 48px 48px;
+      cursor: grab;
+    }
+
+    .map-stage.is-dragging {
+      cursor: grabbing;
+    }
+
+    #map-svg,
+    #map-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #map-svg {
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #map-canvas {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .map-ui {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .map-label {
+      position: absolute;
+      transform: translate(-50%, 14px);
+      color: rgba(17, 17, 17, 0.5);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      line-height: 1.25;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 0.2rem 0.35rem;
+    }
+
+    .map-label.is-current {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .map-label.is-recommendation {
+      color: rgba(183, 39, 39, 0.86);
+    }
+
+    .map-label.is-recommendation:hover,
+    .map-label.is-selected {
+      background: rgba(183, 39, 39, 0.08);
+      color: var(--alert);
+    }
+
+    .map-corner {
+      position: absolute;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .map-corner.top-left {
+      top: 1.25rem;
+      left: 1.25rem;
+    }
+
+    .map-corner.top-right {
+      top: 1.25rem;
+      right: 1.25rem;
+      text-align: right;
+    }
+
+    .map-corner.bottom-left {
+      left: 1.25rem;
+      bottom: 1.25rem;
+    }
+
+    .map-corner.bottom-right {
+      right: 1.25rem;
+      bottom: 1.25rem;
+      text-align: right;
+    }
+
+    .pan-zone {
+      position: absolute;
+      z-index: 6;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      transition: opacity 160ms ease;
+      pointer-events: none;
+    }
+
+    .pan-zone.left {
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 16%;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+    }
+
+    .pan-zone.right {
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 16%;
+      background: linear-gradient(270deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+    }
+
+    .pan-zone.up {
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 16%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+    }
+
+    .pan-zone.down {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16%;
+      background: linear-gradient(0deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+    }
+
+    .map-stage.show-left .pan-zone.left,
+    .map-stage.show-right .pan-zone.right,
+    .map-stage.show-up .pan-zone.up,
+    .map-stage.show-down .pan-zone.down {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .pan-button {
+      width: 3.2rem;
+      aspect-ratio: 1;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+      font-size: 1.5rem;
+      line-height: 1;
+      backdrop-filter: blur(8px);
+    }
+
+    .console-bottom {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 1.2rem 1.45rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .transport {
+      display: grid;
+      grid-template-columns: auto auto auto minmax(180px, 1fr);
+      gap: 0.7rem;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .play-button,
+    .skip-button {
+      width: 3.2rem;
+      aspect-ratio: 1;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .skip-button {
+      width: 2.65rem;
+      color: var(--ink);
+      font-size: 1.28rem;
+      line-height: 1;
+    }
+
+    .play-button:hover,
+    .skip-button:hover {
+      background: var(--soft);
+      transform: translateY(-1px);
+    }
+
+    .play-button span {
+      width: 0;
+      height: 0;
+      margin-left: 0.18rem;
+      border-top: 0.45rem solid transparent;
+      border-bottom: 0.45rem solid transparent;
+      border-left: 0.72rem solid var(--ink);
+    }
+
+    .play-button.is-playing span {
+      width: 0.72rem;
+      height: 0.9rem;
+      margin-left: 0;
+      border: 0;
+      border-left: 0.24rem solid var(--ink);
+      border-right: 0.24rem solid var(--ink);
+    }
+
+    .progress-wrap {
+      min-width: 0;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.55rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+    }
+
+    .progress-track {
+      height: 1.15rem;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .progress-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: var(--line);
+      transform: translateY(-50%);
+    }
+
+    .progress-fill {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 1px;
+      width: 38%;
+      background: var(--ink);
+      transform: translateY(-50%);
+    }
+
+    .progress-fill::after {
+      content: "";
+      position: absolute;
+      right: -0.32rem;
+      top: 50%;
+      width: 0.64rem;
+      aspect-ratio: 1;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      background: #ffffff;
+      transform: translateY(-50%);
+    }
+
+    .recommend-button {
+      min-height: 3.2rem;
+      padding: 0.85rem 1.4rem;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--ink);
+      color: #ffffff;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      transition: transform 180ms ease, background 180ms ease;
+      white-space: nowrap;
+    }
+
+    .recommend-button:hover {
+      transform: translateY(-1px);
+      background: #2a2a2a;
+    }
+
+    .recommend-button.is-running {
+      background: var(--alert);
+      border-color: var(--alert);
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 73px);
+      background: #ffffff;
+    }
+
+    .side-head {
+      padding: 1.35rem 1.45rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .side-head h1 {
+      margin-top: 0.4rem;
+      font-size: clamp(2.8rem, 4.2vw, 5.4rem);
+      font-weight: 400;
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .recommend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: auto;
+    }
+
+    .rec-card {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1.25rem 1.45rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      cursor: pointer;
+      transition: background 180ms ease;
+    }
+
+    .rec-card:not(.is-placeholder):hover {
+      background: var(--soft);
+    }
+
+    .rec-card.is-selected {
+      background: var(--soft);
+      box-shadow: inset 3px 0 0 var(--alert);
+    }
+
+    .rec-card.is-placeholder {
+      color: var(--muted);
+      cursor: default;
+      line-height: 1.55;
+    }
+
+    .rec-card h2 {
+      font-size: 1.2rem;
+      font-weight: 400;
+      line-height: 1.15;
+    }
+
+    .rec-card p {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+
+    .rec-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 1.65rem;
+      padding: 0.28rem 0.65rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+    }
+
+    .audio-el {
+      display: none;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(17, 17, 17, 0.22);
+      }
+      70% {
+        box-shadow: 0 0 0 0.55rem rgba(17, 17, 17, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(17, 17, 17, 0);
+      }
+    }
+
+    @media (max-width: 1120px) {
+      .station-header {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .player-head {
+        grid-template-columns: auto minmax(220px, 1fr) auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .rec-head {
+        min-height: auto;
+      }
+
+      .now-playing {
+        padding-left: 0;
+        border-left: 0;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .station-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .console {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .side-panel {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        background-size: 42px 42px;
+      }
+
+      .player-head,
+      .rec-head,
+      .console-top,
+      .console-bottom,
+      .side-head,
+      .rec-card {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .player-head {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+      }
+
+      .player-head > .pill {
+        justify-self: start;
+      }
+
+      .console-top {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .map-stage {
+        min-height: 430px;
+      }
+
+      .console-bottom {
+        grid-template-columns: 1fr;
+      }
+
+      .transport {
+        grid-template-columns: auto auto auto;
+      }
+
+      .progress-wrap {
+        grid-column: 1 / -1;
+      }
+
+      .recommend-button {
+        width: 100%;
+      }
+
+      .track-title-line {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .track-title-line strong {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="station-header">
+    <div class="player-head">
+      <a class="brand" href="index.html" aria-label="Echo homepage">
+        <span class="brand-mark">Echo</span>
+        <span class="brand-sub">音乐台</span>
+      </a>
+
+      <section class="now-playing" aria-label="正在播放">
+        <span class="status-dot"></span>
+        <div>
+          <div class="track-kicker">Now Playing / 当前播放</div>
+          <div class="track-title-line">
+            <strong id="top-title">Moonlit Silk Road</strong>
+            <span id="top-meta">Lian Zhao - Xi'an, China</span>
+          </div>
+        </div>
+      </section>
+
+      <label class="pill" for="music-upload">上传音乐</label>
+      <input class="upload-input" id="music-upload" type="file" accept="audio/*">
+    </div>
+
+    <div class="rec-head">
+      <nav class="top-actions" aria-label="音乐台导航">
+        <a class="pill is-active" href="music.html">音乐台</a>
+        <a class="pill" href="index.html#method">技术展示</a>
+        <a class="pill" href="index.html#contact">设置界面</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="station-shell">
+    <section class="console" aria-label="音乐播放与地图">
+      <div class="console-top">
+        <div class="readout">
+          <div class="meta-label">Track</div>
+          <strong id="readout-track">Moonlit Silk Road</strong>
+        </div>
+        <div class="readout">
+          <div class="meta-label">Origin</div>
+          <strong id="readout-origin">Xi'an, Shaanxi, China</strong>
+        </div>
+        <div class="readout">
+          <div class="meta-label">Style</div>
+          <strong id="readout-style">Pipa / Lo-fi / Silk Road</strong>
+        </div>
+        <div class="readout">
+          <div class="meta-label">Map Center</div>
+          <strong id="readout-center">City coordinate</strong>
+        </div>
+      </div>
+
+      <div class="map-stage" id="station-map" aria-label="可拖动的世界音乐地图">
+        <svg id="map-svg"></svg>
+        <canvas id="map-canvas"></canvas>
+        <div class="map-ui" id="map-ui">
+          <div class="map-corner top-left">Global Flat Earth / Music Atlas</div>
+          <div class="map-corner top-right" id="map-mode">Current Track Centered</div>
+          <div class="map-corner bottom-left">Drag map / edge controls</div>
+          <div class="map-corner bottom-right" id="map-status">Recommendation links idle</div>
+        </div>
+        <div class="pan-zone left">
+          <button class="pan-button" type="button" data-pan-x="-1" data-pan-y="0" aria-label="向左移动地图">‹</button>
+        </div>
+        <div class="pan-zone right">
+          <button class="pan-button" type="button" data-pan-x="1" data-pan-y="0" aria-label="向右移动地图">›</button>
+        </div>
+        <div class="pan-zone up">
+          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="1" aria-label="向上移动地图">⌃</button>
+        </div>
+        <div class="pan-zone down">
+          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="-1" aria-label="向下移动地图">⌄</button>
+        </div>
+      </div>
+
+      <div class="console-bottom">
+        <div class="transport">
+          <button class="skip-button" id="prev-button" type="button" aria-label="上一首">‹</button>
+          <button class="play-button is-playing" id="play-button" type="button" aria-label="播放或暂停"><span></span></button>
+          <button class="skip-button" id="next-button" type="button" aria-label="下一首">›</button>
+          <div class="progress-wrap">
+            <div class="progress-meta">
+              <span id="play-state">Streaming local preview</span>
+              <span id="time-code">00:00:18 / 03:42</span>
+            </div>
+            <div class="progress-track" id="progress-track" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8"><div class="progress-fill" id="progress-fill"></div></div>
+          </div>
+        </div>
+
+        <button class="recommend-button" id="recommend-button" type="button">跨文化音乐推荐</button>
+      </div>
+
+      <audio class="audio-el" id="audio-player"></audio>
+    </section>
+
+    <aside class="side-panel" aria-label="跨文化推荐列表">
+      <div class="side-head">
+        <div class="meta-label">Recommendation Notes</div>
+        <h1>Cross<br>Route</h1>
+      </div>
+      <div class="recommend-list" id="recommend-list">
+        <article class="rec-card is-placeholder">
+          <div class="meta-label">Waiting</div>
+          <p>点击左下方的“跨文化音乐推荐”后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
+        </article>
+      </div>
+    </aside>
+  </main>
+
+  <script src="./vendor/d3.v7.min.js"></script>
+  <script src="./vendor/topojson-client.min.js"></script>
+  <script>
+    const currentTrack = {
+      title: "Moonlit Silk Road",
+      artist: "Lian Zhao",
+      city: "Xi'an",
+      province: "Shaanxi",
+      country: "China",
+      capital: "Beijing",
+      lat: 34.3416,
+      lng: 108.9398,
+      style: "Pipa / Lo-fi / Silk Road",
+      note: "A plucked pipa phrase over soft percussion and nocturnal texture."
+    };
+
+    const capitalLookup = {
+      China: { city: "Beijing", lat: 39.9042, lng: 116.4074 },
+      Brazil: { city: "Brasilia", lat: -15.7939, lng: -47.8828 },
+      Mali: { city: "Bamako", lat: 12.6392, lng: -8.0029 },
+      Portugal: { city: "Lisbon", lat: 38.7223, lng: -9.1393 },
+      Indonesia: { city: "Jakarta", lat: -6.2088, lng: 106.8456 },
+      Turkey: { city: "Ankara", lat: 39.9334, lng: 32.8597 },
+      Japan: { city: "Tokyo", lat: 35.6762, lng: 139.6503 },
+      India: { city: "New Delhi", lat: 28.6139, lng: 77.2090 }
+    };
+
+    const recommendations = [
+      {
+        title: "Bahia Mirror",
+        artist: "Ana Lira",
+        country: "Brazil",
+        city: "Salvador",
+        lat: -12.9777,
+        lng: -38.5016,
+        style: "Samba-reggae / Candomble rhythm",
+        why: "Shares bright plucked accents with a warmer carnival percussion field."
+      },
+      {
+        title: "Kora After Rain",
+        artist: "Moussa Diarra",
+        country: "Mali",
+        city: "Bamako",
+        lat: 12.6392,
+        lng: -8.0029,
+        style: "Kora / Mande praise song",
+        why: "Connects pipa-like cascading lines to West African harp-lute phrasing."
+      },
+      {
+        title: "Lisboa Low Tide",
+        artist: "Marta Vale",
+        country: "Portugal",
+        city: "Lisbon",
+        lat: 38.7223,
+        lng: -9.1393,
+        style: "Fado / ambient guitar",
+        why: "Matches nocturnal melancholy while changing vocal ornament and harmonic color."
+      },
+      {
+        title: "Gamelan Orbit",
+        artist: "Sari Wulan",
+        country: "Indonesia",
+        city: "Yogyakarta",
+        lat: -7.7956,
+        lng: 110.3695,
+        style: "Gamelan / soft electronics",
+        why: "Reframes the melodic contour through interlocking metallophone cycles."
+      },
+      {
+        title: "Istanbul Taksim Drift",
+        artist: "Emre Aydin",
+        country: "Turkey",
+        city: "Istanbul",
+        lat: 41.0082,
+        lng: 28.9784,
+        style: "Oud / maqam / downtempo",
+        why: "Bridges Silk Road modality with maqam-inflected improvisation."
+      }
+    ];
+
+    const els = {
+      topTitle: document.getElementById("top-title"),
+      topMeta: document.getElementById("top-meta"),
+      readoutTrack: document.getElementById("readout-track"),
+      readoutOrigin: document.getElementById("readout-origin"),
+      readoutStyle: document.getElementById("readout-style"),
+      readoutCenter: document.getElementById("readout-center"),
+      upload: document.getElementById("music-upload"),
+      audio: document.getElementById("audio-player"),
+      playButton: document.getElementById("play-button"),
+      prevButton: document.getElementById("prev-button"),
+      nextButton: document.getElementById("next-button"),
+      playState: document.getElementById("play-state"),
+      timeCode: document.getElementById("time-code"),
+      progressTrack: document.getElementById("progress-track"),
+      progressFill: document.getElementById("progress-fill"),
+      recommendButton: document.getElementById("recommend-button"),
+      recommendList: document.getElementById("recommend-list"),
+      mapStatus: document.getElementById("map-status"),
+      mapMode: document.getElementById("map-mode"),
+      mapStage: document.getElementById("station-map"),
+      mapSvg: document.getElementById("map-svg"),
+      mapCanvas: document.getElementById("map-canvas"),
+      mapUi: document.getElementById("map-ui")
+    };
+
+    let primaryTrack = { ...currentTrack };
+    let activeRecommendations = [];
+    let currentQueueIndex = 0;
+    let isPlaying = true;
+    let isScrubbing = false;
+    let simulatedSeconds = 18;
+    let mapData = null;
+    let worldFeatures = null;
+    let borders = null;
+    let width = 0;
+    let height = 0;
+    let projection = null;
+    let path = null;
+    let centerLng = locateTrack(currentTrack).lng;
+    let centerLat = locateTrack(currentTrack).lat;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let panInterval = null;
+    const defaultDuration = 222;
+    const dpr = window.devicePixelRatio || 1;
+
+    function locateTrack(track) {
+      if (Number.isFinite(track.lat) && Number.isFinite(track.lng)) {
+        return { lat: track.lat, lng: track.lng, precision: track.city ? "City coordinate" : "Country coordinate" };
+      }
+      const fallback = capitalLookup[track.country] || capitalLookup.China;
+      return { ...fallback, precision: "Capital fallback" };
+    }
+
+    function formatOrigin(track) {
+      return [track.city, track.province, track.country].filter(Boolean).join(", ");
+    }
+
+    function isSameTrack(a, b) {
+      return a && b && a.title === b.title && a.artist === b.artist && a.country === b.country;
+    }
+
+    function getPlaybackQueue() {
+      return [primaryTrack, ...recommendations];
+    }
+
+    function replaceCurrentTrack(track) {
+      Object.keys(currentTrack).forEach((key) => {
+        delete currentTrack[key];
+      });
+      Object.assign(currentTrack, {
+        province: "",
+        capital: "",
+        note: "",
+        ...track
+      });
+    }
+
+    function selectTrack(track) {
+      replaceCurrentTrack(track);
+      const loc = locateTrack(currentTrack);
+      centerLng = loc.lng;
+      centerLat = loc.lat;
+      currentQueueIndex = Math.max(0, getPlaybackQueue().findIndex((item) => isSameTrack(item, currentTrack)));
+      simulatedSeconds = 0;
+      isPlaying = true;
+      els.playButton.classList.add("is-playing");
+
+      if (currentTrack.fileObjectUrl) {
+        if (els.audio.src !== currentTrack.fileObjectUrl) {
+          els.audio.src = currentTrack.fileObjectUrl;
+        }
+        els.audio.currentTime = 0;
+        els.audio.play().catch(() => {});
+        els.playState.textContent = "Uploaded audio loaded";
+      } else {
+        if (els.audio.src) {
+          els.audio.pause();
+          els.audio.removeAttribute("src");
+          els.audio.load();
+        }
+        els.playState.textContent = "Streaming local preview";
+      }
+
+      if (!activeRecommendations.length && !isSameTrack(currentTrack, primaryTrack)) {
+        activeRecommendations = recommendations;
+      }
+
+      syncTrackReadouts();
+      renderRecommendations();
+      drawMap();
+      updateProgressUI();
+    }
+
+    function playQueueDelta(delta) {
+      const queue = getPlaybackQueue();
+      currentQueueIndex = (currentQueueIndex + delta + queue.length) % queue.length;
+      selectTrack(queue[currentQueueIndex]);
+    }
+
+    function formatTime(value) {
+      const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+      const m = Math.floor(safeValue / 60).toString().padStart(2, "0");
+      const s = Math.floor(safeValue % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function getDuration() {
+      return Number.isFinite(els.audio.duration) && els.audio.duration > 0 ? els.audio.duration : defaultDuration;
+    }
+
+    function getCurrentTime() {
+      if (els.audio.src && Number.isFinite(els.audio.currentTime)) {
+        return els.audio.currentTime;
+      }
+      return simulatedSeconds % getDuration();
+    }
+
+    function updateProgressUI() {
+      const duration = getDuration();
+      const current = getCurrentTime();
+      const pct = Math.max(0, Math.min(100, (current / duration) * 100));
+      els.progressFill.style.width = `${pct}%`;
+      els.progressTrack.setAttribute("aria-valuenow", Math.round(pct).toString());
+      els.timeCode.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+    }
+
+    function scrubTo(clientX) {
+      const rect = els.progressTrack.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const nextTime = pct * getDuration();
+      if (els.audio.src) {
+        els.audio.currentTime = nextTime;
+      } else {
+        simulatedSeconds = nextTime;
+      }
+      updateProgressUI();
+    }
+
+    function syncTrackReadouts() {
+      const loc = locateTrack(currentTrack);
+      els.topTitle.textContent = currentTrack.title;
+      els.topMeta.textContent = `${currentTrack.artist} - ${formatOrigin(currentTrack)}`;
+      els.readoutTrack.textContent = currentTrack.title;
+      els.readoutOrigin.textContent = formatOrigin(currentTrack);
+      els.readoutStyle.textContent = currentTrack.style;
+      els.readoutCenter.textContent = loc.precision;
+    }
+
+    function updateProjection() {
+      const scale = Math.min(width, height) * 0.82;
+      projection = d3.geoMercator()
+        .center([centerLng, centerLat])
+        .scale(scale)
+        .translate([width / 2, height / 2]);
+      path = d3.geoPath(projection);
+    }
+
+    function projectedPoint(item) {
+      const point = projection([item.lng, item.lat]);
+      if (!point) return { x: NaN, y: NaN };
+      return { x: point[0], y: point[1] };
+    }
+
+    function clearLabels() {
+      els.mapUi.querySelectorAll(".map-label").forEach((label) => label.remove());
+    }
+
+    function addLabel(item, className, index = -1) {
+      const pos = projectedPoint(item);
+      if (!Number.isFinite(pos.x) || !Number.isFinite(pos.y)) return;
+      const label = document.createElement("div");
+      label.className = `map-label ${className}`;
+      if (className.includes("is-recommendation") && isSameTrack(item, currentTrack)) {
+        label.classList.add("is-selected");
+      }
+      label.style.left = `${pos.x}px`;
+      label.style.top = `${pos.y}px`;
+      if (index >= 0) {
+        label.dataset.recIndex = String(index);
+        label.setAttribute("role", "button");
+        label.tabIndex = 0;
+        label.setAttribute("aria-label", `播放推荐音乐 ${item.title}`);
+      }
+      label.innerHTML = `${item.city || item.country}<br>${item.style.split("/")[0].trim()}`;
+      label.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      label.addEventListener("click", (event) => {
+        if (index < 0) return;
+        event.stopPropagation();
+        selectTrack(recommendations[index]);
+      });
+      label.addEventListener("keydown", (event) => {
+        if (index < 0 || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        selectTrack(recommendations[index]);
+      });
+      els.mapUi.appendChild(label);
+    }
+
+    function drawMap() {
+      if (!worldFeatures) return;
+      updateProjection();
+
+      const svg = d3.select(els.mapSvg);
+      svg.attr("viewBox", `0 0 ${width} ${height}`);
+      svg.selectAll("*").remove();
+
+      svg.append("g")
+        .selectAll("path")
+        .data(worldFeatures.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", "rgba(17, 17, 17, 0.035)")
+        .attr("stroke", "rgba(17, 17, 17, 0.10)")
+        .attr("stroke-width", 0.55);
+
+      svg.append("path")
+        .datum(borders)
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", "rgba(17, 17, 17, 0.16)")
+        .attr("stroke-width", 0.55);
+
+      clearLabels();
+      addLabel(currentTrack, "is-current");
+      activeRecommendations.forEach((item, index) => addLabel(item, "is-recommendation", index));
+    }
+
+    function drawStar(ctx, x, y, inner, outer, alpha, color) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      const points = 8;
+      for (let i = 0; i < points; i += 1) {
+        const angle = (i * Math.PI) / (points / 2) - Math.PI / points;
+        const radius = i % 2 === 0 ? outer : inner;
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCanvas(time) {
+      const ctx = els.mapCanvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      if (!projection) {
+        requestAnimationFrame(drawCanvas);
+        return;
+      }
+
+      const current = projectedPoint(currentTrack);
+      const elapsed = time * 0.001;
+
+      if (activeRecommendations.length) {
+        activeRecommendations.forEach((item, index) => {
+          const target = projectedPoint(item);
+          const offset = Math.sin(elapsed * 1.2 + index) * 10;
+          ctx.save();
+          ctx.setLineDash([5, 10]);
+          ctx.lineDashOffset = -(elapsed * 22 + index * 4);
+          ctx.beginPath();
+          ctx.moveTo(current.x, current.y);
+          const midX = (current.x + target.x) / 2;
+          const midY = (current.y + target.y) / 2 - 45 - offset;
+          ctx.quadraticCurveTo(midX, midY, target.x, target.y);
+          ctx.strokeStyle = "rgba(17, 17, 17, 0.36)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+
+      const allNodes = [currentTrack, ...activeRecommendations];
+      allNodes.forEach((item, index) => {
+        const p = projectedPoint(item);
+        const isCurrent = index === 0;
+        const color = isCurrent ? "#111111" : "#b72727";
+        const breath = 0.5 + 0.5 * Math.sin(elapsed * (0.7 + index * 0.08) + index);
+        const glowRadius = isCurrent ? 30 : 22 + breath * 10;
+        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowRadius);
+        glow.addColorStop(0, isCurrent ? "rgba(17, 17, 17, 0.16)" : "rgba(183, 39, 39, 0.18)");
+        glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, glowRadius, 0, Math.PI * 2);
+        ctx.fillStyle = glow;
+        ctx.fill();
+
+        drawStar(ctx, p.x, p.y, isCurrent ? 2.8 : 2.2, isCurrent ? 10 : 8, isCurrent ? 0.9 : 0.72, color);
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, isCurrent ? 4.5 : 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      });
+
+      requestAnimationFrame(drawCanvas);
+    }
+
+    function resize() {
+      const rect = els.mapStage.getBoundingClientRect();
+      width = Math.max(1, Math.round(rect.width));
+      height = Math.max(1, Math.round(rect.height));
+      els.mapCanvas.width = width * dpr;
+      els.mapCanvas.height = height * dpr;
+      els.mapCanvas.style.width = `${width}px`;
+      els.mapCanvas.style.height = `${height}px`;
+      drawMap();
+    }
+
+    async function loadMap() {
+      mapData = await d3.json("./vendor/countries-110m.json");
+      worldFeatures = topojson.feature(mapData, mapData.objects.countries);
+      borders = topojson.mesh(mapData, mapData.objects.countries, (a, b) => a !== b);
+      resize();
+      requestAnimationFrame(drawCanvas);
+    }
+
+    function renderRecommendations() {
+      if (!activeRecommendations.length) {
+        els.recommendList.innerHTML = `
+          <article class="rec-card is-placeholder">
+            <div class="meta-label">Waiting</div>
+            <p>点击左下方的“跨文化音乐推荐”后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
+          </article>
+        `;
+        return;
+      }
+
+      els.recommendList.innerHTML = activeRecommendations.map((item, index) => `
+        <button class="rec-card${isSameTrack(item, currentTrack) ? " is-selected" : ""}" type="button" data-rec-index="${index}">
+          <div class="meta-label">${String(index + 1).padStart(2, "0")} / ${item.country}</div>
+          <h2>${item.title}</h2>
+          <p>${item.artist} - ${item.city}, ${item.country}</p>
+          <p>${item.why}</p>
+          <div class="rec-meta">
+            <span class="tag">${item.style}</span>
+            <span class="tag">${Math.round(82 + index * 3)}% bridge fit</span>
+          </div>
+        </button>
+      `).join("");
+
+      els.recommendList.querySelectorAll("[data-rec-index]").forEach((card) => {
+        card.addEventListener("click", () => {
+          selectTrack(recommendations[Number(card.dataset.recIndex)]);
+        });
+      });
+    }
+
+    function startRecommendations() {
+      els.recommendButton.classList.add("is-running");
+      els.recommendButton.textContent = "推荐计算中...";
+      els.mapStatus.textContent = "Cross-cultural route building";
+      activeRecommendations = [];
+      renderRecommendations();
+      drawMap();
+
+      setTimeout(() => {
+        activeRecommendations = recommendations;
+        els.recommendButton.classList.remove("is-running");
+        els.recommendButton.textContent = "重新生成推荐";
+        els.mapStatus.textContent = "5 cross-cultural links active";
+        els.mapMode.textContent = "Recommendation network";
+        renderRecommendations();
+        drawMap();
+      }, 700);
+    }
+
+    function clampLat(value) {
+      return Math.max(-68, Math.min(74, value));
+    }
+
+    function panBy(deltaLng = 0, deltaLat = 0) {
+      centerLng += deltaLng;
+      centerLat = clampLat(centerLat + deltaLat);
+      if (centerLng > 180) centerLng -= 360;
+      if (centerLng < -180) centerLng += 360;
+      drawMap();
+    }
+
+    function beginPan(directionX, directionY) {
+      panBy(directionX * 9, directionY * 6);
+      clearInterval(panInterval);
+      panInterval = setInterval(() => panBy(directionX * 4, directionY * 2.8), 45);
+    }
+
+    function stopPan() {
+      clearInterval(panInterval);
+      panInterval = null;
+    }
+
+    els.mapStage.addEventListener("pointerdown", (event) => {
+      dragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      els.mapStage.classList.add("is-dragging");
+      els.mapStage.setPointerCapture(event.pointerId);
+    });
+
+    els.mapStage.addEventListener("pointermove", (event) => {
+      const rect = els.mapStage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      els.mapStage.classList.toggle("show-left", x < 86);
+      els.mapStage.classList.toggle("show-right", x > rect.width - 86);
+      els.mapStage.classList.toggle("show-up", y < 76);
+      els.mapStage.classList.toggle("show-down", y > rect.height - 76);
+
+      if (!dragging) return;
+      const dx = event.clientX - lastX;
+      const dy = event.clientY - lastY;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      panBy(-dx * 0.22, dy * 0.14);
+    });
+
+    els.mapStage.addEventListener("pointerup", (event) => {
+      dragging = false;
+      els.mapStage.classList.remove("is-dragging");
+      if (els.mapStage.hasPointerCapture(event.pointerId)) {
+        els.mapStage.releasePointerCapture(event.pointerId);
+      }
+    });
+
+    els.mapStage.addEventListener("pointerleave", () => {
+      dragging = false;
+      els.mapStage.classList.remove("show-left", "show-right", "show-up", "show-down", "is-dragging");
+    });
+
+    document.querySelectorAll(".pan-button").forEach((button) => {
+      const directionX = Number(button.dataset.panX || 0);
+      const directionY = Number(button.dataset.panY || 0);
+      button.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+        beginPan(directionX, directionY);
+      });
+      button.addEventListener("pointerup", stopPan);
+      button.addEventListener("pointerleave", stopPan);
+    });
+
+    els.recommendButton.addEventListener("click", startRecommendations);
+
+    els.prevButton.addEventListener("click", () => playQueueDelta(-1));
+    els.nextButton.addEventListener("click", () => playQueueDelta(1));
+
+    els.playButton.addEventListener("click", () => {
+      isPlaying = !isPlaying;
+      els.playButton.classList.toggle("is-playing", isPlaying);
+      els.playState.textContent = isPlaying
+        ? (currentTrack.fileObjectUrl ? "Uploaded audio loaded" : "Streaming local preview")
+        : "Playback paused";
+      if (els.audio.src) {
+        if (isPlaying) els.audio.play().catch(() => {});
+        else els.audio.pause();
+      }
+    });
+
+    els.progressTrack.addEventListener("pointerdown", (event) => {
+      isScrubbing = true;
+      scrubTo(event.clientX);
+      els.progressTrack.setPointerCapture(event.pointerId);
+    });
+
+    els.progressTrack.addEventListener("pointermove", (event) => {
+      if (!isScrubbing) return;
+      scrubTo(event.clientX);
+    });
+
+    els.progressTrack.addEventListener("pointerup", (event) => {
+      isScrubbing = false;
+      if (els.progressTrack.hasPointerCapture(event.pointerId)) {
+        els.progressTrack.releasePointerCapture(event.pointerId);
+      }
+    });
+
+    els.progressTrack.addEventListener("pointerleave", () => {
+      isScrubbing = false;
+    });
+
+    els.upload.addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const name = file.name.replace(/\.[^.]+$/, "");
+      currentTrack.title = name;
+      currentTrack.artist = "Uploaded local audio";
+      currentTrack.city = "Beijing";
+      currentTrack.province = "";
+      currentTrack.country = "China";
+      currentTrack.lat = 39.9042;
+      currentTrack.lng = 116.4074;
+      currentTrack.style = "Uploaded / pending analysis";
+      currentTrack.note = "Local file uploaded for future model analysis.";
+      currentTrack.fileObjectUrl = URL.createObjectURL(file);
+      primaryTrack = { ...currentTrack };
+      currentQueueIndex = 0;
+
+      els.audio.src = currentTrack.fileObjectUrl;
+      els.audio.play().catch(() => {});
+      isPlaying = true;
+      els.playButton.classList.add("is-playing");
+      els.playState.textContent = "Uploaded audio loaded";
+      centerLng = currentTrack.lng;
+      centerLat = currentTrack.lat;
+      activeRecommendations = [];
+      renderRecommendations();
+      syncTrackReadouts();
+      drawMap();
+      updateProgressUI();
+    });
+
+    setInterval(() => {
+      if (!isPlaying || isScrubbing) return;
+      simulatedSeconds += 1;
+      updateProgressUI();
+    }, 1000);
+
+    window.addEventListener("resize", resize);
+    syncTrackReadouts();
+    renderRecommendations();
+    loadMap().catch((error) => {
+      els.mapStatus.textContent = "Map data failed to load";
+      console.error(error);
+    });
+  </script>
+</body>
+</html>

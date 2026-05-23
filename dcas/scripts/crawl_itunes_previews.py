@@ -85,6 +85,25 @@ SEARCH_TERMS = [
     "top", "hit", "chart", "single", "album",
 ]
 
+ERA_SEARCH_TERMS = [
+    "1950s music", "1960s music", "1970s music", "1980s music",
+    "1990s music", "2000s music", "2010s music", "2020s music",
+    "oldies", "classic hits",
+]
+
+CULTURE_SEARCH_TERMS: dict[str, list[str]] = {
+    "west": ["oldies", "classic rock", "singer songwriter", "eurovision"],
+    "japan": ["j-pop", "j-rock", "city pop", "enka", "anime"],
+    "korea": ["k-pop", "korean", "trot", "k-indie"],
+    "india": ["bollywood", "indian pop", "hindustani", "carnatic"],
+    "china": ["mandopop", "cantopop", "chinese pop", "taiwan pop"],
+    "brazil": ["samba", "bossa nova", "mpb", "sertanejo"],
+    "latin": ["reggaeton", "salsa", "bachata", "cumbia", "tango"],
+    "africa": ["afrobeats", "amapiano", "highlife", "soukous"],
+    "middle_east": ["arabic pop", "turkish pop", "persian pop", "rai"],
+    "southeast_asia": ["thai pop", "dangdut", "v-pop", "opm"],
+}
+
 DEFAULT_COUNTRIES = list(COUNTRY_TO_CULTURE.keys())
 
 
@@ -113,6 +132,7 @@ class TrackRecord:
             "track_id": self.track_id,
             "culture": self.culture,
             "audio_path": audio_rel_path,
+            "source_dataset": "itunes",
             "label": self.genre,
             "title": self.title,
             "artist": self.artist,
@@ -201,8 +221,10 @@ class CheckpointManager:
 # ---------------------------------------------------------------------------
 
 class RateLimitedSession:
-    def __init__(self, interval: float = REQUEST_INTERVAL):
+    def __init__(self, interval: float = REQUEST_INTERVAL, max_retries: int = 4, backoff: float = 5.0):
         self.interval = interval
+        self.max_retries = max(1, int(max_retries))
+        self.backoff = max(0.1, float(backoff))
         self._last_request_time: float = 0.0
 
     def _wait(self) -> None:
@@ -213,15 +235,33 @@ class RateLimitedSession:
         self._last_request_time = time.time()
 
     def get(self, url: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        self._wait()
-        resp = requests.get(url, params=params, timeout=30)
-        if resp.status_code == 403:
-            print(f"[RATE LIMIT] 403 from iTunes; backing off 60s")
-            time.sleep(60)
-            self._last_request_time = time.time()
-            return {}
-        resp.raise_for_status()
-        return resp.json()
+        last_error: Exception | None = None
+        for attempt in range(1, self.max_retries + 1):
+            self._wait()
+            try:
+                resp = requests.get(url, params=params, timeout=30)
+                if resp.status_code == 403:
+                    print("[RATE LIMIT] 403 from iTunes; backing off 60s")
+                    time.sleep(60)
+                    self._last_request_time = time.time()
+                    return {}
+                if resp.status_code in (429, 500, 502, 503, 504):
+                    sleep_secs = self.backoff * attempt
+                    print(f"[REQUEST RETRY] status={resp.status_code}; sleeping {sleep_secs:.1f}s ({attempt}/{self.max_retries})")
+                    time.sleep(sleep_secs)
+                    continue
+                resp.raise_for_status()
+                return resp.json()
+            except requests.RequestException as exc:
+                last_error = exc
+                if attempt >= self.max_retries:
+                    break
+                sleep_secs = self.backoff * attempt
+                print(f"[REQUEST RETRY] {type(exc).__name__}: {exc}; sleeping {sleep_secs:.1f}s ({attempt}/{self.max_retries})")
+                time.sleep(sleep_secs)
+        if last_error is not None:
+            raise last_error
+        return {}
 
 
 # ---------------------------------------------------------------------------
@@ -238,6 +278,7 @@ class iTunesCrawler:
         target_total: int,
         workers: int,
         checkpoint_interval: int,
+        max_per_query: int,
     ):
         self.session = session
         self.checkpoint = checkpoint
@@ -246,12 +287,13 @@ class iTunesCrawler:
         self.target_total = target_total
         self.workers = workers
         self.checkpoint_interval = checkpoint_interval
+        self.max_per_query = max(1, int(max_per_query))
 
         self.audio_dir = out_dir / "audio"
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
         self._fieldnames = [
-            "track_id", "culture", "audio_path", "label",
+            "track_id", "culture", "audio_path", "source_dataset", "label",
             "title", "artist", "album", "country",
             "duration_ms", "explicit", "release_date",
             "preview_url", "artwork_url", "collection_id",
@@ -335,7 +377,12 @@ class iTunesCrawler:
         for country in self.countries:
             culture = COUNTRY_TO_CULTURE.get(country, "west")
             # Empty term search not supported well; use genre terms
-            for term in SEARCH_TERMS:
+            terms = SEARCH_TERMS + ERA_SEARCH_TERMS + CULTURE_SEARCH_TERMS.get(culture, [])
+            seen_terms: set[str] = set()
+            for term in terms:
+                if term in seen_terms:
+                    continue
+                seen_terms.add(term)
                 pool.append((country, term, culture))
             # Add some country-specific terms
             if culture == "korea":
@@ -382,6 +429,19 @@ class iTunesCrawler:
         failed_set = set(state.failed_track_ids)
         existing_meta_ids = self.checkpoint.read_existing_metadata_ids()
         downloaded_set |= existing_meta_ids
+        if existing_meta_ids:
+            state.downloaded_track_ids = sorted(downloaded_set)
+            if len(downloaded_set) > state.total_downloaded:
+                state.total_downloaded = len(downloaded_set)
+            synced_collected = len(downloaded_set) + len(failed_set)
+            if synced_collected > state.total_collected:
+                state.total_collected = synced_collected
+        if resume and state.completed_queries and not downloaded_set and not failed_set:
+            print("[RECOVERY] Existing checkpoint has completed queries but no downloaded/failed tracks; retrying queries.")
+            state.completed_queries.clear()
+            state.total_collected = 0
+            completed_set.clear()
+        seen_set = set(downloaded_set) | set(failed_set)
         print(f"[INIT] {len(downloaded_set)} tracks already in metadata.csv")
 
         query_pool = self._build_query_pool()
@@ -441,19 +501,38 @@ class iTunesCrawler:
                 print(f"[{qidx}/{total_queries}] country={country} term={term}")
 
                 all_records: list[TrackRecord] = []
+                remaining = max(0, self.target_total - state.total_collected)
+                query_limit = min(remaining, self.max_per_query)
+                query_failed = False
                 for offset in range(0, 2000, 200):
-                    items = self.search_tracks(country, term, offset=offset)
+                    try:
+                        items = self.search_tracks(country, term, offset=offset)
+                    except requests.RequestException as exc:
+                        query_failed = True
+                        print(
+                            f"[QUERY ERROR] country={country} term={term!r} "
+                            f"offset={offset}: {type(exc).__name__}: {exc}"
+                        )
+                        break
                     if not items:
                         break
                     for item in items:
                         rec = self._parse_track(item, culture, country, term)
-                        if rec and rec.track_id not in downloaded_set and rec.track_id not in failed_set:
+                        if rec and rec.track_id not in seen_set:
                             all_records.append(rec)
-                            downloaded_set.add(rec.track_id)
+                            seen_set.add(rec.track_id)
+                            if len(all_records) >= query_limit:
+                                break
+                    if len(all_records) >= query_limit:
+                        break
                     if len(items) < 200:
                         break
                     if state.total_collected + len(all_records) >= self.target_total:
                         break
+
+                if query_failed:
+                    do_checkpoint(force=True)
+                    continue
 
                 if not all_records:
                     completed_set.add(query_key)
@@ -507,6 +586,7 @@ def main() -> None:
     ap.add_argument("--target_total", type=int, default=5_000, help="Target unique tracks")
     ap.add_argument("--workers", type=int, default=4, help="Parallel download workers")
     ap.add_argument("--checkpoint_interval", type=int, default=300, help="Seconds between checkpoints")
+    ap.add_argument("--max_per_query", type=int, default=50, help="Max new tracks downloaded from a single country/term query")
     ap.add_argument("--resume", action="store_true", help="Resume from existing checkpoint")
     args = ap.parse_args()
 
@@ -539,6 +619,7 @@ def main() -> None:
         target_total=args.target_total,
         workers=args.workers,
         checkpoint_interval=args.checkpoint_interval,
+        max_per_query=args.max_per_query,
     )
 
     crawler.run(resume=args.resume)

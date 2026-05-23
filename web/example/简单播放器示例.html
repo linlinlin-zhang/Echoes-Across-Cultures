@@ -1,0 +1,364 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Signal Capture Unit</title>
+    <style vid="5">
+        :root {
+            --bg-color: #E6E6E6; 
+            --card-bg: #151619; 
+            --text-primary: #FFFFFF;
+            --text-secondary: #8E9299;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --mono-font: 'JetBrains Mono', 'Roboto Mono', monospace;
+            --border-radius: 12px;
+            --padding-inner: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        
+        .widget-container {
+            width: 380px;
+            height: 520px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        
+        .widget-header {
+            padding: var(--padding-inner);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .ref-label {
+            font-family: var(--mono-font);
+            font-size: 10px;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        
+        .visualizer-stage {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        
+        .radial-hud {
+            width: 280px;
+            height: 280px;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .radial-track {
+            position: absolute;
+            width: 176px;
+            height: 176px;
+            border: 1px dashed var(--text-secondary);
+            border-radius: 50%;
+        }
+        
+        .is-recording .radial-track {
+            animation: spin 60s linear infinite;
+        }
+
+        .record-trigger {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 1px solid var(--text-secondary);
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 10;
+        }
+
+        .record-trigger:hover {
+            border-color: rgba(255,255,255,0.6);
+            transform: scale(1.05);
+        }
+
+        .record-trigger:active {
+            transform: scale(0.95);
+        }
+
+        .trigger-icon {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-primary);
+            border-radius: 1px; 
+            transition: all 0.3s ease;
+        }
+
+        .is-recording .trigger-icon {
+            background-color: #FF4444; 
+            border-radius: 2px;
+            width: 12px;
+            height: 12px;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+        }
+
+        
+        .widget-footer {
+            padding: var(--padding-inner);
+            padding-bottom: 32px;
+        }
+
+        .status-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .status-label {
+            font-family: var(--mono-font);
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .main-readout {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            max-width: 90%;
+        }
+
+        .timer-display {
+            font-family: var(--mono-font);
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 24px;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 16px;
+        }
+
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            50% { opacity: 0.3; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        .pulse-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .pulse-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+        }
+
+        .is-recording .pulse-circle {
+            animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        
+        .mono {
+            font-family: var(--mono-font);
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" vid="6">
+</head>
+<body vid="7">
+
+    <div class="widget-container" id="widget" vid="8">
+
+        
+        <div class="widget-header" vid="9">
+            <span class="ref-label" vid="10">W - 01</span>
+            <span class="ref-label" vid="11">AUDIO_IN</span>
+        </div>
+
+        
+        <div class="visualizer-stage" vid="12">
+            
+            <div class="radial-hud" vid="13">
+                <div class="radial-track" vid="14"></div>
+                
+                <canvas id="radial-canvas" width="280" height="280" style="position: absolute; top:0; left:0;" vid="15"></canvas>
+                
+                <div class="pulse-effect" vid="16">
+                    <div class="pulse-circle" vid="17"></div>
+                </div>
+
+                <button class="record-trigger" id="recordBtn" aria-label="Toggle Recording" vid="18">
+                    <div class="trigger-icon" vid="19"></div>
+                </button>
+            </div>
+
+        </div>
+
+        
+        <div class="widget-footer" vid="20">
+            <div class="status-row" vid="21">
+                <div class="status-label" vid="22">STATUS</div>
+                <div class="main-readout" id="statusText" vid="23">System Idle. <br vid="24">Ready for capture.</div>
+            </div>
+            
+            <div class="timer-display" vid="25">
+                <span id="timeCode" vid="26">00:00:00:00</span>
+                <span class="mono" vid="27">44.1 kHz</span>
+            </div>
+        </div>
+    </div>
+
+    <script vid="28">
+        const widget = document.getElementById('widget');
+        const recordBtn = document.getElementById('recordBtn');
+        const statusText = document.getElementById('statusText');
+        const timeCode = document.getElementById('timeCode');
+        const radialCanvas = document.getElementById('radial-canvas');
+        const rCtx = radialCanvas.getContext('2d');
+
+        let isRecording = true;
+        let startTime;
+        let timerInterval;
+
+        
+        const tickCount = 120;
+        const cx = 140;
+        const cy = 140;
+        const baseRadius = 105;
+        const baseTickLength = 4;
+        
+        
+        function drawRadialTicks() {
+            rCtx.clearRect(0, 0, 280, 280);
+            
+            const time = Date.now() * 0.002;
+            
+            for (let i = 0; i < tickCount; i++) {
+                const angle = (i / tickCount) * Math.PI * 2;
+                
+                let noise = 0;
+                let opacity = 0.35;
+                
+                if (isRecording) {
+                    noise = Math.sin(i * 0.2 + time) * Math.cos(i * 0.1 - time * 2) * 32;
+                    noise += Math.random() * 10;
+                } else {
+                    noise = Math.sin(i * 0.1 + time) * 5;
+                }
+                
+                const tickLength = baseTickLength + Math.max(0, noise);
+                
+                rCtx.save();
+                rCtx.translate(cx, cy);
+                rCtx.rotate(angle);
+                rCtx.beginPath();
+                rCtx.moveTo(0, -baseRadius);
+                rCtx.lineTo(0, -baseRadius - tickLength);
+                rCtx.strokeStyle = isRecording ? 'rgba(255,255,255,0.85)' : '#8E9299';
+                rCtx.lineWidth = 1.5;
+                rCtx.stroke();
+                rCtx.restore();
+            }
+        }
+        
+        function updateViz() {
+            drawRadialTicks();
+            requestAnimationFrame(updateViz);
+        }
+        
+        updateViz();
+
+        
+        function updateTimer() {
+            const now = Date.now();
+            const diff = now - startTime;
+            
+            const ms = Math.floor((diff % 1000) / 10);
+            const s = Math.floor((diff / 1000) % 60);
+            const m = Math.floor((diff / (1000 * 60)) % 60);
+            const h = Math.floor((diff / (1000 * 60 * 60)));
+
+            const pad = (n) => n.toString().padStart(2, '0');
+            timeCode.innerText = `${pad(h)}:${pad(m)}:${pad(s)}:${pad(ms)}`;
+        }
+        widget.classList.add('is-recording');
+        statusText.innerHTML = "Secure link established.<br>Capturing input stream...";
+        startTime = Date.now();
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 10);
+
+        
+        recordBtn.addEventListener('click', () => {
+            isRecording = !isRecording;
+            
+            if (isRecording) {
+                widget.classList.add('is-recording');
+                statusText.innerHTML = "Secure link established.<br>Capturing input stream...";
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 10);
+            } else {
+                widget.classList.remove('is-recording');
+                statusText.innerHTML = "Capture stopped.<br>Data encrypted and stored.";
+                clearInterval(timerInterval);
+            }
+        });
+
+    </script>
+
+</body></html>

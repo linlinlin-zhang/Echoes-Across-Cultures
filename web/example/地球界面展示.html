@@ -1,0 +1,306 @@
+<html lang="en" vid="0"><head vid="1">
+<meta charset="UTF-8" vid="2">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+<title vid="4">Global Pretext Telemetry - Isolated</title>
+<style vid="5">
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    overflow: hidden;
+  }
+
+  #container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    cursor: grab;
+  }
+  
+  #container:active {
+    cursor: grabbing;
+  }
+
+  #webgl-canvas, #pretext-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #pretext-canvas {
+    pointer-events: none;
+    mix-blend-mode: screen; 
+  }
+</style>
+</head>
+<body vid="6">
+
+<main id="container" vid="7">
+  <canvas id="webgl-canvas" vid="8"></canvas>
+  <canvas id="pretext-canvas" vid="9"></canvas>
+</main>
+
+<script type="importmap" vid="10">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "pretext": "https://esm.sh/@chenglou/pretext@0.0.3"
+    }
+  }
+</script>
+
+<script type="module" vid="11">
+  import * as THREE from 'three';
+  import * as Pretext from 'pretext';
+
+  const FONT_SPEC = "11px 'Courier New', monospace";
+  const LINE_HEIGHT = 12;
+  const MASK_RESOLUTION = 256; 
+  
+  const sourceText = `LITHOSPHERE METRICS: NOMINAL. SUBDUCTION ZONE SEISMICITY: ELEVATED. CONTINENTAL CRUST THICKNESS: 35KM AVG. MANTLE CONVECTION CURRENTS: STABLE. PANGEA PROJECTION MODEL: RUNNING. TOPOGRAPHICAL DEVIATION: WITHIN TOLERANCE. BIOME SATURATION: 78%. ATMOSPHERIC PRESSURE: 1013 HPA. OCEANIC TRENCH DEPTH: 10994M. TECTONIC BOUNDARY FRICTION: MODERATE. GEOMAGNETIC FIELD STRENGTH: 25 TO 65 MICROTESLAS. CORE TEMPERATURE: 5700K. PRETEXT LAYOUT ENGINE: ENGAGED. LIVE SURFACE MAPPING: ACTIVE. `.repeat(100);
+
+  const container = document.getElementById('container');
+  const webglCanvas = document.getElementById('webgl-canvas');
+  const pretextCanvas = document.getElementById('pretext-canvas');
+  const ctx2d = pretextCanvas.getContext('2d');
+
+  let width = container.clientWidth;
+  let height = container.clientHeight;
+
+  const renderer = new THREE.WebGLRenderer({ canvas: webglCanvas, antialias: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+  camera.position.z = 6.5; 
+
+  const maskScene = new THREE.Scene();
+  const maskRenderTarget = new THREE.WebGLRenderTarget(MASK_RESOLUTION, MASK_RESOLUTION);
+  const maskPixels = new Uint8Array(MASK_RESOLUTION * MASK_RESOLUTION * 4);
+
+  const textureLoader = new THREE.TextureLoader();
+  const geometry = new THREE.SphereGeometry(1, 64, 64);
+  const earthGroup = new THREE.Group();
+  scene.add(earthGroup);
+
+  const mapUrl = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+  const waterMaskUrl = 'https://unpkg.com/three-globe/example/img/earth-water.png'; 
+
+  textureLoader.load(mapUrl, (diffuseMap) => {
+    textureLoader.load(waterMaskUrl, (waterMask) => {
+      
+      const material = new THREE.MeshPhongMaterial({
+        map: diffuseMap,
+        specularMap: waterMask,
+        specular: new THREE.Color(0x333333),
+        shininess: 15,
+      });
+      const earthMesh = new THREE.Mesh(geometry, material);
+      earthGroup.add(earthMesh);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+      dirLight.position.set(5, 3, 5);
+      scene.add(dirLight);
+
+      const maskMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          waterMap: { value: waterMask }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D waterMap;
+          varying vec2 vUv;
+          void main() {
+            vec4 waterColor = texture2D(waterMap, vUv);
+            if (waterColor.r < 0.5) {
+              gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            } else {
+              gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+            }
+          }
+        `
+      });
+      const maskEarthMesh = new THREE.Mesh(geometry, maskMaterial);
+      maskScene.add(maskEarthMesh);
+
+      animate();
+    });
+  });
+
+  let isDragging = false;
+  let previousMousePosition = { x: 0, y: 0 };
+  let rotationVelocity = { x: 0.001, y: 0.002 };
+
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    previousMousePosition = { x: e.offsetX, y: e.offsetY };
+  });
+  window.addEventListener('mouseup', () => isDragging = false);
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const deltaMove = {
+        x: e.offsetX - previousMousePosition.x,
+        y: e.offsetY - previousMousePosition.y
+      };
+      rotationVelocity.x = deltaMove.y * 0.005;
+      rotationVelocity.y = deltaMove.x * 0.005;
+      previousMousePosition = { x: e.offsetX, y: e.offsetY };
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    width = container.clientWidth;
+    height = container.clientHeight;
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    pretextCanvas.width = width;
+    pretextCanvas.height = height;
+  });
+
+  pretextCanvas.width = width;
+  pretextCanvas.height = height;
+  const preparedText = Pretext.prepareWithSegments(sourceText, FONT_SPEC);
+
+  let cachedRingRadius = 0;
+  let cachedRingText = "";
+  let cachedAnglePerChar = 0;
+  const textToFill = "SATELLITE UPLINK • TELEMETRY • BANDWIDTH • LATENCY • ORBITAL PERIOD • ";
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    if (!isDragging) {
+      rotationVelocity.x *= 0.95; 
+      rotationVelocity.y *= 0.95;
+      if (Math.abs(rotationVelocity.y) < 0.002) rotationVelocity.y = 0.002;
+    }
+    
+    earthGroup.rotation.x += rotationVelocity.x;
+    earthGroup.rotation.y += rotationVelocity.y;
+    maskScene.children[0].rotation.copy(earthGroup.rotation); 
+
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
+
+    renderer.setRenderTarget(maskRenderTarget);
+    renderer.render(maskScene, camera);
+
+    renderer.readRenderTargetPixels(maskRenderTarget, 0, 0, MASK_RESOLUTION, MASK_RESOLUTION, maskPixels);
+
+    ctx2d.clearRect(0, 0, width, height);
+
+    
+    const fov = camera.fov * Math.PI / 180;
+    const vHeight = 2 * Math.tan(fov / 2) * camera.position.z;
+    const screenRadius = (1 / (vHeight / 2)) * (height / 2);
+    const ringRadius = screenRadius * 1.3;
+
+    
+    if (Math.abs(cachedRingRadius - ringRadius) > 0.5) {
+        cachedRingRadius = ringRadius;
+        ctx2d.font = FONT_SPEC;
+        const charW = ctx2d.measureText("M").width; 
+        const adjustedCharW = charW * 1.05; 
+        const totalChars = Math.max(1, Math.floor((2 * Math.PI * ringRadius) / adjustedCharW));
+        
+        cachedRingText = "";
+        while(cachedRingText.length < totalChars) cachedRingText += textToFill;
+        cachedRingText = cachedRingText.substring(0, totalChars);
+        cachedAnglePerChar = (Math.PI * 2) / cachedRingText.length;
+    }
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const time = Date.now() * 0.00005;
+
+    
+    ctx2d.save();
+    ctx2d.font = FONT_SPEC;
+    ctx2d.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx2d.textAlign = 'center';
+    ctx2d.textBaseline = 'middle';
+    
+    ctx2d.translate(centerX, centerY);
+    ctx2d.rotate(time);
+    
+    for (let i = 0; i < cachedRingText.length; i++) {
+        ctx2d.save();
+        ctx2d.rotate(i * cachedAnglePerChar);
+        ctx2d.translate(0, -ringRadius);
+        ctx2d.fillText(cachedRingText[i], 0, 0);
+        ctx2d.restore();
+    }
+    ctx2d.restore();
+
+    
+    ctx2d.font = FONT_SPEC;
+    ctx2d.fillStyle = 'rgba(255, 255, 255, 0.9)'; 
+    ctx2d.textBaseline = 'top';
+    ctx2d.textAlign = 'left';
+
+    let cursor = { segmentIndex: 0, graphemeIndex: 0 };
+    const scaleX = MASK_RESOLUTION / width;
+    const scaleY = MASK_RESOLUTION / height;
+
+    for (let y = 0; y < height; y += LINE_HEIGHT) {
+      const maskY = Math.floor((height - 1 - y) * scaleY);
+      if (maskY < 0 || maskY >= MASK_RESOLUTION) continue;
+
+      let inLandSegment = false;
+      let segmentStartX = 0;
+
+      for (let x = 0; x < width; x += 2) { 
+        const maskX = Math.floor(x * scaleX);
+        const idx = (maskY * MASK_RESOLUTION + maskX) * 4;
+        
+        const isLand = maskPixels[idx] > 128;
+
+        if (isLand && !inLandSegment) {
+          inLandSegment = true;
+          segmentStartX = x;
+        } else if (!isLand && inLandSegment) {
+          inLandSegment = false;
+          const segmentWidth = x - segmentStartX;
+          
+          if (segmentWidth > 15) { 
+            const line = Pretext.layoutNextLine(preparedText, cursor, segmentWidth);
+            if (line) {
+              ctx2d.fillText(line.text, segmentStartX, y);
+              cursor = line.end;
+            }
+          }
+        }
+      }
+      
+      if (inLandSegment) {
+        const segmentWidth = width - segmentStartX;
+        if (segmentWidth > 15) {
+          const line = Pretext.layoutNextLine(preparedText, cursor, segmentWidth);
+          if (line) {
+            ctx2d.fillText(line.text, segmentStartX, y);
+            cursor = line.end;
+          }
+        }
+      }
+    }
+  }
+
+</script>
+
+
+</body></html>

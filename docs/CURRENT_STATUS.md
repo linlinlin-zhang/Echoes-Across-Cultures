@@ -1,6 +1,6 @@
 # 项目当前状态说明
 
-> 更新日期：2026-05-22  
+> 更新日期：2026-05-24  
 > 当前分支：`feature/research-v2-platform-and-results`
 
 ---
@@ -35,8 +35,8 @@
 | 数据源 | 状态 | 说明 |
 |---|---|---|
 | **Spotify Web API** | 基本不可用 | 2024年11月政策变更后，`preview_url` 完全不再返回；Development Mode 搜索上限仅 10 条/请求；音频特征和 popularity 字段亦被移除。脚本保留仅作元数据备用。 |
-| **Apple iTunes Search API** | 可用，需修复 bug | 无需 API Key，返回 30 秒 AAC 预览（`.m4a`）。爬虫已写好，但存在 **下载计数始终为 0** 的 bug，待修复。 |
-| **Jamendo API** | 推荐主力 | Creative Commons 授权，可合法下载完整 MP3。需自行申请 Client ID。脚本已就绪。 |
+| **Apple iTunes Search API** | 可用，已通过 smoke test | 无需 API Key，返回 30 秒 AAC 预览（`.m4a`）。2026-05-23 已修复“只收集不下载”的集合标记 bug，并验证可实际写入 `.m4a`。 |
+| **Jamendo API** | 推荐主力，等待 Client ID | Creative Commons 授权，可合法下载完整 MP3。脚本已就绪；`run_jamendo_crawl.ps1` 现优先读取环境变量 `JAMENDO_CLIENT_ID`。 |
 | **Free Music Archive (FMA)** | 备选补充 | 可通过 HuggingFace 下载大规模 CC 音乐数据集，用于补充冷门文化区域。 |
 
 ### 2.2 已就绪的爬虫脚本
@@ -46,7 +46,8 @@
 | `crawl_itunes_previews.py` | `dcas/scripts/` | iTunes 30s 预览抓取，支持按国家/文化分桶、断点续传 |
 | `crawl_jamendo.py` | `dcas/scripts/` | Jamendo CC 音乐抓取，支持文化标签映射、断点续传 |
 | `crawl_spotify_previews.py` | `dcas/scripts/` | Spotify 元数据扫描（预览功能已失效） |
-| `merge_spotify_jamendo_metadata.py` | `dcas/scripts/` | 多源元数据对齐、去重、文化别名统一化 |
+| `merge_spotify_jamendo_metadata.py` | `dcas/scripts/` | Spotify/Jamendo 元数据对齐、去重、文化别名统一化 |
+| `merge_metadata_dedup.py` | `dcas/scripts/` | 通用多源 metadata 合并与去重；当前 `run_merge_metadata.ps1` 使用它合并 iTunes/Jamendo/Spotify 可用输入 |
 
 所有脚本均遵循相同的**断点续传（checkpoint/resume）**架构：输出目录内保存 `state.json` + `metadata.csv`，中断后可无缝恢复。
 
@@ -55,6 +56,7 @@
 | 脚本 | 对应爬虫 | 状态 |
 |---|---|---|
 | `run_itunes_crawl.ps1` | iTunes | 安全，可直接使用 |
+| `run_itunes_nonwestern_supervisor.ps1` | iTunes | 非西方文化域补量守护脚本；默认中国 700，其余非西方域 500 |
 | `run_jamendo_crawl.ps1` | Jamendo | 需用户填写 `JAMENDO_CLIENT_ID` |
 | `run_merge_metadata.ps1` | merge | 安全，自动检测输入文件 |
 | `run_spotify_crawl.ps1` | Spotify | **含真实凭证，勿提交 git** |
@@ -63,17 +65,35 @@
 
 ## 3. 已知问题与阻塞项
 
-### 3.1 iTunes 爬虫下载逻辑 bug
+### 3.1 iTunes 爬虫下载逻辑 bug（已修复）
 
 - **现象**：`total_collected` 正常增长，但 `total_downloaded` 始终为 0。
-- **根因推测**：`_parse_track` 中的 `preview_url` 过滤逻辑或下载批处理的集合判断可能存在问题。此前调试时对该函数进行过修改，恢复后可能未完全复原。
-- **优先级**：高——这是目前获取主流商业音乐预览的最可行通道。
+- **根因**：新解析出的 `track_id` 在加入待下载列表时被提前加入 `downloaded_set`，导致下载批处理认为这些记录已经下载并全部跳过。
+- **修复**：分离 `seen_set` 与 `downloaded_set`；只有实际下载成功后才写入 `downloaded_set` / `downloaded_track_ids`。
+- **验证**：2026-05-23 在 `storage/public/itunes_smoke_codex_source_20260523/` 运行小规模 smoke crawl，`target_total=2`，结果 `total_collected=2`、`total_downloaded=2`，metadata 指向的 `.m4a` 文件均存在。
+- **当前小样本**：已在 `storage/public/itunes_crawl/` 抓取 10 条预览，覆盖 `west/japan/korea/india/brazil` 各 2 条；已合并到 `storage/public/merged/metadata_merged.csv`。
+- **当前大规模任务状态**：2026-05-24 重新盘点，`storage/public/itunes_crawl/metadata.csv` 按 `track_id` 去重为 9975 首；当前主要集中在 west（9967 首），JP/KR/IN/BR 各 2 首。后台进程当前不在运行；上一轮在 `FI / indie` 查询遇到 iTunes SSL EOF 后停止。
+- **韧性修复**：`crawl_itunes_previews.py` 已改为单个 query 请求失败时保存 checkpoint 并跳过该 query，不再让整轮任务直接崩掉；未完成 query 不会写入 `completed_queries`，后续守护脚本可重试。
+- **补量目标**：新增 `dcas/scripts/supervise_itunes_culture_crawl.py`、`scripts/supervise_itunes_nonwestern_crawl.sh`、`run_itunes_nonwestern_supervisor.ps1`。默认 iTunes 非西方文化域目标为中国 700 首，`japan/korea/india/brazil/latin/africa/middle_east/southeast_asia` 各 500 首；west 不继续主动补量。
+- **续跑注意**：旧的 `scripts/run_itunes_balanced_world_crawl.sh` 仍保留按 country 当前数量补到 `PER_COUNTRY` 的能力；非西方补量优先使用新的 supervisor，避免 west 继续扩大。
 
 ### 3.2 Spotify 彻底无法获取预览
 
 - 这不是脚本 bug，而是 Spotify 平台级政策变更。
 - 当前 `crawl_spotify_previews.py` 可收集歌曲元数据（曲名、艺人、专辑、发行日期等），但无法下载音频。
 - 建议：仅作为 Jamendo/iTunes 元数据的补充对齐来源，不依赖其实际抓音功能。
+
+### 3.3 Jamendo 凭证状态
+
+- Jamendo Client ID 已验证可用，API 返回 `status=success`。
+- 2026-05-23 已完成一轮 Jamendo 采集：77 个查询槽全部跑完，`storage/public/jamendo_crawl/metadata.csv` 按 `track_id` 去重为 1742 首，`state.json` 记录 `total_collected=1784`、`total_downloaded=1742`、失败下载 42 个。
+- 主要分布：west 835、latin 289、brazil 130、celtic 116、india 110、middle_east 94、japan 61、africa 53、china 39、southeast_asia 10、korea 5。
+- 也可用环境变量方式运行：
+
+```powershell
+$env:JAMENDO_CLIENT_ID = "your_client_id"
+.\run_jamendo_crawl.ps1
+```
 
 ---
 
@@ -115,12 +135,12 @@
 ## 6. 下一步行动清单（建议优先级）
 
 ### 紧急（阻塞数据流）
-- [ ] **修复 `crawl_itunes_previews.py` 的下载 bug**，验证能实际写入 `.m4a` 文件。
+- [x] **修复 `crawl_itunes_previews.py` 的下载 bug**，验证能实际写入 `.m4a` 文件。
 - [ ] **申请 Jamendo Client ID** 并执行小规模 Jamendo 抓取测试。
 
 ### 高优先级（构建数据集）
-- [ ] 并行运行 iTunes + Jamendo 爬虫，收集第一批跨文化音乐样本（目标：各文化至少 500~1000 首）。
-- [ ] 运行 `merge_spotify_jamendo_metadata.py`（如有 Spotify 元数据）或 iTunes/Jamendo 两源合并。
+- [ ] 使用 iTunes 非西方 supervisor 补量：中国至少 700 首，其余非西方文化域至少 500 首。
+- [ ] 运行 `run_merge_metadata.ps1` 或 `merge_metadata_dedup.py` 进行 iTunes/Jamendo/Spotify 可用输入合并。
 - [ ] 使用 `build_tracks_from_audio.py` 生成 **CultureMERT 嵌入**（`ntua-slp/CultureMERT-95M`，mean pooling，30s 截断）。
 
 ### 中优先级（前端与系统）
@@ -140,7 +160,8 @@
 |---|---|
 | iTunes 爬虫 | `dcas/scripts/crawl_itunes_previews.py` |
 | Jamendo 爬虫 | `dcas/scripts/crawl_jamendo.py` |
-| 元数据合并 | `dcas/scripts/merge_spotify_jamendo_metadata.py` |
+| 通用元数据合并 | `dcas/scripts/merge_metadata_dedup.py` |
+| Spotify/Jamendo 专用合并 | `dcas/scripts/merge_spotify_jamendo_metadata.py` |
 | iTunes 启动器 | `run_itunes_crawl.ps1` |
 | Jamendo 启动器 | `run_jamendo_crawl.ps1` |
 | 合并启动器 | `run_merge_metadata.ps1` |

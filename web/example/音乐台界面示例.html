@@ -1,0 +1,813 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">S. CHEN // CS PORTFOLIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" vid="7">
+    
+    <style vid="8">
+        :root {
+            --bg-outer: #0a090b;
+            --bg-canvas: #262128;
+            --bg-sidebar: #1a161d;
+            --bg-surface: rgba(255, 255, 255, 0.03);
+            --bg-surface-hover: rgba(255, 255, 255, 0.06);
+            
+            --text-main: #e2dde4;
+            --text-muted: #8b8392;
+            --text-dark: #58515c;
+            
+            --accent: #d8b86d;
+            --accent-glow: rgba(216, 184, 109, 0.15);
+            
+            --border-light: rgba(255, 255, 255, 0.06);
+            --border-heavy: rgba(255, 255, 255, 0.1);
+            
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-outer);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 13px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        
+        .app-window {
+            width: 90vw;
+            max-width: 1400px;
+            height: 85vh;
+            min-height: 600px;
+            background: var(--bg-sidebar); 
+            border-radius: 12px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid var(--border-light);
+        }
+
+        
+        .canvas-pane {
+            flex: 1;
+            background: linear-gradient(135deg, #2a242c 0%, #1f1b22 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-light);
+        }
+
+        .canvas-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(122, 85, 133, 0.1) 0%, rgba(0,0,0,0) 60%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        
+        .canvas-header {
+            position: relative;
+            z-index: 10;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-mark {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: var(--font-mono);
+            font-size: 16px;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+
+        .logo-mark svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .sys-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sys-title {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .sys-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .status-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .status-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .status-value {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .action-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-light);
+            padding: 6px 14px 6px 6px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-pill:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        .avatar-mini {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .pill-text {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        
+        .canvas-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px 32px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-surface-hover);
+            color: #fff;
+        }
+
+        .icon-btn.active {
+            background: var(--text-main);
+            color: var(--bg-outer);
+        }
+
+        .icon-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .progress-track {
+            width: 140px;
+            height: 2px;
+            background: var(--border-light);
+            border-radius: 2px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 45%;
+            background: var(--text-muted);
+        }
+
+        .progress-handle {
+            width: 8px;
+            height: 8px;
+            background: var(--text-main);
+            border-radius: 50%;
+            position: absolute;
+            left: 45%;
+            transform: translateX(-50%);
+        }
+
+        
+        .sidebar-pane {
+            width: 380px;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-icon {
+            opacity: 0.5;
+        }
+
+        
+        .thread-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+        }
+
+        
+        .thread-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .thread-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .thread-container::-webkit-scrollbar-thumb {
+            background: var(--border-heavy);
+            border-radius: 4px;
+        }
+
+        .thread-line {
+            position: absolute;
+            left: 40px; 
+            top: 40px;
+            bottom: 40px;
+            width: 1px;
+            background: var(--border-heavy);
+            z-index: 0;
+        }
+
+        .thread-item {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .thread-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .node-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #231f26;
+            border: 1px solid var(--border-heavy);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .node-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+
+        .node-avatar.system {
+            background: var(--bg-surface);
+            color: var(--text-muted);
+        }
+
+        .node-avatar.accent {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .node-content {
+            flex: 1;
+            padding-top: 4px;
+        }
+
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+
+        .node-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .node-time {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dark);
+        }
+
+        .node-desc {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        
+        .meta-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 2px 6px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-muted);
+        }
+
+        .tag.highlight {
+            color: var(--accent);
+            border-color: rgba(216, 184, 109, 0.2);
+            background: rgba(216, 184, 109, 0.05);
+        }
+
+        
+        .data-block {
+            background: #151217;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dark);
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .data-key {
+            color: var(--text-muted);
+        }
+
+        .data-val.success { color: #8bb886; }
+        .data-val.warn { color: #d8b86d; }
+
+        
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-light);
+            background: var(--bg-sidebar);
+            display: flex;
+            gap: 12px;
+        }
+
+        .cmd-input {
+            flex: 1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .cmd-input:focus {
+            border-color: var(--text-muted);
+        }
+
+        .cmd-input::placeholder {
+            color: var(--text-dark);
+        }
+
+        .btn-primary {
+            background: var(--text-main);
+            color: var(--bg-outer);
+            border: none;
+            border-radius: 20px;
+            padding: 0 16px;
+            font-weight: 600;
+            font-size: 11px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        
+        .ring-indicator {
+            position: absolute;
+            right: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+    </style>
+</head>
+<body vid="9">
+
+    <div class="app-window" vid="10">
+        
+        
+        <div class="canvas-pane" vid="11">
+            <div class="canvas-glow" vid="12"></div>
+            <canvas id="generativeCanvas" vid="13"></canvas>
+
+            <header class="canvas-header" vid="14">
+                <div class="brand-cluster" vid="15">
+                    <div class="logo-mark" vid="16">
+                        <svg viewBox="0 0 24 24" vid="17"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5z" vid="18"></path></svg>
+                        s.chen
+                    </div>
+                    <div class="sys-info" vid="19">
+                        <span class="sys-title" vid="20">Computer Science</span>
+                        <span class="sys-sub" vid="21">SYS_VER 4.1.0</span>
+                    </div>
+                </div>
+
+                <div class="status-center" vid="22">
+                    <span class="status-label" vid="23">Now Inspecting</span>
+                    <span class="status-value" vid="24">Architecture Overview</span>
+                </div>
+
+                <div class="action-pill" vid="25">
+                    <div class="avatar-mini" vid="26">SC</div>
+                    <span class="pill-text" vid="27">SYS_ADMIN</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5" vid="28"><path d="M6 9l6 6 6-6" vid="29"></path></svg>
+                </div>
+            </header>
+
+            <footer class="canvas-footer" vid="30">
+                <div class="control-group" vid="31">
+                    <button class="icon-btn" vid="32">
+                        <svg viewBox="0 0 24 24" vid="33"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" vid="34"></path><circle cx="12" cy="12" r="3" vid="35"></circle></svg>
+                    </button>
+                    <button class="icon-btn" vid="36">
+                        <svg viewBox="0 0 24 24" vid="37"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" vid="38"></path></svg>
+                    </button>
+                    <button class="icon-btn active" vid="39">
+                        <svg viewBox="0 0 24 24" vid="40"><path d="M8 5v14l11-7z" vid="41"></path></svg>
+                    </button>
+                </div>
+
+                <div class="control-group" style="gap: 16px;" vid="42">
+                    <div class="progress-track" vid="43">
+                        <div class="progress-fill" vid="44"></div>
+                        <div class="progress-handle" vid="45"></div>
+                    </div>
+                    <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dark);" vid="46">02:41 / 05:00</span>
+                </div>
+
+                <div class="control-group" vid="47">
+                    <button class="icon-btn" vid="48">
+                        <svg viewBox="0 0 24 24" vid="49"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z" vid="50"></path></svg>
+                    </button>
+                </div>
+            </footer>
+        </div>
+
+        
+        <div class="sidebar-pane" vid="51">
+            <div class="sidebar-header" vid="52">
+                <div class="header-title" vid="53">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="filter-icon" vid="54"><line x1="4" y1="21" x2="4" y2="14" vid="55"></line><line x1="4" y1="10" x2="4" y2="3" vid="56"></line><line x1="12" y1="21" x2="12" y2="12" vid="57"></line><line x1="12" y1="8" x2="12" y2="3" vid="58"></line><line x1="20" y1="21" x2="20" y2="16" vid="59"></line><line x1="20" y1="12" x2="20" y2="3" vid="60"></line><line x1="1" y1="14" x2="7" y2="14" vid="61"></line><line x1="9" y1="8" x2="15" y2="8" vid="62"></line><line x1="17" y1="16" x2="23" y2="16" vid="63"></line></svg>
+                    Project Logs
+                </div>
+                <div style="font-size: 10px; color: var(--text-dark); font-family: var(--font-mono);" vid="64">2 ENTRIES</div>
+            </div>
+
+            <div class="thread-container" vid="65">
+                <div class="thread-line" vid="66"></div>
+
+                
+                <div class="thread-item" vid="67">
+                    <div class="node-avatar system" vid="68">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="69"><path d="M22 12h-4l-3 9L9 3l-3 9H2" vid="70"></path></svg>
+                    </div>
+                    <div class="node-content" vid="71">
+                        <div class="node-header" vid="72">
+                            <span class="node-title" vid="73">System Init</span>
+                            <span class="node-time" vid="74">00:00</span>
+                        </div>
+                        <div class="node-desc" vid="75">
+                            Core competencies loaded. Focusing on backend architecture, distributed systems, and systems-level programming.
+                        </div>
+                        <div class="meta-tags" vid="76">
+                            <span class="tag" vid="77">C++</span>
+                            <span class="tag" vid="78">Go</span>
+                            <span class="tag" vid="79">Rust</span>
+                            <span class="tag" vid="80">PostgreSQL</span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="thread-item" vid="81">
+                    <div class="node-avatar accent" vid="82">
+                        <img src="https://images.pexels.com/photos/8297031/pexels-photo-8297031.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=100&amp;h=100&amp;dpr=1" alt="Abstract Code" vid="83">
+                    </div>
+                    <div class="node-content" vid="84">
+                        <div class="node-header" vid="85">
+                            <span class="node-title" vid="86">Distributed Key-Value Store</span>
+                            <span class="node-time" vid="87">01:14</span>
+                        </div>
+                        <div class="node-desc" vid="88">
+                            Designed and implemented a fault-tolerant, distributed key-value store using the Raft consensus algorithm. Handles leader election, log replication, and persistence under network partitions.
+                        </div>
+                        <div class="meta-tags" vid="89">
+                            <span class="tag highlight" vid="90">Go</span>
+                            <span class="tag" vid="91">Raft</span>
+                            <span class="tag" vid="92">gRPC</span>
+                        </div>
+                        <div class="data-block" vid="93">
+                            <div class="data-row" vid="94">
+                                <span class="data-key" vid="95">Throughput:</span>
+                                <span class="data-val" vid="96">15k ops/sec</span>
+                            </div>
+                            <div class="data-row" vid="97">
+                                <span class="data-key" vid="98">Latency (p99):</span>
+                                <span class="data-val success" vid="99">&lt; 2ms</span>
+                            </div>
+                            <div class="data-row" vid="100">
+                                <span class="data-key" vid="101">Status:</span>
+                                <span class="data-val" vid="102">Deployed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="thread-item" vid="103">
+                    <div class="node-avatar" vid="104">
+                        <img src="https://images.pexels.com/photos/6804581/pexels-photo-6804581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=100&amp;h=100&amp;dpr=1" alt="Abstract Math" vid="105">
+                    </div>
+                    <div class="node-content" vid="106">
+                        <div class="node-header" vid="107">
+                            <span class="node-title" vid="108">Neural Net Kernel Optimizer</span>
+                            <span class="node-time" vid="109">03:42</span>
+                        </div>
+                        <div class="node-desc" vid="110">
+                            Custom CUDA kernels for matrix multiplication and convolution layers. Achieved significant speedups over standard cuBLAS implementations for specific edge-case tensor dimensions.
+                        </div>
+                        <div class="meta-tags" vid="111">
+                            <span class="tag highlight" vid="112">CUDA</span>
+                            <span class="tag" vid="113">C++</span>
+                            <span class="tag" vid="114">PyTorch</span>
+                        </div>
+                        <div class="data-block" vid="115">
+                            <div class="data-row" vid="116">
+                                <span class="data-key" vid="117">Speedup vs cuBLAS:</span>
+                                <span class="data-val success" vid="118">+18%</span>
+                            </div>
+                            <div class="data-row" vid="119">
+                                <span class="data-key" vid="120">Memory Overhead:</span>
+                                <span class="data-val warn" vid="121">High</span>
+                            </div>
+                            <div class="data-row" vid="122">
+                                <span class="data-key" vid="123">Target Arch:</span>
+                                <span class="data-val" vid="124">Ampere</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="thread-item" style="margin-top: 10px; opacity: 0.3;" vid="125">
+                    <div class="node-avatar system" style="width: 12px; height: 12px; margin-left: 10px;" vid="126"></div>
+                    <div class="node-content" style="padding-top: 0;" vid="127">
+                        <span class="node-time" vid="128">EOF</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="sidebar-footer" vid="129">
+                <input type="text" class="cmd-input" placeholder="Execute command or contact..." vid="130">
+                <button class="btn-primary" vid="131">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <script vid="132">
+        
+        const canvas = document.getElementById('generativeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let time = 0;
+
+        function resize() {
+            
+            const pixelRatio = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            
+            width = rect.width;
+            height = rect.height;
+            
+            canvas.width = width * pixelRatio;
+            canvas.height = height * pixelRatio;
+            
+            ctx.scale(pixelRatio, pixelRatio);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            
+            const numRings = 80; 
+            const maxRadius = Math.min(width, height) * 0.35;
+            
+            ctx.lineWidth = 0.5;
+            
+            for (let i = 0; i < numRings; i++) {
+                const normalizedRadius = i / numRings;
+                const baseRadius = maxRadius * normalizedRadius;
+                
+                
+                const alpha = Math.pow(normalizedRadius, 0.5) * 0.4;
+                if(i > numRings * 0.7 && i < numRings * 0.8) {
+                    ctx.strokeStyle = `rgba(180, 150, 190, ${alpha * 2})`; 
+                } else if (i < numRings * 0.2) {
+                    ctx.strokeStyle = `rgba(216, 184, 109, ${alpha})`; 
+                } else {
+                    ctx.strokeStyle = `rgba(150, 140, 160, ${alpha})`;
+                }
+
+                ctx.beginPath();
+                
+                const segments = 120;
+                for (let j = 0; j <= segments; j++) {
+                    const angle = (j / segments) * Math.PI * 2;
+                    
+                    
+                    
+                    const wave1 = Math.sin(angle * 3 + time * 0.001) * 10 * (1-normalizedRadius);
+                    const wave2 = Math.cos(angle * 7 - time * 0.002 + i*0.1) * 5 * normalizedRadius;
+                    
+                    
+                    const pulse = Math.sin(time * 0.003) * 5;
+                    
+                    const r = baseRadius + wave1 + wave2 + (i < 5 ? pulse : 0);
+                    
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+                    
+                    if (j === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            
+            ctx.beginPath();
+            const orbX = centerX + Math.cos(time * 0.001) * 30;
+            const orbY = centerY + Math.sin(time * 0.0015) * 30;
+            ctx.arc(orbX, orbY, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#d8b86d';
+            ctx.fill();
+            
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(orbX, orbY);
+            ctx.strokeStyle = 'rgba(216, 184, 109, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            time += 16; 
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+
+</body></html>

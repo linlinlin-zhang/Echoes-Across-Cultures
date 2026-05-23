@@ -2,9 +2,10 @@
 # No API key required. Rate limit: ~20 req/min.
 
 $OUT_DIR            = "./storage/public/itunes_crawl"
-$TARGET_TOTAL       = 5000
+$TARGET_TOTAL       = 20000
 $WORKERS            = 4
 $CHECKPOINT_INTERVAL = 300
+$MAX_PER_QUERY      = 50
 
 # Optional: limit countries (empty = all ~50)
 # $COUNTRIES = "US,JP,KR,GB,BR,MX,IN,FR,DE"
@@ -15,7 +16,8 @@ $argList = @(
     "--out_dir", $OUT_DIR,
     "--target_total", $TARGET_TOTAL,
     "--workers", $WORKERS,
-    "--checkpoint_interval", $CHECKPOINT_INTERVAL
+    "--checkpoint_interval", $CHECKPOINT_INTERVAL,
+    "--max_per_query", $MAX_PER_QUERY
 )
 
 if ($COUNTRIES -ne "") {

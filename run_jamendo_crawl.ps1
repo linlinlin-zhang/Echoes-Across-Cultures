@@ -7,14 +7,17 @@
 #   3. Copy your Client ID
 
 # ---------------------------------------------------------------------------
-# FILL IN YOUR CREDENTIALS HERE
+# FILL IN YOUR CREDENTIALS HERE, or set the JAMENDO_CLIENT_ID environment variable.
 # ---------------------------------------------------------------------------
-$JAMENDO_CLIENT_ID = "<YOUR_JAMENDO_CLIENT_ID>"
+$JAMENDO_CLIENT_ID = $env:JAMENDO_CLIENT_ID
+if ([string]::IsNullOrWhiteSpace($JAMENDO_CLIENT_ID)) {
+    $JAMENDO_CLIENT_ID = "e66fc5d8"
+}
 
 # ---------------------------------------------------------------------------
 # Validate
 # ---------------------------------------------------------------------------
-if ($JAMENDO_CLIENT_ID -eq "<YOUR_JAMENDO_CLIENT_ID>") {
+if ($JAMENDO_CLIENT_ID -eq "<YOUR_JAMENDO_CLIENT_ID>" -or $JAMENDO_CLIENT_ID.StartsWith("<") -or $JAMENDO_CLIENT_ID.EndsWith(">")) {
     Write-Host "[ERROR] Please edit this file and set your Jamendo Client ID." -ForegroundColor Red
     exit 1
 }
@@ -26,6 +29,7 @@ $OUT_DIR            = "./storage/public/jamendo_crawl"
 $TARGET_TOTAL       = 20000           # Total unique tracks to collect
 $WORKERS            = 6                # Parallel download workers
 $CHECKPOINT_INTERVAL = 300             # Seconds between state saves
+$MAX_PER_QUERY      = 50               # Keep culture/tag coverage balanced
 
 # Optional: limit to specific cultures (leave empty for all)
 # Valid cultures: west, china, korea, japan, india, latin, brazil, africa, middle_east, southeast_asia, celtic
@@ -41,7 +45,8 @@ $argList = @(
     "--out_dir", $OUT_DIR,
     "--target_total", $TARGET_TOTAL,
     "--workers", $WORKERS,
-    "--checkpoint_interval", $CHECKPOINT_INTERVAL
+    "--checkpoint_interval", $CHECKPOINT_INTERVAL,
+    "--max_per_query", $MAX_PER_QUERY
 )
 
 if ($CULTURES -ne "") {
