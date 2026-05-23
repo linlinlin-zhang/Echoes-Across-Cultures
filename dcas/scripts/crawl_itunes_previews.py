@@ -547,7 +547,7 @@ class iTunesCrawler:
 
                 completed_set.add(query_key)
                 state.completed_queries.append(query_key)
-                do_checkpoint()
+                do_checkpoint(force=True)
 
         except KeyboardInterrupt:
             print("\n[INTERRUPT] Saving checkpoint...")

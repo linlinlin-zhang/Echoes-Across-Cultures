@@ -12,7 +12,7 @@ BATCH_SIZE="${BATCH_SIZE:-120}"
 RESTART_DELAY="${RESTART_DELAY:-120}"
 IDLE_ROUND_LIMIT="${IDLE_ROUND_LIMIT:-8}"
 
-python3 -m dcas.scripts.supervise_itunes_culture_crawl \
+PYTHONUNBUFFERED=1 python3 -m dcas.scripts.supervise_itunes_culture_crawl \
   --out_dir "$OUT_DIR" \
   --targets "$TARGETS" \
   --workers "$WORKERS" \

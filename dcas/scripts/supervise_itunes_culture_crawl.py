@@ -122,6 +122,8 @@ def write_status(
 
 def stream_subprocess(cmd: list[str], log_path: Path) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env.setdefault("PYTHONUNBUFFERED", "1")
     with log_path.open("a", encoding="utf-8") as log:
         log.write(f"\n[COMMAND] {' '.join(cmd)}\n")
         log.flush()
@@ -131,6 +133,7 @@ def stream_subprocess(cmd: list[str], log_path: Path) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            env=env,
         )
         assert proc.stdout is not None
         for line in proc.stdout:
