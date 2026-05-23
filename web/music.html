@@ -222,7 +222,7 @@
 
     .console {
       display: grid;
-      grid-template-rows: auto minmax(420px, 1fr) auto;
+      grid-template-rows: auto minmax(420px, 1fr) auto auto;
       min-height: calc(100vh - 73px);
       border-right: 1px solid var(--line);
       background: #ffffff;
@@ -557,6 +557,248 @@
       border-color: var(--alert);
     }
 
+    .parameter-lab {
+      border-top: 1px solid var(--line);
+      background: var(--line);
+      display: grid;
+      gap: 1px;
+    }
+
+    .parameter-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .parameter-metric,
+    .parameter-panel,
+    .parameter-table-panel {
+      background: #ffffff;
+      padding: 1.35rem 1.45rem;
+    }
+
+    .parameter-metric {
+      min-height: 174px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .parameter-metric.is-dark {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .parameter-metric.is-dark .meta-label,
+    .parameter-metric.is-dark .parameter-sub {
+      color: rgba(255, 255, 255, 0.58);
+    }
+
+    .parameter-metric-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .parameter-value {
+      font-size: clamp(2.35rem, 4.4vw, 4.9rem);
+      font-weight: 400;
+      letter-spacing: 0;
+      line-height: 0.92;
+    }
+
+    .parameter-sub {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .parameter-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .parameter-panel {
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .parameter-panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .parameter-panel h2 {
+      margin-top: 0.35rem;
+      font-size: clamp(1.55rem, 2.3vw, 2.45rem);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .parameter-panel .head-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.65rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .parameter-topography {
+      position: relative;
+      flex: 1;
+      min-height: 260px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 1.2rem 0 2.2rem;
+    }
+
+    .parameter-topography::before,
+    .parameter-topography::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 1px dashed var(--line-strong);
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .parameter-topography::before {
+      bottom: 33%;
+    }
+
+    .parameter-topography::after {
+      bottom: 66%;
+    }
+
+    .param-bar {
+      position: relative;
+      flex: 1;
+      min-width: 2px;
+      background: var(--ink);
+      opacity: 0.58;
+    }
+
+    .param-bar.is-hollow {
+      background: transparent;
+      border-left: 1px solid var(--ink);
+      opacity: 0.72;
+    }
+
+    .param-bar span {
+      position: absolute;
+      left: 0;
+      bottom: -1.55rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .parameter-radial-wrap {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      min-height: 260px;
+    }
+
+    .parameter-radial {
+      position: relative;
+      width: min(100%, 285px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+    }
+
+    .parameter-ring,
+    .parameter-node,
+    .parameter-spoke {
+      position: absolute;
+    }
+
+    .parameter-ring {
+      inset: var(--ring-inset);
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      opacity: var(--ring-opacity);
+      border-style: var(--ring-style);
+    }
+
+    .parameter-node {
+      left: var(--node-x);
+      top: var(--node-y);
+      width: var(--node-size);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--node-color);
+      transform: translate(-50%, -50%);
+    }
+
+    .parameter-spoke {
+      left: 50%;
+      top: 50%;
+      width: var(--spoke-width);
+      height: 1px;
+      background: var(--line-strong);
+      transform-origin: 0 50%;
+      transform: rotate(var(--spoke-rotate));
+      opacity: 0.35;
+    }
+
+    .parameter-radial-legend {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .parameter-table-panel {
+      overflow-x: auto;
+    }
+
+    .parameter-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .parameter-table th,
+    .parameter-table td {
+      padding: 0.85rem 0.75rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .parameter-table th {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+
+    .parameter-table td:last-child,
+    .parameter-table th:last-child {
+      text-align: right;
+    }
+
     .side-panel {
       display: flex;
       flex-direction: column;
@@ -693,6 +935,11 @@
         border-bottom: 1px solid var(--line);
       }
 
+      .parameter-grid,
+      .parameter-metrics {
+        grid-template-columns: 1fr 1fr;
+      }
+
       .side-panel {
         min-height: auto;
       }
@@ -732,6 +979,20 @@
 
       .console-bottom {
         grid-template-columns: 1fr;
+      }
+
+      .parameter-metrics,
+      .parameter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .parameter-panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .parameter-panel .head-meta {
+        justify-content: flex-start;
       }
 
       .transport {
@@ -851,6 +1112,57 @@
       </div>
 
       <audio class="audio-el" id="audio-player"></audio>
+
+      <section class="parameter-lab" aria-label="推荐参数展示">
+        <div class="parameter-metrics" id="parameter-metrics"></div>
+
+        <div class="parameter-grid">
+          <article class="parameter-panel" aria-label="参数地形">
+            <div class="parameter-panel-head">
+              <div>
+                <div class="meta-label">Macro Observation</div>
+                <h2>Parameter<br>Topography</h2>
+              </div>
+              <div class="head-meta">
+                <span>Y: WEIGHT / SIGNAL</span>
+                <span>X: RERANK PASS</span>
+              </div>
+            </div>
+            <div class="parameter-topography" id="parameter-topography"></div>
+          </article>
+
+          <article class="parameter-panel" aria-label="潜变量分布">
+            <div class="parameter-panel-head">
+              <div>
+                <div class="meta-label">Micro Distribution</div>
+                <h2>Latent<br>Orbit</h2>
+              </div>
+            </div>
+            <div class="parameter-radial-wrap">
+              <div class="parameter-radial" id="parameter-radial"></div>
+            </div>
+            <div class="parameter-radial-legend">
+              <span class="meta-label">za content</span>
+              <span class="meta-label">zs culture</span>
+              <span class="meta-label">PAL</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="parameter-table-panel">
+          <table class="parameter-table" aria-label="推荐参数表">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Project Signal</th>
+                <th>Current Value</th>
+                <th>Read</th>
+              </tr>
+            </thead>
+            <tbody id="parameter-table-body"></tbody>
+          </table>
+        </div>
+      </section>
     </section>
 
     <aside class="side-panel" aria-label="跨文化推荐列表">
@@ -880,7 +1192,18 @@
       lat: 34.3416,
       lng: 108.9398,
       style: "Pipa / Lo-fi / Silk Road",
-      note: "A plucked pipa phrase over soft percussion and nocturnal texture."
+      note: "A plucked pipa phrase over soft percussion and nocturnal texture.",
+      metrics: {
+        serendipity: 0.832,
+        calibrationKl: 2.03,
+        targetAffinity: 0.188,
+        minorityExposure: 0.402,
+        userAlignmentKl: 0.000001,
+        palUncertainty: 0.64,
+        score: 0.86,
+        relevance: 0.79,
+        unexpectedness: 0.91
+      }
     };
 
     const capitalLookup = {
@@ -903,7 +1226,8 @@
         lat: -12.9777,
         lng: -38.5016,
         style: "Samba-reggae / Candomble rhythm",
-        why: "Shares bright plucked accents with a warmer carnival percussion field."
+        why: "Shares bright plucked accents with a warmer carnival percussion field.",
+        metrics: { serendipity: 0.821, calibrationKl: 2.04, targetAffinity: 0.205, minorityExposure: 0.38, userAlignmentKl: 0.009, palUncertainty: 0.57, score: 0.88, relevance: 0.8, unexpectedness: 0.9 }
       },
       {
         title: "Kora After Rain",
@@ -913,7 +1237,8 @@
         lat: 12.6392,
         lng: -8.0029,
         style: "Kora / Mande praise song",
-        why: "Connects pipa-like cascading lines to West African harp-lute phrasing."
+        why: "Connects pipa-like cascading lines to West African harp-lute phrasing.",
+        metrics: { serendipity: 0.846, calibrationKl: 2.01, targetAffinity: 0.214, minorityExposure: 0.46, userAlignmentKl: 0.013, palUncertainty: 0.72, score: 0.91, relevance: 0.77, unexpectedness: 0.96 }
       },
       {
         title: "Lisboa Low Tide",
@@ -923,7 +1248,8 @@
         lat: 38.7223,
         lng: -9.1393,
         style: "Fado / ambient guitar",
-        why: "Matches nocturnal melancholy while changing vocal ornament and harmonic color."
+        why: "Matches nocturnal melancholy while changing vocal ornament and harmonic color.",
+        metrics: { serendipity: 0.802, calibrationKl: 2.08, targetAffinity: 0.181, minorityExposure: 0.34, userAlignmentKl: 0.006, palUncertainty: 0.49, score: 0.84, relevance: 0.83, unexpectedness: 0.84 }
       },
       {
         title: "Gamelan Orbit",
@@ -933,7 +1259,8 @@
         lat: -7.7956,
         lng: 110.3695,
         style: "Gamelan / soft electronics",
-        why: "Reframes the melodic contour through interlocking metallophone cycles."
+        why: "Reframes the melodic contour through interlocking metallophone cycles.",
+        metrics: { serendipity: 0.858, calibrationKl: 1.99, targetAffinity: 0.231, minorityExposure: 0.5, userAlignmentKl: 0.017, palUncertainty: 0.76, score: 0.93, relevance: 0.75, unexpectedness: 0.98 }
       },
       {
         title: "Istanbul Taksim Drift",
@@ -943,8 +1270,19 @@
         lat: 41.0082,
         lng: 28.9784,
         style: "Oud / maqam / downtempo",
-        why: "Bridges Silk Road modality with maqam-inflected improvisation."
+        why: "Bridges Silk Road modality with maqam-inflected improvisation.",
+        metrics: { serendipity: 0.835, calibrationKl: 2.02, targetAffinity: 0.202, minorityExposure: 0.42, userAlignmentKl: 0.011, palUncertainty: 0.68, score: 0.9, relevance: 0.81, unexpectedness: 0.89 }
       }
+    ];
+
+    const defaultMetrics = { ...currentTrack.metrics };
+    const rerankWeights = [
+      { label: "相关性", code: "relevance", value: 0.62, signal: "za 内容潜变量与用户历史的 OT 近邻度" },
+      { label: "新颖度", code: "novelty", value: 0.12, signal: "zs 风格潜变量相对历史均值的距离" },
+      { label: "目标亲和", code: "target", value: 0.14, signal: "目标文化 centroid 的 soft probability" },
+      { label: "长尾提升", code: "minority", value: 0.08, signal: "按交互热度反向加权的 minority boost" },
+      { label: "来源平衡", code: "source", value: 0.04, signal: "source_dataset inverse score" },
+      { label: "多样性", code: "diversity", value: 0.03, signal: "greedy diverse top-k 的 latent repulsion" }
     ];
 
     const els = {
@@ -970,7 +1308,11 @@
       mapStage: document.getElementById("station-map"),
       mapSvg: document.getElementById("map-svg"),
       mapCanvas: document.getElementById("map-canvas"),
-      mapUi: document.getElementById("map-ui")
+      mapUi: document.getElementById("map-ui"),
+      parameterMetrics: document.getElementById("parameter-metrics"),
+      parameterTopography: document.getElementById("parameter-topography"),
+      parameterRadial: document.getElementById("parameter-radial"),
+      parameterTableBody: document.getElementById("parameter-table-body")
     };
 
     let primaryTrack = { ...currentTrack };
@@ -1023,6 +1365,7 @@
         province: "",
         capital: "",
         note: "",
+        metrics: defaultMetrics,
         ...track
       });
     }
@@ -1059,6 +1402,7 @@
 
       syncTrackReadouts();
       renderRecommendations();
+      renderParameterPanel();
       drawMap();
       updateProgressUI();
     }
@@ -1106,6 +1450,139 @@
         simulatedSeconds = nextTime;
       }
       updateProgressUI();
+    }
+
+    function activeMetrics() {
+      return currentTrack.metrics || defaultMetrics;
+    }
+
+    function formatPct(value) {
+      return `${Math.round(Number(value) * 100)}%`;
+    }
+
+    function formatTiny(value) {
+      if (!Number.isFinite(Number(value))) return "--";
+      if (Math.abs(Number(value)) < 0.001) return Number(value).toExponential(1);
+      return Number(value).toFixed(3);
+    }
+
+    function renderParameterMetrics() {
+      const metrics = activeMetrics();
+      const cards = [
+        {
+          label: "文化惊喜度",
+          code: "01",
+          value: Number(metrics.serendipity).toFixed(3),
+          sub: "serendipity = relevance x unexpectedness"
+        },
+        {
+          label: "校准 KL",
+          code: "02",
+          value: Number(metrics.calibrationKl).toFixed(2),
+          sub: "推荐文化分布与目标先验的距离"
+        },
+        {
+          label: "目标亲和",
+          code: "03",
+          value: formatPct(metrics.targetAffinity),
+          sub: "soft culture centroid probability"
+        },
+        {
+          label: "长尾曝光",
+          code: "04",
+          value: formatPct(metrics.minorityExposure),
+          sub: "minority@k via popularity quantile",
+          dark: true
+        }
+      ];
+
+      els.parameterMetrics.innerHTML = cards.map((card) => `
+        <article class="parameter-metric${card.dark ? " is-dark" : ""}">
+          <div class="parameter-metric-head">
+            <span class="meta-label">${card.label}</span>
+            <span class="meta-label">${card.code}</span>
+          </div>
+          <div>
+            <div class="parameter-value">${card.value}</div>
+            <div class="parameter-sub">${card.sub}</div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderParameterTopography() {
+      const metrics = activeMetrics();
+      const seed = currentTrack.title.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+      const metricPulse = [
+        Number(metrics.serendipity),
+        Math.max(0.08, 1 / (1 + Number(metrics.calibrationKl))),
+        Number(metrics.targetAffinity),
+        Number(metrics.minorityExposure),
+        Number(metrics.palUncertainty),
+        Number(metrics.unexpectedness)
+      ];
+      const bars = Array.from({ length: 84 }, (_, index) => {
+        const weight = rerankWeights[index % rerankWeights.length];
+        const wave = Math.sin((index + seed % 17) * 0.34) * 18;
+        const pulse = metricPulse[index % metricPulse.length] * 42;
+        const height = Math.max(8, Math.min(96, 22 + wave + pulse + weight.value * 50));
+        const label = index % 14 === 0 ? `<span>${weight.code}</span>` : "";
+        return `<div class="param-bar${index % 9 === 0 ? " is-hollow" : ""}" style="height:${height.toFixed(2)}%">${label}</div>`;
+      });
+      els.parameterTopography.innerHTML = bars.join("");
+    }
+
+    function renderParameterRadial() {
+      const metrics = activeMetrics();
+      const nodes = [
+        { angle: -84, radius: 0.34 + metrics.relevance * 0.22, size: 9, color: "#111111" },
+        { angle: -18, radius: 0.28 + metrics.unexpectedness * 0.26, size: 6, color: "#111111" },
+        { angle: 42, radius: 0.3 + metrics.targetAffinity * 0.52, size: 7, color: "#b72727" },
+        { angle: 118, radius: 0.25 + metrics.minorityExposure * 0.35, size: 8, color: "#111111" },
+        { angle: 176, radius: 0.3 + metrics.palUncertainty * 0.36, size: 5, color: "#b72727" },
+        { angle: 228, radius: 0.28 + Math.min(0.4, metrics.calibrationKl / 6), size: 5, color: "#111111" }
+      ];
+      const rings = [8, 20, 32, 44].map((inset, index) => `
+        <div class="parameter-ring" style="--ring-inset:${inset}%;--ring-opacity:${0.58 - index * 0.12};--ring-style:${index % 2 ? "dashed" : "solid"}"></div>
+      `);
+      const spokes = nodes.map((node) => `
+        <div class="parameter-spoke" style="--spoke-width:${(node.radius * 50).toFixed(2)}%;--spoke-rotate:${node.angle}deg"></div>
+      `);
+      const dots = nodes.map((node) => {
+        const rad = node.angle * Math.PI / 180;
+        const x = 50 + Math.cos(rad) * node.radius * 50;
+        const y = 50 + Math.sin(rad) * node.radius * 50;
+        return `<div class="parameter-node" style="--node-x:${x.toFixed(2)}%;--node-y:${y.toFixed(2)}%;--node-size:${node.size}px;--node-color:${node.color}"></div>`;
+      });
+      els.parameterRadial.innerHTML = [...rings, ...spokes, ...dots].join("");
+    }
+
+    function renderParameterTable() {
+      const metrics = activeMetrics();
+      const rows = [
+        ["DCAS OT", "Sinkhorn transport on za content factor", Number(metrics.score).toFixed(3), "route score"],
+        ["Relevance", rerankWeights[0].signal, Number(metrics.relevance).toFixed(3), `w=${rerankWeights[0].value}`],
+        ["Unexpectedness", "zs 风格潜变量相对用户历史的平均距离", Number(metrics.unexpectedness).toFixed(3), `w=${rerankWeights[1].value}`],
+        ["Target Affinity", rerankWeights[2].signal, formatPct(metrics.targetAffinity), `w=${rerankWeights[2].value}`],
+        ["Minority Exposure", rerankWeights[3].signal, formatPct(metrics.minorityExposure), `w=${rerankWeights[3].value}`],
+        ["PAL Uncertainty", "culture centroid entropy + neighbor entropy", Number(metrics.palUncertainty).toFixed(3), "review priority"],
+        ["User Loop KL", "recommendation soft culture distribution vs listener history", formatTiny(metrics.userAlignmentKl), "lower is closer"]
+      ];
+      els.parameterTableBody.innerHTML = rows.map((row) => `
+        <tr>
+          <td>${row[0]}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderParameterPanel() {
+      renderParameterMetrics();
+      renderParameterTopography();
+      renderParameterRadial();
+      renderParameterTable();
     }
 
     function syncTrackReadouts() {
@@ -1332,6 +1809,7 @@
       els.mapStatus.textContent = "Cross-cultural route building";
       activeRecommendations = [];
       renderRecommendations();
+      renderParameterPanel();
       drawMap();
 
       setTimeout(() => {
@@ -1341,6 +1819,7 @@
         els.mapStatus.textContent = "5 cross-cultural links active";
         els.mapMode.textContent = "Recommendation network";
         renderRecommendations();
+        renderParameterPanel();
         drawMap();
       }, 700);
     }
@@ -1470,6 +1949,17 @@
       currentTrack.lng = 116.4074;
       currentTrack.style = "Uploaded / pending analysis";
       currentTrack.note = "Local file uploaded for future model analysis.";
+      currentTrack.metrics = {
+        ...defaultMetrics,
+        serendipity: 0.5,
+        calibrationKl: 2.18,
+        targetAffinity: 0.15,
+        minorityExposure: 0.25,
+        palUncertainty: 0.88,
+        score: 0.42,
+        relevance: 0.5,
+        unexpectedness: 0.5
+      };
       currentTrack.fileObjectUrl = URL.createObjectURL(file);
       primaryTrack = { ...currentTrack };
       currentQueueIndex = 0;
@@ -1484,6 +1974,7 @@
       activeRecommendations = [];
       renderRecommendations();
       syncTrackReadouts();
+      renderParameterPanel();
       drawMap();
       updateProgressUI();
     });
@@ -1497,6 +1988,7 @@
     window.addEventListener("resize", resize);
     syncTrackReadouts();
     renderRecommendations();
+    renderParameterPanel();
     loadMap().catch((error) => {
       els.mapStatus.textContent = "Map data failed to load";
       console.error(error);
