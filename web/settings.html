@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo | 设置界面</title>
+  <style>
+    :root {
+      --ink: #111111;
+      --muted: #737373;
+      --line: #dedbd6;
+      --line-strong: #bdb8b0;
+      --soft: #f7f6f3;
+      --font-sans: Inter, "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+      --font-mono: "Courier New", "Noto Sans Mono CJK SC", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px),
+        #ffffff;
+      background-size: 72px 72px;
+      color: var(--ink);
+      font-family: var(--font-sans);
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .settings-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1.2rem;
+      align-items: center;
+      min-height: 4.55rem;
+      padding: 0 1.65rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.7rem;
+    }
+
+    .brand-mark {
+      font-size: 2rem;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .brand-sub,
+    .meta-label {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 0.65rem;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.65rem;
+      padding: 0 1.35rem;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .pill.is-active,
+    .pill:hover {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .settings-shell {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.75fr) minmax(420px, 1.25fr);
+      min-height: calc(100vh - 4.55rem);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .settings-hero,
+    .settings-panel {
+      background: #ffffff;
+      border-right: 1px solid var(--line);
+      padding: 2rem 2.25rem;
+    }
+
+    .settings-hero h1 {
+      margin-top: 0.45rem;
+      font-size: clamp(3.2rem, 6vw, 7.4rem);
+      font-weight: 400;
+      line-height: 0.9;
+      letter-spacing: 0;
+    }
+
+    .settings-hero p {
+      max-width: 32rem;
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .settings-panel {
+      border-right: 0;
+      display: grid;
+      align-content: start;
+      gap: 1.35rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .field label,
+    .note {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 3.6rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      padding: 0 1rem;
+      background: #ffffff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: var(--ink);
+      box-shadow: inset 0 -2px 0 var(--ink);
+    }
+
+    .config-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.45fr);
+      gap: 1rem;
+    }
+
+    .panel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.8rem;
+      margin-top: 0.4rem;
+    }
+
+    .text-button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+
+    .status {
+      min-height: 2.2rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .settings-header,
+      .settings-shell,
+      .config-row {
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .settings-hero,
+      .settings-panel {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="settings-header">
+    <a class="brand" href="index.html" aria-label="Echo 主页">
+      <span class="brand-mark">Echo</span>
+      <span class="brand-sub">设置界面</span>
+    </a>
+    <div></div>
+    <nav class="top-actions" aria-label="主导航">
+      <a class="pill" href="music.html">音乐台</a>
+      <a class="pill" href="index.html#method">技术展示</a>
+      <a class="pill is-active" href="settings.html">设置界面</a>
+    </nav>
+  </header>
+
+  <main class="settings-shell">
+    <section class="settings-hero">
+      <div class="meta-label">模型设置</div>
+      <h1>Kimi<br>接口</h1>
+      <p>这里配置音乐台 AI 分析所需的 Moonshot/Kimi 接口。密钥仍只保存在当前浏览器，本地后端负责代理请求。</p>
+    </section>
+
+    <section class="settings-panel" aria-label="Kimi API 设置">
+      <div class="config-row">
+        <div class="field">
+          <label for="kimi-api-key">Kimi API 密钥</label>
+          <input id="kimi-api-key" type="password" autocomplete="off" placeholder="填入 Moonshot/Kimi 密钥">
+        </div>
+        <div class="field">
+          <label for="kimi-model">模型</label>
+          <input id="kimi-model" type="text" value="kimi-k2.6" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="kimi-endpoint">接口地址</label>
+        <input id="kimi-endpoint" type="text" value="https://api.moonshot.cn/v1/chat/completions" autocomplete="off">
+      </div>
+
+      <div class="panel-actions">
+        <button class="pill" id="save-config" type="button">保存设置</button>
+        <button class="text-button" id="clear-config" type="button">清空密钥</button>
+      </div>
+
+      <p class="note">API 密钥、模型和接口地址都只保存在当前浏览器本地；音乐台会通过 /api/ai/kimi/chat 让本地后端代理转发，避免浏览器直连跨域问题。</p>
+      <div class="status" id="settings-status"></div>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      apiKey: document.getElementById("kimi-api-key"),
+      model: document.getElementById("kimi-model"),
+      endpoint: document.getElementById("kimi-endpoint"),
+      save: document.getElementById("save-config"),
+      clear: document.getElementById("clear-config"),
+      status: document.getElementById("settings-status")
+    };
+
+    function loadConfig() {
+      try {
+        const local = JSON.parse(localStorage.getItem("echo-kimi-config") || "{}");
+        const session = JSON.parse(sessionStorage.getItem("echo-kimi-session") || "{}");
+        els.model.value = local.model || "kimi-k2.6";
+        els.endpoint.value = local.endpoint || "https://api.moonshot.cn/v1/chat/completions";
+        els.apiKey.value = local.apiKey || session.apiKey || "";
+      } catch (error) {
+        els.status.textContent = "读取本地设置失败，请重新保存一次。";
+      }
+    }
+
+    function saveConfig() {
+      const model = els.model.value.trim() || "kimi-k2.6";
+      const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
+      const apiKey = els.apiKey.value.trim();
+      localStorage.setItem("echo-kimi-config", JSON.stringify({ model, endpoint, apiKey }));
+      sessionStorage.setItem("echo-kimi-session", JSON.stringify({ apiKey }));
+      els.status.textContent = "设置已保存。回到音乐台后即可生成 AI 分析。";
+    }
+
+    function clearConfig() {
+      els.apiKey.value = "";
+      sessionStorage.removeItem("echo-kimi-session");
+      try {
+        const local = JSON.parse(localStorage.getItem("echo-kimi-config") || "{}");
+        delete local.apiKey;
+        localStorage.setItem("echo-kimi-config", JSON.stringify(local));
+      } catch (error) {
+        localStorage.removeItem("echo-kimi-config");
+      }
+      els.status.textContent = "密钥已从当前浏览器本地清空。";
+    }
+
+    els.save.addEventListener("click", saveConfig);
+    els.clear.addEventListener("click", clearConfig);
+    loadConfig();
+  </script>
+</body>
+</html>

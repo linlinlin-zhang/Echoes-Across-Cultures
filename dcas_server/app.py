@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from uuid import uuid4
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,10 +21,13 @@ from dcas.pipelines import (
     train_model,
 )
 
+from .mainline_platform import MainlineWeights, get_mainline_platform
 from .paths import Storage
 from .prototype_api import create_prototype_router
 from .schemas import (
     DatasetBuildRequest,
+    KimiChatRequest,
+    MainlineRecommendRequest,
     OntologyAnnotationCreateRequest,
     OntologyConceptCreateRequest,
     OntologyExportConstraintsRequest,
@@ -43,7 +47,12 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -195,6 +204,247 @@ def create_app() -> FastAPI:
             epsilon=req.epsilon,
             iters=req.iters,
         )
+
+    @app.get("/api/mainline/status")
+    def api_mainline_status(prefer_cuda: bool = False):
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            return platform.status()
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/mainline/cultures")
+    def api_mainline_cultures(prefer_cuda: bool = False):
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            return platform.cultures()
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/mainline/catalog")
+    def api_mainline_catalog(
+        culture: str | None = None,
+        source_dataset: str | None = None,
+        q: str | None = None,
+        limit: int = 24,
+        random_seed: int | None = 42,
+        exclude_low_signal: bool = True,
+        prefer_cuda: bool = False,
+    ):
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            return platform.catalog(
+                culture=culture,
+                source_dataset=source_dataset,
+                q=q,
+                limit=limit,
+                random_seed=random_seed,
+                exclude_low_signal=exclude_low_signal,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/mainline/random")
+    def api_mainline_random(
+        culture: str | None = None,
+        source_dataset: str | None = None,
+        random_seed: int | None = 42,
+        exclude_low_signal: bool = True,
+        prefer_cuda: bool = False,
+    ):
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            return platform.random_track(
+                culture=culture,
+                source_dataset=source_dataset,
+                random_seed=random_seed,
+                exclude_low_signal=exclude_low_signal,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/mainline/tracks/{track_id}")
+    def api_mainline_track(track_id: str, prefer_cuda: bool = False):
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            return platform.track(track_id)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/mainline/audio/{track_id}")
+    def api_mainline_audio(track_id: str, prefer_cuda: bool = False):
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            path, media_type = platform.audio_file(track_id)
+            return FileResponse(str(path), media_type=media_type, headers={"Accept-Ranges": "bytes"})
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/mainline/recommend")
+    def api_mainline_recommend(req: MainlineRecommendRequest):
+        seed_track_ids = list(req.seed_track_ids)
+        if req.seed_track_id:
+            seed_track_ids.insert(0, req.seed_track_id)
+        weights = MainlineWeights(
+            relevance=req.relevance_weight,
+            novelty=req.novelty_weight,
+            target_affinity=req.target_affinity_weight,
+            minority=req.minority_weight,
+            source=req.source_weight,
+            diversity_lambda=req.diversity_lambda,
+        )
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=req.prefer_cuda)
+            return platform.recommend(
+                seed_track_ids=seed_track_ids,
+                seed_culture=req.seed_culture,
+                target_culture=req.target_culture,
+                mode=req.mode,
+                k=req.k,
+                recall_k=req.recall_k,
+                random_seed=req.random_seed,
+                exclude_same_artist=req.exclude_same_artist,
+                exclude_low_signal=req.exclude_low_signal,
+                weights=weights,
+            )
+        except (KeyError, ValueError) as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/mainline/upload_recommend")
+    async def api_mainline_upload_recommend(
+        file: UploadFile = File(...),
+        title: str | None = Form(default=None),
+        artist: str | None = Form(default=None),
+        seed_culture: str | None = Form(default=None),
+        target_culture: str | None = Form(default=None),
+        mode: str = Form(default="open"),
+        k: int = Form(default=10),
+        recall_k: int = Form(default=900),
+        random_seed: int | None = Form(default=42),
+        prefer_cuda: bool = Form(default=False),
+        exclude_same_artist: bool = Form(default=False),
+        exclude_low_signal: bool = Form(default=True),
+        max_seconds: float = Form(default=30.0),
+        window_count: int = Form(default=1),
+        window_strategy: str = Form(default="single"),
+        window_aggregate: str = Form(default="mean"),
+    ):
+        filename = Path(file.filename or "uploaded_audio").name
+        suffix = Path(filename).suffix.lower()[:12]
+        saved_name = f"{uuid4().hex}_{Path(filename).stem[:80] or 'audio'}{suffix}"
+        upload_dir = storage.ensure_dir("uploads/mainline")
+        dest = (upload_dir / saved_name).resolve()
+        max_bytes = 200 * 1024 * 1024
+        content = await file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="empty upload")
+        if len(content) > max_bytes:
+            raise HTTPException(status_code=413, detail="uploaded audio is larger than 200MB")
+        dest.write_bytes(content)
+
+        weights = MainlineWeights()
+        rel_upload_path = storage.relpath(dest)
+        upload_info = {
+            "track_id": f"upload_{dest.stem[:48]}",
+            "filename": filename,
+            "title": title or Path(filename).stem,
+            "artist": artist or "Uploaded audio",
+            "path": rel_upload_path,
+            "size_bytes": int(len(content)),
+            "content_type": file.content_type or "",
+            "audio_api_url": f"/api/files/download?path={rel_upload_path}",
+        }
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            result = platform.recommend_audio_file(
+                audio_path=dest,
+                upload_info=upload_info,
+                seed_culture=seed_culture,
+                target_culture=target_culture,
+                mode=mode,
+                k=k,
+                recall_k=recall_k,
+                random_seed=random_seed,
+                exclude_same_artist=exclude_same_artist,
+                exclude_low_signal=exclude_low_signal,
+                weights=weights,
+                max_seconds=max_seconds,
+                window_count=window_count,
+                window_strategy=window_strategy,
+                window_aggregate=window_aggregate,
+            )
+            return result
+        except (KeyError, ValueError) as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/ai/kimi/chat")
+    def api_kimi_chat(req: KimiChatRequest):
+        endpoint = req.endpoint.strip()
+        if not endpoint.startswith("https://"):
+            raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+        payload = {
+            "model": req.model.strip() or "kimi-k2.6",
+            "messages": req.messages,
+            "max_completion_tokens": int(req.max_completion_tokens),
+        }
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        try:
+            import urllib.error
+            import urllib.request
+
+            upstream = urllib.request.Request(
+                endpoint,
+                data=body,
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {req.api_key.strip()}",
+                    "Content-Type": "application/json",
+                },
+            )
+            with urllib.request.urlopen(upstream, timeout=float(req.timeout_seconds)) as response:
+                response_body = response.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")[:4000]
+            raise HTTPException(status_code=e.code, detail=detail)
+        except urllib.error.URLError as e:
+            raise HTTPException(status_code=502, detail=str(e.reason))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+        try:
+            data = json.loads(response_body)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=502, detail="Kimi returned invalid JSON")
+        content = data.get("choices", [{}])[0].get("message", {}).get("content")
+        if not content:
+            raise HTTPException(status_code=502, detail="Kimi returned no message content")
+        return {"ok": True, "content": content, "raw": data}
 
     @app.post("/api/style/transfer")
     def api_style_transfer(req: StyleTransferRequest):
@@ -423,8 +673,8 @@ def create_app() -> FastAPI:
                 ])
         return {"csv": str(csv_file), "count": len(anns)}
 
+    web_dir = Path("web")
     dist = Path("web/dist")
-    dist.mkdir(parents=True, exist_ok=True)
     prototype_dir = Path("web_prototype")
     if prototype_dir.exists():
         app.mount("/prototype", StaticFiles(directory=str(prototype_dir), html=True), name="prototype")
@@ -432,11 +682,14 @@ def create_app() -> FastAPI:
     pal_html = dist / "pal.html"
     if pal_html.exists():
         app.mount("/pal", StaticFiles(directory=str(pal_html.parent), html=False), name="pal")
-    if (dist / "index.html").exists():
+    if (web_dir / "index.html").exists():
+        app.mount("/", StaticFiles(directory=str(web_dir), html=True), name="web")
+    elif (dist / "index.html").exists():
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
     elif prototype_dir.exists():
         app.mount("/", StaticFiles(directory=str(prototype_dir), html=True), name="prototype-root")
     else:
+        dist.mkdir(parents=True, exist_ok=True)
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="web-empty")
 
     return app

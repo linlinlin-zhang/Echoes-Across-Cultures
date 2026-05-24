@@ -54,6 +54,35 @@ class RecommendRequest(BaseModel):
     iters: int = Field(default=200, ge=10, le=2000)
 
 
+class MainlineRecommendRequest(BaseModel):
+    seed_track_id: str | None = None
+    seed_track_ids: list[str] = Field(default_factory=list)
+    seed_culture: str | None = None
+    target_culture: str | None = None
+    mode: str = Field(default="open")
+    k: int = Field(default=10, ge=1, le=100)
+    recall_k: int = Field(default=600, ge=10, le=5000)
+    random_seed: int | None = Field(default=42)
+    prefer_cuda: bool = Field(default=False)
+    exclude_same_artist: bool = Field(default=False)
+    exclude_low_signal: bool = Field(default=True)
+    relevance_weight: float = Field(default=0.48, ge=0.0)
+    novelty_weight: float = Field(default=0.10, ge=0.0)
+    target_affinity_weight: float = Field(default=0.22, ge=0.0)
+    minority_weight: float = Field(default=0.14, ge=0.0)
+    source_weight: float = Field(default=0.06, ge=0.0)
+    diversity_lambda: float = Field(default=0.03, ge=0.0)
+
+
+class KimiChatRequest(BaseModel):
+    api_key: str = Field(min_length=1)
+    model: str = Field(default="kimi-k2.6", min_length=1)
+    endpoint: str = Field(default="https://api.moonshot.cn/v1/chat/completions", min_length=1)
+    messages: list[dict[str, str]]
+    max_completion_tokens: int = Field(default=1800, ge=1, le=8192)
+    timeout_seconds: float = Field(default=60.0, gt=0, le=180)
+
+
 class StyleTransferRequest(BaseModel):
     model_path: str
     tracks_path: str
