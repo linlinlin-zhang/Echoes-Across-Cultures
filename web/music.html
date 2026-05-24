@@ -1364,7 +1364,7 @@
       </section>
 
       <label class="pill" for="music-upload">上传音乐</label>
-      <input class="upload-input" id="music-upload" type="file" accept="audio/*">
+      <input class="upload-input" id="music-upload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma">
     </div>
 
     <div class="rec-head">
@@ -2667,6 +2667,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
           form.append("max_seconds", "30");
           form.append("window_count", "1");
           form.append("window_strategy", "single");
+          form.append("compress_upload", "true");
           response = await fetch("/api/mainline/upload_recommend", {
             method: "POST",
             body: form

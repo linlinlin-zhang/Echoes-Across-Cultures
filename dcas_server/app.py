@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -40,6 +41,86 @@ from .schemas import (
     TrainRequest,
     WaveStyleTransferRequest,
 )
+
+
+SUPPORTED_UPLOAD_AUDIO_EXTENSIONS = {
+    ".mp3",
+    ".m4a",
+    ".mp4",
+    ".aac",
+    ".wav",
+    ".wave",
+    ".flac",
+    ".ogg",
+    ".oga",
+    ".opus",
+    ".webm",
+    ".aif",
+    ".aiff",
+    ".wma",
+}
+
+UPLOAD_ACCEPT_ATTRIBUTE = ",".join(
+    [
+        "audio/mpeg",
+        "audio/mp4",
+        "audio/aac",
+        "audio/wav",
+        "audio/x-wav",
+        "audio/flac",
+        "audio/ogg",
+        "audio/opus",
+        "audio/webm",
+        *sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS),
+    ]
+)
+
+
+def _validate_upload_audio(filename: str, content_type: str | None) -> str:
+    suffix = Path(filename or "").suffix.lower()
+    if suffix in SUPPORTED_UPLOAD_AUDIO_EXTENSIONS:
+        return suffix
+    if str(content_type or "").lower().startswith("audio/"):
+        return suffix or ".audio"
+    allowed = ", ".join(sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS))
+    raise HTTPException(status_code=415, detail=f"unsupported audio format. Supported extensions: {allowed}")
+
+
+def _compress_audio_for_analysis(source: Path, target: Path, *, max_seconds: float, bitrate: str = "96k") -> dict[str, object]:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "ffmpeg",
+        "-nostdin",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        str(source),
+    ]
+    if float(max_seconds) > 0:
+        cmd.extend(["-t", f"{float(max_seconds):.6f}"])
+    cmd.extend(["-vn", "-ac", "1", "-ar", "24000", "-b:a", str(bitrate), str(target)])
+    timeout = max(90.0, float(max_seconds or 0) + 60.0)
+    proc = subprocess.run(cmd, capture_output=True, timeout=timeout)
+    if proc.returncode != 0:
+        err = proc.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"ffmpeg compression failed: {err}")
+    if not target.exists() or target.stat().st_size <= 0:
+        raise RuntimeError("ffmpeg compression produced no output")
+    raw_size = int(source.stat().st_size) if source.exists() else 0
+    compressed_size = int(target.stat().st_size)
+    return {
+        "status": "compressed",
+        "codec": "mp3",
+        "sample_rate_hz": 24000,
+        "channels": 1,
+        "bitrate": str(bitrate),
+        "max_seconds": float(max_seconds),
+        "raw_size_bytes": raw_size,
+        "compressed_size_bytes": compressed_size,
+        "ratio": float(compressed_size / raw_size) if raw_size else None,
+    }
 
 
 def create_app() -> FastAPI:
@@ -332,6 +413,23 @@ def create_app() -> FastAPI:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get("/api/mainline/upload_formats")
+    def api_mainline_upload_formats():
+        return {
+            "ok": True,
+            "extensions": sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS),
+            "accept": UPLOAD_ACCEPT_ATTRIBUTE,
+            "max_upload_mb": 200,
+            "default_compression": {
+                "enabled": True,
+                "codec": "mp3",
+                "sample_rate_hz": 24000,
+                "channels": 1,
+                "bitrate": "96k",
+                "trimmed_to_analysis_window": True,
+            },
+        }
+
     @app.post("/api/mainline/upload_recommend")
     async def api_mainline_upload_recommend(
         file: UploadFile = File(...),
@@ -350,12 +448,15 @@ def create_app() -> FastAPI:
         window_count: int = Form(default=1),
         window_strategy: str = Form(default="single"),
         window_aggregate: str = Form(default="mean"),
+        compress_upload: bool = Form(default=True),
     ):
         filename = Path(file.filename or "uploaded_audio").name
-        suffix = Path(filename).suffix.lower()[:12]
-        saved_name = f"{uuid4().hex}_{Path(filename).stem[:80] or 'audio'}{suffix}"
-        upload_dir = storage.ensure_dir("uploads/mainline")
-        dest = (upload_dir / saved_name).resolve()
+        suffix = _validate_upload_audio(filename, file.content_type)
+        saved_stem = f"{uuid4().hex}_{Path(filename).stem[:80] or 'audio'}"
+        saved_name = f"{saved_stem}{suffix[:12]}"
+        raw_dir = storage.ensure_dir("uploads/mainline/raw")
+        compressed_dir = storage.ensure_dir("uploads/mainline/compressed")
+        dest = (raw_dir / saved_name).resolve()
         max_bytes = 200 * 1024 * 1024
         content = await file.read()
         if not content:
@@ -366,20 +467,54 @@ def create_app() -> FastAPI:
 
         weights = MainlineWeights()
         rel_upload_path = storage.relpath(dest)
+        analysis_path = dest
+        playback_path = dest
+        compression_info: dict[str, object] = {
+            "status": "disabled",
+            "raw_path": rel_upload_path,
+            "raw_size_bytes": int(len(content)),
+        }
+        if bool(compress_upload):
+            compressed_path = (compressed_dir / f"{saved_stem}.mp3").resolve()
+            try:
+                compression_info = _compress_audio_for_analysis(
+                    dest,
+                    compressed_path,
+                    max_seconds=max(1.0, float(max_seconds)),
+                )
+                compression_info["path"] = storage.relpath(compressed_path)
+                compression_info["raw_path"] = rel_upload_path
+                analysis_path = compressed_path
+                playback_path = compressed_path
+                try:
+                    dest.unlink()
+                    compression_info["raw_deleted"] = True
+                except OSError:
+                    compression_info["raw_deleted"] = False
+            except Exception as e:
+                compression_info = {
+                    "status": "fallback_original",
+                    "raw_path": rel_upload_path,
+                    "raw_size_bytes": int(len(content)),
+                    "error": str(e)[:1200],
+                }
+
+        rel_playback_path = storage.relpath(playback_path)
         upload_info = {
             "track_id": f"upload_{dest.stem[:48]}",
             "filename": filename,
             "title": title or Path(filename).stem,
             "artist": artist or "Uploaded audio",
-            "path": rel_upload_path,
+            "path": rel_playback_path,
             "size_bytes": int(len(content)),
             "content_type": file.content_type or "",
-            "audio_api_url": f"/api/files/download?path={rel_upload_path}",
+            "audio_api_url": f"/api/files/download?path={rel_playback_path}",
+            "compression": compression_info,
         }
         try:
             platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
             result = platform.recommend_audio_file(
-                audio_path=dest,
+                audio_path=analysis_path,
                 upload_info=upload_info,
                 seed_culture=seed_culture,
                 target_culture=target_culture,

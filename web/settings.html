@@ -261,6 +261,7 @@
 
       <div class="panel-actions">
         <button class="pill" id="save-config" type="button">保存设置</button>
+        <button class="pill" id="test-config" type="button">测试连接</button>
         <button class="text-button" id="clear-config" type="button">清空密钥</button>
       </div>
 
@@ -275,6 +276,7 @@
       model: document.getElementById("kimi-model"),
       endpoint: document.getElementById("kimi-endpoint"),
       save: document.getElementById("save-config"),
+      test: document.getElementById("test-config"),
       clear: document.getElementById("clear-config"),
       status: document.getElementById("settings-status")
     };
@@ -300,6 +302,45 @@
       els.status.textContent = "设置已保存。回到音乐台后即可生成 AI 分析。";
     }
 
+    async function testConfig() {
+      const model = els.model.value.trim() || "kimi-k2.6";
+      const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
+      const apiKey = els.apiKey.value.trim();
+      if (!apiKey) {
+        els.status.textContent = "请先填入 Kimi API 密钥。";
+        return;
+      }
+      els.test.disabled = true;
+      els.status.textContent = "正在通过本地后端测试 Kimi 连接...";
+      try {
+        const response = await fetch("/api/ai/kimi/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: apiKey,
+            model,
+            endpoint,
+            messages: [
+              { role: "system", content: "你是 Echo 设置页的连通性测试助手。" },
+              { role: "user", content: "请只回复：KIMI_OK" }
+            ],
+            max_completion_tokens: 32,
+            timeout_seconds: 45
+          })
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`${response.status} ${text}`);
+        }
+        const data = await response.json();
+        els.status.textContent = `Kimi 连接成功：${String(data.content || "").slice(0, 80)}`;
+      } catch (error) {
+        els.status.textContent = `Kimi 连接失败：${error.message || error}`;
+      } finally {
+        els.test.disabled = false;
+      }
+    }
+
     function clearConfig() {
       els.apiKey.value = "";
       sessionStorage.removeItem("echo-kimi-session");
@@ -314,6 +355,7 @@
     }
 
     els.save.addEventListener("click", saveConfig);
+    els.test.addEventListener("click", testConfig);
     els.clear.addEventListener("click", clearConfig);
     loadConfig();
   </script>
