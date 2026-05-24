@@ -75,6 +75,13 @@ UPLOAD_ACCEPT_ATTRIBUTE = ",".join(
     ]
 )
 
+DEFAULT_UPLOAD_COMPRESSION_BITRATE = "192k"
+DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ = 44_100
+DEFAULT_UPLOAD_COMPRESSION_CHANNELS = 2
+ALLOWED_UPLOAD_COMPRESSION_BITRATES = {"96k", "128k", "160k", "192k", "224k", "256k", "320k"}
+ALLOWED_UPLOAD_COMPRESSION_SAMPLE_RATES = {24_000, 32_000, 44_100, 48_000}
+ALLOWED_UPLOAD_COMPRESSION_CHANNELS = {1, 2}
+
 
 def _validate_upload_audio(filename: str, content_type: str | None) -> str:
     suffix = Path(filename or "").suffix.lower()
@@ -86,8 +93,40 @@ def _validate_upload_audio(filename: str, content_type: str | None) -> str:
     raise HTTPException(status_code=415, detail=f"unsupported audio format. Supported extensions: {allowed}")
 
 
-def _compress_audio_for_analysis(source: Path, target: Path, *, max_seconds: float, bitrate: str = "96k") -> dict[str, object]:
+def _safe_compression_bitrate(value: str | None) -> str:
+    raw = str(value or DEFAULT_UPLOAD_COMPRESSION_BITRATE).strip().lower()
+    return raw if raw in ALLOWED_UPLOAD_COMPRESSION_BITRATES else DEFAULT_UPLOAD_COMPRESSION_BITRATE
+
+
+def _safe_sample_rate(value: int | str | None) -> int:
+    try:
+        raw = int(value or DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ)
+    except Exception:
+        return DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ
+    return raw if raw in ALLOWED_UPLOAD_COMPRESSION_SAMPLE_RATES else DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ
+
+
+def _safe_channels(value: int | str | None) -> int:
+    try:
+        raw = int(value or DEFAULT_UPLOAD_COMPRESSION_CHANNELS)
+    except Exception:
+        return DEFAULT_UPLOAD_COMPRESSION_CHANNELS
+    return raw if raw in ALLOWED_UPLOAD_COMPRESSION_CHANNELS else DEFAULT_UPLOAD_COMPRESSION_CHANNELS
+
+
+def _compress_audio_for_analysis(
+    source: Path,
+    target: Path,
+    *,
+    max_seconds: float,
+    bitrate: str = DEFAULT_UPLOAD_COMPRESSION_BITRATE,
+    sample_rate_hz: int = DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ,
+    channels: int = DEFAULT_UPLOAD_COMPRESSION_CHANNELS,
+) -> dict[str, object]:
     target.parent.mkdir(parents=True, exist_ok=True)
+    bitrate = _safe_compression_bitrate(bitrate)
+    sample_rate_hz = _safe_sample_rate(sample_rate_hz)
+    channels = _safe_channels(channels)
     cmd = [
         "ffmpeg",
         "-nostdin",
@@ -100,7 +139,7 @@ def _compress_audio_for_analysis(source: Path, target: Path, *, max_seconds: flo
     ]
     if float(max_seconds) > 0:
         cmd.extend(["-t", f"{float(max_seconds):.6f}"])
-    cmd.extend(["-vn", "-ac", "1", "-ar", "24000", "-b:a", str(bitrate), str(target)])
+    cmd.extend(["-vn", "-ac", str(channels), "-ar", str(sample_rate_hz), "-b:a", str(bitrate), str(target)])
     timeout = max(90.0, float(max_seconds or 0) + 60.0)
     proc = subprocess.run(cmd, capture_output=True, timeout=timeout)
     if proc.returncode != 0:
@@ -113,14 +152,54 @@ def _compress_audio_for_analysis(source: Path, target: Path, *, max_seconds: flo
     return {
         "status": "compressed",
         "codec": "mp3",
-        "sample_rate_hz": 24000,
-        "channels": 1,
+        "sample_rate_hz": int(sample_rate_hz),
+        "channels": int(channels),
         "bitrate": str(bitrate),
         "max_seconds": float(max_seconds),
         "raw_size_bytes": raw_size,
         "compressed_size_bytes": compressed_size,
         "ratio": float(compressed_size / raw_size) if raw_size else None,
     }
+
+
+def _load_local_kimi_config() -> dict[str, str]:
+    paths = [
+        Path("configs/secrets/kimi.local.json"),
+        Path("storage/secrets/kimi.local.json"),
+    ]
+    config: dict[str, str] = {}
+    for path in paths:
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        api_key = str(data.get("api_key") or data.get("apiKey") or "").strip()
+        if api_key:
+            config["api_key"] = api_key
+            config["source"] = str(path)
+        model = str(data.get("model") or "").strip()
+        endpoint = str(data.get("endpoint") or "").strip()
+        if model:
+            config["model"] = model
+        if endpoint:
+            config["endpoint"] = endpoint
+        if config.get("api_key"):
+            break
+    import os
+
+    env_key = str(os.environ.get("KIMI_API_KEY", "")).strip()
+    if env_key:
+        config["api_key"] = env_key
+        config["source"] = "env:KIMI_API_KEY"
+    env_model = str(os.environ.get("KIMI_MODEL", "")).strip()
+    env_endpoint = str(os.environ.get("KIMI_ENDPOINT", "")).strip()
+    if env_model:
+        config["model"] = env_model
+    if env_endpoint:
+        config["endpoint"] = env_endpoint
+    return config
 
 
 def create_app() -> FastAPI:
@@ -423,9 +502,9 @@ def create_app() -> FastAPI:
             "default_compression": {
                 "enabled": True,
                 "codec": "mp3",
-                "sample_rate_hz": 24000,
-                "channels": 1,
-                "bitrate": "96k",
+                "sample_rate_hz": DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ,
+                "channels": DEFAULT_UPLOAD_COMPRESSION_CHANNELS,
+                "bitrate": DEFAULT_UPLOAD_COMPRESSION_BITRATE,
                 "trimmed_to_analysis_window": True,
             },
         }
@@ -449,6 +528,9 @@ def create_app() -> FastAPI:
         window_strategy: str = Form(default="single"),
         window_aggregate: str = Form(default="mean"),
         compress_upload: bool = Form(default=True),
+        compression_bitrate: str = Form(default=DEFAULT_UPLOAD_COMPRESSION_BITRATE),
+        compression_sample_rate_hz: int = Form(default=DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ),
+        compression_channels: int = Form(default=DEFAULT_UPLOAD_COMPRESSION_CHANNELS),
     ):
         filename = Path(file.filename or "uploaded_audio").name
         suffix = _validate_upload_audio(filename, file.content_type)
@@ -481,6 +563,9 @@ def create_app() -> FastAPI:
                     dest,
                     compressed_path,
                     max_seconds=max(1.0, float(max_seconds)),
+                    bitrate=compression_bitrate,
+                    sample_rate_hz=compression_sample_rate_hz,
+                    channels=compression_channels,
                 )
                 compression_info["path"] = storage.relpath(compressed_path)
                 compression_info["raw_path"] = rel_upload_path
@@ -538,13 +623,32 @@ def create_app() -> FastAPI:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get("/api/ai/kimi/status")
+    def api_kimi_status():
+        local = _load_local_kimi_config()
+        return {
+            "ok": True,
+            "has_local_key": bool(local.get("api_key")),
+            "source": local.get("source", ""),
+            "model": local.get("model", "kimi-k2.6"),
+            "endpoint": local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions"),
+        }
+
     @app.post("/api/ai/kimi/chat")
     def api_kimi_chat(req: KimiChatRequest):
-        endpoint = req.endpoint.strip()
+        local = _load_local_kimi_config()
+        api_key = str(req.api_key or "").strip() or str(local.get("api_key") or "").strip()
+        if not api_key:
+            raise HTTPException(
+                status_code=400,
+                detail="Kimi API key is not configured. Set it in settings.html, KIMI_API_KEY, or configs/secrets/kimi.local.json.",
+            )
+        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions")
         if not endpoint.startswith("https://"):
             raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+        model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
         payload = {
-            "model": req.model.strip() or "kimi-k2.6",
+            "model": model,
             "messages": req.messages,
             "max_completion_tokens": int(req.max_completion_tokens),
         }
@@ -558,7 +662,7 @@ def create_app() -> FastAPI:
                 data=body,
                 method="POST",
                 headers={
-                    "Authorization": f"Bearer {req.api_key.strip()}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 },
             )

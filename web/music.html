@@ -2296,8 +2296,14 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
     async function requestKimi(messages) {
       const { apiKey, model, endpoint } = getKimiConfig();
-      if (!apiKey) {
-        throw new Error("请先到设置界面填入 Kimi API 密钥。");
+      const payload = {
+        model,
+        endpoint,
+        messages,
+        max_completion_tokens: 1800
+      };
+      if (apiKey) {
+        payload.api_key = apiKey;
       }
 
       const response = await fetch("/api/ai/kimi/chat", {
@@ -2305,13 +2311,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          api_key: apiKey,
-          model,
-          endpoint,
-          messages,
-          max_completion_tokens: 1800
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -2668,6 +2668,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
           form.append("window_count", "1");
           form.append("window_strategy", "single");
           form.append("compress_upload", "true");
+          form.append("compression_bitrate", "192k");
+          form.append("compression_sample_rate_hz", "44100");
+          form.append("compression_channels", "2");
           response = await fetch("/api/mainline/upload_recommend", {
             method: "POST",
             body: form

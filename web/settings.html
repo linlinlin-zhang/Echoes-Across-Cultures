@@ -265,7 +265,7 @@
         <button class="text-button" id="clear-config" type="button">清空密钥</button>
       </div>
 
-      <p class="note">API 密钥、模型和接口地址都只保存在当前浏览器本地；音乐台会通过 /api/ai/kimi/chat 让本地后端代理转发，避免浏览器直连跨域问题。</p>
+      <p class="note">可以把密钥保存在当前浏览器本地，也可以填入 configs/secrets/kimi.local.json；音乐台会通过 /api/ai/kimi/chat 让本地后端代理转发。</p>
       <div class="status" id="settings-status"></div>
     </section>
   </main>
@@ -293,6 +293,21 @@
       }
     }
 
+    async function loadBackendKimiStatus() {
+      try {
+        const response = await fetch("/api/ai/kimi/status");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.has_local_key && !els.apiKey.value.trim()) {
+          els.model.value = data.model || els.model.value;
+          els.endpoint.value = data.endpoint || els.endpoint.value;
+          els.status.textContent = `已检测到后端本地 Kimi 配置：${data.source}`;
+        }
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+
     function saveConfig() {
       const model = els.model.value.trim() || "kimi-k2.6";
       const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
@@ -306,27 +321,26 @@
       const model = els.model.value.trim() || "kimi-k2.6";
       const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
       const apiKey = els.apiKey.value.trim();
-      if (!apiKey) {
-        els.status.textContent = "请先填入 Kimi API 密钥。";
-        return;
-      }
       els.test.disabled = true;
       els.status.textContent = "正在通过本地后端测试 Kimi 连接...";
       try {
+        const payload = {
+          model,
+          endpoint,
+          messages: [
+            { role: "system", content: "你是 Echo 设置页的连通性测试助手。" },
+            { role: "user", content: "请只回复：KIMI_OK" }
+          ],
+          max_completion_tokens: 32,
+          timeout_seconds: 45
+        };
+        if (apiKey) {
+          payload.api_key = apiKey;
+        }
         const response = await fetch("/api/ai/kimi/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            api_key: apiKey,
-            model,
-            endpoint,
-            messages: [
-              { role: "system", content: "你是 Echo 设置页的连通性测试助手。" },
-              { role: "user", content: "请只回复：KIMI_OK" }
-            ],
-            max_completion_tokens: 32,
-            timeout_seconds: 45
-          })
+          body: JSON.stringify(payload)
         });
         if (!response.ok) {
           const text = await response.text();
@@ -358,6 +372,7 @@
     els.test.addEventListener("click", testConfig);
     els.clear.addEventListener("click", clearConfig);
     loadConfig();
+    loadBackendKimiStatus();
   </script>
 </body>
 </html>

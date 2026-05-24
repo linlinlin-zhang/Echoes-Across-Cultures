@@ -75,7 +75,7 @@ class MainlineRecommendRequest(BaseModel):
 
 
 class KimiChatRequest(BaseModel):
-    api_key: str = Field(min_length=1)
+    api_key: str | None = None
     model: str = Field(default="kimi-k2.6", min_length=1)
     endpoint: str = Field(default="https://api.moonshot.cn/v1/chat/completions", min_length=1)
     messages: list[dict[str, str]]
