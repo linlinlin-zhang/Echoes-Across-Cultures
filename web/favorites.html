@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo | 收藏夹</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #111111;
+      --muted: #6b6b6b;
+      --line: rgba(17, 17, 17, 0.14);
+      --line-strong: rgba(17, 17, 17, 0.28);
+      --soft: #f5f5f5;
+      --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "Courier New", Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, rgba(17, 17, 17, 0.026) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(17, 17, 17, 0.026) 1px, transparent 1px),
+        var(--bg);
+      background-size: 72px 72px;
+      color: var(--ink);
+      font-family: var(--font-main);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    select,
+    label {
+      font: inherit;
+    }
+
+    button,
+    label {
+      cursor: pointer;
+    }
+
+    .library-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1.2rem;
+      align-items: center;
+      min-height: 4.8rem;
+      padding: 0.95rem 2rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      font-size: clamp(1.4rem, 2vw, 2.1rem);
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .brand-sub,
+    .meta-label {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.35rem;
+      padding: 0.65rem 1.1rem;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .pill:hover,
+    .pill.is-active {
+      background: var(--ink);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .library-shell {
+      width: min(100%, 1800px);
+      margin: 0 auto;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .library-hero {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+      gap: 1px;
+      background: var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-copy,
+    .hero-panel {
+      min-height: 18rem;
+      background: #ffffff;
+      padding: clamp(1.35rem, 3vw, 3.3rem);
+    }
+
+    .hero-copy h1 {
+      margin-top: 0.9rem;
+      max-width: 13ch;
+      font-size: clamp(3.4rem, 8vw, 8.4rem);
+      font-weight: 400;
+      line-height: 0.88;
+      letter-spacing: 0;
+    }
+
+    .hero-copy p {
+      max-width: 38rem;
+      margin-top: 1.4rem;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .hero-panel {
+      display: grid;
+      align-content: end;
+      gap: 1.2rem;
+      background:
+        linear-gradient(90deg, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
+        #f9f9f9;
+      background-size: 44px 44px;
+    }
+
+    .hero-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .hero-stat {
+      min-height: 8.5rem;
+      padding: 1rem;
+      background: #ffffff;
+      display: grid;
+      align-content: space-between;
+      gap: 1rem;
+    }
+
+    .hero-stat strong {
+      font-size: clamp(2.4rem, 4vw, 4.8rem);
+      font-weight: 400;
+      line-height: 0.9;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 4.8rem;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: auto minmax(180px, 1fr) repeat(3, minmax(150px, 0.34fr));
+      gap: 0.8rem;
+      align-items: end;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+    }
+
+    .upload-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .control {
+      display: grid;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .control input,
+    .control select {
+      width: 100%;
+      min-height: 2.65rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 0.75rem;
+      outline: none;
+    }
+
+    .control input:focus,
+    .control select:focus {
+      border-color: var(--ink);
+      box-shadow: inset 0 -2px 0 var(--ink);
+    }
+
+    .masonry-wrap {
+      padding: 1px;
+      background: var(--line);
+    }
+
+    .masonry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      grid-auto-rows: 10px;
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .track-card {
+      display: grid;
+      align-content: start;
+      min-height: 18rem;
+      background: #ffffff;
+      overflow: hidden;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .track-card:hover {
+      background: var(--soft);
+      transform: translateY(-1px);
+    }
+
+    .track-card.is-wide {
+      grid-column: span 2;
+      grid-template-columns: minmax(180px, 0.72fr) minmax(260px, 1fr);
+      min-height: 15rem;
+    }
+
+    .cover {
+      width: 100%;
+      aspect-ratio: 1;
+      display: block;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.02)),
+        #ffffff;
+      object-fit: cover;
+    }
+
+    .track-card.is-wide .cover {
+      height: 100%;
+      min-height: 15rem;
+      aspect-ratio: auto;
+      border-right: 1px solid var(--line);
+      border-bottom: 0;
+    }
+
+    .cover-fallback {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .track-info {
+      display: grid;
+      gap: 0.8rem;
+      padding: 1.05rem;
+    }
+
+    .track-info h2 {
+      font-size: clamp(1.28rem, 2.2vw, 2.1rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .track-info p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 1.6rem;
+      padding: 0.28rem 0.58rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+    }
+
+    .empty-state {
+      min-height: 18rem;
+      display: grid;
+      place-items: center;
+      background: #ffffff;
+      color: var(--muted);
+      padding: 2rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+      .library-header,
+      .library-hero,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+      }
+
+      .toolbar {
+        position: static;
+      }
+
+      .track-card.is-wide {
+        grid-column: span 1;
+        grid-template-columns: 1fr;
+      }
+
+      .track-card.is-wide .cover {
+        height: auto;
+        aspect-ratio: 1;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="library-header">
+    <a class="brand" href="index.html" aria-label="Echo 主页">
+      <span class="brand-mark">Echo</span>
+      <span class="brand-sub">收藏夹</span>
+    </a>
+    <div></div>
+    <nav class="top-actions" aria-label="主导航">
+      <a class="pill" href="music.html">音乐台</a>
+      <a class="pill is-active" href="favorites.html">收藏夹</a>
+      <a class="pill" href="settings.html">设置界面</a>
+    </nav>
+  </header>
+
+  <main class="library-shell">
+    <section class="library-hero" aria-label="收藏夹总览">
+      <div class="hero-copy">
+        <div class="meta-label">Library Surface</div>
+        <h1>声音<br>收藏夹</h1>
+        <p>把来自 iTunes、Jamendo 与上传音频的曲目整理成可浏览、可筛选、可继续接入推荐反馈的音乐集合。</p>
+      </div>
+      <div class="hero-panel">
+        <div class="hero-stat-grid" aria-label="曲库统计">
+          <article class="hero-stat">
+            <span class="meta-label">曲目</span>
+            <strong id="stat-count">--</strong>
+          </article>
+          <article class="hero-stat">
+            <span class="meta-label">文化域</span>
+            <strong id="stat-culture">--</strong>
+          </article>
+          <article class="hero-stat">
+            <span class="meta-label">封面</span>
+            <strong id="stat-cover">--</strong>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="收藏夹工具栏">
+      <label class="pill" for="favorite-import">导入歌曲</label>
+      <input class="upload-input" id="favorite-import" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma" multiple>
+
+      <div class="control">
+        <label class="meta-label" for="search-input">歌曲检索</label>
+        <input id="search-input" type="search" placeholder="曲名 / 创作者 / 流派">
+      </div>
+
+      <div class="control">
+        <label class="meta-label" for="culture-filter">文化筛选</label>
+        <select id="culture-filter">
+          <option value="">全部文化域</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label class="meta-label" for="source-filter">来源筛选</label>
+        <select id="source-filter">
+          <option value="">全部来源</option>
+          <option value="itunes">iTunes</option>
+          <option value="jamendo">Jamendo</option>
+          <option value="upload">本地导入</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label class="meta-label" for="sort-select">歌曲排序</label>
+        <select id="sort-select">
+          <option value="shuffle">随机漫游</option>
+          <option value="title">曲名 A-Z</option>
+          <option value="artist">创作者 A-Z</option>
+          <option value="culture">文化域</option>
+          <option value="source">来源</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="masonry-wrap" aria-label="收藏曲目">
+      <div class="masonry-grid" id="masonry-grid"></div>
+    </section>
+  </main>
+
+  <script>
+    const cultureLabels = {
+      west: "西方",
+      china: "中国",
+      southeast_asia: "东南亚",
+      eastern_europe: "东欧",
+      japan: "日本",
+      africa: "非洲",
+      middle_east: "中东",
+      celtic: "凯尔特",
+      korea: "韩国",
+      caribbean: "加勒比",
+      brazil: "巴西",
+      india: "印度",
+      nordic: "北欧",
+      latin: "拉丁",
+      balkans: "巴尔干",
+      central_asia: "中亚",
+      andean: "安第斯"
+    };
+
+    const els = {
+      grid: document.getElementById("masonry-grid"),
+      search: document.getElementById("search-input"),
+      culture: document.getElementById("culture-filter"),
+      source: document.getElementById("source-filter"),
+      sort: document.getElementById("sort-select"),
+      import: document.getElementById("favorite-import"),
+      statCount: document.getElementById("stat-count"),
+      statCulture: document.getElementById("stat-culture"),
+      statCover: document.getElementById("stat-cover")
+    };
+
+    let catalog = [];
+    let imported = [];
+    let shuffleSeed = 17;
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
+
+    function normalizeItem(item, index = 0) {
+      return {
+        id: item.track_id || `track_${index}`,
+        title: item.title || item.track_id || "未知曲目",
+        artist: item.artist || item.source_dataset || "未知创作者",
+        genre: item.label || cultureLabels[item.culture] || item.culture || "未标注流派",
+        culture: item.culture || "",
+        cultureLabel: cultureLabels[item.culture] || item.culture || "未标注文化",
+        source: item.source_dataset || item.platform || "catalog",
+        cover: item.cover_art_url_large || item.cover_art_url || item.artwork_url_large || item.image_url || "",
+        url: item.platform_track_url || item.full_track_url || item.preview_url || "",
+        imported: false
+      };
+    }
+
+    function seededScore(text) {
+      let n = shuffleSeed;
+      for (const ch of String(text)) {
+        n = (n * 31 + ch.charCodeAt(0)) % 1000003;
+      }
+      return n;
+    }
+
+    function filteredItems() {
+      const query = els.search.value.trim().toLowerCase();
+      const culture = els.culture.value;
+      const source = els.source.value;
+      let items = [...imported, ...catalog].filter((item) => {
+        const hay = `${item.title} ${item.artist} ${item.genre} ${item.cultureLabel} ${item.source}`.toLowerCase();
+        if (query && !hay.includes(query)) return false;
+        if (culture && item.culture !== culture) return false;
+        if (source && item.source !== source) return false;
+        return true;
+      });
+
+      const sort = els.sort.value;
+      if (sort === "title") items.sort((a, b) => a.title.localeCompare(b.title));
+      else if (sort === "artist") items.sort((a, b) => a.artist.localeCompare(b.artist));
+      else if (sort === "culture") items.sort((a, b) => a.cultureLabel.localeCompare(b.cultureLabel));
+      else if (sort === "source") items.sort((a, b) => a.source.localeCompare(b.source));
+      else items.sort((a, b) => seededScore(a.id) - seededScore(b.id));
+      return items;
+    }
+
+    function coverMarkup(item) {
+      if (item.cover) {
+        return `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`;
+      }
+      return `<div class="cover cover-fallback">No Cover</div>`;
+    }
+
+    function cardMarkup(item, index) {
+      const wide = !item.imported && (index % 11 === 0 || index % 17 === 0);
+      const linkOpen = item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">` : "";
+      const linkClose = item.url ? "</a>" : "";
+      return `
+        <article class="track-card${wide ? " is-wide" : ""}">
+          ${linkOpen}${coverMarkup(item)}${linkClose}
+          <div class="track-info">
+            <div class="meta-label">${escapeHtml(item.source)}</div>
+            <h2>${escapeHtml(item.title)}</h2>
+            <p>${escapeHtml(item.artist)}</p>
+            <div class="tag-row">
+              <span class="tag">${escapeHtml(item.genre)}</span>
+              <span class="tag">${escapeHtml(item.cultureLabel)}</span>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function resizeMasonryItems() {
+      const row = 10;
+      const gap = 1;
+      els.grid.querySelectorAll(".track-card").forEach((card) => {
+        card.style.gridRowEnd = "";
+        const height = card.getBoundingClientRect().height;
+        card.style.gridRowEnd = `span ${Math.max(18, Math.ceil((height + gap) / (row + gap)))}`;
+      });
+    }
+
+    function render() {
+      const items = filteredItems();
+      const cultures = new Set(items.map((item) => item.culture).filter(Boolean));
+      const withCover = items.filter((item) => item.cover).length;
+      els.statCount.textContent = String(items.length);
+      els.statCulture.textContent = String(cultures.size);
+      els.statCover.textContent = `${Math.round((withCover / Math.max(1, items.length)) * 100)}%`;
+
+      if (!items.length) {
+        els.grid.innerHTML = `<div class="empty-state">没有匹配曲目。</div>`;
+        return;
+      }
+      els.grid.innerHTML = items.map(cardMarkup).join("");
+      requestAnimationFrame(resizeMasonryItems);
+      els.grid.querySelectorAll("img").forEach((img) => {
+        img.addEventListener("load", resizeMasonryItems, { once: true });
+        img.addEventListener("error", resizeMasonryItems, { once: true });
+      });
+    }
+
+    function populateCultures(items) {
+      const values = [...new Set(items.map((item) => item.culture).filter(Boolean))].sort();
+      els.culture.innerHTML = `<option value="">全部文化域</option>` + values.map((culture) => (
+        `<option value="${escapeHtml(culture)}">${escapeHtml(cultureLabels[culture] || culture)}</option>`
+      )).join("");
+    }
+
+    async function loadCatalog() {
+      els.grid.innerHTML = `<div class="empty-state">正在加载收藏曲库...</div>`;
+      const response = await fetch("/api/mainline/catalog?limit=160&random_seed=20260525&exclude_low_signal=true");
+      if (!response.ok) {
+        throw new Error(`catalog ${response.status}`);
+      }
+      const data = await response.json();
+      catalog = (data.items || []).map(normalizeItem);
+      populateCultures(catalog);
+      render();
+    }
+
+    function importFiles(files) {
+      const next = Array.from(files || []).map((file, index) => {
+        const title = file.name.replace(/\.[^.]+$/, "");
+        return {
+          id: `upload_${Date.now()}_${index}`,
+          title,
+          artist: "本地导入",
+          genre: file.type || "audio",
+          culture: "",
+          cultureLabel: "待分析",
+          source: "upload",
+          cover: "",
+          url: "",
+          imported: true
+        };
+      });
+      imported = [...next, ...imported];
+      els.source.value = "";
+      render();
+    }
+
+    [els.search, els.culture, els.source, els.sort].forEach((control) => {
+      control.addEventListener("input", render);
+      control.addEventListener("change", render);
+    });
+    els.import.addEventListener("change", (event) => importFiles(event.target.files));
+    window.addEventListener("resize", resizeMasonryItems);
+
+    loadCatalog().catch((error) => {
+      console.error(error);
+      els.grid.innerHTML = `<div class="empty-state">曲库加载失败，请确认本地后端正在运行。</div>`;
+    });
+  </script>
+</body>
+</html>

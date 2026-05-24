@@ -680,8 +680,16 @@ def create_app() -> FastAPI:
             data = json.loads(response_body)
         except json.JSONDecodeError:
             raise HTTPException(status_code=502, detail="Kimi returned invalid JSON")
-        content = data.get("choices", [{}])[0].get("message", {}).get("content")
+        choice = data.get("choices", [{}])[0]
+        message = choice.get("message", {})
+        content = message.get("content")
         if not content:
+            finish_reason = choice.get("finish_reason")
+            if finish_reason == "length" and message.get("reasoning_content"):
+                raise HTTPException(
+                    status_code=502,
+                    detail="Kimi reasoning started but max_completion_tokens was too low to produce final content.",
+                )
             raise HTTPException(status_code=502, detail="Kimi returned no message content")
         return {"ok": True, "content": content, "raw": data}
 

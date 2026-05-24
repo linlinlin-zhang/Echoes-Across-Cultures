@@ -45,6 +45,14 @@
       background-size: 72px 72px;
     }
 
+    @media (min-width: 961px) {
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+    }
+
     a,
     button,
     label {
@@ -218,6 +226,22 @@
       grid-template-columns: minmax(620px, 1.45fr) minmax(360px, 0.55fr);
       border-left: 1px solid var(--line);
       border-right: 1px solid var(--line);
+    }
+
+    @media (min-width: 961px) {
+      .station-shell {
+        height: calc(100vh - 4.8rem);
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .console,
+      .side-panel {
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+      }
     }
 
     .console {
@@ -1010,6 +1034,7 @@
       max-width: min(48rem, 100%);
       padding: 1rem 1.05rem;
       border: 1px solid var(--line);
+      border-radius: 8px;
       background: #ffffff;
       line-height: 1.58;
       white-space: pre-wrap;
@@ -1025,6 +1050,7 @@
       border-color: var(--ink);
       background: var(--ink);
       color: #ffffff;
+      max-width: min(36rem, 88%);
     }
 
     .ai-message.is-user .meta-label {
@@ -1032,8 +1058,11 @@
     }
 
     .ai-message.is-system {
+      align-self: center;
       color: var(--muted);
       font-size: 0.92rem;
+      border-style: dashed;
+      background: var(--soft);
     }
 
     .ai-composer {
@@ -1370,7 +1399,7 @@
     <div class="rec-head">
       <nav class="top-actions" aria-label="音乐台导航">
         <a class="pill is-active" href="music.html">音乐台</a>
-        <a class="pill" href="index.html#method">技术展示</a>
+        <a class="pill" href="favorites.html">收藏夹</a>
         <a class="pill" href="settings.html">设置界面</a>
       </nav>
     </div>
@@ -1496,7 +1525,7 @@
             <div class="meta-label">AI 分析</div>
             <h2>推荐讲解</h2>
           </div>
-          <p>把当前上传曲目、跨文化推荐结果、地图位置和参数读数发送给 Kimi，由 AI 对这次推荐路线做中文分析，并支持继续追问。</p>
+          <p>把当前上传曲目、跨文化推荐结果等内容发送给AI，由 AI 对这次推荐路线做分析。</p>
           <button class="pill ai-run" id="ai-run-button" type="button">生成分析</button>
         </div>
 
@@ -2230,6 +2259,13 @@
 ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
+    function buildAiDisplayPrompt(extraQuestion = "") {
+      if (extraQuestion) {
+        return `继续追问：${extraQuestion}`;
+      }
+      return "请基于当前上传曲目、跨文化推荐结果等内容，分析这次推荐路线。";
+    }
+
     function renderAiMessages() {
       if (!aiConversationMessages.length) {
         els.aiMessages.innerHTML = "";
@@ -2240,10 +2276,11 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         .map((message) => {
           const roleLabel = message.role === "assistant" ? "Kimi 分析" : "我的问题";
           const roleClass = message.role === "assistant" ? "is-assistant" : "is-user";
+          const visibleContent = message.displayContent || message.content;
           return `
             <div class="ai-message ${roleClass}">
               <div class="meta-label">${roleLabel}</div>
-              <div>${escapeHtml(message.content)}</div>
+              <div>${escapeHtml(visibleContent)}</div>
             </div>
           `;
         })
@@ -2294,12 +2331,19 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       };
     }
 
+    function toKimiMessages(messages) {
+      return messages.map((message) => ({
+        role: message.role,
+        content: message.content
+      }));
+    }
+
     async function requestKimi(messages) {
       const { apiKey, model, endpoint } = getKimiConfig();
       const payload = {
         model,
         endpoint,
-        messages,
+        messages: toKimiMessages(messages),
         max_completion_tokens: 1800
       };
       if (apiKey) {
@@ -2345,7 +2389,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         },
         {
           role: "user",
-          content: buildAiInitialPrompt(extraQuestion)
+          content: buildAiInitialPrompt(extraQuestion),
+          displayContent: buildAiDisplayPrompt(extraQuestion)
         }
       ];
       renderAiMessages();
