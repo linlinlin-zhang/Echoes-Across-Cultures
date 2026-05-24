@@ -9,9 +9,12 @@
       --bg: #ffffff;
       --ink: #111111;
       --muted: #6b6b6b;
+      --light: #999999;
       --line: rgba(17, 17, 17, 0.14);
-      --line-strong: rgba(17, 17, 17, 0.28);
-      --soft: #f5f5f5;
+      --line-soft: rgba(17, 17, 17, 0.08);
+      --card: #f7f7f7;
+      --card-hover: #f0f0f0;
+      --grid-gap: 12px;
       --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
       --font-mono: "Courier New", Courier, monospace;
     }
@@ -26,11 +29,7 @@
 
     body {
       min-height: 100vh;
-      background:
-        linear-gradient(90deg, rgba(17, 17, 17, 0.026) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(17, 17, 17, 0.026) 1px, transparent 1px),
-        var(--bg);
-      background-size: 72px 72px;
+      background: var(--bg);
       color: var(--ink);
       font-family: var(--font-main);
       overflow-x: hidden;
@@ -54,18 +53,16 @@
     }
 
     .library-header {
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 20;
       display: grid;
       grid-template-columns: auto 1fr auto;
       gap: 1.2rem;
       align-items: center;
-      min-height: 4.8rem;
-      padding: 0.95rem 2rem;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(14px);
+      width: min(calc(100% - 48px), 1600px);
+      margin: 0 auto;
+      padding: 2.2rem 0 1.8rem;
+      background: var(--bg);
     }
 
     .brand {
@@ -121,34 +118,42 @@
     }
 
     .library-shell {
-      width: min(100%, 1800px);
-      margin: 0 auto;
-      border-left: 1px solid var(--line);
-      border-right: 1px solid var(--line);
-      background: #ffffff;
+      width: min(calc(100% - 48px), 1600px);
+      margin: 0 auto 4rem;
+      background: transparent;
     }
 
     .library-hero {
       display: grid;
-      grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
-      gap: 1px;
-      background: var(--line);
-      border-bottom: 1px solid var(--line);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--grid-gap);
+      margin-bottom: var(--grid-gap);
+      background: transparent;
     }
 
     .hero-copy,
     .hero-panel {
-      min-height: 18rem;
-      background: #ffffff;
-      padding: clamp(1.35rem, 3vw, 3.3rem);
+      min-height: 19rem;
+      padding: 2.5rem;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: var(--card);
+    }
+
+    .hero-copy {
+      grid-column: span 2;
+    }
+
+    .hero-panel {
+      grid-column: span 2;
     }
 
     .hero-copy h1 {
       margin-top: 0.9rem;
       max-width: 13ch;
-      font-size: clamp(3.4rem, 8vw, 8.4rem);
+      font-size: 5rem;
       font-weight: 400;
-      line-height: 0.88;
+      line-height: 0.94;
       letter-spacing: 0;
     }
 
@@ -158,30 +163,26 @@
       color: var(--muted);
       font-size: 1rem;
       line-height: 1.6;
+      overflow-wrap: anywhere;
     }
 
     .hero-panel {
       display: grid;
       align-content: end;
       gap: 1.2rem;
-      background:
-        linear-gradient(90deg, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
-        #f9f9f9;
-      background-size: 44px 44px;
     }
 
     .hero-stat-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
+      gap: 8px;
     }
 
     .hero-stat {
       min-height: 8.5rem;
       padding: 1rem;
+      border: 1px solid var(--line-soft);
+      border-radius: 4px;
       background: #ffffff;
       display: grid;
       align-content: space-between;
@@ -189,23 +190,30 @@
     }
 
     .hero-stat strong {
-      font-size: clamp(2.4rem, 4vw, 4.8rem);
+      font-size: 4rem;
       font-weight: 400;
       line-height: 0.9;
     }
 
     .toolbar {
       position: sticky;
-      top: 4.8rem;
+      top: 0;
       z-index: 10;
       display: grid;
       grid-template-columns: auto minmax(180px, 1fr) repeat(3, minmax(150px, 0.34fr));
-      gap: 0.8rem;
-      align-items: end;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.96);
+      gap: var(--grid-gap);
+      align-items: stretch;
+      padding: var(--grid-gap) 0;
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(14px);
+    }
+
+    .toolbar .pill {
+      min-height: 4.6rem;
+      border-color: var(--ink);
+      border-radius: 6px;
+      background: var(--ink);
+      color: #ffffff;
     }
 
     .upload-input {
@@ -218,78 +226,102 @@
 
     .control {
       display: grid;
-      gap: 0.35rem;
+      align-content: center;
+      gap: 0.45rem;
       min-width: 0;
+      min-height: 4.6rem;
+      padding: 0.8rem 0.95rem;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: var(--card);
     }
 
     .control input,
     .control select {
       width: 100%;
-      min-height: 2.65rem;
-      border: 1px solid var(--line-strong);
-      border-radius: 0;
-      background: #ffffff;
+      min-height: 1.8rem;
+      border: 0;
+      background: transparent;
       color: var(--ink);
-      padding: 0 0.75rem;
+      padding: 0;
       outline: none;
     }
 
     .control input:focus,
     .control select:focus {
-      border-color: var(--ink);
-      box-shadow: inset 0 -2px 0 var(--ink);
+      box-shadow: inset 0 -1px 0 var(--ink);
     }
 
     .masonry-wrap {
-      padding: 1px;
-      background: var(--line);
+      padding: 0;
+      background: transparent;
     }
 
     .masonry-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      grid-auto-rows: 10px;
-      gap: 1px;
-      background: var(--line);
+      grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+      grid-auto-rows: 8px;
+      gap: var(--grid-gap);
+      background: transparent;
     }
 
     .track-card {
       display: grid;
       align-content: start;
-      min-height: 18rem;
-      background: #ffffff;
+      gap: 1rem;
+      min-height: 22rem;
+      padding: 0.9rem;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: var(--card);
       overflow: hidden;
-      transition: background 180ms ease, transform 180ms ease;
+      transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
     }
 
     .track-card:hover {
-      background: var(--soft);
-      transform: translateY(-1px);
+      border-color: var(--line);
+      background: var(--card-hover);
+      transform: translateY(-2px);
     }
 
     .track-card.is-wide {
       grid-column: span 2;
-      grid-template-columns: minmax(180px, 0.72fr) minmax(260px, 1fr);
-      min-height: 15rem;
+      grid-template-columns: minmax(190px, 0.82fr) minmax(230px, 1fr);
+      min-height: 19rem;
+      align-items: stretch;
+    }
+
+    .cover-shell {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: 4px;
+      background: #ffffff;
     }
 
     .cover {
       width: 100%;
       aspect-ratio: 1;
       display: block;
-      border-bottom: 1px solid var(--line);
       background:
         linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.02)),
         #ffffff;
       object-fit: cover;
     }
 
+    .track-card:hover .cover {
+      transform: scale(1.015);
+    }
+
     .track-card.is-wide .cover {
       height: 100%;
-      min-height: 15rem;
       aspect-ratio: auto;
-      border-right: 1px solid var(--line);
-      border-bottom: 0;
+    }
+
+    .track-card.is-wide .cover-shell {
+      height: 100%;
+      min-height: 17rem;
     }
 
     .cover-fallback {
@@ -303,27 +335,41 @@
 
     .track-info {
       display: grid;
-      gap: 0.8rem;
-      padding: 1.05rem;
+      align-content: start;
+      gap: 0.85rem;
+      min-width: 0;
+      padding: 0 0.2rem 0.15rem;
+    }
+
+    .track-card.is-wide .track-info {
+      align-content: space-between;
+      padding: 1rem 0.5rem 1rem 0;
     }
 
     .track-info h2 {
-      font-size: clamp(1.28rem, 2.2vw, 2.1rem);
+      font-size: 1.65rem;
       font-weight: 400;
-      line-height: 1.05;
+      line-height: 1.12;
       letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .track-card.is-wide .track-info h2 {
+      font-size: 2rem;
     }
 
     .track-info p {
       color: var(--muted);
       font-size: 0.92rem;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
 
     .tag-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.45rem;
+      margin-top: 0.15rem;
     }
 
     .tag {
@@ -331,19 +377,36 @@
       align-items: center;
       min-height: 1.6rem;
       padding: 0.28rem 0.58rem;
-      border: 1px solid var(--line-strong);
-      border-radius: 999px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
       color: var(--muted);
       font-family: var(--font-mono);
       font-size: 0.62rem;
       text-transform: uppercase;
     }
 
+    .track-open {
+      display: inline-flex;
+      width: max-content;
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      transition: color 180ms ease;
+    }
+
+    .track-open:hover {
+      color: var(--ink);
+    }
+
     .empty-state {
       min-height: 18rem;
       display: grid;
       place-items: center;
-      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: var(--card);
       color: var(--muted);
       padding: 2rem;
       text-align: center;
@@ -352,9 +415,28 @@
 
     @media (max-width: 980px) {
       .library-header,
-      .library-hero,
+      .library-shell {
+        width: min(calc(100% - 28px), 1600px);
+      }
+
+      .library-header,
       .toolbar {
         grid-template-columns: 1fr;
+      }
+
+      .library-hero {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy,
+      .hero-panel {
+        grid-column: span 1;
+        min-height: auto;
+        padding: 1.5rem;
+      }
+
+      .hero-copy h1 {
+        font-size: 3.15rem;
       }
 
       .top-actions {
@@ -370,11 +452,22 @@
         grid-template-columns: 1fr;
       }
 
+      .track-card.is-wide .cover-shell {
+        height: auto;
+        min-height: 0;
+      }
+
       .track-card.is-wide .cover {
         height: auto;
         aspect-ratio: 1;
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
+      }
+
+      .track-card.is-wide .track-info {
+        padding: 0 0.2rem 0.15rem;
+      }
+
+      .track-card.is-wide .track-info h2 {
+        font-size: 1.65rem;
       }
 
       .hero-stat-grid {
@@ -557,26 +650,37 @@
     }
 
     function coverMarkup(item) {
+      const media = item.cover
+        ? `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`
+        : `<div class="cover cover-fallback">No Cover</div>`;
       if (item.cover) {
-        return `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`;
+        return item.url
+          ? `<a class="cover-shell" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${media}</a>`
+          : `<div class="cover-shell">${media}</div>`;
       }
-      return `<div class="cover cover-fallback">No Cover</div>`;
+      return `<div class="cover-shell">${media}</div>`;
     }
 
     function cardMarkup(item, index) {
       const wide = !item.imported && (index % 11 === 0 || index % 17 === 0);
-      const linkOpen = item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">` : "";
-      const linkClose = item.url ? "</a>" : "";
+      const platformLink = item.url
+        ? `<a class="track-open" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">打开平台 ↗</a>`
+        : `<span class="track-open">本地曲目</span>`;
       return `
         <article class="track-card${wide ? " is-wide" : ""}">
-          ${linkOpen}${coverMarkup(item)}${linkClose}
+          ${coverMarkup(item)}
           <div class="track-info">
-            <div class="meta-label">${escapeHtml(item.source)}</div>
-            <h2>${escapeHtml(item.title)}</h2>
-            <p>${escapeHtml(item.artist)}</p>
-            <div class="tag-row">
-              <span class="tag">${escapeHtml(item.genre)}</span>
-              <span class="tag">${escapeHtml(item.cultureLabel)}</span>
+            <div>
+              <div class="meta-label">${escapeHtml(item.source)}</div>
+              <h2>${escapeHtml(item.title)}</h2>
+              <p>${escapeHtml(item.artist)}</p>
+            </div>
+            <div>
+              <div class="tag-row">
+                <span class="tag">${escapeHtml(item.genre)}</span>
+                <span class="tag">${escapeHtml(item.cultureLabel)}</span>
+              </div>
+              ${platformLink}
             </div>
           </div>
         </article>
@@ -584,8 +688,9 @@
     }
 
     function resizeMasonryItems() {
-      const row = 10;
-      const gap = 1;
+      const style = getComputedStyle(els.grid);
+      const row = parseFloat(style.getPropertyValue("grid-auto-rows")) || 8;
+      const gap = parseFloat(style.rowGap) || 12;
       els.grid.querySelectorAll(".track-card").forEach((card) => {
         card.style.gridRowEnd = "";
         const height = card.getBoundingClientRect().height;
