@@ -535,6 +535,7 @@
         <label class="meta-label" for="source-filter" data-i18n="favorites.sourceFilter">来源筛选</label>
         <select id="source-filter">
           <option value="" data-i18n="favorites.allSources">全部来源</option>
+          <option value="favorite" data-i18n="favorites.source.favorite">收藏</option>
           <option value="itunes">iTunes</option>
           <option value="jamendo">Jamendo</option>
           <option value="upload" data-i18n="favorites.localUpload">本地导入</option>
@@ -559,6 +560,7 @@
   </main>
 
   <script src="i18n.js"></script>
+  <script src="favorite-store.js"></script>
   <script>
     const els = {
       grid: document.getElementById("masonry-grid"),
@@ -574,6 +576,7 @@
 
     let catalog = [];
     let imported = [];
+    let storedFavorites = [];
     let shuffleSeed = 17;
 
     function t(key, params = {}) {
@@ -611,7 +614,7 @@
 
     function normalizeItem(item, index = 0) {
       return {
-        id: item.track_id || `track_${index}`,
+        id: item.id || item.track_id || `track_${index}`,
         title: item.title || item.track_id || "",
         artist: item.artist || item.source_dataset || "",
         genre: item.label || "",
@@ -619,6 +622,8 @@
         source: item.source_dataset || item.platform || "catalog",
         cover: item.cover_art_url_large || item.cover_art_url || item.artwork_url_large || item.image_url || "",
         url: item.platform_track_url || item.full_track_url || item.preview_url || "",
+        description: item.description || item.album_description || "",
+        favorite: Boolean(item.favorite),
         imported: false
       };
     }
@@ -635,11 +640,16 @@
       const query = els.search.value.trim().toLowerCase();
       const culture = els.culture.value;
       const source = els.source.value;
-      let items = [...imported, ...catalog].filter((item) => {
+      const seen = new Set();
+      let items = [...imported, ...storedFavorites, ...catalog].filter((item) => {
+        const key = String(item.id || `${item.title}::${item.artist}`).trim();
+        if (key && seen.has(key)) return false;
+        if (key) seen.add(key);
         const hay = `${itemTitle(item)} ${itemArtist(item)} ${itemGenre(item)} ${cultureLabel(item.culture)} ${item.source}`.toLowerCase();
         if (query && !hay.includes(query)) return false;
         if (culture && item.culture !== culture) return false;
-        if (source && item.source !== source) return false;
+        if (source === "favorite" && !item.favorite) return false;
+        if (source && source !== "favorite" && item.source !== source) return false;
         return true;
       });
 
@@ -677,6 +687,7 @@
               <div class="meta-label">${escapeHtml(item.source)}</div>
               <h2>${escapeHtml(itemTitle(item))}</h2>
               <p>${escapeHtml(itemArtist(item))}</p>
+              ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
             </div>
             <div>
               <div class="tag-row">
@@ -738,8 +749,16 @@
       }
       const data = await response.json();
       catalog = (data.items || []).map(normalizeItem);
+      loadStoredFavorites();
       populateCultures(catalog);
       render();
+    }
+
+    function loadStoredFavorites() {
+      storedFavorites = (window.EchoFavoriteStore?.read() || []).map((item, index) => ({
+        ...normalizeItem(item, index),
+        favorite: true
+      }));
     }
 
     function importFiles(files) {
@@ -768,13 +787,24 @@
     });
     els.import.addEventListener("change", (event) => importFiles(event.target.files));
     window.addEventListener("resize", resizeMasonryItems);
+    window.addEventListener("echo-favorites-change", () => {
+      loadStoredFavorites();
+      render();
+    });
     window.addEventListener("echo-language-change", () => {
+      loadStoredFavorites();
       populateCultures(catalog);
       render();
     });
 
     loadCatalog().catch((error) => {
       console.error(error);
+      loadStoredFavorites();
+      if (storedFavorites.length) {
+        populateCultures(storedFavorites);
+        render();
+        return;
+      }
       els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.loadFailed"))}</div>`;
     });
   </script>

@@ -1119,9 +1119,10 @@
     }
 
     .rec-card {
+      position: relative;
       display: grid;
       gap: 0.75rem;
-      padding: 1.25rem 1.45rem;
+      padding: 1.25rem 3.35rem 1.25rem 1.45rem;
       border-bottom: 1px solid var(--line);
       text-align: left;
       cursor: pointer;
@@ -1186,6 +1187,41 @@
       color: var(--muted);
       font-size: 0.94rem;
       line-height: 1.45;
+    }
+
+    .rec-description {
+      color: #4f4f4f;
+    }
+
+    .rec-description.is-loading {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .favorite-button {
+      position: absolute;
+      top: 1.05rem;
+      right: 1rem;
+      display: inline-grid;
+      place-items: center;
+      width: 2.15rem;
+      height: 2.15rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 1.15rem;
+      line-height: 1;
+      transition: background 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease;
+    }
+
+    .favorite-button:hover,
+    .favorite-button.is-active {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #ffffff;
+      transform: translateY(-1px);
     }
 
     .rec-links {
@@ -1559,6 +1595,7 @@
   <script src="./vendor/d3.v7.min.js"></script>
   <script src="./vendor/topojson-client.min.js"></script>
   <script src="i18n.js"></script>
+  <script src="favorite-store.js"></script>
   <script>
     const apiBase = window.location.origin;
     const urlParams = new URLSearchParams(window.location.search);
@@ -1807,12 +1844,15 @@
       const platform = String(item.platform || item.source_dataset || "").trim();
       const label = String(item.label || cultureLabels[culture] || culture || "未标注风格").trim();
       const durationMs = Number(item.duration_ms || 0);
-      const score = Number(item.score || 0);
       return {
         trackId: String(item.track_id || ""),
         title,
         artist,
         album: String(item.album || "").trim(),
+        label,
+        description: String(item.description || item.track_description || "").trim(),
+        albumDescription: String(item.album_description || "").trim(),
+        tags: String(item.tags || "").trim(),
         country: place.country,
         city: place.city,
         lat: place.lat,
@@ -1822,9 +1862,7 @@
         platform,
         style: [cultureLabels[culture] || culture, label, platform].filter(Boolean).join(" / "),
         note: item.audio_is_preview === "true" ? "平台试听音频，已接入本地音频流。" : "平台音频，已接入本地音频流。",
-        why: score
-          ? `DCAS 主线综合分 ${score.toFixed(3)}，由内容相关性、文化新颖度、目标亲和与长尾平衡共同排序。`
-          : "来自主线曲库的真实候选曲目。",
+        why: "",
         metrics: metricsFromApiItem(item, index),
         durationSeconds: durationMs > 0 ? durationMs / 1000 : undefined,
         coverArtUrl: item.cover_art_url_large || item.cover_art_url || "",
@@ -2350,13 +2388,13 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }));
     }
 
-    async function requestKimi(messages) {
+    async function requestKimi(messages, options = {}) {
       const { apiKey, model, endpoint } = getKimiConfig();
       const payload = {
         model,
         endpoint,
         messages: toKimiMessages(messages),
-        max_completion_tokens: 1800
+        max_completion_tokens: options.maxCompletionTokens || 1800
       };
       if (apiKey) {
         payload.api_key = apiKey;
@@ -2389,6 +2427,175 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         return t("music.ai.fetchFailed");
       }
       return raw;
+    }
+
+    const descriptionCacheKey = "echo-recommendation-descriptions";
+    let descriptionHydrationRun = 0;
+    let kimiDescriptionAvailable = null;
+
+    function readDescriptionCache() {
+      try {
+        const data = JSON.parse(localStorage.getItem(descriptionCacheKey) || "{}");
+        return data && typeof data === "object" ? data : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function writeDescriptionCache(cache) {
+      localStorage.setItem(descriptionCacheKey, JSON.stringify(cache));
+    }
+
+    function descriptionKey(item) {
+      return String(item.trackId || `${item.title}::${item.artist}::${item.album}`).trim();
+    }
+
+    function metadataDescription(item) {
+      const trackDescription = String(item.description || "").trim();
+      if (trackDescription) {
+        return { text: trackDescription, source: "track" };
+      }
+      const albumDescription = String(item.albumDescription || "").trim();
+      if (albumDescription) {
+        return { text: albumDescription, source: "album" };
+      }
+      return null;
+    }
+
+    function conciseText(value, maxLength = 260) {
+      const text = String(value || "").replace(/\s+/g, " ").trim();
+      if (text.length <= maxLength) return text;
+      return `${text.slice(0, maxLength - 1).trim()}…`;
+    }
+
+    function fallbackDescription(item) {
+      const parts = [
+        item.album ? `专辑《${item.album}》` : "",
+        item.label ? `流派 ${item.label}` : "",
+        item.culture ? `文化域 ${cultureLabels[item.culture] || item.culture}` : "",
+        item.tags ? `标签 ${item.tags}` : ""
+      ].filter(Boolean);
+      if (parts.length) {
+        return `这首歌来自 ${item.artist || "未知创作者"}，${parts.join("，")}。`;
+      }
+      return `${item.artist || "未知创作者"} 的曲目，已进入当前跨文化推荐候选。`;
+    }
+
+    function recommendationDescription(item) {
+      const fromMetadata = metadataDescription(item);
+      if (fromMetadata) return conciseText(fromMetadata.text);
+      if (item.aiDescription) return conciseText(item.aiDescription);
+      if (item.descriptionLoading) return "正在补充音乐介绍...";
+      return conciseText(fallbackDescription(item));
+    }
+
+    async function canUseKimiDescriptions() {
+      if (kimiDescriptionAvailable !== null) return kimiDescriptionAvailable;
+      const config = getKimiConfig();
+      if (config.apiKey) {
+        kimiDescriptionAvailable = true;
+        return true;
+      }
+      try {
+        const response = await fetch("/api/ai/kimi/status");
+        if (!response.ok) {
+          kimiDescriptionAvailable = false;
+          return false;
+        }
+        const data = await response.json();
+        kimiDescriptionAvailable = Boolean(data.has_local_key);
+        return kimiDescriptionAvailable;
+      } catch (error) {
+        kimiDescriptionAvailable = false;
+        return false;
+      }
+    }
+
+    function applyCachedDescriptions(items) {
+      const cache = readDescriptionCache();
+      items.forEach((item) => {
+        const key = descriptionKey(item);
+        if (!metadataDescription(item) && key && cache[key]) {
+          item.aiDescription = cache[key];
+        }
+      });
+    }
+
+    function descriptionPrompt(item) {
+      const responseLanguage = aiResponseLanguageName();
+      return `请使用 ${responseLanguage} 为这首音乐写一段简短介绍，1-2 句即可。
+
+要求：
+- 优先基于曲名、艺术家、专辑、流派、文化域、标签和平台来源来写。
+- 如果无法确认真实背景，不要编造具体发行故事、奖项、歌词或听后细节。
+- 语气适合音乐推荐卡片，具体但克制。
+
+曲目信息：
+曲名：${item.title || ""}
+艺术家：${item.artist || ""}
+专辑：${item.album || ""}
+流派/标签：${[item.label, item.tags].filter(Boolean).join(" / ")}
+文化域：${cultureLabels[item.culture] || item.culture || ""}
+国家/城市：${[item.country, item.city].filter(Boolean).join(" / ")}
+来源：${item.sourceDataset || item.platform || ""}`;
+    }
+
+    async function generateKimiDescription(item) {
+      const content = await requestKimi(
+        [
+          {
+            role: "system",
+            content: `你是 Echo 的音乐资料撰写助手。请使用 ${aiResponseLanguageName()}，只输出音乐介绍正文，不输出标题、项目符号或免责声明。`
+          },
+          {
+            role: "user",
+            content: descriptionPrompt(item)
+          }
+        ],
+        { maxCompletionTokens: 1024 }
+      );
+      return conciseText(content, 320);
+    }
+
+    async function hydrateRecommendationDescriptions(items) {
+      const run = ++descriptionHydrationRun;
+      const missing = items.filter((item) => !metadataDescription(item) && !item.aiDescription);
+      if (!missing.length) return;
+      const canUseKimi = await canUseKimiDescriptions();
+      if (run !== descriptionHydrationRun) return;
+      if (!canUseKimi) {
+        missing.forEach((item) => {
+          item.descriptionLoading = false;
+        });
+        renderRecommendations();
+        return;
+      }
+
+      missing.forEach((item) => {
+        item.descriptionLoading = true;
+      });
+      renderRecommendations();
+
+      const cache = readDescriptionCache();
+      for (let start = 0; start < missing.length; start += 3) {
+        const chunk = missing.slice(start, start + 3);
+        const results = await Promise.allSettled(chunk.map((item) => generateKimiDescription(item)));
+        if (run !== descriptionHydrationRun) return;
+        results.forEach((result, index) => {
+          const item = chunk[index];
+          item.descriptionLoading = false;
+          if (result.status === "fulfilled" && result.value) {
+            item.aiDescription = result.value;
+            const key = descriptionKey(item);
+            if (key) cache[key] = result.value;
+            if (window.EchoFavoriteStore?.isFavorite(item)) {
+              window.EchoFavoriteStore.add(item);
+            }
+          }
+        });
+        writeDescriptionCache(cache);
+        renderRecommendations();
+      }
     }
 
     async function runAiAnalysis(extraQuestion = "") {
@@ -2651,6 +2858,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }
 
       els.recommendList.innerHTML = activeRecommendations.map((item, index) => {
+        const isFavorite = window.EchoFavoriteStore?.isFavorite(item);
         const cover = item.coverArtUrl
           ? `<img class="rec-cover" src="${escapeHtml(item.coverArtUrl)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`
           : `<div class="rec-cover is-empty" aria-hidden="true">Cover</div>`;
@@ -2662,13 +2870,16 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
           : "";
         return `
         <article class="rec-card${isSameTrack(item, currentTrack) ? " is-selected" : ""}" role="button" tabindex="0" data-rec-index="${index}">
+          <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite-index="${index}" aria-label="${isFavorite ? "取消收藏" : "收藏"} ${escapeHtml(item.title)}" title="${isFavorite ? "取消收藏" : "收藏"}">
+            ${isFavorite ? "★" : "☆"}
+          </button>
           <div class="rec-card-main">
             ${cover}
             <div class="rec-card-content">
               <div class="meta-label">${String(index + 1).padStart(2, "0")} / ${escapeHtml(item.country)} / ${escapeHtml(item.sourceDataset || item.platform || "catalog")}</div>
               <h2>${escapeHtml(item.title)}</h2>
               <p>${escapeHtml(item.artist)} - ${escapeHtml(item.city)}, ${escapeHtml(item.country)}</p>
-              <p>${escapeHtml(item.why)}</p>
+              <p class="rec-description${item.descriptionLoading ? " is-loading" : ""}">${escapeHtml(recommendationDescription(item))}</p>
               <div class="rec-meta">
                 <span class="tag">${escapeHtml(item.style)}</span>
                 <span class="tag">${recommendationMatchLabel(item, index)}</span>
@@ -2682,14 +2893,24 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
       els.recommendList.querySelectorAll("[data-rec-index]").forEach((card) => {
         card.addEventListener("click", (event) => {
-          if (event.target.closest("a")) return;
+          if (event.target.closest("a, button")) return;
           selectTrack(activeRecommendations[Number(card.dataset.recIndex)]);
         });
         card.addEventListener("keydown", (event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
-          if (event.target.closest("a")) return;
+          if (event.target.closest("a, button")) return;
           event.preventDefault();
           selectTrack(activeRecommendations[Number(card.dataset.recIndex)]);
+        });
+      });
+
+      els.recommendList.querySelectorAll("[data-favorite-index]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const item = activeRecommendations[Number(button.dataset.favoriteIndex)];
+          window.EchoFavoriteStore?.toggle(item);
+          renderRecommendations();
         });
       });
     }
@@ -2788,6 +3009,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         }
         recommendations = (data.recommendations || []).map((item, index) => trackFromApiItem(item, index));
         activeRecommendations = recommendations;
+        applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.textContent = "重新生成推荐";
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
@@ -2795,15 +3017,18 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         els.mapMode.textContent = "推荐网络已展开";
         syncTrackReadouts();
         renderRecommendations();
+        hydrateRecommendationDescriptions(activeRecommendations);
         renderParameterPanel();
         drawMap();
       } catch (error) {
         console.error(error);
         activeRecommendations = recommendations;
+        applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.textContent = "重新生成推荐";
         els.mapStatus.textContent = "推荐接口暂不可用，已回退到本地演示";
         renderRecommendations();
+        hydrateRecommendationDescriptions(activeRecommendations);
         renderParameterPanel();
         drawMap();
       }

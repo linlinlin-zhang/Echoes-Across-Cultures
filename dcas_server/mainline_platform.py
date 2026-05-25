@@ -103,6 +103,14 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
     return float(out)
 
 
+def _first_clean(row: dict[str, Any], keys: tuple[str, ...]) -> str:
+    for key in keys:
+        value = _clean(row.get(key))
+        if value:
+            return value
+    return ""
+
+
 class MainlineRecommendationPlatform:
     """Cached service wrapper for the DCAS mainline recommender.
 
@@ -887,9 +895,34 @@ class MainlineRecommendationPlatform:
             "title": _clean(row.get("title")) or track_id,
             "artist": _clean(row.get("artist")) or _clean(row.get("source_dataset")),
             "album": _clean(row.get("album")),
+            "description": _first_clean(
+                row,
+                (
+                    "description",
+                    "track_description",
+                    "track_desc",
+                    "track_summary",
+                    "summary",
+                    "notes",
+                    "note",
+                    "about",
+                ),
+            ),
+            "album_description": _first_clean(
+                row,
+                (
+                    "album_description",
+                    "album_desc",
+                    "album_summary",
+                    "album_notes",
+                    "collection_description",
+                    "release_description",
+                ),
+            ),
             "culture": str(self.tracks.culture[int(idx)]),
             "source_dataset": str(self.tracks.source_dataset[int(idx)]) if self.tracks.source_dataset is not None else _clean(row.get("source_dataset")),
             "label": _clean(row.get("label")),
+            "tags": _clean(row.get("tags")),
             "country": _clean(row.get("country")),
             "duration_ms": _safe_float(row.get("duration_ms"), default=0.0),
             "audio_is_preview": _clean(row.get("audio_is_preview")),
