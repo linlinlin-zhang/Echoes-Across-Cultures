@@ -56,6 +56,31 @@ def _write_rows(path: Path, rows: list[dict[str, str]], fields: list[str]) -> No
     tmp.replace(path)
 
 
+def _refresh_counts(stats: dict[str, Any], rows: list[dict[str, str]]) -> None:
+    stats["rows_with_description"] = sum(1 for row in rows if _clean(row.get("description")))
+    stats["missing_description_rows"] = sum(1 for row in rows if not _clean(row.get("description")))
+    stats["rows_with_album_description"] = sum(1 for row in rows if _clean(row.get("album_description")))
+    stats["rows_with_tags"] = sum(1 for row in rows if _clean(row.get("tags")))
+    stats["last_checkpoint_at"] = _utc_now()
+
+
+def _write_progress(
+    out_path: Path,
+    rows: list[dict[str, str]],
+    fields: list[str],
+    stats: dict[str, Any],
+    *,
+    dry_run: bool,
+) -> None:
+    _refresh_counts(stats, rows)
+    if dry_run:
+        return
+    _write_rows(out_path, rows, fields)
+    report_path = out_path.with_suffix(out_path.suffix + ".description_report.json")
+    report_path.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
+    stats["report_path"] = str(report_path.resolve())
+
+
 def _clean(value: Any) -> str:
     if value is None:
         return ""
@@ -79,7 +104,7 @@ def _first(*values: Any) -> str:
 
 
 def _has_description(row: dict[str, str]) -> bool:
-    return bool(_first(row.get("description"), row.get("album_description")))
+    return bool(_clean(row.get("description")))
 
 
 def _itunes_numeric_id(track_id: str) -> str:
@@ -382,8 +407,8 @@ def _kimi_prompt(row: dict[str, str]) -> str:
     compact = json.dumps(fields, ensure_ascii=False)
     return (
         "Write one concise Chinese paragraph for a music recommendation card. "
-        "Length 90-150 Chinese characters. Be concrete about likely sound, mood, "
-        "era, genre, or instrumentation, but do not invent awards, chart positions, "
+        "Strictly keep the final answer within 80-140 Chinese characters. Be concrete "
+        "about likely sound, mood, era, genre, or instrumentation, but do not invent awards, chart positions, "
         "personal biographies, exact release-market claims, or artist nationality. "
         "The country and culture fields are catalog tags, not proof of artist origin "
         "or release territory. If evidence is thin, use cautious wording such as "
@@ -393,12 +418,19 @@ def _kimi_prompt(row: dict[str, str]) -> str:
     )
 
 
-def _call_kimi(row: dict[str, str], config: dict[str, str]) -> str:
+def _call_kimi(
+    row: dict[str, str],
+    config: dict[str, str],
+    *,
+    completion_tokens: int,
+    retry_completion_tokens: int,
+) -> str:
     api_key = _clean(config.get("api_key"))
     if not api_key:
         return ""
     endpoint = _clean(config.get("endpoint")) or "https://api.moonshot.cn/v1/chat/completions"
-    for token_budget in (1024, 1536):
+    budgets = [max(1024, int(completion_tokens)), max(1024, int(retry_completion_tokens))]
+    for token_budget in dict.fromkeys(budgets):
         payload = {
             "model": _clean(config.get("model")) or "kimi-k2.6",
             "messages": [
@@ -438,6 +470,9 @@ def enrich_metadata_descriptions(
     max_wikipedia: int = 80,
     max_kimi: int = 40,
     kimi_workers: int = 3,
+    kimi_completion_tokens: int = 4096,
+    kimi_retry_completion_tokens: int = 8192,
+    write_every: int = 100,
     sleep_seconds: float = 0.15,
     source_filter: set[str] | None = None,
     overwrite_generated: bool = False,
@@ -480,6 +515,9 @@ def enrich_metadata_descriptions(
         "source_filter": sorted(source_filter or []),
         "overwrite_generated": overwrite_generated,
         "only_generated": only_generated,
+        "kimi_completion_tokens": int(kimi_completion_tokens),
+        "kimi_retry_completion_tokens": int(kimi_retry_completion_tokens),
+        "write_every": int(write_every),
     }
 
     for pos, idx in enumerate(candidates, start=1):
@@ -536,30 +574,54 @@ def enrich_metadata_descriptions(
         def run_one(row_idx: int) -> tuple[int, str, str]:
             for attempt in range(1, 3):
                 try:
-                    return row_idx, _call_kimi(rows[row_idx], kimi_config), ""
+                    return row_idx, _call_kimi(
+                        rows[row_idx],
+                        kimi_config,
+                        completion_tokens=kimi_completion_tokens,
+                        retry_completion_tokens=kimi_retry_completion_tokens,
+                    ), ""
                 except requests.RequestException as exc:
                     if attempt >= 2:
                         return row_idx, "", str(exc)
                     time.sleep(1.5 * attempt)
             return row_idx, "", "unknown"
 
-        with ThreadPoolExecutor(max_workers=max(1, int(kimi_workers))) as pool:
-            futures = [pool.submit(run_one, idx) for idx in kimi_targets]
-            for done, future in enumerate(as_completed(futures), start=1):
-                idx, text, error = future.result()
-                if error:
-                    print(f"[WARN] kimi failed for row {idx}: {error[:180]}", flush=True)
-                if text and (
-                    not _clean(rows[idx].get("description"))
-                    or (overwrite_generated and _clean(rows[idx].get("description_source")) == "kimi_generated")
-                ):
-                    rows[idx]["description"] = text
-                    rows[idx]["description_source"] = "kimi_generated"
-                    rows[idx]["description_updated_at"] = _utc_now()
-                    changed_indices.add(idx)
-                    stats["kimi_descriptions"] += 1
-                if done % 10 == 0:
-                    print(f"[INFO] kimi descriptions {done}/{len(kimi_targets)}", flush=True)
+        completed = 0
+        errors = 0
+        empty = 0
+        chunk_size = max(1, int(write_every))
+        for chunk_start in range(0, len(kimi_targets), chunk_size):
+            chunk = kimi_targets[chunk_start : chunk_start + chunk_size]
+            with ThreadPoolExecutor(max_workers=max(1, int(kimi_workers))) as pool:
+                futures = [pool.submit(run_one, idx) for idx in chunk]
+                for future in as_completed(futures):
+                    idx, text, error = future.result()
+                    completed += 1
+                    if error:
+                        errors += 1
+                        print(f"[WARN] kimi failed for row {idx}: {error[:180]}", flush=True)
+                    if text and (
+                        not _clean(rows[idx].get("description"))
+                        or (overwrite_generated and _clean(rows[idx].get("description_source")) == "kimi_generated")
+                    ):
+                        rows[idx]["description"] = text
+                        rows[idx]["description_source"] = "kimi_generated"
+                        rows[idx]["description_updated_at"] = _utc_now()
+                        changed_indices.add(idx)
+                        stats["kimi_descriptions"] += 1
+                    elif not text:
+                        empty += 1
+                    stats["kimi_completed"] = completed
+                    stats["kimi_errors"] = errors
+                    stats["kimi_empty_responses"] = empty
+                    if completed % 10 == 0:
+                        print(f"[INFO] kimi descriptions {completed}/{len(kimi_targets)}", flush=True)
+            _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
+            print(
+                f"[CHECKPOINT] {stats['rows_with_description']}/{len(rows)} rows now have descriptions; "
+                f"missing={stats['missing_description_rows']}",
+                flush=True,
+            )
 
     now = _utc_now()
     for idx in changed_indices:
@@ -567,15 +629,8 @@ def enrich_metadata_descriptions(
             rows[idx]["description_updated_at"] = now
 
     stats["changed_rows"] = len(changed_indices)
-    stats["rows_with_description"] = sum(1 for row in rows if _clean(row.get("description")))
-    stats["rows_with_album_description"] = sum(1 for row in rows if _clean(row.get("album_description")))
-    stats["rows_with_tags"] = sum(1 for row in rows if _clean(row.get("tags")))
 
-    if not dry_run:
-        _write_rows(out_path, rows, fields)
-        report_path = out_path.with_suffix(out_path.suffix + ".description_report.json")
-        report_path.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
-        stats["report_path"] = str(report_path.resolve())
+    _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
     return stats
 
 
@@ -592,6 +647,9 @@ def main() -> None:
     ap.add_argument("--max_wikipedia", type=int, default=80)
     ap.add_argument("--max_kimi", type=int, default=40)
     ap.add_argument("--kimi_workers", type=int, default=3)
+    ap.add_argument("--kimi_completion_tokens", type=int, default=4096)
+    ap.add_argument("--kimi_retry_completion_tokens", type=int, default=8192)
+    ap.add_argument("--write_every", type=int, default=100, help="Write metadata/report after each N Kimi rows.")
     ap.add_argument("--sleep_seconds", type=float, default=0.15)
     ap.add_argument("--source", default="", help="Optional comma-separated source_dataset filter, e.g. itunes,jamendo.")
     ap.add_argument("--overwrite_generated", action="store_true", help="Regenerate rows whose description_source is kimi_generated.")
@@ -612,6 +670,9 @@ def main() -> None:
         max_wikipedia=args.max_wikipedia,
         max_kimi=args.max_kimi,
         kimi_workers=args.kimi_workers,
+        kimi_completion_tokens=args.kimi_completion_tokens,
+        kimi_retry_completion_tokens=args.kimi_retry_completion_tokens,
+        write_every=args.write_every,
         sleep_seconds=args.sleep_seconds,
         source_filter=source_filter,
         overwrite_generated=args.overwrite_generated,
