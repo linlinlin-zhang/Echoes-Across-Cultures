@@ -19,6 +19,7 @@ ITUNES_LOOKUP_URL = "https://itunes.apple.com/lookup"
 JAMENDO_TRACKS_URL = "https://api.jamendo.com/v3.0/tracks"
 WIKI_SEARCH_URL = "https://{lang}.wikipedia.org/w/api.php"
 WIKI_SUMMARY_URL = "https://{lang}.wikipedia.org/api/rest_v1/page/summary/{title}"
+KIMI_DESCRIPTION_SOURCE = "kimi_generated_v2"
 
 ENRICHED_FIELDS = [
     "description",
@@ -107,6 +108,12 @@ def _has_description(row: dict[str, str]) -> bool:
     return bool(_clean(row.get("description")))
 
 
+def _can_replace_description(row: dict[str, str], *, overwrite_generated: bool) -> bool:
+    if not _clean(row.get("description")):
+        return True
+    return overwrite_generated and _clean(row.get("description_source")).startswith("kimi_generated")
+
+
 def _itunes_numeric_id(track_id: str) -> str:
     if track_id.startswith("itunes_"):
         return track_id.removeprefix("itunes_")
@@ -192,7 +199,7 @@ def _select_candidates(
             if only_generated
             else (
                 not _has_description(row)
-                or (overwrite_generated and _clean(row.get("description_source")) == "kimi_generated")
+                or (overwrite_generated and _clean(row.get("description_source")).startswith("kimi_generated"))
             )
         )
         and (not source_filter or _clean(row.get("source_dataset")).lower() in source_filter)
@@ -233,7 +240,7 @@ def _lookup_itunes(row: dict[str, str], session: requests.Session) -> dict[str, 
     return {}
 
 
-def _apply_itunes_info(row: dict[str, str], item: dict[str, Any]) -> bool:
+def _apply_itunes_info(row: dict[str, str], item: dict[str, Any], *, overwrite_generated: bool = False) -> bool:
     changed = False
     genre = _clean(item.get("primaryGenreName"))
     if genre and not _clean(row.get("tags")):
@@ -246,7 +253,7 @@ def _apply_itunes_info(row: dict[str, str], item: dict[str, Any]) -> bool:
 
     track_desc = _first(item.get("longDescription"), item.get("shortDescription"), item.get("description"))
     album_desc = _first(item.get("collectionDescription"))
-    if track_desc and not _clean(row.get("description")):
+    if track_desc and _can_replace_description(row, overwrite_generated=overwrite_generated):
         row["description"] = _clip(track_desc)
         row["description_source"] = "itunes_lookup"
         row["description_evidence_url"] = _first(item.get("trackViewUrl"), row.get("track_url"))
@@ -254,6 +261,11 @@ def _apply_itunes_info(row: dict[str, str], item: dict[str, Any]) -> bool:
     if album_desc and not _clean(row.get("album_description")):
         row["album_description"] = _clip(album_desc)
         row["album_description_source"] = "itunes_lookup"
+        row["description_evidence_url"] = _first(item.get("collectionViewUrl"), row.get("collection_url"))
+        changed = True
+    if album_desc and _can_replace_description(row, overwrite_generated=overwrite_generated):
+        row["description"] = _clip(album_desc)
+        row["description_source"] = "itunes_album_lookup"
         row["description_evidence_url"] = _first(item.get("collectionViewUrl"), row.get("collection_url"))
         changed = True
     return changed
@@ -280,7 +292,7 @@ def _lookup_jamendo(row: dict[str, str], client_id: str, session: requests.Sessi
     return results[0] if results else {}
 
 
-def _apply_jamendo_info(row: dict[str, str], item: dict[str, Any]) -> bool:
+def _apply_jamendo_info(row: dict[str, str], item: dict[str, Any], *, overwrite_generated: bool = False) -> bool:
     changed = False
     musicinfo = item.get("musicinfo") if isinstance(item.get("musicinfo"), dict) else {}
     tags = _flatten_jamendo_tags(musicinfo)
@@ -304,7 +316,7 @@ def _apply_jamendo_info(row: dict[str, str], item: dict[str, Any]) -> bool:
         changed = True
 
     track_desc = _first(item.get("description"), item.get("shortdescription"))
-    if track_desc and not _clean(row.get("description")):
+    if track_desc and _can_replace_description(row, overwrite_generated=overwrite_generated):
         row["description"] = _clip(track_desc)
         row["description_source"] = "jamendo_api"
         row["description_evidence_url"] = _first(item.get("shareurl"), row.get("jamendo_url"))
@@ -357,18 +369,21 @@ def _apply_wikipedia_description(
     *,
     languages: list[str],
     session: requests.Session,
+    overwrite_generated: bool = False,
 ) -> bool:
     title = _clean(row.get("title"))
     artist = _clean(row.get("artist"))
     album = _clean(row.get("album"))
     queries: list[tuple[str, str]] = []
-    if album and artist:
-        queries.append(("album_description", f"{album} {artist} album"))
     if title and artist:
         queries.append(("description", f"{title} {artist} song"))
+    if album and artist:
+        queries.append(("album_description", f"{album} {artist} album"))
 
     for field, query in queries:
-        if _clean(row.get(field)):
+        if field == "description" and not _can_replace_description(row, overwrite_generated=overwrite_generated):
+            continue
+        if field == "album_description" and _clean(row.get(field)) and not _can_replace_description(row, overwrite_generated=overwrite_generated):
             continue
         for lang in languages:
             try:
@@ -380,10 +395,16 @@ def _apply_wikipedia_description(
                 continue
             if not summary:
                 continue
-            row[field] = _clip(summary["extract"], 700)
+            extract = _clip(summary["extract"], 700)
             if field == "album_description":
-                row["album_description_source"] = f"wikipedia:{lang}"
+                if not _clean(row.get("album_description")):
+                    row["album_description"] = extract
+                    row["album_description_source"] = f"wikipedia:{lang}"
+                if _can_replace_description(row, overwrite_generated=overwrite_generated):
+                    row["description"] = extract
+                    row["description_source"] = f"wikipedia_album:{lang}"
             else:
+                row[field] = extract
                 row["description_source"] = f"wikipedia:{lang}"
             row["description_evidence_url"] = summary.get("url", "")
             return True
@@ -406,14 +427,16 @@ def _kimi_prompt(row: dict[str, str]) -> str:
     }
     compact = json.dumps(fields, ensure_ascii=False)
     return (
-        "Write one concise Chinese paragraph for a music recommendation card. "
-        "Strictly keep the final answer within 80-140 Chinese characters. Be concrete "
-        "about likely sound, mood, era, genre, or instrumentation, but do not invent awards, chart positions, "
+        "Write one polished Chinese paragraph for an end-user music recommendation card. "
+        "Strictly keep the final answer within 80-140 Chinese characters. Describe the "
+        "track's likely sound, mood, era, genre, instrumentation, or listening scenario. "
+        "Do not mention internal data handling, metadata, fields, tags, catalog labels, "
+        "source_dataset, country/culture columns, recommendation algorithms, embeddings, "
+        "or AI generation. Avoid phrases like 被归类为, 标注为, 指向, metadata, 元数据, "
+        "字段, 目录标签, 数据显示, 可能, 预计, 根据. Do not invent awards, chart positions, "
         "personal biographies, exact release-market claims, or artist nationality. "
-        "The country and culture fields are catalog tags, not proof of artist origin "
-        "or release territory. If evidence is thin, use cautious wording such as "
-        "\"classified under\" or \"the metadata points to\". Return only the paragraph, "
-        "no markdown.\n\n"
+        "If evidence is thin, write conservatively about the audible style instead of "
+        "explaining uncertainty. Return only the paragraph, no markdown.\n\n"
         f"Metadata: {compact}"
     )
 
@@ -528,12 +551,12 @@ def enrich_metadata_descriptions(
             if use_itunes and source == "itunes":
                 item = _lookup_itunes(row, session)
                 stats["itunes_checked"] += 1
-                if item and _apply_itunes_info(row, item):
+                if item and _apply_itunes_info(row, item, overwrite_generated=overwrite_generated):
                     changed_indices.add(idx)
             elif use_jamendo and source == "jamendo" and jamendo_client_id:
                 item = _lookup_jamendo(row, jamendo_client_id, session)
                 stats["jamendo_checked"] += 1
-                if item and _apply_jamendo_info(row, item):
+                if item and _apply_jamendo_info(row, item, overwrite_generated=overwrite_generated):
                     changed_indices.add(idx)
         except requests.RequestException as exc:
             print(f"[WARN] platform lookup failed for row {idx}: {exc}", flush=True)
@@ -543,6 +566,10 @@ def enrich_metadata_descriptions(
                 stats["platform_descriptions"] += 1
         if pos % 25 == 0:
             print(f"[INFO] platform pass {pos}/{len(candidates)}", flush=True)
+        if int(write_every) > 0 and pos % int(write_every) == 0:
+            stats["platform_completed"] = pos
+            stats["changed_rows"] = len(changed_indices)
+            _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
         if sleep_seconds > 0:
             time.sleep(sleep_seconds)
 
@@ -552,9 +579,14 @@ def enrich_metadata_descriptions(
             if wiki_count >= max_wikipedia:
                 break
             row = rows[idx]
-            if _has_description(row):
+            if _has_description(row) and not _can_replace_description(row, overwrite_generated=overwrite_generated):
                 continue
-            if _apply_wikipedia_description(row, languages=wiki_languages, session=session):
+            if _apply_wikipedia_description(
+                row,
+                languages=wiki_languages,
+                session=session,
+                overwrite_generated=overwrite_generated,
+            ):
                 row["description_updated_at"] = _utc_now()
                 changed_indices.add(idx)
                 wiki_count += 1
@@ -568,7 +600,7 @@ def enrich_metadata_descriptions(
         idx
         for idx in candidates
         if not _has_description(rows[idx])
-        or (overwrite_generated and _clean(rows[idx].get("description_source")) == "kimi_generated")
+        or (overwrite_generated and _clean(rows[idx].get("description_source")).startswith("kimi_generated"))
     ][: max(0, max_kimi)]
     if use_kimi and kimi_targets and kimi_config.get("api_key"):
         def run_one(row_idx: int) -> tuple[int, str, str]:
@@ -602,10 +634,10 @@ def enrich_metadata_descriptions(
                         print(f"[WARN] kimi failed for row {idx}: {error[:180]}", flush=True)
                     if text and (
                         not _clean(rows[idx].get("description"))
-                        or (overwrite_generated and _clean(rows[idx].get("description_source")) == "kimi_generated")
+                        or (overwrite_generated and _clean(rows[idx].get("description_source")).startswith("kimi_generated"))
                     ):
                         rows[idx]["description"] = text
-                        rows[idx]["description_source"] = "kimi_generated"
+                        rows[idx]["description_source"] = KIMI_DESCRIPTION_SOURCE
                         rows[idx]["description_updated_at"] = _utc_now()
                         changed_indices.add(idx)
                         stats["kimi_descriptions"] += 1
