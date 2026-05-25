@@ -651,6 +651,7 @@ def create_app() -> FastAPI:
             "model": model,
             "messages": req.messages,
             "max_completion_tokens": int(req.max_completion_tokens),
+            "thinking": {"type": "disabled"},
         }
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         try:

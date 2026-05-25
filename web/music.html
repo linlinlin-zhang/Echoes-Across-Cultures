@@ -233,6 +233,7 @@
         height: calc(100vh - 4.8rem);
         min-height: 0;
         overflow: hidden;
+        overscroll-behavior: contain;
       }
 
       .console,
@@ -241,6 +242,7 @@
         min-height: 0;
         overflow-y: auto;
         scrollbar-gutter: stable;
+        overscroll-behavior: contain;
       }
     }
 
@@ -289,6 +291,7 @@
         #ffffff;
       background-size: 48px 48px;
       cursor: grab;
+      overscroll-behavior: contain;
     }
 
     .map-stage.is-dragging {
@@ -396,7 +399,7 @@
       left: 0;
       top: 0;
       bottom: 0;
-      width: 16%;
+      width: 10.7%;
       background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
     }
 
@@ -404,7 +407,7 @@
       right: 0;
       top: 0;
       bottom: 0;
-      width: 16%;
+      width: 10.7%;
       background: linear-gradient(270deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
     }
 
@@ -1891,6 +1894,7 @@
     ];
 
     const els = {
+      consolePanel: document.querySelector(".console"),
       topTitle: document.getElementById("top-title"),
       topMeta: document.getElementById("top-meta"),
       readoutTrack: document.getElementById("readout-track"),
@@ -3057,6 +3061,14 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       panInterval = null;
     }
 
+    function routeEdgeWheelToConsole(event) {
+      if (!els.consolePanel) return;
+      const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+      els.consolePanel.scrollTop += delta;
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     async function loadInitialTrack() {
       els.mapStatus.textContent = "正在连接后端曲库";
       try {
@@ -3129,6 +3141,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       });
       button.addEventListener("pointerup", stopPan);
       button.addEventListener("pointerleave", stopPan);
+    });
+
+    document.querySelectorAll(".pan-zone.left, .pan-zone.right").forEach((zone) => {
+      zone.addEventListener("wheel", routeEdgeWheelToConsole, { passive: false });
     });
 
     els.recommendButton.addEventListener("click", startRecommendations);
