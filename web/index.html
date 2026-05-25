@@ -697,16 +697,16 @@
     }
   </style>
 </head>
-<body>
+<body data-i18n-title="index.title">
   <header class="site-header">
-    <a href="#" class="brand" aria-label="Echo homepage">
+    <a href="#" class="brand" aria-label="Echo homepage" data-i18n-aria-label="common.brand.homeAria">
       <span class="brand-mark">Echo</span>
-      <span class="brand-sub">Soundscape Without Borders</span>
+      <span class="brand-sub" data-i18n="index.brandSub">Soundscape Without Borders</span>
     </a>
     <nav class="nav-group" aria-label="Primary navigation">
-      <a class="btn-pill" href="music.html">音乐台</a>
-      <a class="btn-pill" href="favorites.html">收藏夹</a>
-      <a class="btn-pill" href="settings.html">设置界面</a>
+      <a class="btn-pill" href="music.html" data-i18n="common.nav.music">音乐台</a>
+      <a class="btn-pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
+      <a class="btn-pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
     </nav>
   </header>
 
@@ -734,12 +734,12 @@
         <div>
           <span class="label">Cross Cultural Music Intelligence</span>
           <h1 class="hero-title">Echo<br><span>Atlas</span></h1>
-          <p class="hero-sub">
+          <p class="hero-sub" data-i18n="index.heroSub">
             一个把音乐文化、情绪与听觉结构放在同一张世界地图上的研究型推荐主页。
           </p>
           <div class="hero-actions">
-            <a class="link-small" href="#method">进入方法层 +</a>
-            <a class="link-small" href="#signals">查看信号图谱 +</a>
+            <a class="link-small" href="#method" data-i18n="index.action.method">进入方法层 +</a>
+            <a class="link-small" href="#signals" data-i18n="index.action.signals">查看信号图谱 +</a>
           </div>
         </div>
 
@@ -1228,6 +1228,7 @@
       ctx2d.shadowBlur = 0;
     }
   </script>
+  <script src="i18n.js"></script>
   <script>
     const siteHeader = document.querySelector(".site-header");
     let headerHidden = false;

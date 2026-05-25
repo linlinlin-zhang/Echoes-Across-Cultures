@@ -1373,18 +1373,18 @@
     }
   </style>
 </head>
-<body>
+<body data-i18n-title="music.title">
   <header class="station-header">
     <div class="player-head">
-      <a class="brand" href="index.html" aria-label="Echo 主页">
+      <a class="brand" href="index.html" aria-label="Echo 主页" data-i18n-aria-label="common.brand.homeAria">
         <span class="brand-mark">Echo</span>
-        <span class="brand-sub">音乐台</span>
+        <span class="brand-sub" data-i18n="music.brandSub">音乐台</span>
       </a>
 
-      <section class="now-playing" aria-label="正在播放">
+      <section class="now-playing" aria-label="正在播放" data-i18n-aria-label="music.nowPlaying">
         <span class="status-dot"></span>
         <div>
-          <div class="track-kicker">当前播放</div>
+          <div class="track-kicker" data-i18n="music.currentPlaying">当前播放</div>
           <div class="track-title-line">
             <strong id="top-title">月照丝路</strong>
             <span id="top-meta">赵莲 - 中国西安</span>
@@ -1392,15 +1392,15 @@
         </div>
       </section>
 
-      <label class="pill" for="music-upload">上传音乐</label>
+      <label class="pill" for="music-upload" data-i18n="music.upload">上传音乐</label>
       <input class="upload-input" id="music-upload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma">
     </div>
 
     <div class="rec-head">
       <nav class="top-actions" aria-label="音乐台导航">
-        <a class="pill is-active" href="music.html">音乐台</a>
-        <a class="pill" href="favorites.html">收藏夹</a>
-        <a class="pill" href="settings.html">设置界面</a>
+        <a class="pill is-active" href="music.html" data-i18n="common.nav.music">音乐台</a>
+        <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
+        <a class="pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
       </nav>
     </div>
   </header>
@@ -1522,21 +1522,21 @@
       <section class="ai-lab" id="ai-analysis" aria-label="AI 推荐分析">
         <div class="ai-strip">
           <div>
-            <div class="meta-label">AI 分析</div>
-            <h2>推荐讲解</h2>
+            <div class="meta-label" data-i18n="music.ai.meta">AI 分析</div>
+            <h2 data-i18n="music.ai.title">推荐讲解</h2>
           </div>
-          <p>把当前上传曲目、跨文化推荐结果等内容发送给AI，由 AI 对这次推荐路线做分析。</p>
-          <button class="pill ai-run" id="ai-run-button" type="button">生成分析</button>
+          <p data-i18n="music.ai.copy">把当前上传曲目、跨文化推荐结果等内容发送给AI，由 AI 对这次推荐路线做分析。</p>
+          <button class="pill ai-run" id="ai-run-button" type="button" data-i18n="music.ai.generate">生成分析</button>
         </div>
 
         <section class="ai-chat" aria-label="AI 分析对话">
           <div class="ai-messages" id="ai-messages"></div>
           <div class="ai-composer">
             <div class="field">
-              <label for="ai-question">继续追问</label>
-              <textarea id="ai-question" placeholder="例如：为什么马里科拉琴会被推荐给这首歌？"></textarea>
+              <label for="ai-question" data-i18n="music.ai.followup">继续追问</label>
+              <textarea id="ai-question" placeholder="例如：为什么马里科拉琴会被推荐给这首歌？" data-i18n-placeholder="music.ai.followupPlaceholder"></textarea>
             </div>
-            <button class="pill ai-send" id="ai-send-button" type="button">发送</button>
+            <button class="pill ai-send" id="ai-send-button" type="button" data-i18n="music.ai.send">发送</button>
           </div>
         </section>
       </section>
@@ -1558,6 +1558,7 @@
 
   <script src="./vendor/d3.v7.min.js"></script>
   <script src="./vendor/topojson-client.min.js"></script>
+  <script src="i18n.js"></script>
   <script>
     const apiBase = window.location.origin;
     const urlParams = new URLSearchParams(window.location.search);
@@ -2183,6 +2184,14 @@
       })[char]);
     }
 
+    function t(key, params = {}) {
+      return window.EchoI18n?.t(key, params) || key;
+    }
+
+    function aiResponseLanguageName() {
+      return window.EchoI18n?.promptLanguageName() || "中文";
+    }
+
     function summarizeTrack(track) {
       const loc = locateTrack(track);
       return {
@@ -2242,8 +2251,11 @@
     }
 
     function buildAiInitialPrompt(extraQuestion = "") {
+      const responseLanguage = aiResponseLanguageName();
       const followup = extraQuestion ? `\n\n用户本次还特别追问：${extraQuestion}` : "";
-      return `请基于下面的 Echo 跨文化音乐推荐数据，进行一次中文、面向音乐产品用户的详细分析。
+      return `请基于下面的 Echo 跨文化音乐推荐数据，进行一次面向音乐产品用户的详细分析。
+
+请使用 ${responseLanguage} 回答。
 
 请覆盖：
 1. 当前曲目或上传曲目的音乐线索与文化起点。
@@ -2261,9 +2273,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
     function buildAiDisplayPrompt(extraQuestion = "") {
       if (extraQuestion) {
-        return `继续追问：${extraQuestion}`;
+        return t("music.ai.displayFollowup", { question: extraQuestion });
       }
-      return "请基于当前上传曲目、跨文化推荐结果等内容，分析这次推荐路线。";
+      return t("music.ai.displayPrompt");
     }
 
     function renderAiMessages() {
@@ -2274,7 +2286,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       els.aiMessages.innerHTML = aiConversationMessages
         .filter((message) => message.role !== "system")
         .map((message) => {
-          const roleLabel = message.role === "assistant" ? "Kimi 分析" : "我的问题";
+          const roleLabel = message.role === "assistant" ? t("music.ai.assistantLabel") : t("music.ai.userLabel");
           const roleClass = message.role === "assistant" ? "is-assistant" : "is-user";
           const visibleContent = message.displayContent || message.content;
           return `
@@ -2299,8 +2311,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       els.aiSendButton.disabled = nextBusy;
       els.aiRunButton.classList.toggle("is-running", nextBusy);
       els.aiSendButton.classList.toggle("is-running", nextBusy);
-      els.aiRunButton.textContent = nextBusy ? "分析生成中..." : "生成分析";
-      els.aiSendButton.textContent = nextBusy ? "发送中..." : "发送";
+      els.aiRunButton.textContent = nextBusy ? t("music.ai.generating") : t("music.ai.generate");
+      els.aiSendButton.textContent = nextBusy ? t("music.ai.sending") : t("music.ai.send");
     }
 
     function readStoredKimiConfig() {
@@ -2366,7 +2378,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       const data = await response.json();
       const content = data?.content || data?.choices?.[0]?.message?.content;
       if (!content) {
-        throw new Error("Kimi 没有返回可用文本。");
+        throw new Error(t("music.ai.noText"));
       }
       return content;
     }
@@ -2374,7 +2386,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     function kimiErrorMessage(error) {
       const raw = String(error?.message || error);
       if (raw.includes("Failed to fetch")) {
-        return "请求没有成功发出，可能是本地后端未启动、网络问题，或接口地址不可达。";
+        return t("music.ai.fetchFailed");
       }
       return raw;
     }
@@ -2385,7 +2397,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       aiConversationMessages = [
         {
           role: "system",
-          content: "你是 Echo 项目的跨文化音乐推荐解释助手。你擅长用中文解释音乐风格、文化路线、推荐参数和人类反馈风险。回答要具体、克制，不编造真实音频内容。"
+          content: `你是 Echo 项目的跨文化音乐推荐解释助手。你擅长解释音乐风格、文化路线、推荐参数和人类反馈风险。请使用 ${aiResponseLanguageName()} 回答；回答要具体、克制，不编造真实音频内容。`
         },
         {
           role: "user",
@@ -3013,6 +3025,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }, 1000);
 
     window.addEventListener("resize", resize);
+    window.addEventListener("echo-language-change", () => {
+      renderAiMessages();
+      setAiBusy(aiBusy);
+    });
     syncTrackReadouts();
     renderRecommendations();
     renderParameterPanel();

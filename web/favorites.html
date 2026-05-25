@@ -476,39 +476,39 @@
     }
   </style>
 </head>
-<body>
+<body data-i18n-title="favorites.title">
   <header class="library-header">
-    <a class="brand" href="index.html" aria-label="Echo 主页">
+    <a class="brand" href="index.html" aria-label="Echo 主页" data-i18n-aria-label="common.brand.homeAria">
       <span class="brand-mark">Echo</span>
-      <span class="brand-sub">收藏夹</span>
+      <span class="brand-sub" data-i18n="favorites.brandSub">收藏夹</span>
     </a>
     <div></div>
     <nav class="top-actions" aria-label="主导航">
-      <a class="pill" href="music.html">音乐台</a>
-      <a class="pill is-active" href="favorites.html">收藏夹</a>
-      <a class="pill" href="settings.html">设置界面</a>
+      <a class="pill" href="music.html" data-i18n="common.nav.music">音乐台</a>
+      <a class="pill is-active" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
+      <a class="pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
     </nav>
   </header>
 
   <main class="library-shell">
     <section class="library-hero" aria-label="收藏夹总览">
       <div class="hero-copy">
-        <div class="meta-label">Library Surface</div>
-        <h1>声音<br>收藏夹</h1>
-        <p>把来自 iTunes、Jamendo 与上传音频的曲目整理成可浏览、可筛选、可继续接入推荐反馈的音乐集合。</p>
+        <div class="meta-label" data-i18n="favorites.heroMeta">Library Surface</div>
+        <h1 data-i18n-html="favorites.heroTitle">声音<br>收藏夹</h1>
+        <p data-i18n="favorites.heroCopy">把来自 iTunes、Jamendo 与上传音频的曲目整理成可浏览、可筛选、可继续接入推荐反馈的音乐集合。</p>
       </div>
       <div class="hero-panel">
         <div class="hero-stat-grid" aria-label="曲库统计">
           <article class="hero-stat">
-            <span class="meta-label">曲目</span>
+            <span class="meta-label" data-i18n="favorites.stat.tracks">曲目</span>
             <strong id="stat-count">--</strong>
           </article>
           <article class="hero-stat">
-            <span class="meta-label">文化域</span>
+            <span class="meta-label" data-i18n="favorites.stat.cultures">文化域</span>
             <strong id="stat-culture">--</strong>
           </article>
           <article class="hero-stat">
-            <span class="meta-label">封面</span>
+            <span class="meta-label" data-i18n="favorites.stat.covers">封面</span>
             <strong id="stat-cover">--</strong>
           </article>
         </div>
@@ -516,39 +516,39 @@
     </section>
 
     <section class="toolbar" aria-label="收藏夹工具栏">
-      <label class="pill" for="favorite-import">导入歌曲</label>
+      <label class="pill" for="favorite-import" data-i18n="favorites.import">导入歌曲</label>
       <input class="upload-input" id="favorite-import" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma" multiple>
 
       <div class="control">
-        <label class="meta-label" for="search-input">歌曲检索</label>
-        <input id="search-input" type="search" placeholder="曲名 / 创作者 / 流派">
+        <label class="meta-label" for="search-input" data-i18n="favorites.searchLabel">歌曲检索</label>
+        <input id="search-input" type="search" placeholder="曲名 / 创作者 / 流派" data-i18n-placeholder="favorites.searchPlaceholder">
       </div>
 
       <div class="control">
-        <label class="meta-label" for="culture-filter">文化筛选</label>
+        <label class="meta-label" for="culture-filter" data-i18n="favorites.cultureFilter">文化筛选</label>
         <select id="culture-filter">
-          <option value="">全部文化域</option>
+          <option value="" data-i18n="favorites.allCultures">全部文化域</option>
         </select>
       </div>
 
       <div class="control">
-        <label class="meta-label" for="source-filter">来源筛选</label>
+        <label class="meta-label" for="source-filter" data-i18n="favorites.sourceFilter">来源筛选</label>
         <select id="source-filter">
-          <option value="">全部来源</option>
+          <option value="" data-i18n="favorites.allSources">全部来源</option>
           <option value="itunes">iTunes</option>
           <option value="jamendo">Jamendo</option>
-          <option value="upload">本地导入</option>
+          <option value="upload" data-i18n="favorites.localUpload">本地导入</option>
         </select>
       </div>
 
       <div class="control">
-        <label class="meta-label" for="sort-select">歌曲排序</label>
+        <label class="meta-label" for="sort-select" data-i18n="favorites.sortLabel">歌曲排序</label>
         <select id="sort-select">
-          <option value="shuffle">随机漫游</option>
-          <option value="title">曲名 A-Z</option>
-          <option value="artist">创作者 A-Z</option>
-          <option value="culture">文化域</option>
-          <option value="source">来源</option>
+          <option value="shuffle" data-i18n="favorites.sort.shuffle">随机漫游</option>
+          <option value="title" data-i18n="favorites.sort.title">曲名 A-Z</option>
+          <option value="artist" data-i18n="favorites.sort.artist">创作者 A-Z</option>
+          <option value="culture" data-i18n="favorites.sort.culture">文化域</option>
+          <option value="source" data-i18n="favorites.sort.source">来源</option>
         </select>
       </div>
     </section>
@@ -558,27 +558,8 @@
     </section>
   </main>
 
+  <script src="i18n.js"></script>
   <script>
-    const cultureLabels = {
-      west: "西方",
-      china: "中国",
-      southeast_asia: "东南亚",
-      eastern_europe: "东欧",
-      japan: "日本",
-      africa: "非洲",
-      middle_east: "中东",
-      celtic: "凯尔特",
-      korea: "韩国",
-      caribbean: "加勒比",
-      brazil: "巴西",
-      india: "印度",
-      nordic: "北欧",
-      latin: "拉丁",
-      balkans: "巴尔干",
-      central_asia: "中亚",
-      andean: "安第斯"
-    };
-
     const els = {
       grid: document.getElementById("masonry-grid"),
       search: document.getElementById("search-input"),
@@ -595,6 +576,10 @@
     let imported = [];
     let shuffleSeed = 17;
 
+    function t(key, params = {}) {
+      return window.EchoI18n?.t(key, params) || key;
+    }
+
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -605,14 +590,32 @@
       })[char]);
     }
 
+    function cultureLabel(culture) {
+      if (!culture) return t("favorites.unknownCulture");
+      const translated = t(`culture.${culture}`);
+      return translated === `culture.${culture}` ? culture : translated;
+    }
+
+    function itemTitle(item) {
+      return item.title || item.id || t("favorites.unknownTrack");
+    }
+
+    function itemArtist(item) {
+      if (item.artist) return item.artist;
+      return item.imported ? t("favorites.localUpload") : t("favorites.unknownArtist");
+    }
+
+    function itemGenre(item) {
+      return item.genre || cultureLabel(item.culture) || t("favorites.unknownGenre");
+    }
+
     function normalizeItem(item, index = 0) {
       return {
         id: item.track_id || `track_${index}`,
-        title: item.title || item.track_id || "未知曲目",
-        artist: item.artist || item.source_dataset || "未知创作者",
-        genre: item.label || cultureLabels[item.culture] || item.culture || "未标注流派",
+        title: item.title || item.track_id || "",
+        artist: item.artist || item.source_dataset || "",
+        genre: item.label || "",
         culture: item.culture || "",
-        cultureLabel: cultureLabels[item.culture] || item.culture || "未标注文化",
         source: item.source_dataset || item.platform || "catalog",
         cover: item.cover_art_url_large || item.cover_art_url || item.artwork_url_large || item.image_url || "",
         url: item.platform_track_url || item.full_track_url || item.preview_url || "",
@@ -633,7 +636,7 @@
       const culture = els.culture.value;
       const source = els.source.value;
       let items = [...imported, ...catalog].filter((item) => {
-        const hay = `${item.title} ${item.artist} ${item.genre} ${item.cultureLabel} ${item.source}`.toLowerCase();
+        const hay = `${itemTitle(item)} ${itemArtist(item)} ${itemGenre(item)} ${cultureLabel(item.culture)} ${item.source}`.toLowerCase();
         if (query && !hay.includes(query)) return false;
         if (culture && item.culture !== culture) return false;
         if (source && item.source !== source) return false;
@@ -641,9 +644,9 @@
       });
 
       const sort = els.sort.value;
-      if (sort === "title") items.sort((a, b) => a.title.localeCompare(b.title));
-      else if (sort === "artist") items.sort((a, b) => a.artist.localeCompare(b.artist));
-      else if (sort === "culture") items.sort((a, b) => a.cultureLabel.localeCompare(b.cultureLabel));
+      if (sort === "title") items.sort((a, b) => itemTitle(a).localeCompare(itemTitle(b)));
+      else if (sort === "artist") items.sort((a, b) => itemArtist(a).localeCompare(itemArtist(b)));
+      else if (sort === "culture") items.sort((a, b) => cultureLabel(a.culture).localeCompare(cultureLabel(b.culture)));
       else if (sort === "source") items.sort((a, b) => a.source.localeCompare(b.source));
       else items.sort((a, b) => seededScore(a.id) - seededScore(b.id));
       return items;
@@ -651,8 +654,8 @@
 
     function coverMarkup(item) {
       const media = item.cover
-        ? `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`
-        : `<div class="cover cover-fallback">No Cover</div>`;
+        ? `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(itemTitle(item))}" loading="lazy">`
+        : `<div class="cover cover-fallback">${escapeHtml(t("favorites.noCover"))}</div>`;
       if (item.cover) {
         return item.url
           ? `<a class="cover-shell" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${media}</a>`
@@ -664,21 +667,21 @@
     function cardMarkup(item, index) {
       const wide = !item.imported && (index % 11 === 0 || index % 17 === 0);
       const platformLink = item.url
-        ? `<a class="track-open" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">打开平台 ↗</a>`
-        : `<span class="track-open">本地曲目</span>`;
+        ? `<a class="track-open" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(t("favorites.openPlatform"))}</a>`
+        : `<span class="track-open">${escapeHtml(t("favorites.localTrack"))}</span>`;
       return `
         <article class="track-card${wide ? " is-wide" : ""}">
           ${coverMarkup(item)}
           <div class="track-info">
             <div>
               <div class="meta-label">${escapeHtml(item.source)}</div>
-              <h2>${escapeHtml(item.title)}</h2>
-              <p>${escapeHtml(item.artist)}</p>
+              <h2>${escapeHtml(itemTitle(item))}</h2>
+              <p>${escapeHtml(itemArtist(item))}</p>
             </div>
             <div>
               <div class="tag-row">
-                <span class="tag">${escapeHtml(item.genre)}</span>
-                <span class="tag">${escapeHtml(item.cultureLabel)}</span>
+                <span class="tag">${escapeHtml(itemGenre(item))}</span>
+                <span class="tag">${escapeHtml(cultureLabel(item.culture))}</span>
               </div>
               ${platformLink}
             </div>
@@ -707,7 +710,7 @@
       els.statCover.textContent = `${Math.round((withCover / Math.max(1, items.length)) * 100)}%`;
 
       if (!items.length) {
-        els.grid.innerHTML = `<div class="empty-state">没有匹配曲目。</div>`;
+        els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.empty"))}</div>`;
         return;
       }
       els.grid.innerHTML = items.map(cardMarkup).join("");
@@ -720,13 +723,15 @@
 
     function populateCultures(items) {
       const values = [...new Set(items.map((item) => item.culture).filter(Boolean))].sort();
-      els.culture.innerHTML = `<option value="">全部文化域</option>` + values.map((culture) => (
-        `<option value="${escapeHtml(culture)}">${escapeHtml(cultureLabels[culture] || culture)}</option>`
+      const current = els.culture.value;
+      els.culture.innerHTML = `<option value="">${escapeHtml(t("favorites.allCultures"))}</option>` + values.map((culture) => (
+        `<option value="${escapeHtml(culture)}">${escapeHtml(cultureLabel(culture))}</option>`
       )).join("");
+      els.culture.value = values.includes(current) ? current : "";
     }
 
     async function loadCatalog() {
-      els.grid.innerHTML = `<div class="empty-state">正在加载收藏曲库...</div>`;
+      els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.loading"))}</div>`;
       const response = await fetch("/api/mainline/catalog?limit=160&random_seed=20260525&exclude_low_signal=true");
       if (!response.ok) {
         throw new Error(`catalog ${response.status}`);
@@ -743,10 +748,9 @@
         return {
           id: `upload_${Date.now()}_${index}`,
           title,
-          artist: "本地导入",
+          artist: "",
           genre: file.type || "audio",
           culture: "",
-          cultureLabel: "待分析",
           source: "upload",
           cover: "",
           url: "",
@@ -764,10 +768,14 @@
     });
     els.import.addEventListener("change", (event) => importFiles(event.target.files));
     window.addEventListener("resize", resizeMasonryItems);
+    window.addEventListener("echo-language-change", () => {
+      populateCultures(catalog);
+      render();
+    });
 
     loadCatalog().catch((error) => {
       console.error(error);
-      els.grid.innerHTML = `<div class="empty-state">曲库加载失败，请确认本地后端正在运行。</div>`;
+      els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.loadFailed"))}</div>`;
     });
   </script>
 </body>

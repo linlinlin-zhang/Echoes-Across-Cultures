@@ -39,7 +39,8 @@
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
@@ -154,7 +155,8 @@
       font-size: 0.7rem;
     }
 
-    .field input {
+    .field input,
+    .field select {
       width: 100%;
       min-height: 3.6rem;
       border: 1px solid var(--line-strong);
@@ -165,7 +167,8 @@
       outline: none;
     }
 
-    .field input:focus {
+    .field input:focus,
+    .field select:focus {
       border-color: var(--ink);
       box-shadow: inset 0 -2px 0 var(--ink);
     }
@@ -221,57 +224,65 @@
     }
   </style>
 </head>
-<body>
+<body data-i18n-title="settings.title">
   <header class="settings-header">
-    <a class="brand" href="index.html" aria-label="Echo 主页">
+    <a class="brand" href="index.html" aria-label="Echo 主页" data-i18n-aria-label="common.brand.homeAria">
       <span class="brand-mark">Echo</span>
-      <span class="brand-sub">设置界面</span>
+      <span class="brand-sub" data-i18n="settings.brandSub">设置界面</span>
     </a>
     <div></div>
     <nav class="top-actions" aria-label="主导航">
-      <a class="pill" href="music.html">音乐台</a>
-      <a class="pill" href="favorites.html">收藏夹</a>
-      <a class="pill is-active" href="settings.html">设置界面</a>
+      <a class="pill" href="music.html" data-i18n="common.nav.music">音乐台</a>
+      <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
+      <a class="pill is-active" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
     </nav>
   </header>
 
   <main class="settings-shell">
     <section class="settings-hero">
-      <div class="meta-label">模型设置</div>
-      <h1>Kimi<br>接口</h1>
-      <p>这里配置音乐台 AI 分析所需的 Moonshot/Kimi 接口。密钥仍只保存在当前浏览器，本地后端负责代理请求。</p>
+      <div class="meta-label" data-i18n="settings.heroMeta">模型设置</div>
+      <h1 data-i18n-html="settings.heroTitle">Kimi<br>接口</h1>
+      <p data-i18n="settings.heroCopy">这里配置音乐台 AI 分析所需的 Moonshot/Kimi 接口。密钥仍只保存在当前浏览器，本地后端负责代理请求。</p>
     </section>
 
     <section class="settings-panel" aria-label="Kimi API 设置">
+      <div class="field">
+        <label for="app-language" data-i18n="settings.languageLabel">界面与 AI 语言</label>
+        <select id="app-language"></select>
+        <p class="note" data-i18n="settings.languageHelp">选择后会同步影响页面文案和 AI 分析回复语言。</p>
+      </div>
+
       <div class="config-row">
         <div class="field">
-          <label for="kimi-api-key">Kimi API 密钥</label>
-          <input id="kimi-api-key" type="password" autocomplete="off" placeholder="填入 Moonshot/Kimi 密钥">
+          <label for="kimi-api-key" data-i18n="settings.apiKeyLabel">Kimi API 密钥</label>
+          <input id="kimi-api-key" type="password" autocomplete="off" placeholder="填入 Moonshot/Kimi 密钥" data-i18n-placeholder="settings.apiKeyPlaceholder">
         </div>
         <div class="field">
-          <label for="kimi-model">模型</label>
+          <label for="kimi-model" data-i18n="settings.modelLabel">模型</label>
           <input id="kimi-model" type="text" value="kimi-k2.6" autocomplete="off">
         </div>
       </div>
 
       <div class="field">
-        <label for="kimi-endpoint">接口地址</label>
+        <label for="kimi-endpoint" data-i18n="settings.endpointLabel">接口地址</label>
         <input id="kimi-endpoint" type="text" value="https://api.moonshot.cn/v1/chat/completions" autocomplete="off">
       </div>
 
       <div class="panel-actions">
-        <button class="pill" id="save-config" type="button">保存设置</button>
-        <button class="pill" id="test-config" type="button">测试连接</button>
-        <button class="text-button" id="clear-config" type="button">清空密钥</button>
+        <button class="pill" id="save-config" type="button" data-i18n="settings.save">保存设置</button>
+        <button class="pill" id="test-config" type="button" data-i18n="settings.test">测试连接</button>
+        <button class="text-button" id="clear-config" type="button" data-i18n="settings.clear">清空密钥</button>
       </div>
 
-      <p class="note">可以把密钥保存在当前浏览器本地，也可以填入 configs/secrets/kimi.local.json；音乐台会通过 /api/ai/kimi/chat 让本地后端代理转发。</p>
+      <p class="note" data-i18n="settings.note">可以把密钥保存在当前浏览器本地，也可以填入 configs/secrets/kimi.local.json；音乐台会通过 /api/ai/kimi/chat 让本地后端代理转发。</p>
       <div class="status" id="settings-status"></div>
     </section>
   </main>
 
+  <script src="i18n.js"></script>
   <script>
     const els = {
+      language: document.getElementById("app-language"),
       apiKey: document.getElementById("kimi-api-key"),
       model: document.getElementById("kimi-model"),
       endpoint: document.getElementById("kimi-endpoint"),
@@ -281,6 +292,17 @@
       status: document.getElementById("settings-status")
     };
 
+    function t(key, params = {}) {
+      return window.EchoI18n?.t(key, params) || key;
+    }
+
+    function populateLanguageOptions() {
+      const current = window.EchoI18n?.getLanguage() || "zh-CN";
+      els.language.innerHTML = (window.EchoI18n?.languages || [])
+        .map((item) => `<option value="${item.code}"${item.code === current ? " selected" : ""}>${item.nativeName} / ${item.englishName}</option>`)
+        .join("");
+    }
+
     function loadConfig() {
       try {
         const local = JSON.parse(localStorage.getItem("echo-kimi-config") || "{}");
@@ -288,8 +310,9 @@
         els.model.value = local.model || "kimi-k2.6";
         els.endpoint.value = local.endpoint || "https://api.moonshot.cn/v1/chat/completions";
         els.apiKey.value = local.apiKey || session.apiKey || "";
+        els.language.value = window.EchoI18n?.getLanguage() || "zh-CN";
       } catch (error) {
-        els.status.textContent = "读取本地设置失败，请重新保存一次。";
+        els.status.textContent = t("settings.readFailed");
       }
     }
 
@@ -301,7 +324,7 @@
         if (data.has_local_key && !els.apiKey.value.trim()) {
           els.model.value = data.model || els.model.value;
           els.endpoint.value = data.endpoint || els.endpoint.value;
-          els.status.textContent = `已检测到后端本地 Kimi 配置：${data.source}`;
+          els.status.textContent = t("settings.backendDetected", { source: data.source });
         }
       } catch (error) {
         console.warn(error);
@@ -312,9 +335,10 @@
       const model = els.model.value.trim() || "kimi-k2.6";
       const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
       const apiKey = els.apiKey.value.trim();
-      localStorage.setItem("echo-kimi-config", JSON.stringify({ model, endpoint, apiKey }));
+      const language = window.EchoI18n?.setLanguage(els.language.value) || els.language.value;
+      localStorage.setItem("echo-kimi-config", JSON.stringify({ model, endpoint, apiKey, language }));
       sessionStorage.setItem("echo-kimi-session", JSON.stringify({ apiKey }));
-      els.status.textContent = "设置已保存。回到音乐台后即可生成 AI 分析。";
+      els.status.textContent = t("settings.saved");
     }
 
     async function testConfig() {
@@ -322,7 +346,7 @@
       const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
       const apiKey = els.apiKey.value.trim();
       els.test.disabled = true;
-      els.status.textContent = "正在通过本地后端测试 Kimi 连接...";
+      els.status.textContent = t("settings.testing");
       try {
         const payload = {
           model,
@@ -347,9 +371,9 @@
           throw new Error(`${response.status} ${text}`);
         }
         const data = await response.json();
-        els.status.textContent = `Kimi 连接成功：${String(data.content || "").slice(0, 80)}`;
+        els.status.textContent = t("settings.testSuccess", { content: String(data.content || "").slice(0, 80) });
       } catch (error) {
-        els.status.textContent = `Kimi 连接失败：${error.message || error}`;
+        els.status.textContent = t("settings.testFailed", { error: error.message || error });
       } finally {
         els.test.disabled = false;
       }
@@ -365,12 +389,17 @@
       } catch (error) {
         localStorage.removeItem("echo-kimi-config");
       }
-      els.status.textContent = "密钥已从当前浏览器本地清空。";
+      els.status.textContent = t("settings.keyCleared");
     }
 
+    populateLanguageOptions();
     els.save.addEventListener("click", saveConfig);
     els.test.addEventListener("click", testConfig);
     els.clear.addEventListener("click", clearConfig);
+    els.language.addEventListener("change", () => {
+      window.EchoI18n?.setLanguage(els.language.value);
+      els.status.textContent = t("settings.languageSaved");
+    });
     loadConfig();
     loadBackendKimiStatus();
   </script>
