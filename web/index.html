@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23111111'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23f7f6f1' stroke-width='4'/%3E%3Cpath d='M18 32h28' stroke='%23f7f6f1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
-  <title>Echo | 声界无疆</title>
+  <title>Echo | 听见世界的声音</title>
   <style>
     :root {
       --page-bg: #ffffff;
@@ -344,8 +344,10 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      align-items: center;
       border-top: 1px solid var(--line);
       padding-top: 1.1rem;
+      text-align: center;
     }
 
     .feature-item p {
@@ -528,34 +530,15 @@
 
     .footer-grid {
       display: grid;
-      grid-template-columns: 1.35fr 0.65fr 0.65fr;
-      gap: 2rem;
+      place-items: center;
+      text-align: center;
     }
 
-    .site-footer h2 {
-      max-width: 10ch;
-      font-size: clamp(2.6rem, 8vw, 8rem);
+    .footer-motto {
+      font-size: clamp(4rem, 12vw, 12rem);
       font-weight: 400;
       line-height: 0.9;
       letter-spacing: 0;
-      text-transform: uppercase;
-    }
-
-    .footer-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-
-    .footer-col strong {
-      margin-bottom: 0.65rem;
-      color: var(--ink);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 400;
-      text-transform: uppercase;
     }
 
     .footer-bottom {
@@ -694,7 +677,7 @@
   <header class="site-header">
     <a href="#" class="brand" aria-label="Echo homepage" data-i18n-aria-label="common.brand.homeAria">
       <span class="brand-mark">Echo</span>
-      <span class="brand-sub" data-i18n="index.brandSub">Soundscape Without Borders</span>
+      <span class="brand-sub" data-i18n="index.brandSub">听见世界的声音</span>
     </a>
     <nav class="nav-group" aria-label="Primary navigation">
       <a class="btn-pill" href="music.html" data-i18n="common.nav.music">音乐台</a>
@@ -725,13 +708,13 @@
 
       <div class="copy-column">
         <div>
-          <span class="label">Cross Cultural Music Intelligence</span>
+          <span class="label">Cross-Cultural Music Discovery</span>
           <h1 class="hero-title">Echo<br><span>Atlas</span></h1>
           <p class="hero-sub" data-i18n="index.heroSub">
-            一个接入 30,000 首真实曲目、CultureMERT embedding 与 DCAS 推荐主线的跨文化音乐工作台。
+            想听听地球另一边的人在听什么吗？<br><br>上传一首你喜欢的歌，我们会带你去探索 17 个文化域的声音，从古琴到巴萨诺瓦，从演歌到非洲鼓。
           </p>
           <div class="hero-actions">
-            <a class="start-button" href="music.html" data-i18n="index.action.start">开始使用</a>
+            <a class="start-button" href="music.html" data-i18n="index.action.start">开始探索</a>
           </div>
         </div>
 
@@ -739,17 +722,17 @@
           <div class="micro-stat">
             <span>Tracks</span>
             <strong>30K</strong>
-            <span>iTunes + Jamendo real catalog</span>
+            <span>来自世界各地的真实音乐</span>
           </div>
           <div class="micro-stat">
             <span>Cultures</span>
             <strong>17</strong>
-            <span>global domains with non-western expansion</span>
+            <span>个文化域，从东方到西方</span>
           </div>
           <div class="micro-stat">
-            <span>Descriptions</span>
+            <span>Ready</span>
             <strong>100%</strong>
-            <span>frontend-ready cover, link, genre, and copy</span>
+            <span>每首都配有封面、介绍和标签</span>
           </div>
         </div>
       </div>
@@ -759,16 +742,16 @@
       <div class="container">
         <div class="feature-grid">
           <article class="feature-item">
-            <span class="feature-index">01 / 30K Catalog</span>
-            <p>已经接入 30,000 首来自 iTunes 与 Jamendo 的真实曲目，覆盖 17 个文化域，并补齐封面、平台链接和前端可展示音乐介绍。</p>
+            <span class="feature-index">01 / 你的起点</span>
+            <p>上传一首歌，或者从 30,000 首里选一首，这就是你的音乐旅行起点。</p>
           </article>
           <article class="feature-item">
-            <span class="feature-index">02 / Upload Pipeline</span>
-            <p>音乐台支持上传音频，经 CultureMERT 转为 embedding，再进入 DCAS 主线推荐，在地图上生成跨文化路线。</p>
+            <span class="feature-index">02 / AI 带路</span>
+            <p>AI 会分析音乐的"DNA"，为你推荐风格相近但来自不同文化的声音。</p>
           </article>
           <article class="feature-item">
-            <span class="feature-index">03 / Web Metadata</span>
-            <p>推荐卡片、收藏与 AI 分析会读取真实 metadata：曲名、艺人、流派、文化域、封面、链接和介绍文案。</p>
+            <span class="feature-index">03 / 收藏回忆</span>
+            <p>遇到喜欢的歌就收藏起来，你的收藏夹会慢慢变成一张属于你的世界音乐地图。</p>
           </article>
         </div>
       </div>
@@ -778,11 +761,11 @@
       <div class="container">
         <div class="big-text-grid">
           <aside class="section-side">
-            <span class="label">Project Premise</span>
-            <p>项目已经从采集脚本推进到可演示 Web 应用：真实曲库、上传分析、推荐路线、收藏与 Kimi 讲解正在同一条服务链路中运行。</p>
+            <span class="label">How It Works</span>
+            <p>从上传一首歌开始，AI 会分析它的旋律、节奏和情感，然后带你去听世界各地风格相近的声音。</p>
           </aside>
           <div class="big-copy">
-            Echo 现在把 <span class="highlight">真实音乐 metadata</span>、CultureMERT 声学向量、DCAS 跨文化排序和 Kimi 推荐讲解接在一起，让用户可以从一首上传歌曲出发，探索更远的文化声音路线。
+            每首歌都有自己的<span class="highlight">声音 DNA</span>。上传你喜欢的音乐，AI 会理解它的特质，然后从地球另一端为你找到那些你从未听过、却可能一见如故的声音。
           </div>
         </div>
       </div>
@@ -791,10 +774,10 @@
     <section class="signal-band" id="signals" aria-label="Signal visualization placeholder">
       <div class="signal-copy">
         <div>
-          <span class="label">Live Pipeline</span>
-          <h2>Culture Route</h2>
+          <span class="label">Music Journey</span>
+          <h2>声音<br>路线</h2>
         </div>
-        <p>从上传音频到 embedding，从候选召回到跨文化重排，再到封面、链接、介绍和 AI 解读，首页现在指向的是可以实际试用的音乐台流程。</p>
+        <p>上传一首歌，AI 会为你画出一条声音旅行路线。从你的起点出发，跨越语言和文化的边界，去发现那些你从未听过却可能一见如故的音乐。</p>
       </div>
       <div class="signal-field">
         <div class="orbit-text"><span>content - style - affect - feedback - route -</span></div>
@@ -808,23 +791,11 @@
   <footer class="site-footer" id="contact">
     <div class="container">
       <div class="footer-grid">
-        <h2>Echo Atlas</h2>
-        <div class="footer-col">
-          <strong>Next Build</strong>
-          <span>Interactive workbench</span>
-          <span>Recommendation demo</span>
-          <span>PAL annotation loop</span>
-        </div>
-        <div class="footer-col">
-          <strong>Project</strong>
-          <span>DCAS research system</span>
-          <span>Cross-cultural music AI</span>
-          <span>Human-centered evaluation</span>
-        </div>
+        <div class="footer-motto">声届无疆</div>
       </div>
       <div class="footer-bottom">
-        <span>Echo / Soundscape Without Borders</span>
-        <span>Homepage prototype 2026</span>
+        <span>Echo / 听见世界的声音</span>
+        <span>Echo Atlas 2026</span>
       </div>
     </div>
   </footer>

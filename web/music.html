@@ -578,7 +578,7 @@
       left: 0;
       top: 50%;
       height: 1px;
-      width: 38%;
+      width: 0;
       background: var(--ink);
       transform: translateY(-50%);
     }
@@ -718,115 +718,99 @@
       text-transform: uppercase;
     }
 
-    .parameter-topography {
-      position: relative;
-      flex: 1;
-      min-height: 260px;
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      padding: 1.2rem 0 2.2rem;
-    }
-
-    .parameter-topography::before,
-    .parameter-topography::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      border-top: 1px dashed var(--line-strong);
-      opacity: 0.35;
-      pointer-events: none;
-    }
-
-    .parameter-topography::before {
-      bottom: 33%;
-    }
-
-    .parameter-topography::after {
-      bottom: 66%;
-    }
-
-    .param-bar {
-      position: relative;
-      flex: 1;
-      min-width: 2px;
-      background: var(--ink);
-      opacity: 0.58;
-    }
-
-    .param-bar.is-hollow {
-      background: transparent;
-      border-left: 1px solid var(--ink);
-      opacity: 0.72;
-    }
-
-    .param-bar span {
-      position: absolute;
-      left: 0;
-      bottom: -1.55rem;
-      color: var(--muted);
-      font-family: var(--font-mono);
-      font-size: 0.56rem;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .parameter-radial-wrap {
+    .parameter-breakdown,
+    .parameter-distribution {
       flex: 1;
       display: grid;
-      place-items: center;
+      align-content: start;
+      gap: 1rem;
       min-height: 260px;
     }
 
-    .parameter-radial {
-      position: relative;
-      width: min(100%, 285px);
-      aspect-ratio: 1;
-      border-radius: 50%;
-    }
-
-    .parameter-ring,
-    .parameter-node,
-    .parameter-spoke {
-      position: absolute;
-    }
-
-    .parameter-ring {
-      inset: var(--ring-inset);
-      border: 1px solid var(--ink);
-      border-radius: 50%;
-      opacity: var(--ring-opacity);
-      border-style: var(--ring-style);
-    }
-
-    .parameter-node {
-      left: var(--node-x);
-      top: var(--node-y);
-      width: var(--node-size);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      background: var(--node-color);
-      transform: translate(-50%, -50%);
-    }
-
-    .parameter-spoke {
-      left: 50%;
-      top: 50%;
-      width: var(--spoke-width);
-      height: 1px;
-      background: var(--line-strong);
-      transform-origin: 0 50%;
-      transform: rotate(var(--spoke-rotate));
-      opacity: 0.35;
-    }
-
-    .parameter-radial-legend {
-      display: flex;
-      justify-content: space-between;
+    .score-row,
+    .distribution-row {
+      display: grid;
+      grid-template-columns: minmax(7rem, 0.28fr) minmax(0, 1fr) auto;
       gap: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--line);
+      align-items: center;
+    }
+
+    .score-label,
+    .distribution-label {
+      min-width: 0;
+    }
+
+    .score-label strong,
+    .distribution-label strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.25;
+    }
+
+    .score-label span,
+    .distribution-label span,
+    .distribution-empty {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .score-track,
+    .distribution-track {
+      position: relative;
+      height: 0.72rem;
+      overflow: hidden;
+      background: var(--soft-2);
+    }
+
+    .score-fill,
+    .distribution-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: var(--fill-width);
+      background: var(--ink);
+    }
+
+    .score-row.is-accent .score-fill,
+    .distribution-row.is-accent .distribution-fill {
+      background: var(--alert);
+    }
+
+    .score-value,
+    .distribution-value {
+      min-width: 3.5rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-align: right;
+    }
+
+    .distribution-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .distribution-stat {
+      background: #ffffff;
+      padding: 0.9rem;
+    }
+
+    .distribution-stat strong {
+      display: block;
+      font-size: 1.85rem;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .distribution-stat span {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
     }
 
     .ai-lab {
@@ -836,9 +820,9 @@
 
     .ai-strip {
       display: grid;
-      grid-template-columns: minmax(180px, 0.55fr) minmax(320px, 1fr) auto;
-      gap: 1rem;
-      align-items: center;
+      grid-template-columns: minmax(150px, 0.32fr) minmax(620px, 1.45fr) auto;
+      gap: 1.3rem;
+      align-items: end;
       padding: 1.3rem 1.85rem;
       border-bottom: 1px solid var(--line);
       background: #ffffff;
@@ -854,8 +838,10 @@
 
     .ai-strip p {
       color: var(--muted);
+      font-size: clamp(1rem, 1.05vw, 1.18rem);
       line-height: 1.55;
-      max-width: 48rem;
+      max-width: none;
+      white-space: nowrap;
     }
 
     .ai-panel-head {
@@ -1037,38 +1023,37 @@
     }
 
     .ai-message {
-      max-width: min(48rem, 100%);
-      padding: 1rem 1.05rem;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #ffffff;
+      max-width: min(72rem, 100%);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       line-height: 1.58;
       white-space: pre-wrap;
     }
 
     .ai-message .meta-label {
-      display: block;
-      margin-bottom: 0.5rem;
+      display: none;
     }
 
     .ai-message.is-user {
       align-self: flex-end;
-      border-color: var(--ink);
-      background: var(--ink);
-      color: #ffffff;
-      max-width: min(36rem, 88%);
-    }
-
-    .ai-message.is-user .meta-label {
-      color: rgba(255, 255, 255, 0.72);
+      max-width: min(42rem, 86%);
+      padding: 0.85rem 1.15rem;
+      border-radius: 999px;
+      background: var(--soft-2);
+      color: var(--ink);
     }
 
     .ai-message.is-system {
       align-self: center;
+      max-width: min(48rem, 88%);
+      padding: 1rem 1.05rem;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: #ffffff;
       color: var(--muted);
       font-size: 0.92rem;
-      border-style: dashed;
-      background: var(--soft);
     }
 
     .ai-composer {
@@ -1106,6 +1091,10 @@
     .side-head {
       padding: 1.35rem 1.45rem;
       border-bottom: 1px solid var(--line);
+    }
+
+    .side-panel.has-recommendations .side-head {
+      display: none;
     }
 
     .side-head h1 {
@@ -1387,6 +1376,21 @@
         justify-content: flex-start;
       }
 
+      .score-row,
+      .distribution-row {
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+      }
+
+      .score-value,
+      .distribution-value {
+        text-align: left;
+      }
+
+      .ai-strip p {
+        white-space: normal;
+      }
+
       .transport {
         grid-template-columns: auto auto auto;
       }
@@ -1434,8 +1438,8 @@
         <div>
           <div class="track-kicker" data-i18n="music.currentPlaying">当前播放</div>
           <div class="track-title-line">
-            <strong id="top-title">月照丝路</strong>
-            <span id="top-meta">赵莲 - 中国西安</span>
+            <strong id="top-title">正在连接曲库</strong>
+            <span id="top-meta">Echo</span>
           </div>
         </div>
       </section>
@@ -1458,19 +1462,19 @@
       <div class="console-top">
         <div class="readout">
           <div class="meta-label">曲目</div>
-          <strong id="readout-track">月照丝路</strong>
+          <strong id="readout-track">正在连接曲库</strong>
         </div>
         <div class="readout">
           <div class="meta-label">地理位置</div>
-          <strong id="readout-origin">中国陕西西安</strong>
+          <strong id="readout-origin">等待位置</strong>
         </div>
         <div class="readout">
           <div class="meta-label">风格</div>
-          <strong id="readout-style">琵琶 / 低保真 / 丝路夜色</strong>
+          <strong id="readout-style">未知</strong>
         </div>
         <div class="readout">
           <div class="meta-label">来源</div>
-          <strong id="readout-source">本地示例</strong>
+          <strong id="readout-source">后端曲库</strong>
         </div>
       </div>
 
@@ -1500,14 +1504,14 @@
       <div class="console-bottom">
         <div class="transport">
           <button class="skip-button" id="prev-button" type="button" aria-label="上一首">‹</button>
-          <button class="play-button is-playing" id="play-button" type="button" aria-label="播放或暂停"><span></span></button>
+          <button class="play-button" id="play-button" type="button" aria-label="播放或暂停"><span></span></button>
           <button class="skip-button" id="next-button" type="button" aria-label="下一首">›</button>
           <div class="progress-wrap">
             <div class="progress-meta">
-              <span id="play-state">月照丝路 - 赵莲</span>
-              <span id="time-code">00:00:18 / 03:42</span>
+              <span id="play-state">正在连接曲库 - Echo</span>
+              <span id="time-code">00:00:00 / 03:42</span>
             </div>
-            <div class="progress-track" id="progress-track" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-track" id="progress-track" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
           </div>
         </div>
 
@@ -1520,35 +1524,27 @@
         <div class="parameter-metrics" id="parameter-metrics"></div>
 
         <div class="parameter-grid">
-          <article class="parameter-panel" aria-label="参数地形">
+          <article class="parameter-panel" aria-label="推荐得分构成">
             <div class="parameter-panel-head">
               <div>
-                <div class="meta-label">宏观观测</div>
-                <h2>参数<br>地形</h2>
+                <div class="meta-label">推荐依据</div>
+                <h2>得分<br>构成</h2>
               </div>
               <div class="head-meta">
-                <span>纵轴：权重 / 信号</span>
-                <span>横轴：重排轮次</span>
+                <span>越长表示影响越强</span>
               </div>
             </div>
-            <div class="parameter-topography" id="parameter-topography"></div>
+            <div class="parameter-breakdown" id="parameter-breakdown"></div>
           </article>
 
-          <article class="parameter-panel" aria-label="潜变量分布">
+          <article class="parameter-panel" aria-label="推荐结果分布">
             <div class="parameter-panel-head">
               <div>
-                <div class="meta-label">微观分布</div>
-                <h2>潜变量<br>轨道</h2>
+                <div class="meta-label">结果概览</div>
+                <h2>推荐<br>分布</h2>
               </div>
             </div>
-            <div class="parameter-radial-wrap">
-              <div class="parameter-radial" id="parameter-radial"></div>
-            </div>
-            <div class="parameter-radial-legend">
-              <span class="meta-label">ZA 内容</span>
-              <span class="meta-label">ZS 文化</span>
-              <span class="meta-label">人工回路</span>
-            </div>
+            <div class="parameter-distribution" id="parameter-distribution"></div>
           </article>
         </div>
       </section>
@@ -1565,10 +1561,10 @@
 
         <section class="ai-chat" aria-label="AI 分析对话">
           <div class="ai-messages" id="ai-messages"></div>
-          <div class="ai-composer">
+          <div class="ai-composer" id="ai-composer">
             <div class="field">
-              <label for="ai-question" data-i18n="music.ai.followup">继续追问</label>
-              <textarea id="ai-question" placeholder="例如：为什么马里科拉琴会被推荐给这首歌？" data-i18n-placeholder="music.ai.followupPlaceholder"></textarea>
+              <label for="ai-question" data-i18n="music.ai.followup">进行对话</label>
+              <textarea id="ai-question" placeholder="介绍一下被推荐的音乐吧" data-i18n-placeholder="music.ai.followupPlaceholder"></textarea>
             </div>
             <button class="pill ai-send" id="ai-send-button" type="button" data-i18n="music.ai.send">发送</button>
           </div>
@@ -1598,9 +1594,11 @@
     const apiBase = window.location.origin;
     const urlParams = new URLSearchParams(window.location.search);
     const initialSeedTrackId = urlParams.get("seed") || "";
-    const initialSeedCulture = urlParams.get("culture") || "china";
+    const initialSeedCulture = urlParams.get("culture") || "";
     const initialLocalAudioId = urlParams.get("local") || "";
     const apiPreferCuda = ["1", "true", "yes"].includes(String(urlParams.get("cuda") || "").toLowerCase());
+    const appConfigKey = "echo-app-config";
+    const lastStartupTrackKey = "echo-last-startup-track";
     const pendingLocalPlayKey = "echo-pending-local-play";
     const localAudioDbName = "echo-local-audio";
     const localAudioStore = "tracks";
@@ -1643,18 +1641,18 @@
     }
 
     const currentTrack = {
-      title: "月照丝路",
-      artist: "赵莲",
-      city: "西安",
-      province: "陕西",
-      country: "中国",
-      capital: "北京",
-      lat: 34.3416,
-      lng: 108.9398,
-      genre: "琵琶 / 低保真 / 丝路夜色",
-      sourceDataset: "示例曲库",
-      style: "琵琶 / 低保真 / 丝路夜色",
-      note: "琵琶拨弦叠加柔和打击乐和夜色质感。",
+      title: "正在连接曲库",
+      artist: "Echo",
+      city: mysteryPlace.city,
+      province: "",
+      country: mysteryPlace.country,
+      capital: "",
+      lat: mysteryPlace.lat,
+      lng: mysteryPlace.lng,
+      genre: "未知",
+      sourceDataset: "后端曲库",
+      style: "未知",
+      note: "正在连接后端曲库。",
       metrics: {
         serendipity: 0.832,
         calibrationKl: 2.03,
@@ -2071,10 +2069,11 @@
       mapCanvas: document.getElementById("map-canvas"),
       mapUi: document.getElementById("map-ui"),
       parameterMetrics: document.getElementById("parameter-metrics"),
-      parameterTopography: document.getElementById("parameter-topography"),
-      parameterRadial: document.getElementById("parameter-radial"),
+      parameterBreakdown: document.getElementById("parameter-breakdown"),
+      parameterDistribution: document.getElementById("parameter-distribution"),
       aiRunButton: document.getElementById("ai-run-button"),
       aiMessages: document.getElementById("ai-messages"),
+      aiComposer: document.getElementById("ai-composer"),
       aiQuestion: document.getElementById("ai-question"),
       aiSendButton: document.getElementById("ai-send-button")
     };
@@ -2120,9 +2119,9 @@
     let aiConversationMessages = [];
     let aiBusy = false;
     let currentQueueIndex = 0;
-    let isPlaying = true;
+    let isPlaying = false;
     let isScrubbing = false;
-    let simulatedSeconds = 18;
+    let simulatedSeconds = 0;
     let mapData = null;
     let worldFeatures = null;
     let borders = null;
@@ -2207,6 +2206,51 @@
       return a && b && a.title === b.title && a.artist === b.artist && a.country === b.country;
     }
 
+    function readAppConfig() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(appConfigKey) || "{}");
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function startupTrackMode() {
+      const mode = readAppConfig().startupTrackMode;
+      return ["last", "favorite-random", "library-random", "none"].includes(mode) ? mode : "library-random";
+    }
+
+    function startupTrackSnapshot(track = currentTrack) {
+      if (!track?.title || track.title === "正在连接曲库" || track.title === "未加载歌曲") {
+        return null;
+      }
+      if (track.fileObjectUrl && !track.localAudioId) {
+        return null;
+      }
+      const allowed = [
+        "trackId", "track_id", "localAudioId", "title", "artist", "album", "country", "city", "province",
+        "capital", "lat", "lng", "locationPrecision", "culture", "sourceDataset", "platform", "genre",
+        "label", "style", "note", "metrics", "durationSeconds", "coverArtUrl", "platformTrackUrl",
+        "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "albumDescription", "tags"
+      ];
+      return allowed.reduce((snapshot, key) => {
+        if (track[key] !== undefined && track[key] !== null && track[key] !== "") {
+          snapshot[key] = track[key];
+        }
+        return snapshot;
+      }, { savedAt: new Date().toISOString() });
+    }
+
+    function persistLastStartupTrack() {
+      const snapshot = startupTrackSnapshot(currentTrack);
+      if (!snapshot) return;
+      try {
+        localStorage.setItem(lastStartupTrackKey, JSON.stringify(snapshot));
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+
     function getPlaybackQueue() {
       return [primaryTrack, ...activeRecommendations];
     }
@@ -2279,18 +2323,31 @@
       const track = localTrackFromFile(file, metadata);
       primaryTrack = { ...track };
       currentQueueIndex = 0;
-      selectTrack(primaryTrack);
+      selectTrack(primaryTrack, { autoplay: false });
     }
 
-    function selectTrack(track) {
+    function setPlaybackState(nextPlaying) {
+      isPlaying = Boolean(nextPlaying);
+      els.playButton.classList.toggle("is-playing", isPlaying);
+      els.playState.textContent = playbackTrackLabel(currentTrack);
+      if (!els.audio.src) return;
+      if (isPlaying) {
+        els.audio.play().catch(() => {
+          isPlaying = false;
+          els.playButton.classList.remove("is-playing");
+        });
+      } else {
+        els.audio.pause();
+      }
+    }
+
+    function selectTrack(track, options = {}) {
       replaceCurrentTrack(track);
       const loc = locateTrack(currentTrack);
       centerLng = loc.lng;
       centerLat = loc.lat;
       currentQueueIndex = Math.max(0, getPlaybackQueue().findIndex((item) => isSameTrack(item, currentTrack)));
       simulatedSeconds = 0;
-      isPlaying = true;
-      els.playButton.classList.add("is-playing");
 
       const audioSrc = currentTrack.fileObjectUrl || currentTrack.audioUrl || "";
       if (audioSrc) {
@@ -2298,7 +2355,6 @@
           els.audio.src = audioSrc;
         }
         els.audio.currentTime = 0;
-        els.audio.play().catch(() => {});
       } else {
         if (els.audio.src) {
           els.audio.pause();
@@ -2306,6 +2362,7 @@
           els.audio.load();
         }
       }
+      setPlaybackState(Boolean(options.autoplay));
 
       if (!activeRecommendations.length && !isSameTrack(currentTrack, primaryTrack)) {
         activeRecommendations = recommendations;
@@ -2316,12 +2373,14 @@
       renderParameterPanel();
       drawMap();
       updateProgressUI();
+      persistLastStartupTrack();
     }
 
     function playQueueDelta(delta) {
       const queue = getPlaybackQueue();
+      const shouldContinuePlaying = isPlaying;
       currentQueueIndex = (currentQueueIndex + delta + queue.length) % queue.length;
-      selectTrack(queue[currentQueueIndex]);
+      selectTrack(queue[currentQueueIndex], { autoplay: shouldContinuePlaying });
     }
 
     function formatTime(value) {
@@ -2421,57 +2480,109 @@
       `).join("");
     }
 
-    function renderParameterTopography() {
-      const metrics = activeMetrics();
-      const seed = currentTrack.title.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-      const metricPulse = [
-        Number(metrics.serendipity),
-        Math.max(0.08, 1 / (1 + Number(metrics.calibrationKl))),
-        Number(metrics.targetAffinity),
-        Number(metrics.minorityExposure),
-        Number(metrics.palUncertainty),
-        Number(metrics.unexpectedness)
-      ];
-      const bars = Array.from({ length: 84 }, (_, index) => {
-        const weight = rerankWeights[index % rerankWeights.length];
-        const wave = Math.sin((index + seed % 17) * 0.34) * 18;
-        const pulse = metricPulse[index % metricPulse.length] * 42;
-        const height = Math.max(8, Math.min(96, 22 + wave + pulse + weight.value * 50));
-        const label = index % 14 === 0 ? `<span>${weight.code}</span>` : "";
-        return `<div class="param-bar${index % 9 === 0 ? " is-hollow" : ""}" style="height:${height.toFixed(2)}%">${label}</div>`;
-      });
-      els.parameterTopography.innerHTML = bars.join("");
+    function normalizedMetric(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return 0;
+      return Math.max(0, Math.min(1, number));
     }
 
-    function renderParameterRadial() {
+    function renderParameterBreakdown() {
       const metrics = activeMetrics();
-      const nodes = [
-        { angle: -84, radius: 0.34 + metrics.relevance * 0.22, size: 9, color: "#111111" },
-        { angle: -18, radius: 0.28 + metrics.unexpectedness * 0.26, size: 6, color: "#111111" },
-        { angle: 42, radius: 0.3 + metrics.targetAffinity * 0.52, size: 7, color: "#b72727" },
-        { angle: 118, radius: 0.25 + metrics.minorityExposure * 0.35, size: 8, color: "#111111" },
-        { angle: 176, radius: 0.3 + metrics.palUncertainty * 0.36, size: 5, color: "#b72727" },
-        { angle: 228, radius: 0.28 + Math.min(0.4, metrics.calibrationKl / 6), size: 5, color: "#111111" }
+      const scoreRows = [
+        {
+          label: "相关性",
+          hint: "与当前曲目的声音和内容接近",
+          value: normalizedMetric(metrics.relevance),
+          accent: true
+        },
+        {
+          label: "新颖度",
+          hint: "与已有聆听路径拉开距离",
+          value: normalizedMetric(metrics.unexpectedness)
+        },
+        {
+          label: "目标亲和",
+          hint: "靠近目标文化中心的程度",
+          value: normalizedMetric(metrics.targetAffinity)
+        },
+        {
+          label: "长尾覆盖",
+          hint: "偏向较少曝光曲目的程度",
+          value: normalizedMetric(metrics.minorityExposure)
+        },
+        {
+          label: "不确定性",
+          hint: "需要人工反馈校正的程度",
+          value: normalizedMetric(metrics.palUncertainty)
+        }
       ];
-      const rings = [8, 20, 32, 44].map((inset, index) => `
-        <div class="parameter-ring" style="--ring-inset:${inset}%;--ring-opacity:${0.58 - index * 0.12};--ring-style:${index % 2 ? "dashed" : "solid"}"></div>
-      `);
-      const spokes = nodes.map((node) => `
-        <div class="parameter-spoke" style="--spoke-width:${(node.radius * 50).toFixed(2)}%;--spoke-rotate:${node.angle}deg"></div>
-      `);
-      const dots = nodes.map((node) => {
-        const rad = node.angle * Math.PI / 180;
-        const x = 50 + Math.cos(rad) * node.radius * 50;
-        const y = 50 + Math.sin(rad) * node.radius * 50;
-        return `<div class="parameter-node" style="--node-x:${x.toFixed(2)}%;--node-y:${y.toFixed(2)}%;--node-size:${node.size}px;--node-color:${node.color}"></div>`;
-      });
-      els.parameterRadial.innerHTML = [...rings, ...spokes, ...dots].join("");
+      els.parameterBreakdown.innerHTML = scoreRows.map((row) => `
+        <div class="score-row${row.accent ? " is-accent" : ""}">
+          <div class="score-label">
+            <strong>${escapeHtml(row.label)}</strong>
+            <span>${escapeHtml(row.hint)}</span>
+          </div>
+          <div class="score-track" aria-hidden="true">
+            <div class="score-fill" style="--fill-width:${(row.value * 100).toFixed(1)}%"></div>
+          </div>
+          <div class="score-value">${formatPct(row.value)}</div>
+        </div>
+      `).join("");
+    }
+
+    function countBy(items, getKey) {
+      return items.reduce((acc, item) => {
+        const key = getKey(item) || "未知";
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function topDistributionRows(counter, total, limit = 5) {
+      return Object.entries(counter)
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-CN"))
+        .slice(0, limit)
+        .map(([label, count], index) => ({ label, count, pct: total ? count / total : 0, accent: index === 0 }));
+    }
+
+    function renderParameterDistribution() {
+      const items = activeRecommendations;
+      const total = items.length;
+      const cultureCount = countBy(items, (item) => cultureLabels[item.culture] || item.culture || item.country);
+      const sourceCount = countBy(items, (item) => displaySource(item));
+      const countries = new Set(items.map((item) => item.country).filter(Boolean));
+      const rows = [
+        ...topDistributionRows(cultureCount, total, 3),
+        ...topDistributionRows(sourceCount, total, 2).map((row) => ({ ...row, label: `来源：${row.label}` }))
+      ];
+      const summary = `
+        <div class="distribution-summary">
+          <div class="distribution-stat"><strong>${total}</strong><span>推荐曲目</span></div>
+          <div class="distribution-stat"><strong>${Object.keys(cultureCount).length}</strong><span>文化域</span></div>
+          <div class="distribution-stat"><strong>${countries.size}</strong><span>国家/地区</span></div>
+        </div>
+      `;
+      const body = total
+        ? rows.map((row) => `
+          <div class="distribution-row${row.accent ? " is-accent" : ""}">
+            <div class="distribution-label">
+              <strong>${escapeHtml(row.label)}</strong>
+              <span>${row.count} 首</span>
+            </div>
+            <div class="distribution-track" aria-hidden="true">
+              <div class="distribution-fill" style="--fill-width:${(row.pct * 100).toFixed(1)}%"></div>
+            </div>
+            <div class="distribution-value">${formatPct(row.pct)}</div>
+          </div>
+        `).join("")
+        : `<p class="distribution-empty">生成推荐后，这里会显示推荐结果覆盖了哪些文化域、国家/地区和平台来源。</p>`;
+      els.parameterDistribution.innerHTML = `${summary}${body}`;
     }
 
     function renderParameterPanel() {
       renderParameterMetrics();
-      renderParameterTopography();
-      renderParameterRadial();
+      renderParameterBreakdown();
+      renderParameterDistribution();
       renderAiContextPreview();
     }
 
@@ -2565,7 +2676,7 @@
 3. 每首推荐曲目的连接理由，包括听感相似处和文化差异处。
 4. 文化惊喜度、相关性、意外性、目标亲和、长尾曝光、人工回路不确定性等参数如何共同影响结果。
 5. 哪些推荐最值得用户先听，哪些需要人工反馈或再次校准。
-6. 最后给出 3 个用户可以继续追问的问题。
+6. 最后给出 3 个用户可以继续对话的问题。
 
 请不要把参数解释成逐秒听音后的结论；它基于后端主线推荐结果、曲目元数据和推荐参数读数。
 
@@ -2658,7 +2769,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         model,
         endpoint,
         messages: toKimiMessages(messages),
-        max_completion_tokens: options.maxCompletionTokens || 1800
+        max_completion_tokens: options.maxCompletionTokens || 8192,
+        timeout_seconds: options.timeoutSeconds || 180
       };
       if (apiKey) {
         payload.api_key = apiKey;
@@ -2921,11 +3033,11 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
     function renderAiContextPreview() {
       return;
-    }
+      }
 
-    function syncTrackReadouts() {
-      els.topTitle.textContent = currentTrack.title;
-      els.topMeta.textContent = `${currentTrack.artist} - ${formatOrigin(currentTrack)}`;
+      function syncTrackReadouts() {
+        els.topTitle.textContent = currentTrack.title;
+      els.topMeta.textContent = currentTrack.artist || "未知创作者";
       els.playState.textContent = playbackTrackLabel(currentTrack);
       els.readoutTrack.textContent = currentTrack.title;
       els.readoutOrigin.textContent = formatOrigin(currentTrack);
@@ -2981,12 +3093,12 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       label.addEventListener("click", (event) => {
         if (index < 0) return;
         event.stopPropagation();
-        selectTrack(activeRecommendations[index]);
+        selectTrack(activeRecommendations[index], { autoplay: true });
       });
       label.addEventListener("keydown", (event) => {
         if (index < 0 || (event.key !== "Enter" && event.key !== " ")) return;
         event.preventDefault();
-        selectTrack(activeRecommendations[index]);
+        selectTrack(activeRecommendations[index], { autoplay: true });
       });
       els.mapUi.appendChild(label);
     }
@@ -3136,7 +3248,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     function renderRecommendations() {
-      if (!activeRecommendations.length) {
+      const hasRecommendations = activeRecommendations.length > 0;
+      els.sidePanel?.classList.toggle("has-recommendations", hasRecommendations);
+      if (!hasRecommendations) {
         els.recommendList.innerHTML = `
           <article class="rec-card is-placeholder">
             <div class="meta-label">等待推荐</div>
@@ -3184,13 +3298,13 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       els.recommendList.querySelectorAll("[data-rec-index]").forEach((card) => {
         card.addEventListener("click", (event) => {
           if (event.target.closest("a, button")) return;
-          selectTrack(activeRecommendations[Number(card.dataset.recIndex)]);
+          selectTrack(activeRecommendations[Number(card.dataset.recIndex)], { autoplay: true });
         });
         card.addEventListener("keydown", (event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
           if (event.target.closest("a, button")) return;
           event.preventDefault();
-          selectTrack(activeRecommendations[Number(card.dataset.recIndex)]);
+          selectTrack(activeRecommendations[Number(card.dataset.recIndex)], { autoplay: true });
         });
       });
 
@@ -3246,7 +3360,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         } else {
           const body = {
             seed_track_id: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId || null,
-            seed_culture: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId ? null : initialSeedCulture,
+            seed_culture: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId ? null : (initialSeedCulture || null),
             mode: "open",
             k: 10,
             recall_k: 900,
@@ -3405,12 +3519,57 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       event.stopPropagation();
     }
 
-    async function loadInitialTrack() {
+    function setNoStartupTrack(statusText = "已按设置跳过初始加载") {
+      activeRecommendations = [];
+      primaryTrack = {
+        ...currentTrack,
+        title: "未加载歌曲",
+        artist: "等待选择",
+        city: mysteryPlace.city,
+        province: "",
+        country: mysteryPlace.country,
+        lat: mysteryPlace.lat,
+        lng: mysteryPlace.lng,
+        locationPrecision: mysteryPlace.precision,
+        genre: "未知",
+        sourceDataset: "未加载",
+        style: "未知",
+        note: "当前未预载歌曲；可以上传音乐、打开收藏夹曲目，或手动请求推荐。",
+        trackId: "",
+        track_id: "",
+        coverArtUrl: "",
+        platformTrackUrl: "",
+        fullTrackUrl: "",
+        previewUrl: "",
+        audioUrl: "",
+        fileObjectUrl: ""
+      };
+      replaceCurrentTrack(primaryTrack);
+      if (els.audio.src) {
+        els.audio.pause();
+        els.audio.removeAttribute("src");
+        els.audio.load();
+      }
+      setPlaybackState(false);
+      centerLng = currentTrack.lng;
+      centerLat = currentTrack.lat;
+      els.mapStatus.textContent = statusText;
+      els.mapMode.textContent = "等待曲目";
+      syncTrackReadouts();
+      renderRecommendations();
+      renderParameterPanel();
+      drawMap();
+      updateProgressUI();
+    }
+
+    async function loadInitialTrack(options = {}) {
       els.mapStatus.textContent = "正在连接后端曲库";
       try {
+        const randomSeed = options.randomSeed ?? Date.now();
+        const cultureQuery = initialSeedCulture ? `culture=${encodeURIComponent(initialSeedCulture)}&` : "";
         const endpoint = initialSeedTrackId
           ? `/api/mainline/tracks/${encodeURIComponent(initialSeedTrackId)}?prefer_cuda=${apiPreferCuda}`
-          : `/api/mainline/random?culture=${encodeURIComponent(initialSeedCulture)}&random_seed=20260524&prefer_cuda=${apiPreferCuda}`;
+          : `/api/mainline/random?${cultureQuery}random_seed=${encodeURIComponent(randomSeed)}&prefer_cuda=${apiPreferCuda}`;
         const response = await fetch(endpoint);
         if (!response.ok) {
           const errorText = await response.text();
@@ -3421,13 +3580,90 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         const track = trackFromApiItem(item, 0);
         primaryTrack = track;
         activeRecommendations = [];
-        selectTrack(track);
+        selectTrack(track, { autoplay: false });
         els.mapStatus.textContent = "后端曲库已连接";
         els.mapMode.textContent = "真实起点已载入";
+        return true;
       } catch (error) {
         console.error(error);
         els.mapStatus.textContent = "后端曲库暂不可用，保留本地演示";
+        return false;
       }
+    }
+
+    async function loadLastStartupTrack() {
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem(lastStartupTrackKey) || "null");
+      } catch (error) {
+        saved = null;
+      }
+      if (!saved?.title) {
+        setNoStartupTrack("暂无上次关闭时的曲目");
+        return false;
+      }
+      if (saved.localAudioId) {
+        try {
+          const record = await getLocalAudioRecord(saved.localAudioId);
+          if (record?.blob) {
+            const file = new File([record.blob], record.fileName || `${saved.title}.mp3`, {
+              type: record.fileType || record.blob.type || "audio/mpeg",
+              lastModified: record.lastModified || Date.now()
+            });
+            applyLocalAudioFile(file, { ...saved, ...record, source: "上次关闭时的歌", fromFavorites: true });
+            els.mapStatus.textContent = "已载入上次关闭时的本地曲目";
+            return true;
+          }
+        } catch (error) {
+          console.warn(error);
+        }
+      }
+      primaryTrack = { ...saved, metrics: saved.metrics || defaultMetrics };
+      activeRecommendations = [];
+      selectTrack(primaryTrack, { autoplay: false });
+      els.mapStatus.textContent = "已载入上次关闭时的曲目";
+      els.mapMode.textContent = "上次曲目";
+      return true;
+    }
+
+    async function loadRandomFavoriteTrack() {
+      await window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).catch(() => null);
+      const favorites = window.EchoFavoriteStore?.read?.() || [];
+      if (!favorites.length) {
+        setNoStartupTrack("收藏夹暂无可随机载入的曲目");
+        return false;
+      }
+      const item = favorites[Math.floor(Math.random() * favorites.length)];
+      const track = { ...trackFromApiItem(item, 0), fromFavorites: true };
+      primaryTrack = track;
+      activeRecommendations = [];
+      selectTrack(track, { autoplay: false });
+      els.mapStatus.textContent = "已从收藏夹随机载入";
+      els.mapMode.textContent = "收藏夹随机";
+      return true;
+    }
+
+    async function initializeStartupTrack() {
+      const loadedLocal = await loadPendingLocalAudio();
+      if (loadedLocal) return;
+      if (initialSeedTrackId || initialSeedCulture) {
+        await loadInitialTrack({ randomSeed: Date.now() });
+        return;
+      }
+      const mode = startupTrackMode();
+      if (mode === "last") {
+        await loadLastStartupTrack();
+        return;
+      }
+      if (mode === "favorite-random") {
+        await loadRandomFavoriteTrack();
+        return;
+      }
+      if (mode === "none") {
+        setNoStartupTrack();
+        return;
+      }
+      await loadInitialTrack({ randomSeed: Date.now() });
     }
 
     async function loadPendingLocalAudio() {
@@ -3542,13 +3778,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     els.nextButton.addEventListener("click", () => playQueueDelta(1));
 
     els.playButton.addEventListener("click", () => {
-      isPlaying = !isPlaying;
-      els.playButton.classList.toggle("is-playing", isPlaying);
-      els.playState.textContent = playbackTrackLabel(currentTrack);
-      if (els.audio.src) {
-        if (isPlaying) els.audio.play().catch(() => {});
-        else els.audio.pause();
-      }
+      setPlaybackState(!isPlaying);
     });
 
     els.audio.addEventListener("loadedmetadata", updateProgressUI);
@@ -3602,6 +3832,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       renderAiMessages();
       setAiBusy(aiBusy);
     });
+    window.addEventListener("pagehide", persistLastStartupTrack);
     syncTrackReadouts();
     loadMainlineStatus();
     window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).then(() => {
@@ -3610,11 +3841,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     renderRecommendations();
     renderParameterPanel();
     renderAiMessages();
-    loadPendingLocalAudio().then((loaded) => {
-      if (!loaded) loadInitialTrack();
-    }).catch((error) => {
+    initializeStartupTrack().catch((error) => {
       console.error(error);
-      loadInitialTrack();
+      setNoStartupTrack("音乐台初始载入失败");
     });
     loadMap().catch((error) => {
       els.mapStatus.textContent = "地图数据加载失败";

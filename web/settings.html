@@ -249,6 +249,10 @@
       gap: 0.55rem;
     }
 
+    .choice-grid.is-startup {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .choice-button,
     .ratio-button {
       min-height: 2.6rem;
@@ -359,6 +363,7 @@
       }
 
       .choice-grid,
+      .choice-grid.is-startup,
       .ratio-grid {
         grid-template-columns: 1fr;
       }
@@ -416,6 +421,17 @@
           <div class="section-kicker" data-i18n="settings.coverRatioLabel">彩色比例</div>
           <div class="ratio-grid" id="cover-ratio-grid" role="radiogroup" aria-label="彩色比例"></div>
         </div>
+
+        <div class="field">
+          <label data-i18n="settings.startupTrackLabel">进入音乐台时加载</label>
+          <div class="choice-grid is-startup" role="radiogroup" aria-label="进入音乐台时加载">
+            <button class="choice-button" type="button" data-startup-track="last" data-i18n="settings.startupTrack.last">上次关闭时的歌</button>
+            <button class="choice-button" type="button" data-startup-track="favorite-random" data-i18n="settings.startupTrack.favorite">从收藏夹随机</button>
+            <button class="choice-button" type="button" data-startup-track="library-random" data-i18n="settings.startupTrack.library">从音乐库随机</button>
+            <button class="choice-button" type="button" data-startup-track="none" data-i18n="settings.startupTrack.none">不加载歌曲</button>
+          </div>
+          <p class="note" data-i18n="settings.startupTrackHelp">控制打开音乐台时播放器预先载入哪一首歌；通过收藏夹或链接进入的指定曲目仍会优先生效。</p>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -453,6 +469,7 @@
     const els = {
       language: document.getElementById("app-language"),
       coverModeButtons: Array.from(document.querySelectorAll("[data-cover-mode]")),
+      startupTrackButtons: Array.from(document.querySelectorAll("[data-startup-track]")),
       coverRatioPanel: document.getElementById("cover-ratio-panel"),
       coverRatioGrid: document.getElementById("cover-ratio-grid"),
       apiKey: document.getElementById("kimi-api-key"),
@@ -463,8 +480,10 @@
       clear: document.getElementById("clear-config"),
       status: document.getElementById("settings-status")
     };
+    const appConfigKey = "echo-app-config";
     const coverConfigKey = "echo-cover-config";
     const coverRatios = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+    const startupTrackModes = ["last", "favorite-random", "library-random", "none"];
 
     function t(key, params = {}) {
       return window.EchoI18n?.t(key, params) || key;
@@ -479,6 +498,28 @@
       } catch (error) {
         return { mode: "mixed", colorRatio: 30 };
       }
+    }
+
+    function readAppConfig() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(appConfigKey) || "{}");
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function readStartupTrackMode() {
+      const mode = readAppConfig().startupTrackMode;
+      return startupTrackModes.includes(mode) ? mode : "library-random";
+    }
+
+    function saveStartupTrackMode(mode = readStartupTrackMode(), announce = true) {
+      const config = readAppConfig();
+      config.startupTrackMode = startupTrackModes.includes(mode) ? mode : "library-random";
+      localStorage.setItem(appConfigKey, JSON.stringify(config));
+      if (announce) els.status.textContent = t("settings.startupTrackSaved");
+      return config.startupTrackMode;
     }
 
     function saveCoverConfig(config = readCoverConfig(), announce = true) {
@@ -513,6 +554,15 @@
       renderCoverRatioButtons(config);
     }
 
+    function renderStartupTrackSettings(mode = readStartupTrackMode()) {
+      els.startupTrackButtons.forEach((button) => {
+        const active = button.dataset.startupTrack === mode;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-checked", active ? "true" : "false");
+        button.setAttribute("role", "radio");
+      });
+    }
+
     function populateLanguageOptions() {
       const current = window.EchoI18n?.getLanguage() || "zh-CN";
       els.language.innerHTML = (window.EchoI18n?.languages || [])
@@ -529,6 +579,7 @@
         els.apiKey.value = local.apiKey || session.apiKey || "";
         els.language.value = window.EchoI18n?.getLanguage() || "zh-CN";
         renderCoverSettings(readCoverConfig());
+        renderStartupTrackSettings(readStartupTrackMode());
       } catch (error) {
         els.status.textContent = t("settings.readFailed");
       }
@@ -555,6 +606,7 @@
       const apiKey = els.apiKey.value.trim();
       const language = window.EchoI18n?.setLanguage(els.language.value) || els.language.value;
       saveCoverConfig(readCoverConfig(), false);
+      saveStartupTrackMode(readStartupTrackMode(), false);
       localStorage.setItem("echo-kimi-config", JSON.stringify({ model, endpoint, apiKey, language }));
       sessionStorage.setItem("echo-kimi-session", JSON.stringify({ apiKey }));
       els.status.textContent = t("settings.saved");
@@ -613,6 +665,7 @@
 
     populateLanguageOptions();
     renderCoverSettings(readCoverConfig());
+    renderStartupTrackSettings(readStartupTrackMode());
     els.save.addEventListener("click", saveConfig);
     els.test.addEventListener("click", testConfig);
     els.clear.addEventListener("click", clearConfig);
@@ -621,6 +674,12 @@
         const next = { ...readCoverConfig(), mode: button.dataset.coverMode };
         saveCoverConfig(next);
         renderCoverSettings(next);
+      });
+    });
+    els.startupTrackButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const mode = saveStartupTrackMode(button.dataset.startupTrack);
+        renderStartupTrackSettings(mode);
       });
     });
     els.language.addEventListener("change", () => {
