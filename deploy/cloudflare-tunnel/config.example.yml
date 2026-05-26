@@ -1,0 +1,7 @@
+tunnel: echo-mainline-worker
+credentials-file: C:\Users\YOUR_NAME\.cloudflared\YOUR_TUNNEL_ID.json
+
+ingress:
+  - hostname: echo-worker.example.com
+    service: http://127.0.0.1:18011
+  - service: http_status:404

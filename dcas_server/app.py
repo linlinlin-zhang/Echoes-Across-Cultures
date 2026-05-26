@@ -8,25 +8,17 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode, urljoin
 from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from dcas.ontology import OntologyStore
-from dcas.pipelines import (
-    build_tracks_with_culturemert,
-    generate_toy,
-    pal_tasks,
-    recommend,
-    style_transfer,
-    style_transfer_waveform,
-    train_model,
-)
 
-from .mainline_platform import MainlineWeights, get_mainline_platform
+from .lightweight_catalog import get_lightweight_catalog
 from .paths import Storage
 from .prototype_api import create_prototype_router
 from .schemas import (
@@ -88,6 +80,7 @@ ALLOWED_UPLOAD_COMPRESSION_CHANNELS = {1, 2}
 ANON_SESSION_COOKIE = "echo_anon_id"
 ANON_SESSION_RE = re.compile(r"^[a-f0-9]{32}$")
 DEFAULT_INITIAL_FAVORITES = 20
+WORKER_RELATIVE_URL_KEYS: set[str] = set()
 
 
 def _track_key(track: dict[str, Any]) -> str:
@@ -235,6 +228,180 @@ def _session_id_from_request(request: Request, response: Response, store: Anonym
         )
     store.touch_session(session_id)
     return session_id
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = str(os.environ.get(name, "")).strip().lower()
+    if not raw:
+        return bool(default)
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _mainline_worker_url() -> str:
+    return str(os.environ.get("ECHO_MAINLINE_WORKER_URL", "")).strip().rstrip("/")
+
+
+def _mainline_worker_token() -> str:
+    return str(os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")).strip()
+
+
+def _mainline_worker_timeout() -> float:
+    try:
+        return max(5.0, float(os.environ.get("ECHO_MAINLINE_WORKER_TIMEOUT_SECONDS", "900")))
+    except Exception:
+        return 900.0
+
+
+def _worker_url(path: str, query: dict[str, Any] | None = None) -> str:
+    base = _mainline_worker_url()
+    if not base:
+        raise HTTPException(status_code=503, detail="mainline worker is not configured")
+    url = urljoin(f"{base}/", path.lstrip("/"))
+    if query:
+        clean_query = {key: value for key, value in query.items() if value is not None}
+        if clean_query:
+            url = f"{url}?{urlencode(clean_query)}"
+    return url
+
+
+def _worker_headers(extra: dict[str, str] | None = None) -> dict[str, str]:
+    headers = dict(extra or {})
+    token = _mainline_worker_token()
+    if token:
+        headers["X-Echo-Worker-Token"] = token
+    return headers
+
+
+def _require_worker_token(request: Request) -> None:
+    if not _env_bool("ECHO_WORKER_REQUIRE_TOKEN", False):
+        return
+    expected = str(os.environ.get("ECHO_WORKER_SHARED_TOKEN", "") or os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")).strip()
+    if not expected:
+        raise HTTPException(status_code=500, detail="worker token enforcement is enabled but no token is configured")
+    actual = str(request.headers.get("X-Echo-Worker-Token", "")).strip()
+    if actual != expected:
+        raise HTTPException(status_code=401, detail="invalid worker token")
+
+
+def _rewrite_worker_urls(data: Any, worker_base: str) -> Any:
+    if isinstance(data, list):
+        return [_rewrite_worker_urls(item, worker_base) for item in data]
+    if not isinstance(data, dict):
+        return data
+    out: dict[str, Any] = {}
+    for key, value in data.items():
+        if key in WORKER_RELATIVE_URL_KEYS and isinstance(value, str) and value.startswith("/"):
+            out[key] = urljoin(f"{worker_base.rstrip('/')}/", value.lstrip("/"))
+        else:
+            out[key] = _rewrite_worker_urls(value, worker_base)
+    return out
+
+
+def _proxy_worker_json(path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    import urllib.error
+    import urllib.request
+
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        _worker_url(path),
+        data=body,
+        method="POST",
+        headers=_worker_headers({"Content-Type": "application/json"}),
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=_mainline_worker_timeout()) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")[:4000]
+        raise HTTPException(status_code=e.code, detail=detail)
+    except urllib.error.URLError as e:
+        raise HTTPException(status_code=502, detail=f"mainline worker unavailable: {e.reason}")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="mainline worker returned invalid JSON")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return _rewrite_worker_urls(data, _mainline_worker_url())
+
+
+def _proxy_worker_get(path: str, query: dict[str, Any] | None = None) -> dict[str, Any]:
+    import urllib.error
+    import urllib.request
+
+    req = urllib.request.Request(
+        _worker_url(path, query),
+        method="GET",
+        headers=_worker_headers(),
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=_mainline_worker_timeout()) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")[:4000]
+        raise HTTPException(status_code=e.code, detail=detail)
+    except urllib.error.URLError as e:
+        raise HTTPException(status_code=502, detail=f"mainline worker unavailable: {e.reason}")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="mainline worker returned invalid JSON")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return _rewrite_worker_urls(data, _mainline_worker_url())
+
+
+def _proxy_worker_upload_recommend(
+    *,
+    fields: dict[str, Any],
+    file_bytes: bytes,
+    filename: str,
+    content_type: str | None,
+) -> dict[str, Any]:
+    import urllib.error
+    import urllib.request
+
+    boundary = f"----echo-worker-{uuid4().hex}"
+    parts: list[bytes] = []
+    for name, value in fields.items():
+        if value is None:
+            continue
+        parts.extend(
+            [
+                f"--{boundary}\r\n".encode("utf-8"),
+                f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode("utf-8"),
+                str(value).encode("utf-8"),
+                b"\r\n",
+            ]
+        )
+    safe_name = Path(filename or "uploaded_audio").name
+    media_type = content_type or "application/octet-stream"
+    parts.extend(
+        [
+            f"--{boundary}\r\n".encode("utf-8"),
+            f'Content-Disposition: form-data; name="file"; filename="{safe_name}"\r\n'.encode("utf-8"),
+            f"Content-Type: {media_type}\r\n\r\n".encode("utf-8"),
+            file_bytes,
+            b"\r\n",
+            f"--{boundary}--\r\n".encode("utf-8"),
+        ]
+    )
+    body = b"".join(parts)
+    req = urllib.request.Request(
+        _worker_url("/api/mainline/upload_recommend"),
+        data=body,
+        method="POST",
+        headers=_worker_headers({"Content-Type": f"multipart/form-data; boundary={boundary}"}),
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=_mainline_worker_timeout()) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")[:4000]
+        raise HTTPException(status_code=e.code, detail=detail)
+    except urllib.error.URLError as e:
+        raise HTTPException(status_code=502, detail=f"mainline worker unavailable: {e.reason}")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="mainline worker returned invalid JSON")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return _rewrite_worker_urls(data, _mainline_worker_url())
 
 
 def _validate_upload_audio(filename: str, content_type: str | None) -> str:
@@ -449,6 +616,19 @@ def _load_local_kimi_config() -> dict[str, str]:
 def create_app() -> FastAPI:
     app = FastAPI(title="DCAS API", version="0.1.0")
 
+    @app.middleware("http")
+    async def worker_token_guard(request: Request, call_next):
+        if _env_bool("ECHO_WORKER_REQUIRE_TOKEN", False):
+            if not request.url.path.startswith("/api/mainline"):
+                return JSONResponse(status_code=404, content={"detail": "worker mode only exposes mainline API"})
+            expected = str(os.environ.get("ECHO_WORKER_SHARED_TOKEN", "") or os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")).strip()
+            actual = str(request.headers.get("X-Echo-Worker-Token", "")).strip()
+            if not expected:
+                return JSONResponse(status_code=500, content={"detail": "worker token enforcement is enabled but no token is configured"})
+            if actual != expected:
+                return JSONResponse(status_code=401, content={"detail": "invalid worker token"})
+        return await call_next(request)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -480,8 +660,8 @@ def create_app() -> FastAPI:
         if existing:
             return existing, False
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            catalog_result = platform.catalog(
+            catalog = get_lightweight_catalog(storage)
+            catalog_result = catalog.catalog(
                 limit=DEFAULT_INITIAL_FAVORITES,
                 random_seed=_stable_seed(session_id),
                 exclude_low_signal=True,
@@ -577,6 +757,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/toy/generate")
     def api_generate_toy(req: ToyGenerateRequest):
+        from dcas.pipelines import generate_toy
+
         dataset_dir = storage.ensure_dir(f"datasets/{req.name}")
         out = generate_toy(out_dir=dataset_dir, n_tracks=req.n_tracks, dim=req.dim, seed=req.seed)
         return {
@@ -588,6 +770,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/dataset/build_from_audio")
     def api_build_dataset(req: DatasetBuildRequest):
+        from dcas.pipelines import build_tracks_with_culturemert
+
         try:
             metadata_path = storage.resolve_rel(req.metadata_path)
         except ValueError:
@@ -612,6 +796,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/train")
     def api_train(req: TrainRequest):
+        from dcas.pipelines import train_model
+
         try:
             tracks_path = storage.resolve_rel(req.tracks_path)
             constraints_path = storage.resolve_rel(req.constraints_path) if req.constraints_path else None
@@ -648,6 +834,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/recommend")
     def api_recommend(req: RecommendRequest):
+        from dcas.pipelines import recommend
+
         try:
             model_path = storage.resolve_rel(req.model_path)
             tracks_path = storage.resolve_rel(req.tracks_path)
@@ -675,9 +863,27 @@ def create_app() -> FastAPI:
 
     @app.get("/api/mainline/status")
     def api_mainline_status(prefer_cuda: bool = False):
+        if _mainline_worker_url():
+            try:
+                data = _proxy_worker_get("/api/mainline/status", {"prefer_cuda": prefer_cuda})
+                data["worker"] = {"configured": True, "online": True, "url": _mainline_worker_url()}
+                return data
+            except HTTPException as e:
+                try:
+                    data = get_lightweight_catalog(storage).status()
+                except Exception:
+                    raise e
+                data["worker"] = {
+                    "configured": True,
+                    "online": False,
+                    "url": _mainline_worker_url(),
+                    "error": str(e.detail),
+                }
+                return data
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            return platform.status()
+            data = get_lightweight_catalog(storage).status()
+            data["worker"] = {"configured": False, "online": False, "url": ""}
+            return data
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
@@ -686,8 +892,7 @@ def create_app() -> FastAPI:
     @app.get("/api/mainline/cultures")
     def api_mainline_cultures(prefer_cuda: bool = False):
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            return platform.cultures()
+            return get_lightweight_catalog(storage).cultures()
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
@@ -704,8 +909,8 @@ def create_app() -> FastAPI:
         prefer_cuda: bool = False,
     ):
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            return platform.catalog(
+            catalog = get_lightweight_catalog(storage)
+            return catalog.catalog(
                 culture=culture,
                 source_dataset=source_dataset,
                 q=q,
@@ -729,8 +934,8 @@ def create_app() -> FastAPI:
         prefer_cuda: bool = False,
     ):
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            return platform.random_track(
+            catalog = get_lightweight_catalog(storage)
+            return catalog.random_track(
                 culture=culture,
                 source_dataset=source_dataset,
                 random_seed=random_seed,
@@ -746,8 +951,7 @@ def create_app() -> FastAPI:
     @app.get("/api/mainline/tracks/{track_id}")
     def api_mainline_track(track_id: str, prefer_cuda: bool = False):
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            return platform.track(track_id)
+            return get_lightweight_catalog(storage).track(track_id)
         except KeyError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
@@ -756,18 +960,32 @@ def create_app() -> FastAPI:
     @app.get("/api/mainline/audio/{track_id}")
     def api_mainline_audio(track_id: str, prefer_cuda: bool = False):
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
-            path, media_type = platform.audio_file(track_id)
+            catalog = get_lightweight_catalog(storage)
+            path, media_type = catalog.audio_file(track_id)
             return FileResponse(str(path), media_type=media_type, headers={"Accept-Ranges": "bytes"})
         except KeyError as e:
             raise HTTPException(status_code=404, detail=str(e))
-        except FileNotFoundError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+        except FileNotFoundError:
+            try:
+                track = get_lightweight_catalog(storage).track(track_id)
+            except Exception as e:
+                raise HTTPException(status_code=404, detail=str(e))
+            preview_url = str(track.get("preview_url") or "").strip()
+            if preview_url.startswith(("http://", "https://")):
+                return RedirectResponse(preview_url)
+            if _mainline_worker_url():
+                return RedirectResponse(_worker_url(f"/api/mainline/audio/{track_id}", {"prefer_cuda": prefer_cuda}))
+            raise HTTPException(status_code=404, detail="audio not found")
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post("/api/mainline/recommend")
-    def api_mainline_recommend(req: MainlineRecommendRequest):
+    def api_mainline_recommend(req: MainlineRecommendRequest, request: Request):
+        _require_worker_token(request)
+        if _mainline_worker_url():
+            return _proxy_worker_json("/api/mainline/recommend", req.dict())
+        from .mainline_platform import MainlineWeights, get_mainline_platform
+
         seed_track_ids = list(req.seed_track_ids)
         if req.seed_track_id:
             seed_track_ids.insert(0, req.seed_track_id)
@@ -804,6 +1022,8 @@ def create_app() -> FastAPI:
     def api_mainline_upload_formats():
         return {
             "ok": True,
+            "mode": "worker" if _mainline_worker_url() else "local",
+            "worker_configured": bool(_mainline_worker_url()),
             "extensions": sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS),
             "accept": UPLOAD_ACCEPT_ATTRIBUTE,
             "max_upload_mb": 200,
@@ -821,6 +1041,7 @@ def create_app() -> FastAPI:
 
     @app.post("/api/mainline/upload_recommend")
     async def api_mainline_upload_recommend(
+        request: Request,
         file: UploadFile = File(...),
         title: str | None = Form(default=None),
         artist: str | None = Form(default=None),
@@ -855,6 +1076,36 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=400, detail="empty upload")
         if len(content) > max_bytes:
             raise HTTPException(status_code=413, detail="uploaded audio is larger than 200MB")
+        if _mainline_worker_url():
+            return _proxy_worker_upload_recommend(
+                fields={
+                    "title": title,
+                    "artist": artist,
+                    "seed_culture": seed_culture,
+                    "target_culture": target_culture,
+                    "mode": mode,
+                    "k": k,
+                    "recall_k": recall_k,
+                    "random_seed": random_seed,
+                    "prefer_cuda": prefer_cuda,
+                    "exclude_same_artist": exclude_same_artist,
+                    "exclude_low_signal": exclude_low_signal,
+                    "max_seconds": max_seconds,
+                    "window_count": window_count,
+                    "window_strategy": window_strategy,
+                    "window_aggregate": window_aggregate,
+                    "compress_upload": compress_upload,
+                    "compression_bitrate": compression_bitrate,
+                    "compression_sample_rate_hz": compression_sample_rate_hz,
+                    "compression_channels": compression_channels,
+                },
+                file_bytes=content,
+                filename=filename,
+                content_type=file.content_type,
+            )
+        _require_worker_token(request)
+        from .mainline_platform import MainlineWeights, get_mainline_platform
+
         dest.write_bytes(content)
 
         weights = MainlineWeights()
@@ -1000,6 +1251,8 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=e.code, detail=detail)
         except urllib.error.URLError as e:
             raise HTTPException(status_code=502, detail=str(e.reason))
+        except TimeoutError:
+            raise HTTPException(status_code=504, detail=f"Kimi upstream timed out after {float(req.timeout_seconds):.0f}s")
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -1022,6 +1275,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/style/transfer")
     def api_style_transfer(req: StyleTransferRequest):
+        from dcas.pipelines import style_transfer
+
         try:
             model_path = storage.resolve_rel(req.model_path)
             tracks_path = storage.resolve_rel(req.tracks_path)
@@ -1049,6 +1304,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/style/transfer_waveform")
     def api_style_transfer_waveform(req: WaveStyleTransferRequest):
+        from dcas.pipelines import style_transfer_waveform
+
         try:
             source_audio = storage.resolve_rel(req.source_audio_path)
             style_audio = storage.resolve_rel(req.style_audio_path)
@@ -1079,6 +1336,8 @@ def create_app() -> FastAPI:
 
     @app.post("/api/pal")
     def api_pal(req: PalRequest):
+        from dcas.pipelines import pal_tasks
+
         try:
             model_path = storage.resolve_rel(req.model_path)
             tracks_path = storage.resolve_rel(req.tracks_path)

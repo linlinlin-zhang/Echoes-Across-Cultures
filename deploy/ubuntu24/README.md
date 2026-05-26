@@ -2,6 +2,8 @@
 
 This deployment shape serves the static web app and FastAPI backend from the same origin. Visitors stay anonymous: the backend issues an `echo_anon_id` cookie and stores that visitor's favorites in SQLite under `ECHO_USER_DATA_DIR`.
 
+The cloud server can run in a lightweight mode. In that mode it reads the catalog from CSV for pages and default favorites, while CultureMERT/DCAS-heavy recommendation requests are forwarded to a local worker running on your own computer.
+
 ## Server Layout
 
 - App checkout: `/srv/echo`
@@ -39,6 +41,38 @@ The mainline recommender expects the model and public catalog artifacts under `s
 - `storage/public/merged/tracks_culturemert.npz`
 - `storage/public/merged/metadata_merged.csv`
 - `storage/models/dcas_full_v4_main_culturemert_stage3.pt`
+
+For a small cloud server, only `storage/public/merged/metadata_merged.csv` is required for browsing and first-visit favorites. The `.npz` and `.pt` files can stay on the local worker machine.
+
+## Local Mainline Worker
+
+On your own computer, keep the full `storage/` directory and run the worker with CultureMERT/DCAS available:
+
+```powershell
+Copy-Item configs/local_worker.env.example configs/local_worker.env
+notepad configs/local_worker.env
+.\scripts\run_local_mainline_worker.ps1 -Port 18011
+```
+
+Set `ECHO_WORKER_SHARED_TOKEN` in `configs/local_worker.env` to a long random value. Then expose `http://127.0.0.1:18011` to the cloud server through a tunnel or reverse proxy you control.
+
+If your computer has no public address, use Cloudflare Tunnel. See `deploy/cloudflare-tunnel/README.md` for the temporary Quick Tunnel and stable named-tunnel workflows.
+
+On the Ubuntu cloud server, set these values in `/etc/echo/echo.env`:
+
+```bash
+ECHO_MAINLINE_WORKER_URL=https://your-local-worker-public-url
+ECHO_MAINLINE_WORKER_TOKEN=the-same-long-random-token
+ECHO_MAINLINE_WORKER_TIMEOUT_SECONDS=900
+```
+
+After that, the cloud server handles pages, sessions, favorites, and catalog browsing locally, but forwards:
+
+- `POST /api/mainline/recommend`
+- `POST /api/mainline/upload_recommend`
+- `GET /api/mainline/status`
+
+to your local worker. If the worker is offline, catalog browsing and anonymous favorites still work, while recommendation calls return an explicit worker-unavailable error.
 
 ## Service And Proxy
 
