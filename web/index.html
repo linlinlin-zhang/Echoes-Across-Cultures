@@ -165,17 +165,13 @@
       position: relative;
       width: 100%;
       height: 100%;
-      cursor: grab;
+      cursor: default;
       background:
         radial-gradient(circle at 50% 50%, rgba(17, 17, 17, 0.12), rgba(17, 17, 17, 0.035) 26%, transparent 57%),
         linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
         linear-gradient(180deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
         #ffffff;
       background-size: auto, 54px 54px, 54px 54px, auto;
-    }
-
-    .globe-stage:active {
-      cursor: grabbing;
     }
 
     #webgl-canvas,
@@ -535,10 +531,12 @@
     }
 
     .footer-motto {
-      font-size: clamp(4rem, 12vw, 12rem);
-      font-weight: 400;
-      line-height: 0.9;
-      letter-spacing: 0;
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-weight: 300;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+      max-width: 20ch;
     }
 
     .footer-bottom {
@@ -694,13 +692,13 @@
           <canvas id="pretext-canvas" aria-hidden="true"></canvas>
           <div class="globe-overlay" aria-hidden="true">
             <div class="globe-overlay-row">
-              <span>GLOBAL MUSIC SURFACE</span>
-              <span id="region-name">REGION INITIALIZING</span>
+              <span data-i18n="index.globe.surface">全球音乐表面</span>
+              <span id="region-name" data-i18n="index.globe.regionInitializing">区域初始化中</span>
             </div>
             <div class="globe-overlay-spacer"></div>
             <div class="globe-overlay-row">
-              <span>DRAG TO ROTATE</span>
-              <span id="region-style">GENRE SIGNAL ACTIVE</span>
+              <span data-i18n="index.globe.autoRotate">自动旋转</span>
+              <span id="region-style" data-i18n="index.globe.genreSignal">流派信号已激活</span>
             </div>
           </div>
         </div>
@@ -708,7 +706,7 @@
 
       <div class="copy-column">
         <div>
-          <span class="label">Cross-Cultural Music Discovery</span>
+          <span class="label" data-i18n="index.heroLabel">跨文化音乐发现</span>
           <h1 class="hero-title">Echo<br><span>Atlas</span></h1>
           <p class="hero-sub" data-i18n="index.heroSub">
             想听听地球另一边的人在听什么吗？<br><br>上传一首你喜欢的歌，我们会带你去探索 17 个文化域的声音，从古琴到巴萨诺瓦，从演歌到非洲鼓。
@@ -720,19 +718,19 @@
 
         <div class="hero-bottom" aria-label="Project signals">
           <div class="micro-stat">
-            <span>Tracks</span>
+            <span data-i18n="index.stat.tracksLabel">曲目</span>
             <strong>30K</strong>
-            <span>来自世界各地的真实音乐</span>
+            <span data-i18n="index.stat.tracksCopy">来自世界各地的真实音乐</span>
           </div>
           <div class="micro-stat">
-            <span>Cultures</span>
+            <span data-i18n="index.stat.culturesLabel">文化域</span>
             <strong>17</strong>
-            <span>个文化域，从东方到西方</span>
+            <span data-i18n="index.stat.culturesCopy">个文化域，从东方到西方</span>
           </div>
           <div class="micro-stat">
-            <span>Ready</span>
+            <span data-i18n="index.stat.readyLabel">就绪</span>
             <strong>100%</strong>
-            <span>每首都配有封面、介绍和标签</span>
+            <span data-i18n="index.stat.readyCopy">每首都配有封面、介绍和标签</span>
           </div>
         </div>
       </div>
@@ -742,16 +740,16 @@
       <div class="container">
         <div class="feature-grid">
           <article class="feature-item">
-            <span class="feature-index">01 / 你的起点</span>
-            <p>上传一首歌，或者从 30,000 首里选一首，这就是你的音乐旅行起点。</p>
+            <span class="feature-index" data-i18n="index.feature.startLabel">01 / 你的起点</span>
+            <p data-i18n="index.feature.startCopy">上传一首歌，或者从 30,000 首里选一首，这就是你的音乐旅行起点。</p>
           </article>
           <article class="feature-item">
-            <span class="feature-index">02 / AI 带路</span>
-            <p>AI 会分析音乐的"DNA"，为你推荐风格相近但来自不同文化的声音。</p>
+            <span class="feature-index" data-i18n="index.feature.aiLabel">02 / AI 带路</span>
+            <p data-i18n="index.feature.aiCopy">AI 会分析音乐的“DNA”，为你推荐风格相近但来自不同文化的声音。</p>
           </article>
           <article class="feature-item">
-            <span class="feature-index">03 / 收藏回忆</span>
-            <p>遇到喜欢的歌就收藏起来，你的收藏夹会慢慢变成一张属于你的世界音乐地图。</p>
+            <span class="feature-index" data-i18n="index.feature.memoryLabel">03 / 收藏回忆</span>
+            <p data-i18n="index.feature.memoryCopy">遇到喜欢的歌就收藏起来，你的收藏夹会慢慢变成一张属于你的世界音乐地图。</p>
           </article>
         </div>
       </div>
@@ -761,11 +759,11 @@
       <div class="container">
         <div class="big-text-grid">
           <aside class="section-side">
-            <span class="label">How It Works</span>
-            <p>从上传一首歌开始，AI 会分析它的旋律、节奏和情感，然后带你去听世界各地风格相近的声音。</p>
+            <span class="label" data-i18n="index.method.label">它如何工作</span>
+            <p data-i18n="index.method.copy">从上传一首歌开始，AI 会分析它的旋律、节奏和情感，然后带你去听世界各地风格相近的声音。</p>
           </aside>
           <div class="big-copy">
-            每首歌都有自己的<span class="highlight">声音 DNA</span>。上传你喜欢的音乐，AI 会理解它的特质，然后从地球另一端为你找到那些你从未听过、却可能一见如故的声音。
+            <span data-i18n-html="index.method.bigCopy">每首歌都有自己的<span class="highlight">声音 DNA</span>。上传你喜欢的音乐，AI 会理解它的特质，然后从地球另一端为你找到那些你从未听过、却可能一见如故的声音。</span>
           </div>
         </div>
       </div>
@@ -774,16 +772,16 @@
     <section class="signal-band" id="signals" aria-label="Signal visualization placeholder">
       <div class="signal-copy">
         <div>
-          <span class="label">Music Journey</span>
-          <h2>声音<br>路线</h2>
+          <span class="label" data-i18n="index.signal.label">音乐旅程</span>
+          <h2 data-i18n-html="index.signal.title">声音<br>路线</h2>
         </div>
-        <p>上传一首歌，AI 会为你画出一条声音旅行路线。从你的起点出发，跨越语言和文化的边界，去发现那些你从未听过却可能一见如故的音乐。</p>
+        <p data-i18n="index.signal.copy">上传一首歌，AI 会为你画出一条声音旅行路线。从你的起点出发，跨越语言和文化的边界，去发现那些你从未听过却可能一见如故的音乐。</p>
       </div>
       <div class="signal-field">
-        <div class="orbit-text"><span>content - style - affect - feedback - route -</span></div>
-        <div class="pulse-node">zc<br>melody / rhythm</div>
-        <div class="pulse-node">zs<br>culture / style</div>
-        <div class="pulse-node">za<br>valence / arousal</div>
+        <div class="orbit-text"><span data-i18n="index.signal.orbit">内容 - 风格 - 情感 - 反馈 - 路线 -</span></div>
+        <div class="pulse-node" data-i18n-html="index.signal.node.zc">ZC<br>旋律 / 节奏</div>
+        <div class="pulse-node" data-i18n-html="index.signal.node.zs">ZS<br>文化 / 风格</div>
+        <div class="pulse-node" data-i18n-html="index.signal.node.za">ZA<br>情绪效价 / 唤醒度</div>
       </div>
     </section>
   </main>
@@ -791,7 +789,7 @@
   <footer class="site-footer" id="contact">
     <div class="container">
       <div class="footer-grid">
-        <div class="footer-motto">声届无疆</div>
+        <div class="footer-motto">每一首歌，<br>都是一次跨越边界的旅行。</div>
       </div>
       <div class="footer-bottom">
         <span>Echo / 听见世界的声音</span>
@@ -800,6 +798,7 @@
     </div>
   </footer>
 
+  <script src="i18n.js"></script>
   <script type="importmap">
     {
       "imports": {
@@ -813,68 +812,40 @@
 
     const FONT_SPEC = "12px 'Courier New', monospace";
     const LINE_HEIGHT = 12;
-    const MASK_RESOLUTION = 256;
+    const MASK_RESOLUTION = 128;
     const GLOBE_SCALE = 1.18;
     const GLOBE_OFFSET_X = -0.05;
     const GLOBE_OFFSET_Y = 0.01;
-    const MUSIC_REGIONS = [
-      {
-        name: "EAST ASIA",
-        center: 116,
-        style: "GUQIN / ENKA / PANSORI / CITY POP",
-        ring: "EAST ASIA - GUQIN - PIPA - ERHU - ENKA - J-POP - K-POP - CITY POP - PANSORI - ",
-        text: "EAST ASIA SURFACE: GUQIN FINGER NOISE. PIPA TREMOLO. ERHU PORTAMENTO. SHAKUHACHI BREATH. GAGAKU DRONE. ENKA VIBRATO. PANSORI NARRATIVE CALL. K-POP HOOK DENSITY. J-POP CITY POP BRASS. CANTONPOP BALLAD CONTOUR. PENTATONIC MOTIF ACTIVE. "
-      },
-      {
-        name: "SOUTHEAST ASIA",
-        center: 103,
-        style: "GAMELAN / DANGDUT / KULINTANG",
-        ring: "SOUTHEAST ASIA - GAMELAN - DANGDUT - KULINTANG - PINPEAT - MOR LAM - KERONCONG - ",
-        text: "SOUTHEAST ASIA SURFACE: GAMELAN INTERLOCKING METALLOPHONES. DANGDUT DRUM PULSE. KULINTANG GONG ROWS. PINPEAT CEREMONIAL DRIVE. MOR LAM VOCAL ORNAMENT. KERONCONG STRUM. LUK THUNG MELODIC SWAY. SHADOW PLAY TIMBRE. "
-      },
-      {
-        name: "SOUTH ASIA",
-        center: 78,
-        style: "RAGA / QAWWALI / FILMI / BHANGRA",
-        ring: "SOUTH ASIA - RAGA - TABLA - QAWWALI - FILMI - BHANGRA - GHAZAL - CARNATIC - ",
-        text: "SOUTH ASIA SURFACE: HINDUSTANI RAGA ASCENT. CARNATIC KRITI STRUCTURE. TABLA BOL CYCLES. MRIDANGAM RESONANCE. QAWWALI CLAP RESPONSE. FILMI ORCHESTRAL SWELL. BHANGRA DANCE GROOVE. GHAZAL POETIC LINE. "
-      },
-      {
-        name: "MENA",
-        center: 36,
-        style: "MAQAM / OUD / RAI / GNAWA",
-        ring: "MENA - MAQAM - OUD - QANUN - RAI - GNAWA - DABKE - TAQSIM - ",
-        text: "MENA SURFACE: MAQAM MICROTONAL PATH. OUD PLUCKED RESONANCE. QANUN GLISSANDO. NAY BREATH TONE. RAI ELECTRIC VOCAL EDGE. GNAWA GUEMBRI TRANCE. DABKE LINE DANCE PULSE. TAQSIM IMPROVISATION ACTIVE. "
-      },
-      {
-        name: "EUROPE",
-        center: 10,
-        style: "FADO / FLAMENCO / CHANSON / TECHNO",
-        ring: "EUROPE - FADO - FLAMENCO - CHANSON - CELTIC - TECHNO - POLYPHONY - KRAUTROCK - ",
-        text: "EUROPE SURFACE: FADO SAUDADE LINE. FLAMENCO PALMAS AND RASGUEADO. CHANSON TEXT FORWARD FORM. CELTIC REEL MOTION. BALKAN ASYMMETRIC METER. ALPINE YODEL SIGNAL. TECHNO FOUR ON FLOOR. KRAUTROCK MOTORIK FLOW. "
-      },
-      {
-        name: "WEST AFRICA",
-        center: -2,
-        style: "AFROBEAT / HIGHLIFE / MBALAX / KORA",
-        ring: "WEST AFRICA - AFROBEAT - HIGHLIFE - MBALAX - KORA - JUJU - PALM WINE - ",
-        text: "WEST AFRICA SURFACE: AFROBEAT HORN OSTINATO. HIGHLIFE GUITAR LATTICE. MBALAX SABAR POLYRHYTHM. GRIOT KORA ARPEGGIO. JUJU TALKING DRUM. PALM WINE GUITAR. FUJI VOCAL PRAISE. CALL RESPONSE FIELD ACTIVE. "
-      },
-      {
-        name: "AMERICAS",
-        center: -88,
-        style: "JAZZ / BLUES / SALSA / SAMBA",
-        ring: "AMERICAS - JAZZ - BLUES - GOSPEL - SALSA - SAMBA - CUMBIA - HIP HOP - REGGAETON - ",
-        text: "AMERICAS SURFACE: BLUES BENT NOTE. JAZZ SWING RIDE. GOSPEL CALL RESPONSE. SALSA CLAVE. SAMBA BATUCADA. CUMBIA ACCORDION LINE. SON MONTUNO PATTERN. HIP HOP BREAKBEAT. REGGAETON DEMBOW. COUNTRY FIDDLE SIGNAL. "
-      },
-      {
-        name: "OCEANIA / PACIFIC",
-        center: 155,
-        style: "HULA / HAKA / YIDAKI / ISLAND REGGAE",
-        ring: "OCEANIA PACIFIC - HULA - HAKA - YIDAKI - ISLAND REGGAE - CHORAL CHANT - ",
-        text: "OCEANIA PACIFIC SURFACE: HULA MELODY AND STEEL GUITAR. HAKA GROUP CHANT FORCE. YIDAKI DRONE TEXTURE. ISLAND REGGAE SKANK. POLYNESIAN CHORAL STACK. FIELD RECORDING WIND AND WATER. CEREMONIAL RHYTHM LOCKED. "
-      }
+    const GLOBE_TILT = 0.08;
+    const AUTO_ROTATION_SPEED = 0.00012;
+    const FRAME_INTERVAL = 1000 / 30;
+    const TEXT_FRAME_INTERVAL = 1000 / 12;
+    const REGION_CONFIGS = [
+      { key: "eastAsia", center: 116 },
+      { key: "southeastAsia", center: 103 },
+      { key: "southAsia", center: 78 },
+      { key: "mena", center: 36 },
+      { key: "europe", center: 10 },
+      { key: "westAfrica", center: -2 },
+      { key: "americas", center: -88 },
+      { key: "oceania", center: 155 }
     ];
+
+    function t(key) {
+      return window.EchoI18n?.t(key) || key;
+    }
+
+    function buildMusicRegions() {
+      return REGION_CONFIGS.map((region) => ({
+        ...region,
+        name: t(`index.globe.region.${region.key}.name`),
+        style: t(`index.globe.region.${region.key}.style`),
+        ring: t(`index.globe.region.${region.key}.ring`),
+        text: t(`index.globe.region.${region.key}.text`)
+      }));
+    }
+
+    let MUSIC_REGIONS = buildMusicRegions();
 
     const container = document.getElementById("earth-container");
     const webglCanvas = document.getElementById("webgl-canvas");
@@ -884,10 +855,14 @@
     let width = Math.max(1, container.clientWidth);
     let height = Math.max(1, container.clientHeight);
 
-    const renderer = new THREE.WebGLRenderer({ canvas: webglCanvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      canvas: webglCanvas,
+      antialias: false,
+      powerPreference: "low-power"
+    });
     renderer.setClearColor(0xffffff, 1);
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
@@ -898,7 +873,7 @@
     const maskPixels = new Uint8Array(MASK_RESOLUTION * MASK_RESOLUTION * 4);
 
     const textureLoader = new THREE.TextureLoader();
-    const geometry = new THREE.SphereGeometry(1, 64, 64);
+    const geometry = new THREE.SphereGeometry(1, 48, 48);
     const earthGroup = new THREE.Group();
     earthGroup.scale.setScalar(GLOBE_SCALE);
     earthGroup.position.set(GLOBE_OFFSET_X, GLOBE_OFFSET_Y, 0);
@@ -955,41 +930,8 @@
         maskEarthMesh.scale.setScalar(GLOBE_SCALE);
         maskEarthMesh.position.copy(earthGroup.position);
         maskScene.add(maskEarthMesh);
-        animate();
+        scheduleFrame();
       });
-    });
-
-    let isDragging = false;
-    let previousPointerPosition = { x: 0, y: 0 };
-    let rotationVelocity = { x: 0.001, y: 0.002 };
-
-    container.addEventListener("pointerdown", (event) => {
-      isDragging = true;
-      container.setPointerCapture(event.pointerId);
-      previousPointerPosition = { x: event.clientX, y: event.clientY };
-    });
-
-    container.addEventListener("pointerup", (event) => {
-      isDragging = false;
-      if (container.hasPointerCapture(event.pointerId)) {
-        container.releasePointerCapture(event.pointerId);
-      }
-    });
-
-    container.addEventListener("pointerleave", () => {
-      isDragging = false;
-    });
-
-    container.addEventListener("pointermove", (event) => {
-      if (!isDragging) return;
-
-      const deltaMove = {
-        x: event.clientX - previousPointerPosition.x,
-        y: event.clientY - previousPointerPosition.y,
-      };
-      rotationVelocity.x = deltaMove.y * 0.005;
-      rotationVelocity.y = deltaMove.x * 0.005;
-      previousPointerPosition = { x: event.clientX, y: event.clientY };
     });
 
     const regionName = document.getElementById("region-name");
@@ -1000,16 +942,24 @@
     let cachedRingText = "";
     let cachedAnglePerChar = 0;
     let textToFill = MUSIC_REGIONS[0].ring;
+    let frameHandle = 0;
+    let lastRenderTime = 0;
+    let lastTextRenderTime = 0;
+    let globeVisible = true;
+    let documentVisible = !document.hidden;
+    let needsTextRedraw = true;
 
     const resize = () => {
       width = Math.max(1, container.clientWidth);
       height = Math.max(1, container.clientHeight);
-      renderer.setSize(width, height);
+      renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       pretextCanvas.width = width;
       pretextCanvas.height = height;
       cachedRingRadius = 0;
+      needsTextRedraw = true;
+      scheduleFrame();
     };
 
     new ResizeObserver(resize).observe(container);
@@ -1051,6 +1001,7 @@
       preparedText = buildWords(region);
       textToFill = region.ring;
       cachedRingRadius = 0;
+      needsTextRedraw = true;
 
       regionName.textContent = region.name;
       regionStyle.textContent = region.style;
@@ -1077,25 +1028,7 @@
       return text ? { text, end: cursor } : null;
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
-      if (!maskEarthMesh) return;
-
-      if (!isDragging) {
-        rotationVelocity.x *= 0.95;
-        rotationVelocity.y *= 0.95;
-        if (Math.abs(rotationVelocity.y) < 0.002) rotationVelocity.y = 0.002;
-      }
-
-      earthGroup.rotation.x += rotationVelocity.x;
-      earthGroup.rotation.y += rotationVelocity.y;
-      syncActiveRegion();
-      maskEarthMesh.rotation.copy(earthGroup.rotation);
-
-      renderer.setRenderTarget(null);
-      renderer.setClearColor(0xffffff, 1);
-      renderer.render(scene, camera);
-
+    function drawTextOverlay(timestamp) {
       renderer.setRenderTarget(maskRenderTarget);
       renderer.setClearColor(0x000000, 1);
       renderer.clear();
@@ -1126,7 +1059,7 @@
       const visualCenter = new THREE.Vector3(GLOBE_OFFSET_X, GLOBE_OFFSET_Y, 0).project(camera);
       const centerX = (visualCenter.x * 0.5 + 0.5) * width;
       const centerY = (-visualCenter.y * 0.5 + 0.5) * height;
-      const time = Date.now() * 0.00005;
+      const time = timestamp * 0.00005;
 
       ctx2d.save();
       ctx2d.font = FONT_SPEC;
@@ -1198,8 +1131,71 @@
       }
       ctx2d.shadowBlur = 0;
     }
+
+    function scheduleFrame() {
+      if (frameHandle || !documentVisible || !globeVisible) return;
+      frameHandle = requestAnimationFrame(animate);
+    }
+
+    function animate(timestamp = 0) {
+      frameHandle = 0;
+      if (!maskEarthMesh || !documentVisible || !globeVisible) return;
+      scheduleFrame();
+
+      if (lastRenderTime && timestamp - lastRenderTime < FRAME_INTERVAL) {
+        return;
+      }
+
+      const delta = lastRenderTime ? Math.min(80, timestamp - lastRenderTime) : FRAME_INTERVAL;
+      lastRenderTime = timestamp;
+
+      earthGroup.rotation.x = GLOBE_TILT;
+      earthGroup.rotation.y += AUTO_ROTATION_SPEED * delta;
+      syncActiveRegion();
+      maskEarthMesh.rotation.copy(earthGroup.rotation);
+
+      renderer.setRenderTarget(null);
+      renderer.setClearColor(0xffffff, 1);
+      renderer.render(scene, camera);
+
+      if (needsTextRedraw || timestamp - lastTextRenderTime >= TEXT_FRAME_INTERVAL) {
+        drawTextOverlay(timestamp);
+        lastTextRenderTime = timestamp;
+        needsTextRedraw = false;
+      }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      documentVisible = !document.hidden;
+      if (documentVisible) {
+        lastRenderTime = 0;
+        needsTextRedraw = true;
+        scheduleFrame();
+      }
+    });
+
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([entry]) => {
+        globeVisible = entry.isIntersecting;
+        if (globeVisible) {
+          lastRenderTime = 0;
+          needsTextRedraw = true;
+          scheduleFrame();
+        }
+      }, { threshold: 0.05 }).observe(container);
+    }
+
+    window.addEventListener("echo-language-change", () => {
+      MUSIC_REGIONS = buildMusicRegions();
+      currentRegionIndex = -1;
+      preparedText = [];
+      textToFill = MUSIC_REGIONS[0].ring;
+      cachedRingRadius = 0;
+      needsTextRedraw = true;
+      syncActiveRegion();
+      scheduleFrame();
+    });
   </script>
-  <script src="i18n.js"></script>
   <script>
     const siteHeader = document.querySelector(".site-header");
     let headerHidden = false;
