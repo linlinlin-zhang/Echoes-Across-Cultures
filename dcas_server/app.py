@@ -162,6 +162,96 @@ def _compress_audio_for_analysis(
     }
 
 
+def _flatten_audio_tags(data: dict) -> dict[str, str]:
+    tags: dict[str, str] = {}
+    for item in [data.get("format") or {}, *(data.get("streams") or [])]:
+        raw_tags = item.get("tags") or {}
+        if not isinstance(raw_tags, dict):
+            continue
+        for key, value in raw_tags.items():
+            text = str(value or "").strip()
+            if text and key:
+                tags.setdefault(str(key).lower(), text)
+    return tags
+
+
+def _probe_audio_tags(path: Path) -> dict[str, str]:
+    cmd = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_format",
+        "-show_streams",
+        "-print_format",
+        "json",
+        str(path),
+    ]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, timeout=30)
+    except Exception:
+        return {}
+    if proc.returncode != 0:
+        return {}
+    try:
+        data = json.loads(proc.stdout.decode("utf-8", errors="replace") or "{}")
+    except Exception:
+        return {}
+    return _flatten_audio_tags(data if isinstance(data, dict) else {})
+
+
+def _tag_first(tags: dict[str, str], *names: str) -> str:
+    for name in names:
+        value = str(tags.get(name.lower()) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _extract_embedded_cover(source: Path, target: Path) -> bool:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "ffmpeg",
+        "-nostdin",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        str(source),
+        "-map",
+        "0:v:0",
+        "-frames:v",
+        "1",
+        str(target),
+    ]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, timeout=45)
+    except Exception:
+        return False
+    return proc.returncode == 0 and target.exists() and target.stat().st_size > 0
+
+
+def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
+    country = _tag_first(tags, "country", "location", "artist_location", "com.apple.iTunes.location")
+    if country:
+        return {
+            "country": country,
+            "city": _tag_first(tags, "city", "venue") or country,
+            "lat": None,
+            "lng": None,
+            "location_precision": "音频标签位置",
+            "location_note": "来自音频文件内嵌 metadata",
+        }
+    return {
+        "country": "神秘的地方",
+        "city": "太平洋中部",
+        "lat": 0.0,
+        "lng": -160.0,
+        "location_precision": "太平洋默认坐标",
+        "location_note": "上传音频没有提供地区信息，默认标注为来自神秘的地方",
+    }
+
+
 def _load_local_kimi_config() -> dict[str, str]:
     paths = [
         Path("configs/secrets/kimi.local.json"),
@@ -506,6 +596,8 @@ def create_app() -> FastAPI:
                 "channels": DEFAULT_UPLOAD_COMPRESSION_CHANNELS,
                 "bitrate": DEFAULT_UPLOAD_COMPRESSION_BITRATE,
                 "trimmed_to_analysis_window": True,
+                "analysis_only": True,
+                "raw_upload_preserved_for_playback_and_metadata": True,
             },
         }
 
@@ -551,10 +643,17 @@ def create_app() -> FastAPI:
         rel_upload_path = storage.relpath(dest)
         analysis_path = dest
         playback_path = dest
+        tag_info = _probe_audio_tags(dest)
+        cover_rel_path = ""
+        cover_path = storage.ensure_dir("uploads/mainline/covers") / f"{saved_stem}.jpg"
+        if _extract_embedded_cover(dest, cover_path):
+            cover_rel_path = storage.relpath(cover_path)
+        place_info = _upload_place_from_tags(tag_info)
         compression_info: dict[str, object] = {
             "status": "disabled",
             "raw_path": rel_upload_path,
             "raw_size_bytes": int(len(content)),
+            "metadata_preserved_in_raw": True,
         }
         if bool(compress_upload):
             compressed_path = (compressed_dir / f"{saved_stem}.mp3").resolve()
@@ -569,18 +668,18 @@ def create_app() -> FastAPI:
                 )
                 compression_info["path"] = storage.relpath(compressed_path)
                 compression_info["raw_path"] = rel_upload_path
+                compression_info["playback_path"] = rel_upload_path
+                compression_info["analysis_only"] = True
+                compression_info["metadata_preserved_in_raw"] = True
                 analysis_path = compressed_path
-                playback_path = compressed_path
-                try:
-                    dest.unlink()
-                    compression_info["raw_deleted"] = True
-                except OSError:
-                    compression_info["raw_deleted"] = False
+                playback_path = dest
+                compression_info["raw_deleted"] = False
             except Exception as e:
                 compression_info = {
                     "status": "fallback_original",
                     "raw_path": rel_upload_path,
                     "raw_size_bytes": int(len(content)),
+                    "metadata_preserved_in_raw": True,
                     "error": str(e)[:1200],
                 }
 
@@ -588,12 +687,21 @@ def create_app() -> FastAPI:
         upload_info = {
             "track_id": f"upload_{dest.stem[:48]}",
             "filename": filename,
-            "title": title or Path(filename).stem,
-            "artist": artist or "Uploaded audio",
+            "title": title or _tag_first(tag_info, "title") or Path(filename).stem,
+            "artist": artist or _tag_first(tag_info, "artist", "album_artist", "albumartist", "composer") or "Uploaded audio",
+            "album": _tag_first(tag_info, "album"),
+            "genre": _tag_first(tag_info, "genre"),
+            "release_date": _tag_first(tag_info, "date", "year"),
+            "description": _tag_first(tag_info, "description", "comment", "synopsis"),
             "path": rel_playback_path,
+            "analysis_path": storage.relpath(analysis_path),
             "size_bytes": int(len(content)),
             "content_type": file.content_type or "",
             "audio_api_url": f"/api/files/download?path={rel_playback_path}",
+            "cover_art_url": f"/api/files/download?path={cover_rel_path}" if cover_rel_path else "",
+            "cover_art_url_large": f"/api/files/download?path={cover_rel_path}" if cover_rel_path else "",
+            "embedded_tags": {key: tag_info[key] for key in sorted(tag_info)[:80]},
+            **place_info,
             "compression": compression_info,
         }
         try:

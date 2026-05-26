@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +17,20 @@ def _require(row: dict[str, str], key: str) -> str:
     if v is None or str(v).strip() == "":
         raise ValueError(f"missing required column '{key}'")
     return str(v).strip()
+
+
+def _resolve_audio_path(rel_audio: str, metadata_path: Path) -> Path:
+    raw = str(rel_audio).strip()
+    if os.name == "nt":
+        normalized = raw.replace("\\", "/")
+        m = re.match(r"^/mnt/([a-zA-Z])/(.+)$", normalized)
+        if m:
+            return Path(f"{m.group(1).upper()}:/{m.group(2)}")
+
+    audio_path = Path(raw)
+    if not audio_path.is_absolute():
+        audio_path = (metadata_path.parent / audio_path).resolve()
+    return audio_path
 
 
 def build_tracks_from_audio(
@@ -91,9 +107,7 @@ def build_tracks_from_audio(
             seen_track_ids.add(tid)
             cul = _require(row, "culture")
             rel_audio = _require(row, "audio_path")
-            audio_path = Path(rel_audio)
-            if not audio_path.is_absolute():
-                audio_path = (metadata_path.parent / audio_path).resolve()
+            audio_path = _resolve_audio_path(rel_audio, metadata_path)
             emb = embedder.embed_file(audio_path)
 
             track_ids.append(tid)

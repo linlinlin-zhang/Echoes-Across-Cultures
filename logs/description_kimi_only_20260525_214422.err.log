@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "E:\Desktop\Echo\dcas\scripts\enrich_metadata_descriptions.py", line 718, in <module>
+    main()
+  File "E:\Desktop\Echo\dcas\scripts\enrich_metadata_descriptions.py", line 693, in main
+    report = enrich_metadata_descriptions(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Desktop\Echo\dcas\scripts\enrich_metadata_descriptions.py", line 572, in enrich_metadata_descriptions
+    _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
+  File "E:\Desktop\Echo\dcas\scripts\enrich_metadata_descriptions.py", line 79, in _write_progress
+    _write_rows(out_path, rows, fields)
+  File "E:\Desktop\Echo\dcas\scripts\enrich_metadata_descriptions.py", line 57, in _write_rows
+    tmp.replace(path)
+  File "C:\Users\48536\anaconda3\Lib\pathlib.py", line 1188, in replace
+    os.replace(self, target)
+PermissionError: [WinError 5] ¾Ü¾ø·ÃÎÊ¡£: 'storage\\public\\merged\\metadata_merged.csv.tmp' -> 'storage\\public\\merged\\metadata_merged.csv'

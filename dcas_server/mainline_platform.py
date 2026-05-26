@@ -153,6 +153,11 @@ class MainlineRecommendationPlatform:
         self._culturemert_embedders: dict[tuple[Any, ...], CultureMERTEmbedder] = {}
 
     def status(self) -> dict[str, Any]:
+        rows = list(self.metadata_by_id.values())
+        description_count = sum(1 for row in rows if _clean(row.get("description")))
+        album_description_count = sum(1 for row in rows if _clean(row.get("album_description")))
+        tag_count = sum(1 for row in rows if _clean(row.get("tags")))
+        description_sources = Counter(_clean(row.get("description_source")) or "unknown" for row in rows if _clean(row.get("description")))
         return {
             "ok": True,
             "loaded_at": self.loaded_at,
@@ -164,6 +169,14 @@ class MainlineRecommendationPlatform:
             "embedding_dim": int(self.tracks.dim),
             "n_metadata_rows": int(len(self.metadata_by_id)),
             "metadata_fields": list(self.metadata_fields),
+            "metadata_coverage": {
+                "description_rows": int(description_count),
+                "missing_description_rows": int(max(0, len(self.metadata_by_id) - description_count)),
+                "album_description_rows": int(album_description_count),
+                "tagged_rows": int(tag_count),
+                "description_ratio": float(description_count / max(1, len(self.metadata_by_id))),
+                "description_sources": dict(sorted(description_sources.items())),
+            },
             "cultures": dict(sorted(self.culture_counts.items())),
             "sources": dict(sorted(self.source_counts.items())),
             "model_cfg": {
@@ -460,16 +473,22 @@ class MainlineRecommendationPlatform:
             "rank": None,
             "title": _clean(upload_info.get("title")) or _clean(upload_info.get("filename")) or "Uploaded audio",
             "artist": _clean(upload_info.get("artist")) or "Uploaded audio",
-            "album": "",
+            "album": _clean(upload_info.get("album")),
+            "description": _clean(upload_info.get("description")),
             "culture": _clean(seed_culture) or str(inferred["culture"]),
             "source_dataset": "upload",
-            "label": "uploaded_audio",
-            "country": "",
+            "label": _clean(upload_info.get("genre")) or "uploaded_audio",
+            "country": _clean(upload_info.get("country")),
+            "city": _clean(upload_info.get("city")),
+            "lat": upload_info.get("lat"),
+            "lng": upload_info.get("lng"),
+            "location_precision": _clean(upload_info.get("location_precision")),
+            "location_note": _clean(upload_info.get("location_note")),
             "duration_ms": 0.0,
             "audio_is_preview": "false",
             "preview_available": "false",
-            "cover_art_url": "",
-            "cover_art_url_large": "",
+            "cover_art_url": _clean(upload_info.get("cover_art_url")),
+            "cover_art_url_large": _clean(upload_info.get("cover_art_url_large")) or _clean(upload_info.get("cover_art_url")),
             "platform": "upload",
             "platform_track_url": "",
             "platform_album_url": "",

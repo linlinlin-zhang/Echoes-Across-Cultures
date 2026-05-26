@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -151,7 +152,14 @@ class CultureMERTEmbedder:
                     load_kwargs["num_frames"] = int(float(self.cfg.max_seconds) * sr_hint)
             except Exception:
                 pass
-        wav, sr = torchaudio.load(str(audio_path), **load_kwargs)
+        try:
+            wav, sr = torchaudio.load(str(audio_path), **load_kwargs)
+        except Exception:
+            return self._load_audio_with_ffmpeg(
+                audio_path,
+                frame_offset=int(frame_offset),
+                num_frames=num_frames,
+            )
         if wav.ndim != 2:
             raise ValueError(f"invalid waveform shape for {audio_path}: {tuple(wav.shape)}")
         wav = wav.mean(dim=0)  # mixdown to mono
@@ -162,6 +170,49 @@ class CultureMERTEmbedder:
         if int(sr) != int(self.sampling_rate):
             wav = torchaudio.functional.resample(wav, orig_freq=int(sr), new_freq=int(self.sampling_rate))
         return wav
+
+    def _load_audio_with_ffmpeg(
+        self,
+        audio_path: Path,
+        frame_offset: int = 0,
+        num_frames: int | None = None,
+    ) -> torch.Tensor:
+        source_sr = self.sampling_rate
+        try:
+            info = torchaudio.info(str(audio_path))
+            if int(info.sample_rate) > 0:
+                source_sr = int(info.sample_rate)
+        except Exception:
+            pass
+
+        start_seconds = max(0.0, float(frame_offset) / float(source_sr))
+        duration_seconds: float | None = None
+        if num_frames is not None and int(num_frames) > 0:
+            duration_seconds = float(num_frames) / float(source_sr)
+        elif self.cfg.max_seconds is not None and float(self.cfg.max_seconds) > 0:
+            duration_seconds = float(self.cfg.max_seconds)
+
+        cmd = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error"]
+        if start_seconds > 0:
+            cmd.extend(["-ss", f"{start_seconds:.6f}"])
+        cmd.extend(["-i", str(audio_path)])
+        if duration_seconds is not None and duration_seconds > 0:
+            cmd.extend(["-t", f"{duration_seconds:.6f}"])
+        cmd.extend(["-ac", "1", "-ar", str(self.sampling_rate), "-f", "f32le", "pipe:1"])
+
+        timeout = None
+        if duration_seconds is not None and duration_seconds > 0:
+            timeout = max(60.0, duration_seconds + 60.0)
+        proc = subprocess.run(cmd, capture_output=True, timeout=timeout)
+        if proc.returncode != 0:
+            err = proc.stderr.decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"ffmpeg failed for {audio_path}: {err}")
+        if not proc.stdout:
+            raise RuntimeError(f"ffmpeg produced no audio for {audio_path}")
+        arr = np.frombuffer(proc.stdout, dtype=np.float32).copy()
+        if arr.size == 0:
+            raise RuntimeError(f"ffmpeg produced empty audio for {audio_path}")
+        return torch.from_numpy(arr)
 
     def embed_waveform(self, wav: torch.Tensor, sampling_rate: int) -> np.ndarray:
         if wav.ndim != 1:

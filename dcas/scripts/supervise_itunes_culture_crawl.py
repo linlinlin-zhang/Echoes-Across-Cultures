@@ -23,15 +23,40 @@ from dcas.scripts.crawl_itunes_previews import COUNTRY_TO_CULTURE
 
 
 DEFAULT_TARGETS = {
-    "china": 700,
-    "japan": 500,
-    "korea": 500,
-    "india": 500,
-    "brazil": 500,
-    "latin": 500,
-    "africa": 500,
-    "middle_east": 500,
-    "southeast_asia": 500,
+    "china": 1200,
+    "japan": 1200,
+    "korea": 1200,
+    "india": 1200,
+    "brazil": 1200,
+    "latin": 1200,
+    "africa": 1200,
+    "middle_east": 1200,
+    "southeast_asia": 1200,
+    "celtic": 1200,
+    "nordic": 1200,
+    "eastern_europe": 1200,
+    "balkans": 1200,
+    "caribbean": 1200,
+    "andean": 1199,
+    "central_asia": 1199,
+}
+
+CUSTOM_CULTURE_COUNTRIES = {
+    "celtic": ["IE", "GB"],
+    "nordic": ["SE", "NO", "FI", "DK", "IS"],
+    "eastern_europe": ["PL", "CZ", "HU", "RO", "SK", "UA"],
+    "balkans": ["GR", "BG", "HR", "RS", "SI", "BA", "ME", "MK", "AL"],
+    "caribbean": ["JM", "DO", "TT", "BB", "BS", "PR"],
+    "andean": ["PE", "CO", "CL", "AR", "EC", "BO"],
+    "central_asia": ["KZ", "KG", "UZ", "TJ", "TM"],
+}
+
+EXTRA_TERMS_BY_CULTURE = {
+    "china": [
+        "cantonese songs", "hakka songs", "hokkien songs", "taiwanese hokkien",
+        "minnan songs", "teochew songs", "shanghainese songs",
+        "sichuan dialect songs", "wu chinese songs", "yue chinese songs",
+    ],
 }
 
 
@@ -61,6 +86,19 @@ def read_unique_rows(metadata_path: Path) -> list[dict[str, str]]:
     return list(by_id.values())
 
 
+def read_unique_rows_many(metadata_paths: list[Path]) -> list[dict[str, str]]:
+    by_id: dict[str, dict[str, str]] = {}
+    for metadata_path in metadata_paths:
+        if not metadata_path.exists():
+            continue
+        with metadata_path.open("r", encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                track_id = str(row.get("track_id", "")).strip()
+                if track_id and track_id not in by_id:
+                    by_id[track_id] = row
+    return list(by_id.values())
+
+
 def read_state_collected(state_path: Path, fallback: int) -> int:
     if not state_path.exists():
         return fallback
@@ -75,11 +113,12 @@ def countries_by_culture() -> dict[str, list[str]]:
     grouped: dict[str, list[str]] = {}
     for country, culture in COUNTRY_TO_CULTURE.items():
         grouped.setdefault(culture, []).append(country)
+    grouped.update({culture: list(countries) for culture, countries in CUSTOM_CULTURE_COUNTRIES.items()})
     return grouped
 
 
-def culture_counts(out_dir: Path) -> tuple[Counter[str], int]:
-    rows = read_unique_rows(out_dir / "metadata.csv")
+def culture_counts(out_dir: Path, count_metadata: list[Path]) -> tuple[Counter[str], int]:
+    rows = read_unique_rows_many([out_dir / "metadata.csv", *count_metadata])
     counts = Counter(str(row.get("culture", "")).strip() for row in rows)
     return counts, len(rows)
 
@@ -172,6 +211,7 @@ def main() -> int:
     ap.add_argument("--restart_delay", type=int, default=120)
     ap.add_argument("--max_attempts", type=int, default=0, help="0 means unlimited")
     ap.add_argument("--idle_round_limit", type=int, default=8, help="0 means unlimited")
+    ap.add_argument("--count_metadata", nargs="*", default=[], help="Extra metadata.csv files to count toward culture targets")
     ap.add_argument("--merge_out", default="./storage/public/merged/metadata_merged.csv")
     ap.add_argument("--skip_merge", action="store_true")
     ap.add_argument("--dry_run", action="store_true")
@@ -187,6 +227,7 @@ def main() -> int:
     pid_path.write_text(str(os.getpid()), encoding="utf-8")
 
     targets = parse_targets(args.targets)
+    count_metadata = [Path(p) for p in args.count_metadata if Path(p).exists()]
     grouped = countries_by_culture()
     unknown = [culture for culture in targets if culture not in grouped]
     if unknown:
@@ -200,9 +241,10 @@ def main() -> int:
     print("[SUPERVISOR START]")
     print(f"out_dir={out_dir}")
     print(f"targets={targets}")
+    print(f"count_metadata={[str(p) for p in count_metadata]}")
 
     while True:
-        counts, unique_total = culture_counts(out_dir)
+        counts, unique_total = culture_counts(out_dir, count_metadata)
         selected = choose_next_culture(counts, targets)
         write_status(
             status_path,
@@ -234,10 +276,12 @@ def main() -> int:
         before_total = unique_total
         remaining = targets[selected] - before_selected
         batch = max(1, min(args.batch_size, remaining))
-        state_total = read_state_collected(out_dir / "state.json", before_total)
+        itunes_total = len(read_unique_rows(out_dir / "metadata.csv"))
+        state_total = read_state_collected(out_dir / "state.json", itunes_total)
         target_total = state_total + batch
         countries = grouped[selected]
         country_arg = ",".join(countries)
+        extra_terms = EXTRA_TERMS_BY_CULTURE.get(selected, [])
         log_path = log_dir / (
             f"itunes_nonwestern_{selected}_{time.strftime('%Y%m%d_%H%M%S')}"
             f"_attempt{attempts}.log"
@@ -259,8 +303,12 @@ def main() -> int:
             str(args.checkpoint_interval),
             "--max_per_query",
             str(args.max_per_query),
+            "--culture_override",
+            selected,
             "--resume",
         ]
+        if extra_terms:
+            cmd.extend(["--extra_terms", ",".join(extra_terms)])
 
         print(
             f"[ATTEMPT {attempts}] culture={selected} "
@@ -272,7 +320,7 @@ def main() -> int:
             return 0
 
         last_exit_code = stream_subprocess(cmd, log_path)
-        counts_after, total_after = culture_counts(out_dir)
+        counts_after, total_after = culture_counts(out_dir, count_metadata)
         after_selected = counts_after.get(selected, 0)
         gained = after_selected - before_selected
         total_gained = total_after - before_total

@@ -64,8 +64,12 @@ CULTURE_TAG_CONFIGS: dict[str, dict[str, Any]] = {
         "fuzzytags": "",
     },
     "china": {
-        "tags": ["chinese", "mandopop", "cantopop", "c-pop", "chinese folk"],
-        "fuzzytags": "chinese,china,mandarin,cantonese",
+        "tags": [
+            "chinese", "mandopop", "cantopop", "c-pop", "chinese folk",
+            "cantonese", "hakka", "hokkien", "taiwanese", "minnan",
+            "teochew", "shanghainese",
+        ],
+        "fuzzytags": "chinese,china,mandarin,cantonese,hakka,hokkien,taiwanese,minnan,teochew,shanghainese",
     },
     "korea": {
         "tags": ["korean", "k-pop", "k-indie"],
@@ -100,8 +104,32 @@ CULTURE_TAG_CONFIGS: dict[str, dict[str, Any]] = {
         "fuzzytags": "thai,vietnamese,philippine,malay,indonesian,dangdut",
     },
     "celtic": {
-        "tags": ["celtic", "irish", "scottish", "breton", "galician"],
-        "fuzzytags": "celtic,irish,scottish",
+        "tags": ["celtic", "irish", "scottish", "breton", "galician", "gaelic", "fiddle"],
+        "fuzzytags": "celtic,irish,scottish,gaelic,breton,galician",
+    },
+    "nordic": {
+        "tags": ["nordic", "scandinavian", "swedish", "norwegian", "finnish", "danish", "icelandic"],
+        "fuzzytags": "nordic,scandinavian,swedish,norwegian,finnish,danish,icelandic",
+    },
+    "eastern_europe": {
+        "tags": ["polish", "ukrainian", "czech", "hungarian", "romanian", "slavic"],
+        "fuzzytags": "polish,ukrainian,czech,hungarian,romanian,slavic,eastern,europe",
+    },
+    "balkans": {
+        "tags": ["balkan", "greek", "serbian", "croatian", "bulgarian", "sevdah"],
+        "fuzzytags": "balkan,greek,serbian,croatian,bulgarian,sevdah",
+    },
+    "caribbean": {
+        "tags": ["caribbean", "reggae", "dancehall", "soca", "calypso", "zouk"],
+        "fuzzytags": "caribbean,reggae,dancehall,soca,calypso,zouk,kompa",
+    },
+    "andean": {
+        "tags": ["andean", "huayno", "quechua", "charango", "peruvian", "bolivian"],
+        "fuzzytags": "andean,huayno,quechua,charango,peruvian,bolivian",
+    },
+    "central_asia": {
+        "tags": ["kazakh", "uzbek", "kyrgyz", "tajik", "turkmen", "central asian"],
+        "fuzzytags": "kazakh,uzbek,kyrgyz,tajik,turkmen,central,asian",
     },
 }
 
@@ -438,6 +466,8 @@ class JamendoCrawler:
             to_download = [r for r in records if r.track_id not in downloaded_set and r.track_id not in failed_set]
             if not to_download:
                 return
+            completed_in_batch = 0
+            flush_every = max(10, self.workers * 2)
             with ThreadPoolExecutor(max_workers=self.workers) as ex:
                 futures = {ex.submit(self.download_track, r): r for r in to_download}
                 for fut in as_completed(futures):
@@ -457,6 +487,13 @@ class JamendoCrawler:
                         print(f"[BATCH ERROR] {rec.track_id}: {e}")
                         failed_set.add(rec.track_id)
                         state.failed_track_ids.append(rec.track_id)
+                    completed_in_batch += 1
+                    if completed_in_batch % flush_every == 0:
+                        print(
+                            f"[DOWNLOAD PROGRESS] batch={completed_in_batch}/{len(to_download)} "
+                            f"total_downloaded={state.total_downloaded} failed={len(state.failed_track_ids)}"
+                        )
+                        do_checkpoint(force=True)
 
         try:
             for qidx, (culture, tags, fuzzytags) in enumerate(query_pool, start=1):
@@ -540,7 +577,7 @@ class JamendoCrawler:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Bulk collect Jamendo CC-licensed tracks for DCAS.")
-    ap.add_argument("--client_id", required=True, help="Jamendo API Client ID (get from https://devportal.jamendo.com/)")
+    ap.add_argument("--client_id", default=os.environ.get("JAMENDO_CLIENT_ID", ""), help="Jamendo API Client ID (or set JAMENDO_CLIENT_ID)")
     ap.add_argument("--out_dir", required=True, help="Output directory for audio + metadata")
     ap.add_argument("--cultures", default="", help="Comma-separated cultures to crawl (default: all)")
     ap.add_argument("--target_total", type=int, default=20_000, help="Target unique tracks")
@@ -552,6 +589,10 @@ def main() -> None:
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if not str(args.client_id).strip():
+        print("[AUTH/API TEST FAILED] Missing Jamendo Client ID. Set --client_id or JAMENDO_CLIENT_ID.")
+        sys.exit(1)
 
     cultures = [c.strip().lower() for c in args.cultures.split(",") if c.strip()]
     if not cultures:

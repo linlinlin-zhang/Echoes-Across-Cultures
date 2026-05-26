@@ -7,7 +7,7 @@
 
 ## 1. 代码仓库状态
 
-本分支已领先远程仓库 **6 个 commit**，刚刚完成推送。工作区干净，无未提交更改。
+本分支已领先远程仓库 **6 个 commit**。当前工作区有本轮数据采集与 embedding 管线相关的未提交修改。
 
 ### 最近提交概览
 
@@ -36,7 +36,7 @@
 |---|---|---|
 | **Spotify Web API** | 基本不可用 | 2024年11月政策变更后，`preview_url` 完全不再返回；Development Mode 搜索上限仅 10 条/请求；音频特征和 popularity 字段亦被移除。脚本保留仅作元数据备用。 |
 | **Apple iTunes Search API** | 可用，已通过 smoke test | 无需 API Key，返回 30 秒 AAC 预览（`.m4a`）。2026-05-23 已修复“只收集不下载”的集合标记 bug，并验证可实际写入 `.m4a`。 |
-| **Jamendo API** | 推荐主力，等待 Client ID | Creative Commons 授权，可合法下载完整 MP3。脚本已就绪；`run_jamendo_crawl.ps1` 现优先读取环境变量 `JAMENDO_CLIENT_ID`。 |
+| **Jamendo API** | 可用，扩展抓取中 | Creative Commons 授权，可合法下载完整 MP3。Client ID 已验证通过；`run_jamendo_crawl.ps1` 与爬虫脚本均优先读取环境变量 `JAMENDO_CLIENT_ID`。 |
 | **Free Music Archive (FMA)** | 备选补充 | 可通过 HuggingFace 下载大规模 CC 音乐数据集，用于补充冷门文化区域。 |
 
 ### 2.2 已就绪的爬虫脚本
@@ -56,7 +56,7 @@
 | 脚本 | 对应爬虫 | 状态 |
 |---|---|---|
 | `run_itunes_crawl.ps1` | iTunes | 安全，可直接使用 |
-| `run_itunes_nonwestern_supervisor.ps1` | iTunes | 非西方文化域补量守护脚本；默认中国 700，其余非西方域 500 |
+| `run_itunes_nonwestern_supervisor.ps1` | iTunes | 扩展文化域补量守护脚本；当前按 iTunes+Jamendo 合并计数，中国 1000，其余域 700 |
 | `run_jamendo_crawl.ps1` | Jamendo | 需用户填写 `JAMENDO_CLIENT_ID` |
 | `run_merge_metadata.ps1` | merge | 安全，自动检测输入文件 |
 | `run_spotify_crawl.ps1` | Spotify | **含真实凭证，勿提交 git** |
@@ -72,10 +72,13 @@
 - **修复**：分离 `seen_set` 与 `downloaded_set`；只有实际下载成功后才写入 `downloaded_set` / `downloaded_track_ids`。
 - **验证**：2026-05-23 在 `storage/public/itunes_smoke_codex_source_20260523/` 运行小规模 smoke crawl，`target_total=2`，结果 `total_collected=2`、`total_downloaded=2`，metadata 指向的 `.m4a` 文件均存在。
 - **当前小样本**：已在 `storage/public/itunes_crawl/` 抓取 10 条预览，覆盖 `west/japan/korea/india/brazil` 各 2 条；已合并到 `storage/public/merged/metadata_merged.csv`。
-- **当前大规模任务状态**：2026-05-24 重新盘点，`storage/public/itunes_crawl/metadata.csv` 按 `track_id` 去重为 9975 首；当前主要集中在 west（9967 首），JP/KR/IN/BR 各 2 首。后台进程当前不在运行；上一轮在 `FI / indie` 查询遇到 iTunes SSL EOF 后停止。
+- **当前大规模任务状态**：2026-05-24 第一轮 iTunes 非西方补量已完成，`storage/public/itunes_crawl/metadata.csv` 按 `track_id` 去重为 14667 首；iTunes 侧已达到 China 700、Japan/Korea/India/Brazil/Latin/Africa/Middle East/Southeast Asia 各 500。
 - **韧性修复**：`crawl_itunes_previews.py` 已改为单个 query 请求失败时保存 checkpoint 并跳过该 query，不再让整轮任务直接崩掉；未完成 query 不会写入 `completed_queries`，后续守护脚本可重试。
-- **补量目标**：新增 `dcas/scripts/supervise_itunes_culture_crawl.py`、`scripts/supervise_itunes_nonwestern_crawl.sh`、`run_itunes_nonwestern_supervisor.ps1`。默认 iTunes 非西方文化域目标为中国 700 首，`japan/korea/india/brazil/latin/africa/middle_east/southeast_asia` 各 500 首；west 不继续主动补量。
-- **续跑注意**：旧的 `scripts/run_itunes_balanced_world_crawl.sh` 仍保留按 country 当前数量补到 `PER_COUNTRY` 的能力；非西方补量优先使用新的 supervisor，避免 west 继续扩大。
+- **扩展补量目标**：2026-05-24 已将 supervisor 升级为按 iTunes+Jamendo 合并计数判断缺口：China 目标 1000，其余所有跟踪文化域目标 700。新增 6 个文化域：`nordic`、`eastern_europe`、`balkans`、`caribbean`、`andean`、`central_asia`；同时将已有低量 `celtic` 补到 700。
+- **中国方言补量**：中国文化域 query pool 已加入 Cantonese、Hakka、Hokkien/Taiwanese Hokkien、Minnan、Teochew、Shanghainese、Sichuan dialect、Wu Chinese、Yue Chinese 等关键词。
+- **第二阶段 3 万首目标**：2026-05-24 已启动新一轮 iTunes 非西方补量，west 不再补。当前总目标为 30000 首：west 保持现有 10802 首，16 个非西方文化域合计 19198 首，单域目标为 1199-1200 首。
+- **当前后台任务**：`scripts/run_itunes_30k_nonwest_then_embedding.sh` 正在运行；活动日志记录在 `storage/public/merged/nonwest_30k_to_embedding_active_log.txt` 指向的文件。完成后会自动 merge、补封面/播放链接字段，并重启 CultureMERT embedding。
+- **续跑注意**：旧的 `scripts/run_itunes_balanced_world_crawl.sh` 仍保留按 country 当前数量补到 `PER_COUNTRY` 的能力；文化域补量优先使用新的 supervisor，避免 west 继续扩大。
 
 ### 3.2 Spotify 彻底无法获取预览
 
@@ -83,11 +86,14 @@
 - 当前 `crawl_spotify_previews.py` 可收集歌曲元数据（曲名、艺人、专辑、发行日期等），但无法下载音频。
 - 建议：仅作为 Jamendo/iTunes 元数据的补充对齐来源，不依赖其实际抓音功能。
 
-### 3.3 Jamendo 凭证状态
+### 3.3 Jamendo 凭证与扩展状态
 
 - Jamendo Client ID 已验证可用，API 返回 `status=success`。
 - 2026-05-23 已完成一轮 Jamendo 采集：77 个查询槽全部跑完，`storage/public/jamendo_crawl/metadata.csv` 按 `track_id` 去重为 1742 首，`state.json` 记录 `total_collected=1784`、`total_downloaded=1742`、失败下载 42 个。
 - 主要分布：west 835、latin 289、brazil 130、celtic 116、india 110、middle_east 94、japan 61、africa 53、china 39、southeast_asia 10、korea 5。
+- 2026-05-24 已扩展 Jamendo 文化域配置到 17 个：`west`、`china`、`korea`、`japan`、`india`、`latin`、`brazil`、`africa`、`middle_east`、`southeast_asia`、`celtic`、`nordic`、`eastern_europe`、`balkans`、`caribbean`、`andean`、`central_asia`。
+- 中国 Jamendo 标签已补充 Cantonese、Hakka、Hokkien/Taiwanese、Minnan、Teochew、Shanghainese 等方言/区域关键词。
+- Jamendo 扩展抓取已完成，`storage/public/jamendo_crawl/metadata.csv` 当前按 `track_id` 去重为 2551 首，覆盖 17 个文化域；其中新增补充较明显的是 Caribbean、Celtic、Eastern Europe、Balkans、Andean、Nordic 等。
 - 也可用环境变量方式运行：
 
 ```powershell
@@ -136,12 +142,15 @@ $env:JAMENDO_CLIENT_ID = "your_client_id"
 
 ### 紧急（阻塞数据流）
 - [x] **修复 `crawl_itunes_previews.py` 的下载 bug**，验证能实际写入 `.m4a` 文件。
-- [ ] **申请 Jamendo Client ID** 并执行小规模 Jamendo 抓取测试。
+- [x] **申请 Jamendo Client ID** 并执行小规模 Jamendo 抓取测试。
 
 ### 高优先级（构建数据集）
-- [ ] 使用 iTunes 非西方 supervisor 补量：中国至少 700 首，其余非西方文化域至少 500 首。
-- [ ] 运行 `run_merge_metadata.ps1` 或 `merge_metadata_dedup.py` 进行 iTunes/Jamendo/Spotify 可用输入合并。
-- [ ] 使用 `build_tracks_from_audio.py` 生成 **CultureMERT 嵌入**（`ntua-slp/CultureMERT-95M`，mean pooling，30s 截断）。
+- [x] 使用 iTunes supervisor 继续扩展文化域：中国至少 1000 首，其余跟踪文化域至少 700 首，并覆盖 6 个新增文化域。
+- [x] 运行 `merge_metadata_dedup.py` 进行 iTunes/Jamendo 可用输入合并。
+- [ ] 当前执行第二阶段 3 万首补量：west 保持现状，剩余名额均匀分配给非西方文化域。
+- [ ] 补量完成后由 `scripts/run_itunes_30k_nonwest_then_embedding.sh` 自动重跑合并、补 metadata 媒体字段并启动正式 **CultureMERT 嵌入**（`ntua-slp/CultureMERT-95M`，mean pooling，30s 截断）。
+- [x] CultureMERT embedding smoke test 已通过：`storage/public/merged/tracks_culturemert_smoke3.npz`，3 首、768 维、0 错误。
+- [x] 已新增 metadata enrichment：`dcas/scripts/enrich_metadata_media_links.py` 会回填/统一 `cover_art_url`、`cover_art_url_large`、`platform_track_url`、`platform_album_url`、`external_url`、`full_track_url`、`audio_is_preview` 等字段。
 
 ### 中优先级（前端与系统）
 - [ ] 基于 `web/example/` 的验证方向，确定正式前端技术栈（React/Vue/纯原生？）。
@@ -161,6 +170,9 @@ $env:JAMENDO_CLIENT_ID = "your_client_id"
 | iTunes 爬虫 | `dcas/scripts/crawl_itunes_previews.py` |
 | Jamendo 爬虫 | `dcas/scripts/crawl_jamendo.py` |
 | 通用元数据合并 | `dcas/scripts/merge_metadata_dedup.py` |
+| metadata 封面与播放链接补全 | `dcas/scripts/enrich_metadata_media_links.py` |
+| Jamendo 完成后自动 merge + embedding | `scripts/run_post_jamendo_embedding.sh` |
+| 3 万首非西方均衡补量 + enrich + embedding | `scripts/run_itunes_30k_nonwest_then_embedding.sh` |
 | Spotify/Jamendo 专用合并 | `dcas/scripts/merge_spotify_jamendo_metadata.py` |
 | iTunes 启动器 | `run_itunes_crawl.ps1` |
 | Jamendo 启动器 | `run_jamendo_crawl.ps1` |

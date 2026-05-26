@@ -108,10 +108,14 @@ def _has_description(row: dict[str, str]) -> bool:
     return bool(_clean(row.get("description")))
 
 
+def _is_legacy_kimi_description(row: dict[str, str]) -> bool:
+    return _clean(row.get("description_source")) == "kimi_generated"
+
+
 def _can_replace_description(row: dict[str, str], *, overwrite_generated: bool) -> bool:
     if not _clean(row.get("description")):
         return True
-    return overwrite_generated and _clean(row.get("description_source")).startswith("kimi_generated")
+    return overwrite_generated and _is_legacy_kimi_description(row)
 
 
 def _itunes_numeric_id(track_id: str) -> str:
@@ -199,7 +203,7 @@ def _select_candidates(
             if only_generated
             else (
                 not _has_description(row)
-                or (overwrite_generated and _clean(row.get("description_source")).startswith("kimi_generated"))
+                or (overwrite_generated and _is_legacy_kimi_description(row))
             )
         )
         and (not source_filter or _clean(row.get("source_dataset")).lower() in source_filter)
@@ -543,35 +547,40 @@ def enrich_metadata_descriptions(
         "write_every": int(write_every),
     }
 
-    for pos, idx in enumerate(candidates, start=1):
-        row = rows[idx]
-        before = dict(row)
-        source = _clean(row.get("source_dataset")).lower()
-        try:
-            if use_itunes and source == "itunes":
-                item = _lookup_itunes(row, session)
-                stats["itunes_checked"] += 1
-                if item and _apply_itunes_info(row, item, overwrite_generated=overwrite_generated):
-                    changed_indices.add(idx)
-            elif use_jamendo and source == "jamendo" and jamendo_client_id:
-                item = _lookup_jamendo(row, jamendo_client_id, session)
-                stats["jamendo_checked"] += 1
-                if item and _apply_jamendo_info(row, item, overwrite_generated=overwrite_generated):
-                    changed_indices.add(idx)
-        except requests.RequestException as exc:
-            print(f"[WARN] platform lookup failed for row {idx}: {exc}", flush=True)
-        if row != before:
-            stats["platform_metadata_updates"] += 1
-            if _clean(row.get("description")) or _clean(row.get("album_description")):
-                stats["platform_descriptions"] += 1
-        if pos % 25 == 0:
-            print(f"[INFO] platform pass {pos}/{len(candidates)}", flush=True)
-        if int(write_every) > 0 and pos % int(write_every) == 0:
-            stats["platform_completed"] = pos
-            stats["changed_rows"] = len(changed_indices)
-            _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
-        if sleep_seconds > 0:
-            time.sleep(sleep_seconds)
+    run_platform_pass = use_itunes or (use_jamendo and bool(jamendo_client_id))
+    if run_platform_pass:
+        for pos, idx in enumerate(candidates, start=1):
+            row = rows[idx]
+            before = dict(row)
+            source = _clean(row.get("source_dataset")).lower()
+            try:
+                if use_itunes and source == "itunes":
+                    item = _lookup_itunes(row, session)
+                    stats["itunes_checked"] += 1
+                    if item and _apply_itunes_info(row, item, overwrite_generated=overwrite_generated):
+                        changed_indices.add(idx)
+                elif use_jamendo and source == "jamendo" and jamendo_client_id:
+                    item = _lookup_jamendo(row, jamendo_client_id, session)
+                    stats["jamendo_checked"] += 1
+                    if item and _apply_jamendo_info(row, item, overwrite_generated=overwrite_generated):
+                        changed_indices.add(idx)
+            except requests.RequestException as exc:
+                print(f"[WARN] platform lookup failed for row {idx}: {exc}", flush=True)
+            if row != before:
+                stats["platform_metadata_updates"] += 1
+                if _clean(row.get("description")) or _clean(row.get("album_description")):
+                    stats["platform_descriptions"] += 1
+            if pos % 25 == 0:
+                print(f"[INFO] platform pass {pos}/{len(candidates)}", flush=True)
+            if int(write_every) > 0 and pos % int(write_every) == 0:
+                stats["platform_completed"] = pos
+                stats["changed_rows"] = len(changed_indices)
+                _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
+            if sleep_seconds > 0:
+                time.sleep(sleep_seconds)
+    else:
+        stats["platform_completed"] = 0
+        stats["changed_rows"] = len(changed_indices)
 
     wiki_count = 0
     if use_wikipedia and max_wikipedia > 0:
@@ -600,11 +609,11 @@ def enrich_metadata_descriptions(
         idx
         for idx in candidates
         if not _has_description(rows[idx])
-        or (overwrite_generated and _clean(rows[idx].get("description_source")).startswith("kimi_generated"))
+        or (overwrite_generated and _is_legacy_kimi_description(rows[idx]))
     ][: max(0, max_kimi)]
     if use_kimi and kimi_targets and kimi_config.get("api_key"):
         def run_one(row_idx: int) -> tuple[int, str, str]:
-            for attempt in range(1, 3):
+            for attempt in range(1, 7):
                 try:
                     return row_idx, _call_kimi(
                         rows[row_idx],
@@ -613,9 +622,13 @@ def enrich_metadata_descriptions(
                         retry_completion_tokens=kimi_retry_completion_tokens,
                     ), ""
                 except requests.RequestException as exc:
-                    if attempt >= 2:
+                    if attempt >= 6:
                         return row_idx, "", str(exc)
-                    time.sleep(1.5 * attempt)
+                    status_code = getattr(getattr(exc, "response", None), "status_code", None)
+                    if status_code == 429:
+                        time.sleep(min(120, 8 * (2 ** (attempt - 1))))
+                    else:
+                        time.sleep(2.0 * attempt)
             return row_idx, "", "unknown"
 
         completed = 0
@@ -634,7 +647,7 @@ def enrich_metadata_descriptions(
                         print(f"[WARN] kimi failed for row {idx}: {error[:180]}", flush=True)
                     if text and (
                         not _clean(rows[idx].get("description"))
-                        or (overwrite_generated and _clean(rows[idx].get("description_source")).startswith("kimi_generated"))
+                        or (overwrite_generated and _is_legacy_kimi_description(rows[idx]))
                     ):
                         rows[idx]["description"] = text
                         rows[idx]["description_source"] = KIMI_DESCRIPTION_SOURCE

@@ -50,6 +50,12 @@ ITUNES_LOOKUP_URL = "https://itunes.apple.com/lookup"
 # Apple rate limit: ~20 req/min for Search API
 REQUEST_INTERVAL = 3.5  # seconds between requests (conservative)
 
+
+def _upscale_itunes_artwork(url: str, size: int = 600) -> str:
+    if not url:
+        return ""
+    return re.sub(r"/\d+x\d+bb\.(jpg|png|webp)$", f"/{size}x{size}bb.\\1", url)
+
 # ---------------------------------------------------------------------------
 # Country to culture mapping
 # ---------------------------------------------------------------------------
@@ -96,12 +102,25 @@ CULTURE_SEARCH_TERMS: dict[str, list[str]] = {
     "japan": ["j-pop", "j-rock", "city pop", "enka", "anime"],
     "korea": ["k-pop", "korean", "trot", "k-indie"],
     "india": ["bollywood", "indian pop", "hindustani", "carnatic"],
-    "china": ["mandopop", "cantopop", "chinese pop", "taiwan pop"],
+    "china": [
+        "mandopop", "cantopop", "chinese pop", "taiwan pop",
+        "cantonese songs", "hong kong pop", "hakka songs", "hokkien songs",
+        "taiwanese hokkien", "minnan songs", "teochew songs",
+        "shanghainese songs", "sichuan dialect songs", "wu chinese songs",
+        "yue chinese songs",
+    ],
     "brazil": ["samba", "bossa nova", "mpb", "sertanejo"],
     "latin": ["reggaeton", "salsa", "bachata", "cumbia", "tango"],
     "africa": ["afrobeats", "amapiano", "highlife", "soukous"],
     "middle_east": ["arabic pop", "turkish pop", "persian pop", "rai"],
     "southeast_asia": ["thai pop", "dangdut", "v-pop", "opm"],
+    "celtic": ["celtic", "irish folk", "scottish folk", "gaelic", "breton", "fiddle"],
+    "nordic": ["nordic", "scandinavian", "swedish pop", "norwegian", "finnish", "danish", "icelandic"],
+    "eastern_europe": ["polish folk", "ukrainian", "czech", "hungarian", "romanian", "slavic"],
+    "balkans": ["balkan", "greek", "serbian", "croatian", "bulgarian", "sevdah", "turbofolk"],
+    "caribbean": ["caribbean", "reggae", "dancehall", "soca", "calypso", "zouk", "kompa"],
+    "andean": ["andean", "huayno", "quechua music", "charango", "peruvian folk", "bolivian folk"],
+    "central_asia": ["central asian", "kazakh", "uzbek", "kyrgyz", "tajik", "turkmen"],
 }
 
 DEFAULT_COUNTRIES = list(COUNTRY_TO_CULTURE.keys())
@@ -125,7 +144,13 @@ class TrackRecord:
     release_date: str
     explicit: str
     artwork_url: str
+    artwork_url_60: str
+    artwork_url_large: str
     collection_id: str
+    artist_id: str
+    track_url: str
+    collection_url: str
+    artist_url: str
 
     def to_metadata_row(self, audio_rel_path: str) -> dict[str, str]:
         return {
@@ -143,7 +168,15 @@ class TrackRecord:
             "release_date": self.release_date,
             "preview_url": self.preview_url,
             "artwork_url": self.artwork_url,
+            "artwork_url_60": self.artwork_url_60,
+            "artwork_url_large": self.artwork_url_large,
             "collection_id": self.collection_id,
+            "artist_id": self.artist_id,
+            "track_url": self.track_url,
+            "itunes_url": self.track_url,
+            "apple_music_url": self.track_url,
+            "collection_url": self.collection_url,
+            "artist_url": self.artist_url,
         }
 
 
@@ -196,6 +229,25 @@ class CheckpointManager:
 
     def append_metadata_rows(self, rows: list[dict[str, str]], fieldnames: list[str]) -> None:
         write_header = not self.metadata_path.exists()
+        if self.metadata_path.exists():
+            with open(self.metadata_path, "r", encoding="utf-8", newline="") as f:
+                reader = csv.DictReader(f)
+                existing_fields = list(reader.fieldnames or [])
+                existing_rows = list(reader)
+            if existing_fields and existing_fields != fieldnames:
+                merged_fields = list(existing_fields)
+                for name in fieldnames:
+                    if name not in merged_fields:
+                        merged_fields.append(name)
+                tmp = self.metadata_path.with_suffix(".tmp.csv")
+                with open(tmp, "w", encoding="utf-8", newline="") as f:
+                    writer = csv.DictWriter(f, fieldnames=merged_fields)
+                    writer.writeheader()
+                    for row in existing_rows:
+                        writer.writerow({c: str(row.get(c, "")) for c in merged_fields})
+                tmp.replace(self.metadata_path)
+                fieldnames = merged_fields
+                write_header = False
         with open(self.metadata_path, "a", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             if write_header:
@@ -279,6 +331,8 @@ class iTunesCrawler:
         workers: int,
         checkpoint_interval: int,
         max_per_query: int,
+        culture_override: str = "",
+        extra_terms: list[str] | None = None,
     ):
         self.session = session
         self.checkpoint = checkpoint
@@ -288,6 +342,8 @@ class iTunesCrawler:
         self.workers = workers
         self.checkpoint_interval = checkpoint_interval
         self.max_per_query = max(1, int(max_per_query))
+        self.culture_override = culture_override.strip()
+        self.extra_terms = [t.strip() for t in (extra_terms or []) if t.strip()]
 
         self.audio_dir = out_dir / "audio"
         self.audio_dir.mkdir(parents=True, exist_ok=True)
@@ -296,7 +352,9 @@ class iTunesCrawler:
             "track_id", "culture", "audio_path", "source_dataset", "label",
             "title", "artist", "album", "country",
             "duration_ms", "explicit", "release_date",
-            "preview_url", "artwork_url", "collection_id",
+            "preview_url", "artwork_url", "artwork_url_60", "artwork_url_large",
+            "collection_id", "artist_id", "track_url", "itunes_url", "apple_music_url",
+            "collection_url", "artist_url",
         ]
 
     def search_tracks(
@@ -330,6 +388,7 @@ class iTunesCrawler:
         preview = item.get("previewUrl", "")
         if not preview:
             return None
+        artwork_url = str(item.get("artworkUrl100", ""))
         return TrackRecord(
             track_id=f"itunes_{tid}",
             title=str(item.get("trackName", "")),
@@ -342,8 +401,14 @@ class iTunesCrawler:
             duration_ms=int(item.get("trackTimeMillis", 0)),
             release_date=str(item.get("releaseDate", "")),
             explicit=str(item.get("trackExplicitness", "notExplicit")),
-            artwork_url=str(item.get("artworkUrl100", "")),
+            artwork_url=artwork_url,
+            artwork_url_60=str(item.get("artworkUrl60", "")),
+            artwork_url_large=_upscale_itunes_artwork(artwork_url),
             collection_id=str(item.get("collectionId", "")),
+            artist_id=str(item.get("artistId", "")),
+            track_url=str(item.get("trackViewUrl", "")),
+            collection_url=str(item.get("collectionViewUrl", "")),
+            artist_url=str(item.get("artistViewUrl", "")),
         )
 
     def download_preview(self, record: TrackRecord) -> Path | None:
@@ -375,9 +440,9 @@ class iTunesCrawler:
     def _build_query_pool(self) -> list[tuple[str, str, str]]:
         pool: list[tuple[str, str, str]] = []
         for country in self.countries:
-            culture = COUNTRY_TO_CULTURE.get(country, "west")
+            culture = self.culture_override or COUNTRY_TO_CULTURE.get(country, "west")
             # Empty term search not supported well; use genre terms
-            terms = SEARCH_TERMS + ERA_SEARCH_TERMS + CULTURE_SEARCH_TERMS.get(culture, [])
+            terms = SEARCH_TERMS + ERA_SEARCH_TERMS + CULTURE_SEARCH_TERMS.get(culture, []) + self.extra_terms
             seen_terms: set[str] = set()
             for term in terms:
                 if term in seen_terms:
@@ -490,7 +555,7 @@ class iTunesCrawler:
 
         try:
             for qidx, (country, term, culture) in enumerate(query_pool, start=1):
-                query_key = f"{country}::{term}"
+                query_key = f"{culture}::{country}::{term}" if self.culture_override else f"{country}::{term}"
                 if query_key in completed_set:
                     continue
 
@@ -587,6 +652,8 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4, help="Parallel download workers")
     ap.add_argument("--checkpoint_interval", type=int, default=300, help="Seconds between checkpoints")
     ap.add_argument("--max_per_query", type=int, default=50, help="Max new tracks downloaded from a single country/term query")
+    ap.add_argument("--culture_override", default="", help="Force all downloaded rows to this culture label")
+    ap.add_argument("--extra_terms", default="", help="Comma-separated extra search terms to append to the query pool")
     ap.add_argument("--resume", action="store_true", help="Resume from existing checkpoint")
     args = ap.parse_args()
 
@@ -598,8 +665,10 @@ def main() -> None:
         countries = list(DEFAULT_COUNTRIES)
     else:
         invalid = [c for c in countries if c not in COUNTRY_TO_CULTURE]
-        if invalid:
+        if invalid and not args.culture_override.strip():
             print(f"[WARN] Unknown countries (will use 'west'): {invalid}")
+
+    extra_terms = [t.strip() for t in args.extra_terms.split(",") if t.strip()]
 
     session = RateLimitedSession()
     checkpoint = CheckpointManager(out_dir)
@@ -620,6 +689,8 @@ def main() -> None:
         workers=args.workers,
         checkpoint_interval=args.checkpoint_interval,
         max_per_query=args.max_per_query,
+        culture_override=args.culture_override,
+        extra_terms=extra_terms,
     )
 
     crawler.run(resume=args.resume)
