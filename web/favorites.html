@@ -8,15 +8,16 @@
     :root {
       --bg: #ffffff;
       --ink: #111111;
-      --muted: #6b6b6b;
+      --muted: #666666;
       --light: #999999;
-      --line: rgba(17, 17, 17, 0.14);
-      --line-soft: rgba(17, 17, 17, 0.08);
+      --line: #e5e5e5;
+      --line-soft: #f0f0f0;
       --card: #f7f7f7;
       --card-hover: #f0f0f0;
-      --grid-gap: 12px;
-      --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --font-mono: "Courier New", Courier, monospace;
+      --grid-gap: 4px;
+      --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+      --font-main: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", "Courier New", Courier, monospace;
     }
 
     * {
@@ -57,32 +58,36 @@
       z-index: 20;
       display: grid;
       grid-template-columns: auto 1fr auto;
-      gap: 1.2rem;
+      gap: 2rem;
       align-items: center;
-      width: min(calc(100% - 48px), 1600px);
+      width: min(calc(100% - 80px), 1600px);
       margin: 0 auto;
-      padding: 2.2rem 0 1.8rem;
+      padding: 2.5rem 0;
       background: var(--bg);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .brand {
       display: inline-flex;
-      align-items: baseline;
-      gap: 0.75rem;
+      flex-direction: column;
+      gap: 0.25rem;
       min-width: 0;
+      font-weight: 500;
     }
 
     .brand-mark {
-      font-size: clamp(1.4rem, 2vw, 2.1rem);
-      font-weight: 400;
+      font-size: 0.9rem;
+      font-weight: 500;
       line-height: 1;
     }
 
     .brand-sub,
     .meta-label {
-      color: var(--muted);
+      color: var(--light);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
 
@@ -90,7 +95,7 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      gap: 0.65rem;
+      gap: 1.5rem;
       flex-wrap: wrap;
     }
 
@@ -98,27 +103,29 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 2.35rem;
-      padding: 0.65rem 1.1rem;
-      border: 1px solid var(--ink);
+      min-height: 2.1rem;
+      padding: 0.55rem 1.15rem;
+      border: 1px solid var(--line);
       border-radius: 999px;
       background: transparent;
       color: var(--ink);
-      font-size: 0.76rem;
+      font-size: 0.68rem;
+      font-weight: 500;
       text-transform: uppercase;
       white-space: nowrap;
-      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+      transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 260ms var(--ease-out);
     }
 
     .pill:hover,
     .pill.is-active {
       background: var(--ink);
       color: #ffffff;
-      transform: translateY(-1px);
+      border-color: var(--ink);
+      transform: scale(1.04);
     }
 
     .library-shell {
-      width: min(calc(100% - 48px), 1600px);
+      width: min(calc(100% - 80px), 1600px);
       margin: 0 auto 4rem;
       background: transparent;
     }
@@ -133,87 +140,132 @@
 
     .hero-copy,
     .hero-panel {
-      min-height: 19rem;
-      padding: 2.5rem;
-      border: 1px solid var(--line-soft);
-      border-radius: 6px;
+      min-height: 20rem;
+      padding: 2rem;
+      border: 0;
+      border-radius: 0;
       background: var(--card);
+      overflow: hidden;
     }
 
     .hero-copy {
       grid-column: span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .hero-panel {
       grid-column: span 2;
+      position: relative;
+      background:
+        linear-gradient(135deg, rgba(17, 17, 17, 0.04), transparent 52%),
+        var(--card);
+    }
+
+    .hero-panel::before {
+      content: "收藏索引 / 2026";
+      position: absolute;
+      top: 2rem;
+      left: 2rem;
+      color: var(--light);
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      letter-spacing: 0.1em;
+    }
+
+    .hero-panel::after {
+      content: "声纹索引";
+      position: absolute;
+      top: 3.6rem;
+      right: 2rem;
+      max-width: 5ch;
+      color: rgba(17, 17, 17, 0.045);
+      font-size: clamp(4.5rem, 8vw, 8.6rem);
+      font-weight: 200;
+      line-height: 0.88;
+      text-align: right;
+      pointer-events: none;
     }
 
     .hero-copy h1 {
-      margin-top: 0.9rem;
+      margin-top: 1.1rem;
       max-width: 13ch;
-      font-size: 5rem;
-      font-weight: 400;
-      line-height: 0.94;
+      font-size: clamp(4.8rem, 8vw, 8.4rem);
+      font-weight: 200;
+      line-height: 0.86;
       letter-spacing: 0;
     }
 
     .hero-copy p {
-      max-width: 38rem;
-      margin-top: 1.4rem;
+      max-width: 37rem;
+      margin-top: 2rem;
       color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.6;
+      font-size: 0.86rem;
+      line-height: 1.55;
       overflow-wrap: anywhere;
     }
 
     .hero-panel {
       display: grid;
       align-content: end;
-      gap: 1.2rem;
+      gap: var(--grid-gap);
     }
 
     .hero-stat-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
+      gap: var(--grid-gap);
+      position: relative;
+      z-index: 1;
     }
 
     .hero-stat {
-      min-height: 8.5rem;
-      padding: 1rem;
-      border: 1px solid var(--line-soft);
-      border-radius: 4px;
-      background: #ffffff;
+      min-height: 10.5rem;
+      padding: 1.25rem;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       display: grid;
       align-content: space-between;
       gap: 1rem;
     }
 
+    .hero-stat .meta-label {
+      color: var(--ink);
+      font-size: 0.84rem;
+    }
+
     .hero-stat strong {
-      font-size: 4rem;
-      font-weight: 400;
-      line-height: 0.9;
+      font-size: clamp(4rem, 5vw, 5.9rem);
+      font-weight: 200;
+      line-height: 0.86;
+      letter-spacing: -0.03em;
     }
 
     .toolbar {
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 10;
       display: grid;
-      grid-template-columns: auto minmax(180px, 1fr) repeat(3, minmax(150px, 0.34fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--grid-gap);
       align-items: stretch;
-      padding: var(--grid-gap) 0;
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(14px);
+      padding: 0;
+      margin-bottom: var(--grid-gap);
+      background: transparent;
     }
 
     .toolbar .pill {
-      min-height: 4.6rem;
+      min-height: 9.5rem;
       border-color: var(--ink);
-      border-radius: 6px;
+      border-radius: 0;
       background: var(--ink);
       color: #ffffff;
+      align-items: end;
+      justify-content: flex-start;
+      padding: 1.5rem;
+      font-size: 1rem;
+      transform: none;
     }
 
     .upload-input {
@@ -224,27 +276,133 @@
       pointer-events: none;
     }
 
+    .toolbar .control:first-of-type {
+      grid-column: span 2;
+    }
+
+    .toolbar .control:nth-of-type(3),
+    .toolbar .control:nth-of-type(4) {
+      grid-column: span 2;
+    }
+
     .control {
       display: grid;
-      align-content: center;
-      gap: 0.45rem;
+      align-content: space-between;
+      gap: 1.2rem;
       min-width: 0;
-      min-height: 4.6rem;
-      padding: 0.8rem 0.95rem;
-      border: 1px solid var(--line-soft);
-      border-radius: 6px;
+      min-height: 9.5rem;
+      padding: 1.35rem 1.5rem;
+      border: 0;
+      border-radius: 0;
       background: var(--card);
+      transition: background 220ms ease;
+    }
+
+    .control .meta-label {
+      font-size: 0.86rem;
+    }
+
+    .control:hover {
+      background: var(--card-hover);
     }
 
     .control input,
     .control select {
       width: 100%;
-      min-height: 1.8rem;
+      min-height: 2.4rem;
       border: 0;
       background: transparent;
       color: var(--ink);
       padding: 0;
       outline: none;
+      font-size: clamp(1.05rem, 1.5vw, 1.55rem);
+      font-weight: 300;
+      letter-spacing: 0;
+    }
+
+    .select-control {
+      position: relative;
+    }
+
+    .select-control.is-customized select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .select-trigger {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+      min-height: 2.4rem;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 0;
+      text-align: left;
+      font-size: clamp(1.05rem, 1.5vw, 1.55rem);
+      font-weight: 300;
+      letter-spacing: 0;
+    }
+
+    .select-control.is-customized .select-trigger {
+      display: flex;
+    }
+
+    .select-caret {
+      flex: 0 0 auto;
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: transform 180ms var(--ease-out);
+    }
+
+    .select-control.is-open .select-caret {
+      transform: rotate(180deg);
+    }
+
+    .select-menu {
+      display: none;
+      position: absolute;
+      z-index: 50;
+      top: calc(100% + var(--grid-gap));
+      left: 0;
+      right: 0;
+      max-height: 22rem;
+      overflow: auto;
+      background: #ffffff;
+      border-top: 1px solid var(--ink);
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.12);
+    }
+
+    .select-control.is-open .select-menu {
+      display: block;
+    }
+
+    .select-option {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-height: 3.25rem;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0.8rem 1rem;
+      text-align: left;
+      font-size: 1rem;
+      font-weight: 300;
+      letter-spacing: 0;
+    }
+
+    .select-option:hover,
+    .select-option.is-selected {
+      background: var(--ink);
+      color: #ffffff;
     }
 
     .control input:focus,
@@ -258,70 +416,158 @@
     }
 
     .masonry-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
-      grid-auto-rows: 8px;
-      gap: var(--grid-gap);
+      position: relative;
+      min-height: 20rem;
       background: transparent;
+    }
+
+    .masonry-grid.has-empty {
+      display: grid;
+      min-height: 18rem;
     }
 
     .track-card {
       display: grid;
       align-content: start;
-      gap: 1rem;
-      min-height: 22rem;
-      padding: 0.9rem;
-      border: 1px solid var(--line-soft);
-      border-radius: 6px;
+      gap: 1.1rem;
+      min-height: 0;
+      padding: 1rem;
+      border: 0;
+      border-radius: 0;
       background: var(--card);
-      overflow: hidden;
-      transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
+      overflow: visible;
+      position: relative;
+      transform-origin: top left;
+      color: var(--ink);
+      transition: background 300ms var(--ease-out), color 300ms var(--ease-out);
     }
 
     .track-card:hover {
-      border-color: var(--line);
       background: var(--card-hover);
-      transform: translateY(-2px);
+      z-index: 5;
     }
 
-    .track-card.is-wide {
-      grid-column: span 2;
-      grid-template-columns: minmax(190px, 0.82fr) minmax(230px, 1fr);
-      min-height: 19rem;
-      align-items: stretch;
+    .track-card.is-horizontal {
+      grid-template-columns: minmax(260px, 0.48fr) minmax(280px, 0.52fr);
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .track-card.is-compact-90 {
+      --compact-scale: 0.9;
+    }
+
+    .track-card.is-compact-75 {
+      --compact-scale: 0.75;
+    }
+
+    .track-card.is-compact-60 {
+      --compact-scale: 0.6;
+    }
+
+    .track-card.is-dark {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .track-card.is-dark:hover {
+      background: #000000;
+    }
+
+    .track-card.is-dark .meta-label,
+    .track-card.is-dark .track-info p,
+    .track-card.is-dark .tag,
+    .track-card.is-dark .track-open,
+    .track-card.is-dark .terminal-block {
+      color: #888888;
+    }
+
+    .track-card.is-dark .tag,
+    .track-card.is-dark .terminal-block {
+      border-color: #333333;
+    }
+
+    .arrow-icon {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 2;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      transition: opacity 180ms ease, transform 260ms var(--ease-out);
+    }
+
+    .track-card:hover .arrow-icon {
+      opacity: 0;
+      transform: translate(4px, -4px);
+    }
+
+    .remove-track {
+      position: absolute;
+      top: 0.85rem;
+      right: 0.85rem;
+      z-index: 6;
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid rgba(17, 17, 17, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms var(--ease-out), background 180ms ease;
+    }
+
+    .track-card:hover .remove-track {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .remove-track:hover {
+      background: var(--ink);
+      color: #ffffff;
+      transform: scale(1.06);
+    }
+
+    .track-card.is-dark .remove-track {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--ink);
     }
 
     .cover-shell {
       display: block;
       width: 100%;
-      overflow: hidden;
-      border: 1px solid var(--line-soft);
-      border-radius: 4px;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
       background: #ffffff;
+      position: relative;
     }
 
     .cover {
       width: 100%;
-      aspect-ratio: 1;
+      height: auto;
+      max-height: none;
       display: block;
       background:
         linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.02)),
         #ffffff;
-      object-fit: cover;
+      object-fit: contain;
+      filter: grayscale(100%) contrast(1.08);
+      transition: filter 380ms ease;
     }
 
     .track-card:hover .cover {
-      transform: scale(1.015);
+      filter: grayscale(0%) contrast(1);
     }
 
-    .track-card.is-wide .cover {
-      height: 100%;
-      aspect-ratio: auto;
-    }
-
-    .track-card.is-wide .cover-shell {
-      height: 100%;
-      min-height: 17rem;
+    .track-card.is-color .cover {
+      filter: saturate(1.16) contrast(1.03);
     }
 
     .cover-fallback {
@@ -331,67 +577,97 @@
       font-family: var(--font-mono);
       font-size: 0.7rem;
       text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
     .track-info {
       display: grid;
-      align-content: start;
-      gap: 0.85rem;
+      align-content: space-between;
+      gap: 1.2rem;
       min-width: 0;
-      padding: 0 0.2rem 0.15rem;
+      min-height: 0;
+      padding: 0.1rem 0.1rem 0;
     }
 
-    .track-card.is-wide .track-info {
+    .track-card.is-horizontal .track-info {
       align-content: space-between;
-      padding: 1rem 0.5rem 1rem 0;
+      padding: 1rem 1rem 0.2rem 0;
     }
 
     .track-info h2 {
-      font-size: 1.65rem;
-      font-weight: 400;
-      line-height: 1.12;
+      max-width: calc(100% - 1.8rem);
+      margin-top: 0.9rem;
+      font-size: clamp(1.65rem, 2vw, 2.4rem);
+      font-weight: 300;
+      line-height: 1.06;
       letter-spacing: 0;
       overflow-wrap: anywhere;
     }
 
-    .track-card.is-wide .track-info h2 {
-      font-size: 2rem;
+    .track-card.is-horizontal .track-info h2 {
+      margin-top: 0.9rem;
+      font-size: clamp(2rem, 2.4vw, 3rem);
+      font-weight: 200;
+    }
+
+    .track-card.is-horizontal .track-info p {
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .track-card.is-horizontal .tag-row {
+      gap: 0.25rem;
+    }
+
+    .track-card.is-horizontal .tag {
+      font-size: 0.56rem;
+      padding-inline: 0.5rem;
+    }
+
+    .track-card.is-horizontal .terminal-block {
+      margin-top: 1.1rem;
+      padding-top: 1rem;
+      font-size: 0.68rem;
     }
 
     .track-info p {
       color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.45;
+      font-size: 0.82rem;
+      line-height: 1.5;
       overflow-wrap: anywhere;
     }
 
     .tag-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
-      margin-top: 0.15rem;
+      gap: 0.35rem;
+      margin-top: 0.2rem;
     }
 
     .tag {
       display: inline-flex;
       align-items: center;
-      min-height: 1.6rem;
-      padding: 0.28rem 0.58rem;
+      min-height: 1.45rem;
+      padding: 0.22rem 0.5rem;
       border: 1px solid var(--line);
-      border-radius: 4px;
+      border-radius: 0;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.62rem;
+      font-size: 0.64rem;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .track-open {
       display: inline-flex;
       width: max-content;
-      margin-top: 0.25rem;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       transition: color 180ms ease;
     }
@@ -400,12 +676,29 @@
       color: var(--ink);
     }
 
+    .terminal-block {
+      width: 100%;
+      margin-top: 1.1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      color: #333333;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      line-height: 1.55;
+    }
+
+    .prompt::before {
+      content: "-> ";
+      color: var(--light);
+    }
+
     .empty-state {
       min-height: 18rem;
       display: grid;
       place-items: center;
-      border: 1px solid var(--line-soft);
-      border-radius: 6px;
+      grid-column: 1 / -1;
+      border: 0;
+      border-radius: 0;
       background: var(--card);
       color: var(--muted);
       padding: 2rem;
@@ -414,13 +707,19 @@
     }
 
     @media (max-width: 980px) {
-      .library-header,
+      .library-header {
+        grid-template-columns: 1fr;
+        width: min(calc(100% - 28px), 1600px);
+        padding: 1.6rem 0;
+        letter-spacing: 0.03em;
+      }
+
       .library-shell {
         width: min(calc(100% - 28px), 1600px);
       }
 
-      .library-header,
-      .toolbar {
+      .toolbar,
+      .masonry-grid {
         grid-template-columns: 1fr;
       }
 
@@ -436,37 +735,30 @@
       }
 
       .hero-copy h1 {
-        font-size: 3.15rem;
+        font-size: 3.6rem;
       }
 
       .top-actions {
         justify-content: flex-start;
       }
 
-      .toolbar {
-        position: static;
+      .toolbar .control:first-of-type,
+      .toolbar .control:nth-of-type(3),
+      .toolbar .control:nth-of-type(4) {
+        grid-column: span 1;
       }
 
-      .track-card.is-wide {
+      .toolbar .pill,
+      .control {
+        min-height: 7.5rem;
+      }
+
+      .track-card.is-horizontal {
         grid-column: span 1;
         grid-template-columns: 1fr;
       }
 
-      .track-card.is-wide .cover-shell {
-        height: auto;
-        min-height: 0;
-      }
-
-      .track-card.is-wide .cover {
-        height: auto;
-        aspect-ratio: 1;
-      }
-
-      .track-card.is-wide .track-info {
-        padding: 0 0.2rem 0.15rem;
-      }
-
-      .track-card.is-wide .track-info h2 {
+      .track-card.is-horizontal .track-info h2 {
         font-size: 1.65rem;
       }
 
@@ -493,7 +785,7 @@
   <main class="library-shell">
     <section class="library-hero" aria-label="收藏夹总览">
       <div class="hero-copy">
-        <div class="meta-label" data-i18n="favorites.heroMeta">Library Surface</div>
+        <div class="meta-label" data-i18n="favorites.heroMeta">曲库界面</div>
         <h1 data-i18n-html="favorites.heroTitle">声音<br>收藏夹</h1>
         <p data-i18n="favorites.heroCopy">把来自 iTunes、Jamendo 与上传音频的曲目整理成可浏览、可筛选、可继续接入推荐反馈的音乐集合。</p>
       </div>
@@ -516,7 +808,7 @@
     </section>
 
     <section class="toolbar" aria-label="收藏夹工具栏">
-      <label class="pill" for="favorite-import" data-i18n="favorites.import">导入歌曲</label>
+      <label class="pill" for="favorite-import" data-i18n="favorites.import">点击导入歌曲</label>
       <input class="upload-input" id="favorite-import" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma" multiple>
 
       <div class="control">
@@ -578,6 +870,12 @@
     let imported = [];
     let storedFavorites = [];
     let shuffleSeed = 17;
+    const visualSeed = Math.floor(Math.random() * 1000003);
+    const removedStorageKey = "echo-favorite-hidden-tracks";
+    const customSelects = new Map();
+    let masonryResizeObserver = null;
+    let masonryResizeFrame = 0;
+    let removedTrackIds = readRemovedTrackIds();
 
     function t(key, params = {}) {
       return window.EchoI18n?.t(key, params) || key;
@@ -612,6 +910,29 @@
       return item.genre || cultureLabel(item.culture) || t("favorites.unknownGenre");
     }
 
+    function itemKey(item) {
+      return String(
+        window.EchoFavoriteStore?.trackKey?.(item) ||
+        item?.track_id ||
+        item?.trackId ||
+        item?.id ||
+        `${itemTitle(item)}::${itemArtist(item)}::${item.album || ""}`
+      ).trim();
+    }
+
+    function readRemovedTrackIds() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(removedStorageKey) || "[]");
+        return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+      } catch (error) {
+        return new Set();
+      }
+    }
+
+    function writeRemovedTrackIds() {
+      localStorage.setItem(removedStorageKey, JSON.stringify([...removedTrackIds]));
+    }
+
     function normalizeItem(item, index = 0) {
       return {
         id: item.id || item.track_id || `track_${index}`,
@@ -636,13 +957,22 @@
       return n;
     }
 
+    function visualScore(item, index, salt = 0) {
+      let n = (visualSeed + index * 997 + salt * 131) % 1000003;
+      for (const ch of String(item.id || itemTitle(item))) {
+        n = (n * 33 + ch.charCodeAt(0)) % 1000003;
+      }
+      return n;
+    }
+
     function filteredItems() {
       const query = els.search.value.trim().toLowerCase();
       const culture = els.culture.value;
       const source = els.source.value;
       const seen = new Set();
       let items = [...imported, ...storedFavorites, ...catalog].filter((item) => {
-        const key = String(item.id || `${item.title}::${item.artist}`).trim();
+        const key = itemKey(item);
+        if (key && removedTrackIds.has(key)) return false;
         if (key && seen.has(key)) return false;
         if (key) seen.add(key);
         const hay = `${itemTitle(item)} ${itemArtist(item)} ${itemGenre(item)} ${cultureLabel(item.culture)} ${item.source}`.toLowerCase();
@@ -675,12 +1005,31 @@
     }
 
     function cardMarkup(item, index) {
-      const wide = !item.imported && (index % 11 === 0 || index % 17 === 0);
+      const visual = visualScore(item, index, 11);
+      const horizontal = !item.imported && visual % 5 === 0;
+      const dark = !horizontal && visual % 17 === 4;
+      const color = Boolean(item.cover) && visual % 4 === 0;
+      const compactRoll = visualScore(item, index, 29);
+      let compactScale = 1;
+      if (!item.imported && compactRoll % 43 === 0) compactScale = 0.6;
+      else if (!item.imported && compactRoll % 29 === 0) compactScale = 0.75;
+      else if (!item.imported && compactRoll % 17 === 0) compactScale = 0.9;
+      const compactClass = compactScale === 1 ? "" : `is-compact-${Math.round(compactScale * 100)}`;
+      const key = itemKey(item);
+      const classes = [
+        "track-card",
+        horizontal ? "is-horizontal" : "is-vertical",
+        dark ? "is-dark" : "",
+        color ? "is-color" : "",
+        compactClass
+      ].filter(Boolean).join(" ");
       const platformLink = item.url
         ? `<a class="track-open" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(t("favorites.openPlatform"))}</a>`
         : `<span class="track-open">${escapeHtml(t("favorites.localTrack"))}</span>`;
       return `
-        <article class="track-card${wide ? " is-wide" : ""}">
+        <article class="${classes}" data-track-id="${escapeHtml(key)}" data-span="${horizontal ? 2 : 1}" data-scale="${compactScale}">
+          <button class="remove-track" type="button" data-remove-id="${escapeHtml(key)}" aria-label="${escapeHtml(t("favorites.removeTrack"))}">×</button>
+          ${item.url ? `<span class="arrow-icon" aria-hidden="true">↗</span>` : ""}
           ${coverMarkup(item)}
           <div class="track-info">
             <div>
@@ -694,21 +1043,72 @@
                 <span class="tag">${escapeHtml(itemGenre(item))}</span>
                 <span class="tag">${escapeHtml(cultureLabel(item.culture))}</span>
               </div>
-              ${platformLink}
+              <div class="terminal-block"><span class="prompt">${platformLink}</span></div>
             </div>
           </div>
         </article>
       `;
     }
 
+    function queueMasonryResize() {
+      cancelAnimationFrame(masonryResizeFrame);
+      masonryResizeFrame = requestAnimationFrame(resizeMasonryItems);
+    }
+
     function resizeMasonryItems() {
-      const style = getComputedStyle(els.grid);
-      const row = parseFloat(style.getPropertyValue("grid-auto-rows")) || 8;
-      const gap = parseFloat(style.rowGap) || 12;
-      els.grid.querySelectorAll(".track-card").forEach((card) => {
-        card.style.gridRowEnd = "";
-        const height = card.getBoundingClientRect().height;
-        card.style.gridRowEnd = `span ${Math.max(18, Math.ceil((height + gap) / (row + gap)))}`;
+      const cards = Array.from(els.grid.querySelectorAll(".track-card"));
+      if (!cards.length) {
+        els.grid.style.height = "";
+        return;
+      }
+      const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--grid-gap")) || 4;
+      const width = els.grid.clientWidth;
+      const columnCount = width < 760 ? 1 : width < 1180 ? 2 : width < 1480 ? 3 : 4;
+      const columnWidth = (width - gap * (columnCount - 1)) / columnCount;
+      const heights = Array(columnCount).fill(0);
+
+      cards.forEach((card) => {
+        const scale = Math.max(0.6, Math.min(1, Number(card.dataset.scale) || 1));
+        const requestedSpan = Math.max(1, Number(card.dataset.span) || 1);
+        const span = Math.min(columnCount, requestedSpan);
+        const slotWidth = columnWidth * span + gap * (span - 1);
+
+        card.style.position = "absolute";
+        card.style.width = `${slotWidth / scale}px`;
+        card.style.transform = `scale(${scale})`;
+
+        const visualHeight = Math.max(40, card.getBoundingClientRect().height);
+        let bestColumn = 0;
+        let bestTop = Number.POSITIVE_INFINITY;
+        for (let column = 0; column <= columnCount - span; column += 1) {
+          const top = Math.max(...heights.slice(column, column + span));
+          if (top < bestTop) {
+            bestTop = top;
+            bestColumn = column;
+          }
+        }
+
+        const left = bestColumn * (columnWidth + gap);
+        const top = Number.isFinite(bestTop) ? bestTop : 0;
+        card.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+        for (let column = bestColumn; column < bestColumn + span; column += 1) {
+          heights[column] = top + visualHeight + gap;
+        }
+      });
+
+      els.grid.style.height = `${Math.max(...heights)}px`;
+    }
+
+    function observeMasonryItems() {
+      if (masonryResizeObserver) masonryResizeObserver.disconnect();
+      if (!("ResizeObserver" in window)) return;
+      masonryResizeObserver = new ResizeObserver(queueMasonryResize);
+      els.grid.querySelectorAll(".track-card").forEach((card) => masonryResizeObserver.observe(card));
+    }
+
+    function scheduleMasonryPasses() {
+      [0, 120, 360, 900, 1800, 3200].forEach((delay) => {
+        window.setTimeout(queueMasonryResize, delay);
       });
     }
 
@@ -721,14 +1121,20 @@
       els.statCover.textContent = `${Math.round((withCover / Math.max(1, items.length)) * 100)}%`;
 
       if (!items.length) {
+        els.grid.classList.add("has-empty");
         els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.empty"))}</div>`;
+        els.grid.style.height = "";
         return;
       }
+      els.grid.classList.remove("has-empty");
       els.grid.innerHTML = items.map(cardMarkup).join("");
-      requestAnimationFrame(resizeMasonryItems);
+      observeMasonryItems();
+      scheduleMasonryPasses();
       els.grid.querySelectorAll("img").forEach((img) => {
-        img.addEventListener("load", resizeMasonryItems, { once: true });
-        img.addEventListener("error", resizeMasonryItems, { once: true });
+        img.addEventListener("load", queueMasonryResize);
+        img.addEventListener("error", queueMasonryResize);
+        if (img.complete) queueMasonryResize();
+        if (img.decode) img.decode().then(queueMasonryResize).catch(queueMasonryResize);
       });
     }
 
@@ -739,6 +1145,7 @@
         `<option value="${escapeHtml(culture)}">${escapeHtml(cultureLabel(culture))}</option>`
       )).join("");
       els.culture.value = values.includes(current) ? current : "";
+      renderCustomSelect(els.culture);
     }
 
     async function loadCatalog() {
@@ -781,11 +1188,107 @@
       render();
     }
 
+    function removeTrack(removeId) {
+      if (!removeId) return;
+      const current = [...imported, ...storedFavorites, ...catalog];
+      const target = current.find((item) => itemKey(item) === removeId);
+      imported = imported.filter((item) => itemKey(item) !== removeId);
+      if (target?.favorite) {
+        window.EchoFavoriteStore?.remove?.(target);
+        loadStoredFavorites();
+      }
+      removedTrackIds.add(removeId);
+      writeRemovedTrackIds();
+      render();
+    }
+
+    function setupCustomSelect(select) {
+      const control = select.closest(".control");
+      if (!control || customSelects.has(select)) return;
+      control.classList.add("select-control", "is-customized");
+
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = "select-trigger";
+      trigger.setAttribute("aria-haspopup", "listbox");
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.innerHTML = `<span class="select-value"></span><span class="select-caret" aria-hidden="true">⌄</span>`;
+
+      const menu = document.createElement("div");
+      menu.className = "select-menu";
+      menu.setAttribute("role", "listbox");
+
+      select.insertAdjacentElement("afterend", trigger);
+      trigger.insertAdjacentElement("afterend", menu);
+      customSelects.set(select, { control, trigger, menu });
+
+      trigger.addEventListener("click", () => {
+        const shouldOpen = !control.classList.contains("is-open");
+        closeCustomSelects(select);
+        control.classList.toggle("is-open", shouldOpen);
+        trigger.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      });
+
+      select.addEventListener("change", () => renderCustomSelect(select));
+      renderCustomSelect(select);
+    }
+
+    function closeCustomSelects(except = null) {
+      customSelects.forEach(({ control, trigger }, select) => {
+        if (select === except) return;
+        control.classList.remove("is-open");
+        trigger.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    function renderCustomSelect(select) {
+      const state = customSelects.get(select);
+      if (!state) return;
+      const { trigger, menu } = state;
+      const valueText = trigger.querySelector(".select-value");
+      const options = Array.from(select.options);
+      const selected = options.find((option) => option.value === select.value) || options[0];
+      valueText.textContent = selected ? selected.textContent : "";
+      menu.innerHTML = options.map((option) => `
+        <button
+          class="select-option${option.value === select.value ? " is-selected" : ""}"
+          type="button"
+          role="option"
+          aria-selected="${option.value === select.value ? "true" : "false"}"
+          data-value="${escapeHtml(option.value)}"
+        >${escapeHtml(option.textContent || "")}</button>
+      `).join("");
+      menu.querySelectorAll(".select-option").forEach((button) => {
+        button.addEventListener("click", () => {
+          select.value = button.dataset.value || "";
+          closeCustomSelects();
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+      });
+    }
+
+    function setupCustomSelects() {
+      [els.culture, els.source, els.sort].forEach(setupCustomSelect);
+      document.addEventListener("click", (event) => {
+        if (!event.target.closest(".select-control")) closeCustomSelects();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeCustomSelects();
+      });
+    }
+
     [els.search, els.culture, els.source, els.sort].forEach((control) => {
       control.addEventListener("input", render);
       control.addEventListener("change", render);
     });
     els.import.addEventListener("change", (event) => importFiles(event.target.files));
+    els.grid.addEventListener("click", (event) => {
+      const removeButton = event.target.closest("[data-remove-id]");
+      if (!removeButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      removeTrack(removeButton.dataset.removeId);
+    });
     window.addEventListener("resize", resizeMasonryItems);
     window.addEventListener("echo-favorites-change", () => {
       loadStoredFavorites();
@@ -794,9 +1297,11 @@
     window.addEventListener("echo-language-change", () => {
       loadStoredFavorites();
       populateCultures(catalog);
+      [els.source, els.sort].forEach(renderCustomSelect);
       render();
     });
 
+    setupCustomSelects();
     loadCatalog().catch((error) => {
       console.error(error);
       loadStoredFavorites();
