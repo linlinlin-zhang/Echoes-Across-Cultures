@@ -54,31 +54,35 @@
     }
 
     .library-header {
-      position: relative;
+      position: sticky;
+      top: 0;
       z-index: 20;
       display: grid;
       grid-template-columns: auto 1fr auto;
-      gap: 2rem;
+      gap: 1.2rem;
       align-items: center;
-      width: min(calc(100% - 80px), 1600px);
-      margin: 0 auto;
-      padding: 2.5rem 0;
-      background: var(--bg);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      width: 100%;
+      min-height: 4.55rem;
+      margin: 0;
+      padding: 0 1.65rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(18px);
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     .brand {
       display: inline-flex;
-      flex-direction: column;
-      gap: 0.25rem;
+      align-items: baseline;
+      gap: 0.7rem;
       min-width: 0;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .brand-mark {
-      font-size: 0.9rem;
-      font-weight: 500;
+      font-size: 2rem;
+      font-weight: 400;
       line-height: 1;
     }
 
@@ -95,7 +99,7 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      gap: 1.5rem;
+      gap: 0.65rem;
       flex-wrap: wrap;
     }
 
@@ -103,17 +107,17 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 2.1rem;
-      padding: 0.55rem 1.15rem;
-      border: 1px solid var(--line);
+      min-height: 2.65rem;
+      padding: 0 1.35rem;
+      border: 1px solid var(--ink);
       border-radius: 999px;
-      background: transparent;
+      background: #ffffff;
       color: var(--ink);
-      font-size: 0.68rem;
-      font-weight: 500;
-      text-transform: uppercase;
+      font-size: 0.95rem;
+      font-weight: 400;
+      text-transform: none;
       white-space: nowrap;
-      transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 260ms var(--ease-out);
+      transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
     }
 
     .pill:hover,
@@ -121,12 +125,12 @@
       background: var(--ink);
       color: #ffffff;
       border-color: var(--ink);
-      transform: scale(1.04);
+      transform: translateY(-1px);
     }
 
     .library-shell {
       width: min(calc(100% - 80px), 1600px);
-      margin: 0 auto 4rem;
+      margin: 2.4rem auto 4rem;
       background: transparent;
     }
 
@@ -164,7 +168,7 @@
     }
 
     .hero-panel::before {
-      content: "收藏索引 / 2026";
+      content: "收藏索引";
       position: absolute;
       top: 2rem;
       left: 2rem;
@@ -430,6 +434,7 @@
       display: grid;
       align-content: start;
       gap: 1.1rem;
+      --cover-size: 100%;
       min-height: 0;
       padding: 1rem;
       border: 0;
@@ -451,18 +456,6 @@
       grid-template-columns: minmax(260px, 0.48fr) minmax(280px, 0.52fr);
       align-items: start;
       gap: 1rem;
-    }
-
-    .track-card.is-compact-90 {
-      --compact-scale: 0.9;
-    }
-
-    .track-card.is-compact-75 {
-      --compact-scale: 0.75;
-    }
-
-    .track-card.is-compact-60 {
-      --compact-scale: 0.6;
     }
 
     .track-card.is-dark {
@@ -541,12 +534,16 @@
 
     .cover-shell {
       display: block;
-      width: 100%;
+      width: var(--cover-size);
       overflow: visible;
       border: 0;
       border-radius: 0;
       background: #ffffff;
       position: relative;
+    }
+
+    .track-card.is-horizontal .cover-shell {
+      width: var(--cover-size);
     }
 
     .cover {
@@ -563,7 +560,7 @@
     }
 
     .track-card:hover .cover {
-      filter: grayscale(0%) contrast(1);
+      filter: grayscale(100%) contrast(1.08);
     }
 
     .track-card.is-color .cover {
@@ -571,13 +568,57 @@
     }
 
     .cover-fallback {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      min-height: 14rem;
       display: grid;
       place-items: center;
-      color: var(--muted);
+      overflow: hidden;
+      color: var(--ink);
       font-family: var(--font-mono);
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
+      background:
+        radial-gradient(circle at 50% 46%, transparent 0 18%, rgba(17, 17, 17, 0.14) 18.2% 18.9%, transparent 19.2% 30%),
+        radial-gradient(circle at 50% 46%, rgba(17, 17, 17, 0.08) 0 0.35rem, transparent 0.36rem),
+        linear-gradient(135deg, rgba(17, 17, 17, 0.09), rgba(17, 17, 17, 0.02)),
+        #f4f4f4;
+      filter: none;
+    }
+
+    .cover.cover-fallback {
+      filter: none;
+    }
+
+    .cover-fallback::before {
+      content: "";
+      position: absolute;
+      width: 42%;
+      aspect-ratio: 1;
+      border: 1px solid rgba(17, 17, 17, 0.32);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 1.7rem #ffffff,
+        0 0 0 1.76rem rgba(17, 17, 17, 0.12),
+        0 0 0 3.25rem rgba(255, 255, 255, 0.62),
+        0 0 0 3.31rem rgba(17, 17, 17, 0.08);
+    }
+
+    .cover-fallback::after {
+      content: "ECHO";
+      position: absolute;
+      right: 1rem;
+      bottom: 0.9rem;
+      color: rgba(17, 17, 17, 0.38);
+      font-size: 0.76rem;
+    }
+
+    .cover-fallback span {
+      position: absolute;
+      left: 1rem;
+      top: 1rem;
+      color: rgba(17, 17, 17, 0.48);
     }
 
     .track-info {
@@ -597,7 +638,7 @@
     .track-info h2 {
       max-width: calc(100% - 1.8rem);
       margin-top: 0.9rem;
-      font-size: clamp(1.65rem, 2vw, 2.4rem);
+      font-size: clamp(1.5rem, 1.7vw, 2.05rem);
       font-weight: 300;
       line-height: 1.06;
       letter-spacing: 0;
@@ -606,13 +647,13 @@
 
     .track-card.is-horizontal .track-info h2 {
       margin-top: 0.9rem;
-      font-size: clamp(2rem, 2.4vw, 3rem);
+      font-size: clamp(1.85rem, 2.05vw, 2.55rem);
       font-weight: 200;
     }
 
     .track-card.is-horizontal .track-info p {
-      font-size: 0.88rem;
-      line-height: 1.5;
+      font-size: 1.02rem;
+      line-height: 1.58;
     }
 
     .track-card.is-horizontal .tag-row {
@@ -620,20 +661,20 @@
     }
 
     .track-card.is-horizontal .tag {
-      font-size: 0.56rem;
-      padding-inline: 0.5rem;
+      font-size: 0.76rem;
+      padding-inline: 0.66rem;
     }
 
     .track-card.is-horizontal .terminal-block {
       margin-top: 1.1rem;
       padding-top: 1rem;
-      font-size: 0.68rem;
+      font-size: 0.78rem;
     }
 
     .track-info p {
       color: var(--muted);
-      font-size: 0.82rem;
-      line-height: 1.5;
+      font-size: 1.02rem;
+      line-height: 1.58;
       overflow-wrap: anywhere;
     }
 
@@ -647,13 +688,13 @@
     .tag {
       display: inline-flex;
       align-items: center;
-      min-height: 1.45rem;
-      padding: 0.22rem 0.5rem;
+      min-height: 1.7rem;
+      padding: 0.28rem 0.66rem;
       border: 1px solid var(--line);
       border-radius: 0;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.64rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       max-width: 100%;
@@ -667,7 +708,7 @@
       width: max-content;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.65rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       transition: color 180ms ease;
     }
@@ -683,7 +724,7 @@
       border-top: 1px solid var(--line);
       color: #333333;
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.78rem;
       line-height: 1.55;
     }
 
@@ -709,13 +750,13 @@
     @media (max-width: 980px) {
       .library-header {
         grid-template-columns: 1fr;
-        width: min(calc(100% - 28px), 1600px);
-        padding: 1.6rem 0;
-        letter-spacing: 0.03em;
+        min-height: auto;
+        padding: 1.2rem 1rem;
       }
 
       .library-shell {
         width: min(calc(100% - 28px), 1600px);
+        margin-top: 1rem;
       }
 
       .toolbar,
@@ -786,7 +827,7 @@
     <section class="library-hero" aria-label="收藏夹总览">
       <div class="hero-copy">
         <div class="meta-label" data-i18n="favorites.heroMeta">曲库界面</div>
-        <h1 data-i18n-html="favorites.heroTitle">声音<br>收藏夹</h1>
+        <h1 data-i18n-html="favorites.heroTitle">音乐<br>收藏夹</h1>
         <p data-i18n="favorites.heroCopy">把来自 iTunes、Jamendo 与上传音频的曲目整理成可浏览、可筛选、可继续接入推荐反馈的音乐集合。</p>
       </div>
       <div class="hero-panel">
@@ -800,8 +841,8 @@
             <strong id="stat-culture">--</strong>
           </article>
           <article class="hero-stat">
-            <span class="meta-label" data-i18n="favorites.stat.covers">封面</span>
-            <strong id="stat-cover">--</strong>
+            <span class="meta-label" data-i18n="favorites.stat.artists">音乐人</span>
+            <strong id="stat-artist">--</strong>
           </article>
         </div>
       </div>
@@ -863,7 +904,7 @@
       import: document.getElementById("favorite-import"),
       statCount: document.getElementById("stat-count"),
       statCulture: document.getElementById("stat-culture"),
-      statCover: document.getElementById("stat-cover")
+      statArtist: document.getElementById("stat-artist")
     };
 
     let catalog = [];
@@ -872,10 +913,16 @@
     let shuffleSeed = 17;
     const visualSeed = Math.floor(Math.random() * 1000003);
     const removedStorageKey = "echo-favorite-hidden-tracks";
+    const coverConfigKey = "echo-cover-config";
+    const pendingLocalPlayKey = "echo-pending-local-play";
+    const localAudioDbName = "echo-local-audio";
+    const localAudioStore = "tracks";
+    const coverRatios = [10, 20, 30, 40, 50, 60, 70, 80, 90];
     const customSelects = new Map();
     let masonryResizeObserver = null;
     let masonryResizeFrame = 0;
     let removedTrackIds = readRemovedTrackIds();
+    let coverConfig = readCoverConfig();
 
     function t(key, params = {}) {
       return window.EchoI18n?.t(key, params) || key;
@@ -891,8 +938,37 @@
       })[char]);
     }
 
+    function openLocalAudioDb() {
+      return new Promise((resolve, reject) => {
+        if (!("indexedDB" in window)) {
+          reject(new Error("IndexedDB unavailable"));
+          return;
+        }
+        const request = indexedDB.open(localAudioDbName, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(localAudioStore)) {
+            db.createObjectStore(localAudioStore, { keyPath: "id" });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error("IndexedDB open failed"));
+      });
+    }
+
+    async function putLocalAudioRecord(record) {
+      const db = await openLocalAudioDb();
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(localAudioStore, "readwrite");
+        transaction.objectStore(localAudioStore).put(record);
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error("IndexedDB write failed"));
+      });
+      db.close();
+    }
+
     function cultureLabel(culture) {
-      if (!culture) return t("favorites.unknownCulture");
+      if (!culture) return t("favorites.mysteriousPlace");
       const translated = t(`culture.${culture}`);
       return translated === `culture.${culture}` ? culture : translated;
     }
@@ -907,7 +983,21 @@
     }
 
     function itemGenre(item) {
-      return item.genre || cultureLabel(item.culture) || t("favorites.unknownGenre");
+      return String(item.genre || "").trim() || t("favorites.unknownGenre");
+    }
+
+    function itemPlaceLabel(item) {
+      const culture = String(item.culture || "").trim();
+      if (culture) return cultureLabel(culture);
+      const place = [item.country, item.region, item.province, item.city, item.location]
+        .map((part) => String(part || "").trim())
+        .filter(Boolean)
+        .join(" / ");
+      return place || t("favorites.mysteriousPlace");
+    }
+
+    function itemDescription(item) {
+      return String(item.description || "").trim();
     }
 
     function itemKey(item) {
@@ -933,14 +1023,37 @@
       localStorage.setItem(removedStorageKey, JSON.stringify([...removedTrackIds]));
     }
 
+    function readCoverConfig() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(coverConfigKey) || "{}");
+        const mode = ["color", "mono", "mixed"].includes(parsed.mode) ? parsed.mode : "mixed";
+        const colorRatio = coverRatios.includes(Number(parsed.colorRatio)) ? Number(parsed.colorRatio) : 30;
+        return { mode, colorRatio };
+      } catch (error) {
+        return { mode: "mixed", colorRatio: 30 };
+      }
+    }
+
+    function shouldUseColorCover(item, index) {
+      if (!item.cover) return false;
+      if (coverConfig.mode === "color") return true;
+      if (coverConfig.mode === "mono") return false;
+      return visualScore(item, index, 43) % 100 < coverConfig.colorRatio;
+    }
+
     function normalizeItem(item, index = 0) {
       return {
         id: item.id || item.track_id || `track_${index}`,
         title: item.title || item.track_id || "",
         artist: item.artist || item.source_dataset || "",
-        genre: item.label || "",
+        genre: item.genre || item.label || "",
         culture: item.culture || "",
-        source: item.source_dataset || item.platform || "catalog",
+        country: item.country || item.country_name || "",
+        region: item.region || "",
+        province: item.province || "",
+        city: item.city || "",
+        location: item.location || "",
+        source: item.source || item.source_dataset || item.platform || "catalog",
         cover: item.cover_art_url_large || item.cover_art_url || item.artwork_url_large || item.image_url || "",
         url: item.platform_track_url || item.full_track_url || item.preview_url || "",
         description: item.description || item.album_description || "",
@@ -975,7 +1088,7 @@
         if (key && removedTrackIds.has(key)) return false;
         if (key && seen.has(key)) return false;
         if (key) seen.add(key);
-        const hay = `${itemTitle(item)} ${itemArtist(item)} ${itemGenre(item)} ${cultureLabel(item.culture)} ${item.source}`.toLowerCase();
+        const hay = `${itemTitle(item)} ${itemArtist(item)} ${itemGenre(item)} ${itemPlaceLabel(item)} ${item.source}`.toLowerCase();
         if (query && !hay.includes(query)) return false;
         if (culture && item.culture !== culture) return false;
         if (source === "favorite" && !item.favorite) return false;
@@ -986,7 +1099,7 @@
       const sort = els.sort.value;
       if (sort === "title") items.sort((a, b) => itemTitle(a).localeCompare(itemTitle(b)));
       else if (sort === "artist") items.sort((a, b) => itemArtist(a).localeCompare(itemArtist(b)));
-      else if (sort === "culture") items.sort((a, b) => cultureLabel(a.culture).localeCompare(cultureLabel(b.culture)));
+      else if (sort === "culture") items.sort((a, b) => itemPlaceLabel(a).localeCompare(itemPlaceLabel(b)));
       else if (sort === "source") items.sort((a, b) => a.source.localeCompare(b.source));
       else items.sort((a, b) => seededScore(a.id) - seededScore(b.id));
       return items;
@@ -995,7 +1108,7 @@
     function coverMarkup(item) {
       const media = item.cover
         ? `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(itemTitle(item))}" loading="lazy">`
-        : `<div class="cover cover-fallback">${escapeHtml(t("favorites.noCover"))}</div>`;
+        : `<div class="cover cover-fallback" role="img" aria-label="${escapeHtml(t("favorites.noCover"))}"><span>${escapeHtml(t("favorites.noCover"))}</span></div>`;
       if (item.cover) {
         return item.url
           ? `<a class="cover-shell" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${media}</a>`
@@ -1008,40 +1121,38 @@
       const visual = visualScore(item, index, 11);
       const horizontal = !item.imported && visual % 5 === 0;
       const dark = !horizontal && visual % 17 === 4;
-      const color = Boolean(item.cover) && visual % 4 === 0;
+      const color = shouldUseColorCover(item, index);
       const compactRoll = visualScore(item, index, 29);
-      let compactScale = 1;
-      if (!item.imported && compactRoll % 43 === 0) compactScale = 0.6;
-      else if (!item.imported && compactRoll % 29 === 0) compactScale = 0.75;
-      else if (!item.imported && compactRoll % 17 === 0) compactScale = 0.9;
-      const compactClass = compactScale === 1 ? "" : `is-compact-${Math.round(compactScale * 100)}`;
+      const canCompact = !item.imported && compactRoll % 5 === 0;
       const key = itemKey(item);
+      const description = itemDescription(item);
       const classes = [
         "track-card",
         horizontal ? "is-horizontal" : "is-vertical",
         dark ? "is-dark" : "",
-        color ? "is-color" : "",
-        compactClass
+        color ? "is-color" : ""
       ].filter(Boolean).join(" ");
-      const platformLink = item.url
+      const platformLink = item.imported
+        ? `<a class="track-open" href="music.html?local=${encodeURIComponent(item.localAudioId || key)}" data-local-play-id="${escapeHtml(item.localAudioId || key)}">${escapeHtml(t("favorites.playLocal"))}</a>`
+        : item.url
         ? `<a class="track-open" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(t("favorites.openPlatform"))}</a>`
         : `<span class="track-open">${escapeHtml(t("favorites.localTrack"))}</span>`;
       return `
-        <article class="${classes}" data-track-id="${escapeHtml(key)}" data-span="${horizontal ? 2 : 1}" data-scale="${compactScale}">
+        <article class="${classes}" data-track-id="${escapeHtml(key)}" data-span="${horizontal ? 2 : 1}" data-can-compact="${canCompact ? "true" : "false"}">
           <button class="remove-track" type="button" data-remove-id="${escapeHtml(key)}" aria-label="${escapeHtml(t("favorites.removeTrack"))}">×</button>
-          ${item.url ? `<span class="arrow-icon" aria-hidden="true">↗</span>` : ""}
+          ${(item.url || item.imported) ? `<span class="arrow-icon" aria-hidden="true">↗</span>` : ""}
           ${coverMarkup(item)}
           <div class="track-info">
             <div>
               <div class="meta-label">${escapeHtml(item.source)}</div>
               <h2>${escapeHtml(itemTitle(item))}</h2>
               <p>${escapeHtml(itemArtist(item))}</p>
-              ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
+              ${description ? `<p>${escapeHtml(description)}</p>` : ""}
             </div>
             <div>
               <div class="tag-row">
                 <span class="tag">${escapeHtml(itemGenre(item))}</span>
-                <span class="tag">${escapeHtml(cultureLabel(item.culture))}</span>
+                <span class="tag">${escapeHtml(itemPlaceLabel(item))}</span>
               </div>
               <div class="terminal-block"><span class="prompt">${platformLink}</span></div>
             </div>
@@ -1068,35 +1179,71 @@
       const heights = Array(columnCount).fill(0);
 
       cards.forEach((card) => {
-        const scale = Math.max(0.6, Math.min(1, Number(card.dataset.scale) || 1));
         const requestedSpan = Math.max(1, Number(card.dataset.span) || 1);
         const span = Math.min(columnCount, requestedSpan);
         const slotWidth = columnWidth * span + gap * (span - 1);
 
         card.style.position = "absolute";
-        card.style.width = `${slotWidth / scale}px`;
-        card.style.transform = `scale(${scale})`;
+        card.style.left = "0px";
+        card.style.top = "0px";
+        card.style.width = `${slotWidth}px`;
+        card.style.transform = "none";
 
-        const visualHeight = Math.max(40, card.getBoundingClientRect().height);
-        let bestColumn = 0;
-        let bestTop = Number.POSITIVE_INFINITY;
+        const naturalHeight = Math.max(40, card.getBoundingClientRect().height);
+        const canCompact = card.dataset.canCompact === "true" && columnCount > 1;
+        let best = {
+          column: 0,
+          top: Number.POSITIVE_INFINITY,
+          scale: 1,
+          score: Number.POSITIVE_INFINITY
+        };
+
         for (let column = 0; column <= columnCount - span; column += 1) {
           const top = Math.max(...heights.slice(column, column + span));
-          if (top < bestTop) {
-            bestTop = top;
-            bestColumn = column;
+          const scale = canCompact ? compactScaleForSlot(heights, column, span, top, naturalHeight, gap) : 1;
+          const visualHeight = naturalHeight * scale;
+          const nextHeights = heights.slice();
+          for (let nextColumn = column; nextColumn < column + span; nextColumn += 1) {
+            nextHeights[nextColumn] = top + visualHeight + gap;
+          }
+          const maxHeight = Math.max(...nextHeights);
+          const minHeight = Math.min(...nextHeights);
+          const compactPenalty = scale < 0.995 ? 18 : 0;
+          const score = (maxHeight - minHeight) + maxHeight * 0.045 + compactPenalty + top * 0.01;
+          if (score < best.score) {
+            best = { column, top, scale, score };
           }
         }
 
-        const left = bestColumn * (columnWidth + gap);
-        const top = Number.isFinite(bestTop) ? bestTop : 0;
-        card.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
-        for (let column = bestColumn; column < bestColumn + span; column += 1) {
+        const left = best.column * (columnWidth + gap);
+        const top = Number.isFinite(best.top) ? best.top : 0;
+        const scale = Math.max(0.6, Math.min(1, best.scale || 1));
+        const visualHeight = naturalHeight * scale;
+        card.style.left = `${left}px`;
+        card.style.top = `${top}px`;
+        card.style.transform = scale < 0.995 ? `scale(${scale})` : "none";
+        card.dataset.compactScale = scale.toFixed(3);
+        for (let column = best.column; column < best.column + span; column += 1) {
           heights[column] = top + visualHeight + gap;
         }
       });
 
       els.grid.style.height = `${Math.max(...heights)}px`;
+    }
+
+    function compactScaleForSlot(heights, startColumn, span, top, naturalHeight, gap) {
+      const occupied = new Set(Array.from({ length: span }, (_, index) => startColumn + index));
+      const nearbyCeilings = heights
+        .filter((height, column) => !occupied.has(column) && height > top + gap * 3)
+        .sort((a, b) => a - b);
+      const target = nearbyCeilings[0];
+      const fallbackTarget = Math.max(...heights);
+      const targetHeight = (Number.isFinite(target) ? target : fallbackTarget) - top - gap;
+      const scale = targetHeight / naturalHeight;
+      if (scale >= 0.6 && scale < 0.98) {
+        return Math.max(0.6, Math.min(0.98, scale));
+      }
+      return 1;
     }
 
     function observeMasonryItems() {
@@ -1115,10 +1262,12 @@
     function render() {
       const items = filteredItems();
       const cultures = new Set(items.map((item) => item.culture).filter(Boolean));
-      const withCover = items.filter((item) => item.cover).length;
+      const artists = new Set(items.map((item) => itemArtist(item)).filter((artist) => {
+        return artist && artist !== t("favorites.unknownArtist") && artist !== t("favorites.localUpload");
+      }));
       els.statCount.textContent = String(items.length);
       els.statCulture.textContent = String(cultures.size);
-      els.statCover.textContent = `${Math.round((withCover / Math.max(1, items.length)) * 100)}%`;
+      els.statArtist.textContent = String(artists.size);
 
       if (!items.length) {
         els.grid.classList.add("has-empty");
@@ -1168,24 +1317,79 @@
       }));
     }
 
-    function importFiles(files) {
-      const next = Array.from(files || []).map((file, index) => {
+    async function importFiles(files) {
+      const fileList = Array.from(files || []);
+      const stamp = Date.now();
+      const next = fileList.map((file, index) => {
         const title = file.name.replace(/\.[^.]+$/, "");
+        const id = `upload_${stamp}_${index}`;
         return {
-          id: `upload_${Date.now()}_${index}`,
+          id,
+          localAudioId: id,
           title,
-          artist: "",
-          genre: file.type || "audio",
+          artist: "本地上传音频",
+          genre: "",
           culture: "",
+          country: "",
+          region: "",
+          province: "",
+          city: "",
+          location: "",
           source: "upload",
           cover: "",
           url: "",
+          description: "",
+          fileName: file.name,
+          fileType: file.type || "audio",
+          fileSize: file.size || 0,
+          lastModified: file.lastModified || 0,
           imported: true
         };
       });
+      await Promise.all(next.map((item, index) => putLocalAudioRecord({
+        id: item.localAudioId,
+        title: item.title,
+        artist: item.artist,
+        genre: item.genre,
+        culture: item.culture,
+        source: item.source,
+        fileName: item.fileName,
+        fileType: item.fileType,
+        fileSize: item.fileSize,
+        lastModified: item.lastModified,
+        blob: fileList[index]
+      }).catch((error) => {
+        console.warn("local audio save failed", error);
+      })));
       imported = [...next, ...imported];
       els.source.value = "";
+      renderCustomSelect(els.source);
       render();
+    }
+
+    function findVisibleItemByKey(key) {
+      return [...imported, ...storedFavorites, ...catalog].find((item) => {
+        return itemKey(item) === key || item.localAudioId === key;
+      });
+    }
+
+    function playLocalImport(localAudioId) {
+      const item = findVisibleItemByKey(localAudioId);
+      if (!item) return;
+      sessionStorage.setItem(pendingLocalPlayKey, JSON.stringify({
+        id: item.localAudioId || itemKey(item),
+        title: itemTitle(item),
+        artist: itemArtist(item),
+        genre: item.genre || "",
+        culture: item.culture || "",
+        source: item.source || "upload",
+        fileName: item.fileName || "",
+        fileType: item.fileType || "",
+        fileSize: item.fileSize || 0,
+        lastModified: item.lastModified || 0,
+        fromFavorites: true
+      }));
+      window.location.href = `music.html?local=${encodeURIComponent(item.localAudioId || itemKey(item))}`;
     }
 
     function removeTrack(removeId) {
@@ -1284,10 +1488,16 @@
     els.import.addEventListener("change", (event) => importFiles(event.target.files));
     els.grid.addEventListener("click", (event) => {
       const removeButton = event.target.closest("[data-remove-id]");
-      if (!removeButton) return;
+      if (removeButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        removeTrack(removeButton.dataset.removeId);
+        return;
+      }
+      const localPlay = event.target.closest("[data-local-play-id]");
+      if (!localPlay) return;
       event.preventDefault();
-      event.stopPropagation();
-      removeTrack(removeButton.dataset.removeId);
+      playLocalImport(localPlay.dataset.localPlayId);
     });
     window.addEventListener("resize", resizeMasonryItems);
     window.addEventListener("echo-favorites-change", () => {
@@ -1298,6 +1508,15 @@
       loadStoredFavorites();
       populateCultures(catalog);
       [els.source, els.sort].forEach(renderCustomSelect);
+      render();
+    });
+    window.addEventListener("storage", (event) => {
+      if (event.key !== coverConfigKey) return;
+      coverConfig = readCoverConfig();
+      render();
+    });
+    window.addEventListener("echo-cover-settings-change", () => {
+      coverConfig = readCoverConfig();
       render();
     });
 

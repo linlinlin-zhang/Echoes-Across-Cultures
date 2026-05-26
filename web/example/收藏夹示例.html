@@ -1,0 +1,481 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">KERNEL // ARCHITECTURE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;family=JetBrains+Mono:wght@300;400&amp;display=swap" rel="stylesheet" vid="7">
+    <style vid="8">
+        :root {
+
+            --canvas-white: #ffffff;
+            --card-light: #F7F7F7;
+            --card-hover: #F0F0F0;
+            --ink-black: #111111;
+            --ink-gray: #666666;
+            --ink-light: #999999;
+            --grid-gap: 4px;
+
+
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--canvas-white);
+            font-family: var(--font-sans);
+            color: var(--ink-black);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+
+        .layout-wrapper {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .brand {
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand span {
+            color: var(--ink-light);
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .nav-pill {
+            background-color: var(--ink-black);
+            color: var(--canvas-white);
+            padding: 10px 24px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: transform 0.3s var(--ease-out);
+        }
+
+        .nav-pill:hover {
+            transform: scale(1.05);
+        }
+
+        .menu-list {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .menu-list a {
+            text-decoration: none;
+            color: var(--ink-black);
+            font-size: 11px;
+            border: 1px solid #E5E5E5;
+            padding: 8px 16px;
+            border-radius: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-list a:hover {
+            border-color: var(--ink-black);
+        }
+
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: minmax(300px, auto);
+            gap: var(--grid-gap);
+            width: 100%;
+        }
+
+
+        .card {
+            background-color: var(--card-light);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.4s var(--ease-out);
+            text-decoration: none;
+            color: var(--ink-black);
+            min-height: 320px;
+        }
+
+        .card:hover {
+            background-color: var(--card-hover);
+        }
+
+        .card:hover .arrow-icon {
+            transform: translate(4px, -4px);
+        }
+
+        .card.dark {
+            background-color: var(--ink-black);
+            color: var(--canvas-white);
+        }
+
+        .card.dark:hover {
+            background-color: #000;
+        }
+
+        .card.dark .meta-tag, .card.dark .copy {
+            color: #888;
+        }
+
+
+        .meta-tag {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink-light);
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .headline {
+            font-size: 28px;
+            font-weight: 300;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            max-width: 90%;
+        }
+
+        .headline-large {
+            font-size: 48px;
+            font-weight: 200;
+        }
+
+        .copy {
+            font-size: 13px;
+            color: var(--ink-gray);
+            line-height: 1.5;
+            max-width: 300px;
+        }
+
+        .stat-large {
+            font-size: 64px;
+            font-weight: 200;
+            letter-spacing: -0.04em;
+            margin-top: auto;
+        }
+
+        .arrow-icon {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            font-size: 14px;
+            transition: transform 0.3s var(--ease-out);
+        }
+
+
+        .span-2 { grid-column: span 2; }
+        .span-4 { grid-column: span 4; }
+        .row-2 { grid-row: span 2; }
+
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            filter: grayscale(100%) contrast(1.1);
+            transition: filter 0.4s ease, transform 0.6s ease;
+            z-index: 0;
+        }
+
+        .card:hover .card-image {
+            filter: grayscale(0%) contrast(1);
+            transform: scale(1.02);
+        }
+
+        .content-overlay {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+
+        .terminal-block {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #333;
+            margin-top: auto;
+            border-top: 1px solid #E5E5E5;
+            padding-top: 20px;
+            width: 100%;
+        }
+
+        .card.dark .terminal-block {
+            color: #aaa;
+            border-top: 1px solid #333;
+        }
+
+        .prompt::before {
+            content: "➜ ";
+            color: var(--ink-light);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 6px;
+            height: 14px;
+            background-color: var(--ink-black);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        .card.dark .cursor {
+            background-color: #fff;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+
+        footer {
+            margin-top: var(--grid-gap);
+            padding-top: 60px;
+            border-top: 1px solid #f0f0f0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .footer-col h4 {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            color: var(--ink-light);
+        }
+
+        .footer-link {
+            display: block;
+            font-size: 12px;
+            color: var(--ink-black);
+            text-decoration: none;
+            margin-bottom: 12px;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--ink-light);
+        }
+
+    </style>
+</head>
+<body vid="9">
+
+    <div class="layout-wrapper" vid="10">
+        <header vid="11">
+            <div class="brand" vid="12">
+                KERNEL_PANIC
+                <span vid="13">ARCHITECTURE &amp; SYSTEMS</span>
+            </div>
+
+            <ul class="menu-list" vid="14">
+                <li vid="15"><a href="#" vid="16">Articles</a></li>
+                <li vid="17"><a href="#" vid="18">Setups</a></li>
+                <li vid="19"><a href="#" vid="20">Repo</a></li>
+            </ul>
+
+            <a href="#" class="nav-pill" vid="21">SUBSCRIBE</a>
+        </header>
+
+        <main class="bento-grid" vid="22">
+
+
+            <article class="card span-2" vid="23">
+                <div class="content-overlay" vid="24">
+                    <span class="meta-tag" vid="25">Manifesto</span>
+                    <h1 class="headline headline-large" vid="26">COMPUTING AS CRAFT.</h1>
+                    <p class="copy" vid="27">
+                        Exploring the intersection of generative intelligence, low-level systems engineering, and the aesthetics of the command line interface.
+                    </p>
+                </div>
+            </article>
+
+
+            <a href="#" class="card span-2" vid="28">
+                <img src="https://images.unsplash.com/photo-1496559249665-c7e2874707ea?q=80&amp;w=2574&amp;auto=format&amp;fit=crop" alt="Minimalist Desk Setup" class="card-image" vid="29">
+                <div class="content-overlay" style="color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.3);" vid="30">
+                    <span class="meta-tag" style="color: rgba(255,255,255,0.8);" vid="31">Featured Setup</span>
+                    <div style="margin-top: auto;" vid="32">
+                        <h2 class="headline" vid="33">THE MONOCHROME WORKFLOW</h2>
+                        <span class="arrow-icon" vid="34">↗</span>
+                    </div>
+                </div>
+            </a>
+
+
+            <a href="#" class="card" vid="35">
+                <span class="arrow-icon" vid="36">↗</span>
+                <span class="meta-tag" vid="37">Artificial Intelligence</span>
+                <h3 class="headline" vid="38">Transformer Latency</h3>
+                <div class="terminal-block" vid="39">
+                    <span class="prompt" vid="40">python verify_model.py</span><br vid="41">
+                    &gt; Inference: 42ms<br vid="42">
+                    &gt; Accuracy: 98.4%
+                </div>
+            </a>
+
+
+            <a href="#" class="card dark" vid="43">
+                <span class="arrow-icon" vid="44">↗</span>
+                <span class="meta-tag" vid="45">Unixporn</span>
+                <h3 class="headline" vid="46">Ricing Arch Linux</h3>
+                <p class="copy" style="margin-bottom: 20px;" vid="47">
+                    A deep dive into tiling window managers, polybar configuration, and creating the perfect distraction-free environment.
+                </p>
+                <div class="terminal-block" vid="48">
+                    <span class="prompt" vid="49">pacman -S bspwm sxhkd</span><span class="cursor" vid="50"></span>
+                </div>
+            </a>
+
+
+            <div class="card" vid="51">
+                <span class="meta-tag" vid="52">Repo Activity</span>
+                <h3 class="headline" vid="53">Weekly Commits</h3>
+                <div class="stat-large" vid="54">142+</div>
+            </div>
+
+
+            <a href="#" class="card" vid="55">
+                <span class="arrow-icon" vid="56">↗</span>
+                <span class="meta-tag" vid="57">Engineering</span>
+                <h3 class="headline" vid="58">Rust vs C++</h3>
+                <p class="copy" vid="59">Memory safety without garbage collection. Why the industry is shifting its backend philosophy.</p>
+            </a>
+
+
+            <a href="#" class="card span-2" vid="60">
+                <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&amp;w=2670&amp;auto=format&amp;fit=crop" alt="Code on Screen" class="card-image" vid="61">
+                <div class="content-overlay" vid="62">
+                    <span class="meta-tag" style="color: white; mix-blend-mode: difference;" vid="63">Source Code</span>
+                </div>
+            </a>
+
+
+            <a href="#" class="card" vid="64">
+                <span class="arrow-icon" vid="65">↗</span>
+                <span class="meta-tag" vid="66">Terminal</span>
+                <h3 class="headline" vid="67">ZSH Plugins</h3>
+                <p class="copy" vid="68">Optimizing shell productivity with autosuggestions and syntax highlighting.</p>
+            </a>
+
+
+            <a href="#" class="card" vid="69">
+                <span class="arrow-icon" vid="70">↗</span>
+                <span class="meta-tag" vid="71">Homelab</span>
+                <h3 class="headline" vid="72">Self-Hosting LLMs</h3>
+                <p class="copy" vid="73">Running Llama 3 on consumer hardware via Docker containers.</p>
+            </a>
+
+
+            <a href="#" class="card row-2 dark" vid="74">
+                <span class="arrow-icon" vid="75">↗</span>
+                <span class="meta-tag" vid="76">Philosophy</span>
+                <h3 class="headline headline-large" vid="77">THE GHOST IN THE SHELL</h3>
+                <p class="copy" style="margin-top: 20px;" vid="78">
+                    Are we building tools that help us think, or tools that replace thought? An analysis of copilot-driven development.
+                </p>
+                <div style="margin-top: auto; opacity: 0.5;" vid="79">
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1" vid="80">
+                        <circle cx="50" cy="50" r="40" stroke-dasharray="4 4" vid="81"></circle>
+                        <circle cx="50" cy="50" r="20" vid="82"></circle>
+                        <line x1="50" y1="10" x2="50" y2="90" vid="83"></line>
+                        <line x1="10" y1="50" x2="90" y2="50" vid="84"></line>
+                    </svg>
+                </div>
+            </a>
+
+
+            <a href="#" class="card span-2" vid="85">
+                <span class="arrow-icon" vid="86">↗</span>
+                <span class="meta-tag" vid="87">Tutorial</span>
+                <h3 class="headline" vid="88">Vim Motions for Beginners</h3>
+                <div class="terminal-block" vid="89">
+                    <span class="prompt" vid="90">vim ~/.vimrc</span><br vid="91">
+                    " set relative line numbers<br vid="92">
+                    set relativenumber
+                </div>
+            </a>
+
+
+            <div class="card" vid="93">
+                <span class="meta-tag" vid="94">Newsletter</span>
+                <h3 class="headline" vid="95">Join the 0.1%</h3>
+                <p class="copy" vid="96">Weekly insights on code, aesthetics, and systems.</p>
+                <div style="margin-top:auto; width: 100%; display: flex; border-bottom: 1px solid #ddd; padding-bottom: 8px;" vid="97">
+                    <span style="font-size: 12px; color: #999;" vid="98">email@address.com</span>
+                    <span style="margin-left: auto; font-size: 12px;" vid="99">→</span>
+                </div>
+            </div>
+
+        </main>
+
+        <footer vid="100">
+            <div class="footer-col" vid="101">
+                <h4 vid="102">Sitemap</h4>
+                <a href="#" class="footer-link" vid="103">Home</a>
+                <a href="#" class="footer-link" vid="104">Articles</a>
+                <a href="#" class="footer-link" vid="105">About</a>
+                <a href="#" class="footer-link" vid="106">Contact</a>
+            </div>
+            <div class="footer-col" vid="107">
+                <h4 vid="108">Topics</h4>
+                <a href="#" class="footer-link" vid="109">System Architecture</a>
+                <a href="#" class="footer-link" vid="110">Linux Customization</a>
+                <a href="#" class="footer-link" vid="111">Machine Learning</a>
+                <a href="#" class="footer-link" vid="112">Ethics</a>
+            </div>
+            <div class="footer-col" vid="113">
+                <h4 vid="114">Social</h4>
+                <a href="#" class="footer-link" vid="115">GitHub</a>
+                <a href="#" class="footer-link" vid="116">Twitter / X</a>
+                <a href="#" class="footer-link" vid="117">Discord</a>
+            </div>
+            <div class="footer-col" vid="118">
+                <h4 vid="119">Legal</h4>
+                <a href="#" class="footer-link" vid="120">Privacy Policy</a>
+                <a href="#" class="footer-link" vid="121">Terms of Use</a>
+                <span style="display:block; margin-top: 20px; font-size: 10px; color: #999;" vid="122">© 2023 KERNEL PANIC</span>
+            </div>
+        </footer>
+    </div>
+
+
+</body></html>

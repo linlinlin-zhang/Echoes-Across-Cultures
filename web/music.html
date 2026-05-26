@@ -125,13 +125,13 @@
 
     .brand-sub {
       color: var(--muted);
-      font-size: 0.72rem;
+      font-size: 0.82rem;
       white-space: nowrap;
     }
 
     .now-playing {
       display: grid;
-      grid-template-columns: auto 1fr;
+      grid-template-columns: 3rem minmax(0, 1fr);
       gap: 0.85rem;
       align-items: center;
       min-width: 0;
@@ -139,7 +139,28 @@
       border-left: 1px solid var(--line);
     }
 
+    .top-cover-wrap {
+      position: relative;
+      width: 3rem;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 68% 32%, rgba(255, 255, 255, 0.74), transparent 0.48rem),
+        linear-gradient(135deg, #eeeeee, #cfcfcf 48%, #111111 49%, #111111);
+    }
+
+    .top-cover {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+    }
+
     .status-dot {
+      position: absolute;
+      left: 0.38rem;
+      bottom: 0.38rem;
       width: 0.7rem;
       height: 0.7rem;
       border: 1px solid var(--ink);
@@ -153,7 +174,7 @@
       margin-bottom: 0.15rem;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
     }
 
@@ -162,7 +183,7 @@
       align-items: baseline;
       gap: 0.65rem;
       min-width: 0;
-      font-size: 1rem;
+      font-size: 1.08rem;
     }
 
     .track-title-line strong {
@@ -175,7 +196,7 @@
 
     .track-title-line span {
       color: var(--muted);
-      font-size: 0.86rem;
+      font-size: 0.94rem;
       white-space: nowrap;
     }
 
@@ -197,7 +218,7 @@
       border-radius: 999px;
       background: transparent;
       color: var(--ink);
-      font-size: 0.76rem;
+      font-size: 0.84rem;
       text-transform: uppercase;
       transition: background 180ms ease, color 180ms ease, transform 180ms ease;
       white-space: nowrap;
@@ -219,7 +240,7 @@
     }
 
     .station-shell {
-      width: min(100%, 1680px);
+      width: min(100%, 1880px);
       margin: 0 auto;
       min-height: calc(100vh - 73px);
       display: grid;
@@ -248,7 +269,7 @@
 
     .console {
       display: grid;
-      grid-template-rows: auto minmax(420px, 1fr) auto auto;
+      grid-template-rows: auto minmax(540px, 1fr) auto auto;
       min-height: calc(100vh - 73px);
       border-right: 1px solid var(--line);
       background: #ffffff;
@@ -256,7 +277,7 @@
 
     .console-top {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 1rem;
       padding: 1.35rem 1.45rem;
       border-bottom: 1px solid var(--line);
@@ -269,7 +290,7 @@
     .meta-label {
       margin-bottom: 0.35rem;
       color: var(--muted);
-      font-size: 0.66rem;
+      font-size: 0.78rem;
     }
 
     .readout strong {
@@ -277,7 +298,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 0.95rem;
+      font-size: 1.12rem;
       font-weight: 400;
     }
 
@@ -328,7 +349,7 @@
       transform: translate(-50%, 14px);
       color: rgba(17, 17, 17, 0.5);
       font-family: var(--font-mono);
-      font-size: 0.62rem;
+      font-size: 0.74rem;
       line-height: 1.25;
       text-align: center;
       text-transform: uppercase;
@@ -358,7 +379,7 @@
       position: absolute;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       pointer-events: none;
     }
@@ -399,7 +420,7 @@
       left: 0;
       top: 0;
       bottom: 0;
-      width: 10.7%;
+      width: 4.8%;
       background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
     }
 
@@ -407,7 +428,7 @@
       right: 0;
       top: 0;
       bottom: 0;
-      width: 10.7%;
+      width: 4.8%;
       background: linear-gradient(270deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
     }
 
@@ -454,6 +475,9 @@
       align-items: center;
       padding: 1.2rem 1.45rem;
       border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+      z-index: 4;
     }
 
     .transport {
@@ -517,7 +541,18 @@
       margin-bottom: 0.55rem;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.78rem;
+    }
+
+    .progress-meta span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .progress-meta span:last-child {
+      flex: 0 0 auto;
     }
 
     .progress-track {
@@ -568,7 +603,7 @@
       border-radius: 999px;
       background: var(--ink);
       color: #ffffff;
-      font-size: 0.78rem;
+      font-size: 0.88rem;
       text-transform: uppercase;
       transition: transform 180ms ease, background 180ms ease;
       white-space: nowrap;
@@ -599,8 +634,7 @@
     }
 
     .parameter-metric,
-    .parameter-panel,
-    .parameter-table-panel {
+    .parameter-panel {
       background: #ffffff;
       padding: 1.35rem 1.45rem;
     }
@@ -639,7 +673,7 @@
     .parameter-sub {
       margin-top: 0.45rem;
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 0.92rem;
       line-height: 1.35;
     }
 
@@ -680,7 +714,7 @@
       gap: 0.65rem;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
     }
 
@@ -795,37 +829,6 @@
       border-top: 1px solid var(--line);
     }
 
-    .parameter-table-panel {
-      overflow-x: auto;
-    }
-
-    .parameter-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-    }
-
-    .parameter-table th,
-    .parameter-table td {
-      padding: 0.85rem 0.75rem;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .parameter-table th {
-      color: var(--muted);
-      font-family: var(--font-mono);
-      font-size: 0.64rem;
-      font-weight: 400;
-      text-transform: uppercase;
-    }
-
-    .parameter-table td:last-child,
-    .parameter-table th:last-child {
-      text-align: right;
-    }
-
     .ai-lab {
       border-top: 1px solid var(--line);
       background: #ffffff;
@@ -907,7 +910,7 @@
     .ai-context-label {
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.64rem;
+      font-size: 0.74rem;
       text-transform: uppercase;
     }
 
@@ -1117,7 +1120,9 @@
     .recommend-list {
       display: flex;
       flex-direction: column;
+      flex: 1;
       gap: 0;
+      min-height: 0;
       overflow: auto;
     }
 
@@ -1236,7 +1241,7 @@
     .rec-link {
       color: var(--ink);
       font-family: var(--font-mono);
-      font-size: 0.62rem;
+      font-size: 0.72rem;
       text-decoration: underline;
       text-underline-offset: 0.16em;
       text-transform: uppercase;
@@ -1257,7 +1262,7 @@
       border-radius: 999px;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.62rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
     }
 
@@ -1421,7 +1426,10 @@
       </a>
 
       <section class="now-playing" aria-label="正在播放" data-i18n-aria-label="music.nowPlaying">
-        <span class="status-dot"></span>
+        <div class="top-cover-wrap">
+          <div class="top-cover" id="top-cover" aria-hidden="true"></div>
+          <span class="status-dot"></span>
+        </div>
         <div>
           <div class="track-kicker" data-i18n="music.currentPlaying">当前播放</div>
           <div class="track-title-line">
@@ -1452,7 +1460,7 @@
           <strong id="readout-track">月照丝路</strong>
         </div>
         <div class="readout">
-          <div class="meta-label">来源</div>
+          <div class="meta-label">地理位置</div>
           <strong id="readout-origin">中国陕西西安</strong>
         </div>
         <div class="readout">
@@ -1460,8 +1468,8 @@
           <strong id="readout-style">琵琶 / 低保真 / 丝路夜色</strong>
         </div>
         <div class="readout">
-          <div class="meta-label">地图中心</div>
-          <strong id="readout-center">城市坐标</strong>
+          <div class="meta-label">来源</div>
+          <strong id="readout-source">本地示例</strong>
         </div>
       </div>
 
@@ -1495,7 +1503,7 @@
           <button class="skip-button" id="next-button" type="button" aria-label="下一首">›</button>
           <div class="progress-wrap">
             <div class="progress-meta">
-              <span id="play-state">本地预览播放中</span>
+              <span id="play-state">月照丝路 - 赵莲</span>
               <span id="time-code">00:00:18 / 03:42</span>
             </div>
             <div class="progress-track" id="progress-track" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8"><div class="progress-fill" id="progress-fill"></div></div>
@@ -1541,20 +1549,6 @@
               <span class="meta-label">人工回路</span>
             </div>
           </article>
-        </div>
-
-        <div class="parameter-table-panel">
-          <table class="parameter-table" aria-label="推荐参数表">
-            <thead>
-              <tr>
-                <th>指标</th>
-                <th>项目信号</th>
-                <th>当前值</th>
-                <th>解读</th>
-              </tr>
-            </thead>
-            <tbody id="parameter-table-body"></tbody>
-          </table>
         </div>
       </section>
 
@@ -1604,7 +1598,48 @@
     const urlParams = new URLSearchParams(window.location.search);
     const initialSeedTrackId = urlParams.get("seed") || "";
     const initialSeedCulture = urlParams.get("culture") || "china";
+    const initialLocalAudioId = urlParams.get("local") || "";
     const apiPreferCuda = ["1", "true", "yes"].includes(String(urlParams.get("cuda") || "").toLowerCase());
+    const pendingLocalPlayKey = "echo-pending-local-play";
+    const localAudioDbName = "echo-local-audio";
+    const localAudioStore = "tracks";
+    const mysteryPlace = {
+      country: "神秘的地方",
+      city: "太平洋中部",
+      lat: 0,
+      lng: -160,
+      precision: "太平洋默认坐标"
+    };
+
+    function openLocalAudioDb() {
+      return new Promise((resolve, reject) => {
+        if (!("indexedDB" in window)) {
+          reject(new Error("IndexedDB unavailable"));
+          return;
+        }
+        const request = indexedDB.open(localAudioDbName, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(localAudioStore)) {
+            db.createObjectStore(localAudioStore, { keyPath: "id" });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error("IndexedDB open failed"));
+      });
+    }
+
+    async function getLocalAudioRecord(id) {
+      const db = await openLocalAudioDb();
+      const record = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(localAudioStore, "readonly");
+        const request = transaction.objectStore(localAudioStore).get(id);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error("IndexedDB read failed"));
+      });
+      db.close();
+      return record;
+    }
 
     const currentTrack = {
       title: "月照丝路",
@@ -1615,6 +1650,8 @@
       capital: "北京",
       lat: 34.3416,
       lng: 108.9398,
+      genre: "琵琶 / 低保真 / 丝路夜色",
+      sourceDataset: "示例曲库",
       style: "琵琶 / 低保真 / 丝路夜色",
       note: "琵琶拨弦叠加柔和打击乐和夜色质感。",
       metrics: {
@@ -1632,6 +1669,7 @@
 
     const capitalLookup = {
       中国: { city: "北京", lat: 39.9042, lng: 116.4074 },
+      中国台湾: { city: "台北", lat: 25.0330, lng: 121.5654 },
       巴西: { city: "巴西利亚", lat: -15.7939, lng: -47.8828 },
       马里: { city: "巴马科", lat: 12.6392, lng: -8.0029 },
       葡萄牙: { city: "里斯本", lat: 38.7223, lng: -9.1393 },
@@ -1646,7 +1684,17 @@
       秘鲁: { city: "利马", lat: -12.0464, lng: -77.0428 },
       哈萨克斯坦: { city: "阿斯塔纳", lat: 51.1694, lng: 71.4491 },
       牙买加: { city: "金斯敦", lat: 17.9712, lng: -76.7936 },
-      英国: { city: "伦敦", lat: 51.5072, lng: -0.1276 }
+      英国: { city: "伦敦", lat: 51.5072, lng: -0.1276 },
+      新加坡: { city: "新加坡", lat: 1.3521, lng: 103.8198 },
+      马来西亚: { city: "吉隆坡", lat: 3.1390, lng: 101.6869 },
+      泰国: { city: "曼谷", lat: 13.7563, lng: 100.5018 },
+      越南: { city: "河内", lat: 21.0278, lng: 105.8342 },
+      菲律宾: { city: "马尼拉", lat: 14.5995, lng: 120.9842 },
+      西班牙: { city: "马德里", lat: 40.4168, lng: -3.7038 },
+      阿根廷: { city: "布宜诺斯艾利斯", lat: -34.6037, lng: -58.3816 },
+      智利: { city: "圣地亚哥", lat: -33.4489, lng: -70.6693 },
+      澳大利亚: { city: "堪培拉", lat: -35.2809, lng: 149.1300 },
+      加拿大: { city: "渥太华", lat: 45.4215, lng: -75.6972 }
     };
 
     const culturePlaces = {
@@ -1693,7 +1741,13 @@
       US: "美国",
       GB: "英国",
       CN: "中国",
+      SG: "新加坡",
+      MY: "马来西亚",
+      TH: "泰国",
+      VN: "越南",
+      PH: "菲律宾",
       TW: "中国台湾",
+      台湾: "中国台湾",
       HK: "中国香港",
       JP: "日本",
       KR: "韩国",
@@ -1730,8 +1784,21 @@
       DE: "德国",
       FR: "法国",
       IT: "意大利",
+      ES: "西班牙",
       CA: "加拿大"
     };
+
+    const southChinaSeaNineDashSegments = [
+      [[108.6, 18.4], [110.2, 17.1]],
+      [[109.2, 14.9], [110.7, 13.2]],
+      [[110.5, 11.1], [112.0, 9.1]],
+      [[113.5, 6.6], [115.3, 5.5]],
+      [[117.5, 5.3], [119.1, 6.4]],
+      [[120.1, 8.6], [120.4, 10.7]],
+      [[120.2, 12.8], [119.5, 14.8]],
+      [[118.3, 16.6], [116.8, 17.8]],
+      [[115.0, 18.9], [113.1, 19.2]]
+    ];
 
     let recommendations = [
       {
@@ -1798,23 +1865,58 @@
       return `${apiBase}${value.startsWith("/") ? "" : "/"}${value}`;
     }
 
+    function cleanMetaText(value) {
+      const text = String(value ?? "").trim();
+      if (!text) return "";
+      if (["nan", "none", "null", "undefined", "unknown", "n/a", "uploaded_audio", "未标注风格", "未知"].includes(text.toLowerCase())) return "";
+      return text;
+    }
+
+    function firstTagValue(value) {
+      return cleanMetaText(value)
+        .split(/[;,|/]/)
+        .map((item) => item.trim())
+        .filter(Boolean)[0] || "";
+    }
+
     function readableCountry(value, culture) {
-      const text = String(value || "").trim();
-      if (countryNameLookup[text]) return countryNameLookup[text];
-      if (text && text.toLowerCase() !== "nan") return text;
-      return (culturePlaces[culture] && culturePlaces[culture].country) || cultureLabels[culture] || "未知地域";
+      const text = cleanMetaText(value);
+      const mapped = countryNameLookup[text] || countryNameLookup[text.toUpperCase()];
+      if (mapped) return mapped;
+      if (text) return text;
+      return (culturePlaces[culture] && culturePlaces[culture].country) || cultureLabels[culture] || mysteryPlace.country;
     }
 
     function placeForApiItem(item) {
       const culture = String(item.culture || "").trim();
-      const fallback = culturePlaces[culture] || culturePlaces.west;
-      const country = readableCountry(item.country, culture);
+      const lat = Number(item.lat ?? item.latitude);
+      const lng = Number(item.lng ?? item.lon ?? item.longitude);
+      const rawCountry = cleanMetaText(item.country || item.country_code || item.countryCode);
+      const country = readableCountry(rawCountry, culture);
       const countryCapital = capitalLookup[country];
+      const explicitCity = cleanMetaText(item.city || item.location_city || item.location || item.artist_city);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return {
+          country,
+          city: explicitCity || countryCapital?.city || country,
+          lat,
+          lng,
+          precision: cleanMetaText(item.location_precision) || "音频标签位置"
+        };
+      }
+      if (String(item.source_dataset || item.platform || "").trim().toLowerCase() === "upload" && !rawCountry) {
+        return { ...mysteryPlace };
+      }
+      if (!rawCountry && !culture) {
+        return { ...mysteryPlace };
+      }
+      const fallback = culturePlaces[culture] || culturePlaces.west;
       return {
         country,
-        city: fallback.city || countryCapital?.city || country,
-        lat: fallback.lat ?? countryCapital?.lat ?? 0,
-        lng: fallback.lng ?? countryCapital?.lng ?? 0
+        city: explicitCity || countryCapital?.city || (rawCountry ? country : fallback.city || country),
+        lat: countryCapital?.lat ?? fallback.lat ?? mysteryPlace.lat,
+        lng: countryCapital?.lng ?? fallback.lng ?? mysteryPlace.lng,
+        precision: countryCapital ? "国家首府坐标" : "文化域中心坐标"
       };
     }
 
@@ -1844,8 +1946,9 @@
       const place = placeForApiItem(item);
       const title = String(item.title || item.track_id || "未知曲目").trim();
       const artist = String(item.artist || item.source_dataset || "未知艺术家").trim();
-      const platform = String(item.platform || item.source_dataset || "").trim();
-      const label = String(item.label || cultureLabels[culture] || culture || "未标注风格").trim();
+      const platform = cleanMetaText(item.platform || item.source_dataset || item.source);
+      const genre = cleanMetaText(item.genre || item.primaryGenreName || item.primary_genre_name || item.label || firstTagValue(item.tags));
+      const label = cleanMetaText(item.label || genre);
       const durationMs = Number(item.duration_ms || 0);
       return {
         trackId: String(item.track_id || ""),
@@ -1853,6 +1956,7 @@
         artist,
         album: String(item.album || "").trim(),
         label,
+        genre,
         description: String(item.description || item.track_description || "").trim(),
         albumDescription: String(item.album_description || "").trim(),
         tags: String(item.tags || "").trim(),
@@ -1860,10 +1964,11 @@
         city: place.city,
         lat: place.lat,
         lng: place.lng,
+        locationPrecision: place.precision || item.location_precision || "",
         culture,
         sourceDataset: String(item.source_dataset || platform || "").trim(),
         platform,
-        style: [cultureLabels[culture] || culture, label, platform].filter(Boolean).join(" / "),
+        style: genre || label || "未知",
         note: item.audio_is_preview === "true" ? "平台试听音频，已接入本地音频流。" : "平台音频，已接入本地音频流。",
         why: "",
         metrics: metricsFromApiItem(item, index),
@@ -1895,12 +2000,15 @@
 
     const els = {
       consolePanel: document.querySelector(".console"),
+      sidePanel: document.querySelector(".side-panel"),
       topTitle: document.getElementById("top-title"),
       topMeta: document.getElementById("top-meta"),
+      topCover: document.getElementById("top-cover"),
       readoutTrack: document.getElementById("readout-track"),
       readoutOrigin: document.getElementById("readout-origin"),
       readoutStyle: document.getElementById("readout-style"),
-      readoutCenter: document.getElementById("readout-center"),
+      readoutSource: document.getElementById("readout-source"),
+      readoutCatalog: document.getElementById("readout-catalog"),
       upload: document.getElementById("music-upload"),
       audio: document.getElementById("audio-player"),
       playButton: document.getElementById("play-button"),
@@ -1921,7 +2029,6 @@
       parameterMetrics: document.getElementById("parameter-metrics"),
       parameterTopography: document.getElementById("parameter-topography"),
       parameterRadial: document.getElementById("parameter-radial"),
-      parameterTableBody: document.getElementById("parameter-table-body"),
       aiRunButton: document.getElementById("ai-run-button"),
       aiMessages: document.getElementById("ai-messages"),
       aiQuestion: document.getElementById("ai-question"),
@@ -1932,6 +2039,40 @@
     let activeRecommendations = [];
     let uploadedAudioMeta = null;
     let uploadedAudioFile = null;
+    let mainlineStatus = null;
+
+    function formatCount(value) {
+      return Number(value || 0).toLocaleString("zh-CN");
+    }
+
+    function catalogCoverageLabel(status) {
+      const coverage = status?.metadata_coverage || {};
+      const total = Number(status?.n_metadata_rows || status?.n_tracks || 30000);
+      const described = Number(coverage.description_rows || 0);
+      const missing = Number(coverage.missing_description_rows || Math.max(0, total - described));
+      if (described > 0 && missing <= 0) {
+        return `${formatCount(described)}/${formatCount(total)} 描述`;
+      }
+      if (described > 0) {
+        return `${formatCount(described)}/${formatCount(total)} 描述`;
+      }
+      return "30k 描述接入";
+    }
+
+    async function loadMainlineStatus() {
+      try {
+        const response = await fetch(`/api/mainline/status?prefer_cuda=${apiPreferCuda}`);
+        if (!response.ok) throw new Error(`status ${response.status}`);
+        mainlineStatus = await response.json();
+        if (els.readoutCatalog) {
+          els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
+        }
+      } catch (error) {
+        if (els.readoutCatalog) {
+          els.readoutCatalog.textContent = "曲库状态待刷新";
+        }
+      }
+    }
     let aiConversationMessages = [];
     let aiBusy = false;
     let currentQueueIndex = 0;
@@ -1945,6 +2086,7 @@
     let height = 0;
     let projection = null;
     let path = null;
+    let mapZoom = 1;
     let centerLng = locateTrack(currentTrack).lng;
     let centerLat = locateTrack(currentTrack).lat;
     let dragging = false;
@@ -1956,18 +2098,65 @@
 
     function locateTrack(track) {
       if (Number.isFinite(track.lat) && Number.isFinite(track.lng)) {
-        return { lat: track.lat, lng: track.lng, precision: track.city ? "城市坐标" : "国家坐标" };
+        return { lat: track.lat, lng: track.lng, precision: track.locationPrecision || (track.city ? "城市坐标" : "国家坐标") };
       }
-      const fallback = capitalLookup[track.country] || capitalLookup.中国;
-      return { ...fallback, precision: "首都坐标兜底" };
+      const fallback = capitalLookup[track.country] || mysteryPlace;
+      return { ...fallback, precision: fallback.precision || "首都坐标兜底" };
     }
 
     function formatOrigin(track) {
-      const parts = [track.country, track.province, track.city].filter(Boolean);
+      if (track.country === mysteryPlace.country) {
+        return "来自神秘的地方";
+      }
+      const parts = [track.country, track.province, track.city]
+        .map(cleanMetaText)
+        .filter(Boolean)
+        .filter((part, index, all) => all.indexOf(part) === index);
       if (parts.some((part) => /[A-Za-z_]/.test(String(part)))) {
         return parts.join(" / ");
       }
       return parts.join("");
+    }
+
+    function displayGenre(track) {
+      const raw = track.raw || {};
+      return cleanMetaText(track.genre)
+        || cleanMetaText(track.primaryGenreName)
+        || cleanMetaText(raw.primaryGenreName)
+        || cleanMetaText(raw.primary_genre_name)
+        || cleanMetaText(track.label)
+        || firstTagValue(track.tags || raw.tags)
+        || "未知";
+    }
+
+    function displaySource(track) {
+      const raw = track.raw || {};
+      const value = cleanMetaText(track.platform)
+        || cleanMetaText(track.sourceDataset)
+        || cleanMetaText(track.source)
+        || cleanMetaText(raw.platform)
+        || cleanMetaText(raw.source_dataset)
+        || cleanMetaText(raw.source);
+      if (/itunes/i.test(value)) return "iTunes";
+      if (/jamendo/i.test(value)) return "Jamendo";
+      if (/upload|local|本地|用户|收藏夹/i.test(value) || track.fileObjectUrl || track.localAudioId) return "用户上传";
+      return value || "未知";
+    }
+
+    function playbackTrackLabel(track = currentTrack) {
+      return `${track.title || "未知曲目"} - ${track.artist || "未知创作者"}`;
+    }
+
+    function syncTopCover() {
+      if (!els.topCover) return;
+      const url = currentTrack.coverArtUrl || currentTrack.cover_art_url || "";
+      if (url) {
+        els.topCover.style.backgroundImage = `url("${String(url).replace(/"/g, "%22")}")`;
+        els.topCover.textContent = "";
+      } else {
+        els.topCover.style.backgroundImage = "";
+        els.topCover.textContent = "";
+      }
     }
 
     function isSameTrack(a, b) {
@@ -1991,6 +2180,64 @@
       });
     }
 
+    function localTrackFromFile(file, metadata = {}) {
+      const title = String(metadata.title || file.name.replace(/\.[^.]+$/, "") || "本地音频").trim();
+      const genre = cleanMetaText(metadata.genre || metadata.primaryGenreName || metadata.label);
+      return {
+        localAudioId: metadata.id || metadata.localAudioId || "",
+        title,
+        artist: metadata.artist || "本地上传音频",
+        city: metadata.city || mysteryPlace.city,
+        province: metadata.province || "",
+        country: metadata.country || mysteryPlace.country,
+        capital: "",
+        lat: Number.isFinite(Number(metadata.lat)) ? Number(metadata.lat) : mysteryPlace.lat,
+        lng: Number.isFinite(Number(metadata.lng)) ? Number(metadata.lng) : mysteryPlace.lng,
+        locationPrecision: metadata.locationPrecision || mysteryPlace.precision,
+        culture: metadata.culture || "",
+        sourceDataset: metadata.sourceDataset || metadata.source || "upload",
+        platform: metadata.platform || "upload",
+        genre,
+        label: genre,
+        style: metadata.style || "上传音频 / 等待分析",
+        note: metadata.note || "本地文件已载入；点击推荐后会上传到后端走 CultureMERT 与 DCAS 主线。",
+        metrics: {
+          ...defaultMetrics,
+          serendipity: 0.5,
+          calibrationKl: 2.18,
+          targetAffinity: 0.15,
+          minorityExposure: 0.25,
+          palUncertainty: 0.88,
+          score: 0.42,
+          relevance: 0.5,
+          unexpectedness: 0.5
+        },
+        durationSeconds: 0,
+        coverArtUrl: metadata.coverArtUrl || metadata.cover_art_url || "",
+        fileObjectUrl: URL.createObjectURL(file)
+      };
+    }
+
+    function applyLocalAudioFile(file, metadata = {}) {
+      if (currentTrack.fileObjectUrl && currentTrack.fileObjectUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(currentTrack.fileObjectUrl);
+      }
+      uploadedAudioFile = file;
+      uploadedAudioMeta = {
+        name: file.name,
+        type: file.type || metadata.fileType || "未知格式",
+        sizeMB: Number(((file.size || metadata.fileSize || 0) / 1024 / 1024).toFixed(2)),
+        lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : "",
+        source: metadata.source || "本地上传",
+        fromFavorites: Boolean(metadata.fromFavorites)
+      };
+      activeRecommendations = [];
+      const track = localTrackFromFile(file, metadata);
+      primaryTrack = { ...track };
+      currentQueueIndex = 0;
+      selectTrack(primaryTrack);
+    }
+
     function selectTrack(track) {
       replaceCurrentTrack(track);
       const loc = locateTrack(currentTrack);
@@ -2008,16 +2255,12 @@
         }
         els.audio.currentTime = 0;
         els.audio.play().catch(() => {});
-        els.playState.textContent = currentTrack.fileObjectUrl
-          ? "本地音频已载入"
-          : (currentTrack.audioIsPreview ? "平台试听音频已载入" : "平台音频已载入");
       } else {
         if (els.audio.src) {
           els.audio.pause();
           els.audio.removeAttribute("src");
           els.audio.load();
         }
-        els.playState.textContent = "本地预览播放中";
       }
 
       if (!activeRecommendations.length && !isSameTrack(currentTrack, primaryTrack)) {
@@ -2088,12 +2331,6 @@
 
     function formatPct(value) {
       return `${Math.round(Number(value) * 100)}%`;
-    }
-
-    function formatTiny(value) {
-      if (!Number.isFinite(Number(value))) return "--";
-      if (Math.abs(Number(value)) < 0.001) return Number(value).toExponential(1);
-      return Number(value).toFixed(3);
     }
 
     function renderParameterMetrics() {
@@ -2187,32 +2424,10 @@
       els.parameterRadial.innerHTML = [...rings, ...spokes, ...dots].join("");
     }
 
-    function renderParameterTable() {
-      const metrics = activeMetrics();
-      const rows = [
-        ["DCAS 最优传输", "基于 ZA 内容因子的熵正则最优传输", Number(metrics.score).toFixed(3), "路线评分"],
-        ["相关性", rerankWeights[0].signal, Number(metrics.relevance).toFixed(3), `权重=${rerankWeights[0].value}`],
-        ["意外性", "ZS 风格潜变量相对用户历史的平均距离", Number(metrics.unexpectedness).toFixed(3), `权重=${rerankWeights[1].value}`],
-        ["目标亲和", rerankWeights[2].signal, formatPct(metrics.targetAffinity), `权重=${rerankWeights[2].value}`],
-        ["长尾曝光", rerankWeights[3].signal, formatPct(metrics.minorityExposure), `权重=${rerankWeights[3].value}`],
-        ["人工回路不确定性", "文化中心熵 + 邻域熵", Number(metrics.palUncertainty).toFixed(3), "审核优先级"],
-        ["用户回路 KL", "推荐软文化分布与用户历史的距离", formatTiny(metrics.userAlignmentKl), "越低越接近"]
-      ];
-      els.parameterTableBody.innerHTML = rows.map((row) => `
-        <tr>
-          <td>${row[0]}</td>
-          <td>${row[1]}</td>
-          <td>${row[2]}</td>
-          <td>${row[3]}</td>
-        </tr>
-      `).join("");
-    }
-
     function renderParameterPanel() {
       renderParameterMetrics();
       renderParameterTopography();
       renderParameterRadial();
-      renderParameterTable();
       renderAiContextPreview();
     }
 
@@ -2242,7 +2457,8 @@
         地点: formatOrigin(track),
         国家: track.country,
         城市: track.city || "",
-        风格: track.style,
+        风格: displayGenre(track),
+        来源: displaySource(track),
         推荐说明: track.why || track.note || "",
         坐标: { 纬度: loc.lat, 经度: loc.lng, 精度: loc.precision },
         参数: track.metrics || defaultMetrics
@@ -2664,17 +2880,20 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     function syncTrackReadouts() {
-      const loc = locateTrack(currentTrack);
       els.topTitle.textContent = currentTrack.title;
       els.topMeta.textContent = `${currentTrack.artist} - ${formatOrigin(currentTrack)}`;
+      els.playState.textContent = playbackTrackLabel(currentTrack);
       els.readoutTrack.textContent = currentTrack.title;
       els.readoutOrigin.textContent = formatOrigin(currentTrack);
-      els.readoutStyle.textContent = currentTrack.style;
-      els.readoutCenter.textContent = loc.precision;
+      els.readoutStyle.textContent = displayGenre(currentTrack);
+      if (els.readoutSource) {
+        els.readoutSource.textContent = displaySource(currentTrack);
+      }
+      syncTopCover();
     }
 
     function updateProjection() {
-      const scale = Math.min(width, height) * 0.82;
+      const scale = Math.min(width, height) * 0.82 * mapZoom;
       projection = d3.geoMercator()
         .center([centerLng, centerLat])
         .scale(scale)
@@ -2702,13 +2921,16 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }
       label.style.left = `${pos.x}px`;
       label.style.top = `${pos.y}px`;
+      label.style.fontSize = `${(0.74 * mapZoom).toFixed(2)}rem`;
       if (index >= 0) {
         label.dataset.recIndex = String(index);
         label.setAttribute("role", "button");
         label.tabIndex = 0;
         label.setAttribute("aria-label", `播放推荐音乐 ${item.title}`);
       }
-      label.innerHTML = `${item.city || item.country}<br>${item.style.split("/")[0].trim()}`;
+      const placeLabel = item.country === mysteryPlace.country ? "来自神秘的地方" : (item.city || item.country);
+      const styleLabel = item.country === mysteryPlace.country ? item.city : displayGenre(item);
+      label.innerHTML = `${placeLabel}<br>${styleLabel}`;
       label.addEventListener("pointerdown", (event) => {
         event.stopPropagation();
       });
@@ -2723,6 +2945,14 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         selectTrack(activeRecommendations[index]);
       });
       els.mapUi.appendChild(label);
+    }
+
+    function pathFromLngLat(points) {
+      const projected = points
+        .map(([lng, lat]) => projection([lng, lat]))
+        .filter((point) => point && Number.isFinite(point[0]) && Number.isFinite(point[1]));
+      if (projected.length < 2) return "";
+      return projected.map((point, index) => `${index ? "L" : "M"}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(" ");
     }
 
     function drawMap() {
@@ -2748,6 +2978,17 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         .attr("fill", "none")
         .attr("stroke", "rgba(17, 17, 17, 0.16)")
         .attr("stroke-width", 0.55);
+
+      svg.append("g")
+        .attr("aria-label", "南海断续线示意")
+        .selectAll("path")
+        .data(southChinaSeaNineDashSegments)
+        .join("path")
+        .attr("d", pathFromLngLat)
+        .attr("fill", "none")
+        .attr("stroke", "rgba(17, 17, 17, 0.48)")
+        .attr("stroke-width", 1.1)
+        .attr("stroke-linecap", "round");
 
       clearLabels();
       addLabel(currentTrack, "is-current");
@@ -2885,7 +3126,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
               <p>${escapeHtml(item.artist)} - ${escapeHtml(item.city)}, ${escapeHtml(item.country)}</p>
               <p class="rec-description${item.descriptionLoading ? " is-loading" : ""}">${escapeHtml(recommendationDescription(item))}</p>
               <div class="rec-meta">
-                <span class="tag">${escapeHtml(item.style)}</span>
+                <span class="tag">${escapeHtml(displayGenre(item))}</span>
+                <span class="tag">${escapeHtml(displaySource(item))}</span>
                 <span class="tag">${recommendationMatchLabel(item, index)}</span>
               </div>
               ${platformLink || fullLink ? `<div class="rec-links">${platformLink}${fullLink}</div>` : ""}
@@ -2987,18 +3229,33 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
             cultureInference: data.culture_inference || null,
             embedding: data.embedding || null
           };
+          if (data.seeds?.[0]) {
+            const uploadSeed = trackFromApiItem(data.seeds[0], 0);
+            Object.assign(currentTrack, {
+              title: uploadSeed.title || currentTrack.title,
+              artist: uploadSeed.artist || currentTrack.artist,
+              album: uploadSeed.album || currentTrack.album || "",
+              country: uploadSeed.country || currentTrack.country,
+              city: uploadSeed.city || currentTrack.city,
+              lat: Number.isFinite(uploadSeed.lat) ? uploadSeed.lat : currentTrack.lat,
+              lng: Number.isFinite(uploadSeed.lng) ? uploadSeed.lng : currentTrack.lng,
+              locationPrecision: uploadSeed.locationPrecision || currentTrack.locationPrecision,
+              label: uploadSeed.label || currentTrack.label,
+              genre: uploadSeed.genre || currentTrack.genre || "",
+              tags: uploadSeed.tags || currentTrack.tags || "",
+              sourceDataset: uploadSeed.sourceDataset || currentTrack.sourceDataset || "upload",
+              platform: uploadSeed.platform || currentTrack.platform || "upload",
+              style: uploadSeed.style || currentTrack.style,
+              coverArtUrl: uploadSeed.coverArtUrl || currentTrack.coverArtUrl || "",
+              audioUrl: uploadSeed.audioUrl || currentTrack.audioUrl || "",
+              raw: uploadSeed.raw || currentTrack.raw
+            });
+            centerLng = currentTrack.lng;
+            centerLat = currentTrack.lat;
+          }
           const inferredCulture = data.culture_inference?.culture;
           if (inferredCulture) {
             currentTrack.culture = inferredCulture;
-            const inferredPlace = culturePlaces[inferredCulture];
-            if (inferredPlace) {
-              currentTrack.country = inferredPlace.country;
-              currentTrack.city = inferredPlace.city;
-              currentTrack.lat = inferredPlace.lat;
-              currentTrack.lng = inferredPlace.lng;
-              centerLng = inferredPlace.lng;
-              centerLat = inferredPlace.lat;
-            }
             currentTrack.style = `上传音频 / CultureMERT / ${cultureLabels[inferredCulture] || inferredCulture}`;
           }
           primaryTrack = { ...currentTrack };
@@ -3061,10 +3318,45 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       panInterval = null;
     }
 
+    function scrollWholeStation(delta) {
+      const targets = [els.consolePanel, els.sidePanel, els.recommendList]
+        .filter(Boolean)
+        .filter((node, index, all) => all.indexOf(node) === index);
+      targets.forEach((node) => {
+        node.scrollTop += delta;
+      });
+    }
+
     function routeEdgeWheelToConsole(event) {
-      if (!els.consolePanel) return;
       const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-      els.consolePanel.scrollTop += delta;
+      scrollWholeStation(delta);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    function isStationGutterWheel(event) {
+      if (window.matchMedia("(max-width: 960px)").matches) return false;
+      const shell = document.querySelector(".station-shell");
+      if (!shell) return false;
+      const rect = shell.getBoundingClientRect();
+      return event.clientX < rect.left || event.clientX > rect.right;
+    }
+
+    function routeGutterWheelToWholeStation(event) {
+      if (!isStationGutterWheel(event)) return;
+      routeEdgeWheelToConsole(event);
+    }
+
+    function handleMapWheel(event) {
+      const rect = els.mapStage.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      if (x < 40 || x > rect.width - 40) {
+        routeEdgeWheelToConsole(event);
+        return;
+      }
+      const nextZoom = mapZoom + (event.deltaY < 0 ? 0.04 : -0.04);
+      mapZoom = Math.max(0.9, Math.min(1.3, nextZoom));
+      drawMap();
       event.preventDefault();
       event.stopPropagation();
     }
@@ -3094,6 +3386,46 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }
     }
 
+    async function loadPendingLocalAudio() {
+      const raw = sessionStorage.getItem(pendingLocalPlayKey) || "{}";
+      let metadata = {};
+      try {
+        metadata = JSON.parse(raw);
+      } catch (error) {
+        metadata = {};
+      }
+      const localId = initialLocalAudioId || metadata.id || metadata.localAudioId || "";
+      if (!localId) return false;
+
+      try {
+        const record = await getLocalAudioRecord(localId);
+        if (!record?.blob) {
+          els.mapStatus.textContent = "收藏夹本地音频未找到";
+          return false;
+        }
+        const fileName = record.fileName || metadata.fileName || `${record.title || metadata.title || "local-audio"}.mp3`;
+        const fileType = record.fileType || metadata.fileType || record.blob.type || "audio/mpeg";
+        const file = new File([record.blob], fileName, {
+          type: fileType,
+          lastModified: record.lastModified || metadata.lastModified || Date.now()
+        });
+        applyLocalAudioFile(file, {
+          ...record,
+          ...metadata,
+          id: localId,
+          source: "收藏夹",
+          fromFavorites: true
+        });
+        sessionStorage.removeItem(pendingLocalPlayKey);
+        els.mapStatus.textContent = "收藏夹本地音频已载入";
+        return true;
+      } catch (error) {
+        console.error(error);
+        els.mapStatus.textContent = "收藏夹本地音频载入失败";
+        return false;
+      }
+    }
+
     els.mapStage.addEventListener("pointerdown", (event) => {
       dragging = true;
       lastX = event.clientX;
@@ -3106,8 +3438,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       const rect = els.mapStage.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      els.mapStage.classList.toggle("show-left", x < 86);
-      els.mapStage.classList.toggle("show-right", x > rect.width - 86);
+      els.mapStage.classList.toggle("show-left", x < 40);
+      els.mapStage.classList.toggle("show-right", x > rect.width - 40);
       els.mapStage.classList.toggle("show-up", y < 76);
       els.mapStage.classList.toggle("show-down", y > rect.height - 76);
 
@@ -3147,6 +3479,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       zone.addEventListener("wheel", routeEdgeWheelToConsole, { passive: false });
     });
 
+    els.mapStage.addEventListener("wheel", handleMapWheel, { passive: false });
+
+    document.addEventListener("wheel", routeGutterWheelToWholeStation, { passive: false });
+
     els.recommendButton.addEventListener("click", startRecommendations);
 
     els.aiRunButton.addEventListener("click", () => runAiAnalysis());
@@ -3164,9 +3500,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     els.playButton.addEventListener("click", () => {
       isPlaying = !isPlaying;
       els.playButton.classList.toggle("is-playing", isPlaying);
-      els.playState.textContent = isPlaying
-        ? (currentTrack.fileObjectUrl ? "本地音频已载入" : (currentTrack.audioUrl ? "平台音频播放中" : "本地预览播放中"))
-        : "播放已暂停";
+      els.playState.textContent = playbackTrackLabel(currentTrack);
       if (els.audio.src) {
         if (isPlaying) els.audio.play().catch(() => {});
         else els.audio.pause();
@@ -3181,7 +3515,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       } else {
         isPlaying = false;
         els.playButton.classList.remove("is-playing");
-        els.playState.textContent = "播放已结束";
+        els.playState.textContent = playbackTrackLabel(currentTrack);
       }
     });
 
@@ -3210,53 +3544,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     els.upload.addEventListener("change", (event) => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-
-      const name = file.name.replace(/\.[^.]+$/, "");
-      uploadedAudioFile = file;
-      uploadedAudioMeta = {
-        name: file.name,
-        type: file.type || "未知格式",
-        sizeMB: Number((file.size / 1024 / 1024).toFixed(2)),
-        lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : ""
-      };
-      currentTrack.title = name;
-      currentTrack.artist = "本地上传音频";
-      currentTrack.city = "北京";
-      currentTrack.province = "";
-      currentTrack.country = "中国";
-      currentTrack.lat = 39.9042;
-      currentTrack.lng = 116.4074;
-      currentTrack.culture = "";
-      currentTrack.style = "上传音频 / 等待分析";
-      currentTrack.note = "本地文件已载入；点击推荐后会上传到后端走 CultureMERT 与 DCAS 主线。";
-      currentTrack.metrics = {
-        ...defaultMetrics,
-        serendipity: 0.5,
-        calibrationKl: 2.18,
-        targetAffinity: 0.15,
-        minorityExposure: 0.25,
-        palUncertainty: 0.88,
-        score: 0.42,
-        relevance: 0.5,
-        unexpectedness: 0.5
-      };
-      currentTrack.fileObjectUrl = URL.createObjectURL(file);
-      primaryTrack = { ...currentTrack };
-      currentQueueIndex = 0;
-
-      els.audio.src = currentTrack.fileObjectUrl;
-      els.audio.play().catch(() => {});
-      isPlaying = true;
-      els.playButton.classList.add("is-playing");
-      els.playState.textContent = "本地音频已载入";
-      centerLng = currentTrack.lng;
-      centerLat = currentTrack.lat;
-      activeRecommendations = [];
-      renderRecommendations();
-      syncTrackReadouts();
-      renderParameterPanel();
-      drawMap();
-      updateProgressUI();
+      applyLocalAudioFile(file, { source: "本地上传" });
     });
 
     setInterval(() => {
@@ -3271,10 +3559,16 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       setAiBusy(aiBusy);
     });
     syncTrackReadouts();
+    loadMainlineStatus();
     renderRecommendations();
     renderParameterPanel();
     renderAiMessages();
-    loadInitialTrack();
+    loadPendingLocalAudio().then((loaded) => {
+      if (!loaded) loadInitialTrack();
+    }).catch((error) => {
+      console.error(error);
+      loadInitialTrack();
+    });
     loadMap().catch((error) => {
       els.mapStatus.textContent = "地图数据加载失败";
       console.error(error);

@@ -195,7 +195,7 @@
 
     .globe-overlay {
       position: absolute;
-      inset: 5.8rem 1.25rem 1.25rem;
+      inset: clamp(5rem, 8vh, 6.4rem) 1.25rem 1.5rem;
       z-index: 3;
       pointer-events: none;
       display: grid;
@@ -213,37 +213,8 @@
       gap: 1rem;
     }
 
-    .globe-crosshair {
-      align-self: center;
-      justify-self: center;
-      width: 42%;
-      max-width: 280px;
-      aspect-ratio: 1;
-      border: 1px solid rgba(17, 17, 17, 0.22);
-      border-radius: 50%;
-      position: relative;
-      opacity: 0.75;
-    }
-
-    .globe-crosshair::before,
-    .globe-crosshair::after {
-      content: "";
-      position: absolute;
-      background: rgba(17, 17, 17, 0.2);
-    }
-
-    .globe-crosshair::before {
-      left: 50%;
-      top: -18%;
-      width: 1px;
-      height: 136%;
-    }
-
-    .globe-crosshair::after {
-      left: -18%;
-      top: 50%;
-      width: 136%;
-      height: 1px;
+    .globe-overlay-spacer {
+      min-height: 0;
     }
 
     .copy-column {
@@ -297,6 +268,28 @@
       flex-wrap: wrap;
       gap: 0.8rem;
       margin-top: 2.4rem;
+    }
+
+    .start-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3.15rem;
+      min-width: 12rem;
+      padding: 0.85rem 2.2rem;
+      border: 1px solid var(--ink);
+      border-radius: 4px;
+      background: var(--ink);
+      color: #ffffff;
+      font-size: 0.86rem;
+      text-transform: uppercase;
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .start-button:hover {
+      background: #ffffff;
+      color: var(--ink);
+      transform: translateY(-1px);
     }
 
     .hero-bottom {
@@ -721,7 +714,7 @@
               <span>GLOBAL MUSIC SURFACE</span>
               <span id="region-name">REGION INITIALIZING</span>
             </div>
-            <div class="globe-crosshair"></div>
+            <div class="globe-overlay-spacer"></div>
             <div class="globe-overlay-row">
               <span>DRAG TO ROTATE</span>
               <span id="region-style">GENRE SIGNAL ACTIVE</span>
@@ -735,29 +728,28 @@
           <span class="label">Cross Cultural Music Intelligence</span>
           <h1 class="hero-title">Echo<br><span>Atlas</span></h1>
           <p class="hero-sub" data-i18n="index.heroSub">
-            一个把音乐文化、情绪与听觉结构放在同一张世界地图上的研究型推荐主页。
+            一个接入 30,000 首真实曲目、CultureMERT embedding 与 DCAS 推荐主线的跨文化音乐工作台。
           </p>
           <div class="hero-actions">
-            <a class="link-small" href="#method" data-i18n="index.action.method">进入方法层 +</a>
-            <a class="link-small" href="#signals" data-i18n="index.action.signals">查看信号图谱 +</a>
+            <a class="start-button" href="music.html" data-i18n="index.action.start">开始使用</a>
           </div>
         </div>
 
         <div class="hero-bottom" aria-label="Project signals">
           <div class="micro-stat">
-            <span>Culture Route</span>
-            <strong>09</strong>
-            <span>regions aligned by listening context</span>
+            <span>Tracks</span>
+            <strong>30K</strong>
+            <span>iTunes + Jamendo real catalog</span>
           </div>
           <div class="micro-stat">
-            <span>Latent Factors</span>
-            <strong>03</strong>
-            <span>content, style, affect separated for inspection</span>
+            <span>Cultures</span>
+            <strong>17</strong>
+            <span>global domains with non-western expansion</span>
           </div>
           <div class="micro-stat">
-            <span>Human Loop</span>
-            <strong>PAL</strong>
-            <span>expert feedback folded back into ranking logic</span>
+            <span>Descriptions</span>
+            <strong>100%</strong>
+            <span>frontend-ready cover, link, genre, and copy</span>
           </div>
         </div>
       </div>
@@ -767,16 +759,16 @@
       <div class="container">
         <div class="feature-grid">
           <article class="feature-item">
-            <span class="feature-index">01 / Listening Geography</span>
-            <p>从地区、语境与曲目元数据出发，把全球声音材料组织成可以被观察的文化地形。</p>
+            <span class="feature-index">01 / 30K Catalog</span>
+            <p>已经接入 30,000 首来自 iTunes 与 Jamendo 的真实曲目，覆盖 17 个文化域，并补齐封面、平台链接和前端可展示音乐介绍。</p>
           </article>
           <article class="feature-item">
-            <span class="feature-index">02 / Disentangled Signals</span>
-            <p>把旋律节奏、风格文化、情绪感受拆成三条可调信号，让推荐理由不再只是一串分数。</p>
+            <span class="feature-index">02 / Upload Pipeline</span>
+            <p>音乐台支持上传音频，经 CultureMERT 转为 embedding，再进入 DCAS 主线推荐，在地图上生成跨文化路线。</p>
           </article>
           <article class="feature-item">
-            <span class="feature-index">03 / Participatory Feedback</span>
-            <p>人类标注者在不确定位置介入，校正跨文化误读，并把反馈重新写入模型回路。</p>
+            <span class="feature-index">03 / Web Metadata</span>
+            <p>推荐卡片、收藏与 AI 分析会读取真实 metadata：曲名、艺人、流派、文化域、封面、链接和介绍文案。</p>
           </article>
         </div>
       </div>
@@ -787,10 +779,10 @@
         <div class="big-text-grid">
           <aside class="section-side">
             <span class="label">Project Premise</span>
-            <p>这个首页作为研究项目的第一视觉入口；音乐台已经接入主线推荐后端、真实曲库元数据和可播放音频流。</p>
+            <p>项目已经从采集脚本推进到可演示 Web 应用：真实曲库、上传分析、推荐路线、收藏与 Kimi 讲解正在同一条服务链路中运行。</p>
           </aside>
           <div class="big-copy">
-            We listen for the <span class="highlight">distance between musical worlds</span>, then turn that distance into a navigable interface for <span class="highlight">fairer discovery</span>, richer annotation, and slower, more careful recommendation.
+            Echo 现在把 <span class="highlight">真实音乐 metadata</span>、CultureMERT 声学向量、DCAS 跨文化排序和 Kimi 推荐讲解接在一起，让用户可以从一首上传歌曲出发，探索更远的文化声音路线。
           </div>
         </div>
       </div>
@@ -799,10 +791,10 @@
     <section class="signal-band" id="signals" aria-label="Signal visualization placeholder">
       <div class="signal-copy">
         <div>
-          <span class="label">Signal Field</span>
-          <h2>Latent Compass</h2>
+          <span class="label">Live Pipeline</span>
+          <h2>Culture Route</h2>
         </div>
-        <p>下面这块先承接主页示例里的大视觉区，用轻量图形暗示后续工作台：文化路径、因子分离、反馈闭环都会在这里变成可操作模块。</p>
+        <p>从上传音频到 embedding，从候选召回到跨文化重排，再到封面、链接、介绍和 AI 解读，首页现在指向的是可以实际试用的音乐台流程。</p>
       </div>
       <div class="signal-field">
         <div class="orbit-text"><span>content - style - affect - feedback - route -</span></div>
@@ -851,6 +843,9 @@
     const FONT_SPEC = "12px 'Courier New', monospace";
     const LINE_HEIGHT = 12;
     const MASK_RESOLUTION = 256;
+    const GLOBE_SCALE = 1.18;
+    const GLOBE_OFFSET_X = -0.05;
+    const GLOBE_OFFSET_Y = 0.01;
     const MUSIC_REGIONS = [
       {
         name: "EAST ASIA",
@@ -925,7 +920,7 @@
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.z = 6.5;
+    camera.position.z = 6.05;
 
     const maskScene = new THREE.Scene();
     const maskRenderTarget = new THREE.WebGLRenderTarget(MASK_RESOLUTION, MASK_RESOLUTION);
@@ -934,6 +929,8 @@
     const textureLoader = new THREE.TextureLoader();
     const geometry = new THREE.SphereGeometry(1, 64, 64);
     const earthGroup = new THREE.Group();
+    earthGroup.scale.setScalar(GLOBE_SCALE);
+    earthGroup.position.set(GLOBE_OFFSET_X, GLOBE_OFFSET_Y, 0);
     scene.add(earthGroup);
 
     const mapUrl = "./vendor/earth-blue-marble.jpg";
@@ -984,6 +981,8 @@
         });
 
         maskEarthMesh = new THREE.Mesh(geometry, maskMaterial);
+        maskEarthMesh.scale.setScalar(GLOBE_SCALE);
+        maskEarthMesh.position.copy(earthGroup.position);
         maskScene.add(maskEarthMesh);
         animate();
       });
@@ -1137,8 +1136,8 @@
 
       const fov = camera.fov * Math.PI / 180;
       const vHeight = 2 * Math.tan(fov / 2) * camera.position.z;
-      const screenRadius = (1 / (vHeight / 2)) * (height / 2);
-      const ringRadius = screenRadius * 1.3;
+      const screenRadius = (GLOBE_SCALE / (vHeight / 2)) * (height / 2);
+      const ringRadius = Math.min(screenRadius * 1.22, Math.min(width, height) * 0.46);
 
       if (Math.abs(cachedRingRadius - ringRadius) > 0.5) {
         cachedRingRadius = ringRadius;
@@ -1153,8 +1152,9 @@
         cachedAnglePerChar = (Math.PI * 2) / cachedRingText.length;
       }
 
-      const centerX = width / 2;
-      const centerY = height / 2;
+      const visualCenter = new THREE.Vector3(GLOBE_OFFSET_X, GLOBE_OFFSET_Y, 0).project(camera);
+      const centerX = (visualCenter.x * 0.5 + 0.5) * width;
+      const centerY = (-visualCenter.y * 0.5 + 0.5) * height;
       const time = Date.now() * 0.00005;
 
       ctx2d.save();

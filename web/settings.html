@@ -75,7 +75,7 @@
     .meta-label {
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
     }
 
@@ -109,20 +109,80 @@
     .settings-shell {
       display: grid;
       grid-template-columns: minmax(280px, 0.75fr) minmax(420px, 1.25fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
       min-height: calc(100vh - 4.55rem);
       border-bottom: 1px solid var(--line);
+      background: #ffffff;
     }
 
     .settings-hero,
     .settings-panel {
+      display: contents;
       background: #ffffff;
-      border-right: 1px solid var(--line);
-      padding: 2rem 2.25rem;
+      padding: 0;
     }
 
-    .settings-hero h1 {
+    .settings-section,
+    .hero-section {
+      --section-pad-x: 2.25rem;
+      padding: 2rem var(--section-pad-x);
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .hero-section {
+      grid-column: 1;
+      border-right: 1px solid var(--line);
+    }
+
+    .settings-section {
+      grid-column: 2;
+    }
+
+    .settings-hero .hero-section:nth-child(1),
+    .settings-panel .settings-section:nth-child(1) {
+      grid-row: 1;
+    }
+
+    .settings-hero .hero-section:nth-child(2),
+    .settings-panel .settings-section:nth-child(2) {
+      grid-row: 2;
+    }
+
+    .section-kicker {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+    }
+
+    .settings-section > .section-kicker::before {
+      content: "";
+      flex: 0 0 var(--section-pad-x);
+      height: 1px;
+      margin-left: calc(var(--section-pad-x) * -1);
+      background: var(--line);
+    }
+
+    .section-kicker::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .hero-section > .section-kicker::after,
+    .settings-section > .section-kicker::after {
+      margin-right: calc(var(--section-pad-x) * -1);
+    }
+
+    .settings-hero h1,
+    .settings-hero h2 {
       margin-top: 0.45rem;
-      font-size: clamp(3.2rem, 6vw, 7.4rem);
+      font-size: clamp(3rem, 5vw, 6.6rem);
       font-weight: 400;
       line-height: 0.9;
       letter-spacing: 0;
@@ -138,6 +198,10 @@
 
     .settings-panel {
       border-right: 0;
+      gap: 0;
+    }
+
+    .settings-section {
       display: grid;
       align-content: start;
       gap: 1.35rem;
@@ -152,7 +216,7 @@
     .note {
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.7rem;
+      font-size: 0.82rem;
     }
 
     .field input,
@@ -177,6 +241,57 @@
       display: grid;
       grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.45fr);
       gap: 1rem;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .choice-button,
+    .ratio-button {
+      min-height: 2.6rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: #ffffff;
+      color: var(--ink);
+      text-align: center;
+      transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+    }
+
+    .choice-button.is-active,
+    .ratio-button.is-active,
+    .choice-button:hover,
+    .ratio-button:hover {
+      background: var(--ink);
+      color: #ffffff;
+      border-color: var(--ink);
+    }
+
+    .ratio-panel {
+      display: grid;
+      gap: 0.6rem;
+      opacity: 0.45;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .ratio-panel.is-enabled {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ratio-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 0.35rem;
+    }
+
+    .ratio-button {
+      min-height: 2.35rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
     }
 
     .panel-actions {
@@ -217,9 +332,35 @@
 
       .settings-hero,
       .settings-panel {
+        display: grid;
         border-right: 0;
         border-bottom: 1px solid var(--line);
+      }
+
+      .settings-hero .hero-section,
+      .settings-panel .settings-section {
+        grid-column: 1;
+        grid-row: auto;
+        border-right: 0;
+      }
+
+      .settings-section,
+      .hero-section {
+        --section-pad-x: 1.4rem;
         padding: 1.4rem;
+      }
+
+      .settings-section > .section-kicker::before,
+      .hero-section > .section-kicker::after,
+      .settings-section > .section-kicker::after {
+        margin-left: 0;
+        margin-right: 0;
+        flex-basis: 0;
+      }
+
+      .choice-grid,
+      .ratio-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -240,42 +381,70 @@
 
   <main class="settings-shell">
     <section class="settings-hero">
-      <div class="meta-label" data-i18n="settings.heroMeta">模型设置</div>
-      <h1 data-i18n-html="settings.heroTitle">Kimi<br>接口</h1>
-      <p data-i18n="settings.heroCopy">这里配置音乐台 AI 分析所需的 Moonshot/Kimi 接口。密钥仍只保存在当前浏览器，本地后端负责代理请求。</p>
+      <div class="hero-section">
+        <div class="section-kicker" data-i18n="settings.generalSection">通用功能</div>
+        <h1 data-i18n-html="settings.generalTitle">全局<br>偏好</h1>
+        <p data-i18n="settings.generalCopy">这里调整 Echo 的界面语言、AI 回复语言与专辑封面的视觉呈现方式。</p>
+      </div>
+      <div class="hero-section">
+        <div class="section-kicker" data-i18n="settings.kimiSection">AI 配置</div>
+        <h2 data-i18n-html="settings.heroTitle">AI<br>接口</h2>
+        <p data-i18n="settings.heroCopy">这里配置音乐台 AI 分析所需的模型接口。密钥仍只保存在当前浏览器，本地后端负责代理请求。</p>
+      </div>
     </section>
 
-    <section class="settings-panel" aria-label="Kimi API 设置">
-      <div class="field">
-        <label for="app-language" data-i18n="settings.languageLabel">界面与 AI 语言</label>
-        <select id="app-language"></select>
-        <p class="note" data-i18n="settings.languageHelp">选择后会同步影响页面文案和 AI 分析回复语言。</p>
-      </div>
-
-      <div class="config-row">
+    <section class="settings-panel" aria-label="设置">
+      <div class="settings-section">
+        <div class="section-kicker" data-i18n="settings.generalSection">通用功能</div>
         <div class="field">
-          <label for="kimi-api-key" data-i18n="settings.apiKeyLabel">Kimi API 密钥</label>
-          <input id="kimi-api-key" type="password" autocomplete="off" placeholder="填入 Moonshot/Kimi 密钥" data-i18n-placeholder="settings.apiKeyPlaceholder">
+          <label for="app-language" data-i18n="settings.languageLabel">界面与 AI 语言</label>
+          <select id="app-language"></select>
+          <p class="note" data-i18n="settings.languageHelp">选择后会同步影响页面文案和 AI 分析回复语言。</p>
         </div>
+
         <div class="field">
-          <label for="kimi-model" data-i18n="settings.modelLabel">模型</label>
-          <input id="kimi-model" type="text" value="kimi-k2.6" autocomplete="off">
+          <label data-i18n="settings.coverModeLabel">专辑封面显示</label>
+          <div class="choice-grid" role="radiogroup" aria-label="专辑封面显示">
+            <button class="choice-button" type="button" data-cover-mode="color" data-i18n="settings.coverMode.color">全部彩色</button>
+            <button class="choice-button" type="button" data-cover-mode="mono" data-i18n="settings.coverMode.mono">全部黑白</button>
+            <button class="choice-button" type="button" data-cover-mode="mixed" data-i18n="settings.coverMode.mixed">部分彩色</button>
+          </div>
+          <p class="note" data-i18n="settings.coverModeHelp">该设置会影响收藏夹里专辑封面的彩色/黑白呈现。</p>
+        </div>
+
+        <div class="ratio-panel" id="cover-ratio-panel">
+          <div class="section-kicker" data-i18n="settings.coverRatioLabel">彩色比例</div>
+          <div class="ratio-grid" id="cover-ratio-grid" role="radiogroup" aria-label="彩色比例"></div>
         </div>
       </div>
 
-      <div class="field">
-        <label for="kimi-endpoint" data-i18n="settings.endpointLabel">接口地址</label>
-        <input id="kimi-endpoint" type="text" value="https://api.moonshot.cn/v1/chat/completions" autocomplete="off">
-      </div>
+      <div class="settings-section">
+        <div class="section-kicker" data-i18n="settings.kimiSection">AI 配置</div>
+        <div class="config-row">
+          <div class="field">
+            <label for="kimi-api-key" data-i18n="settings.apiKeyLabel">AI API 密钥</label>
+            <input id="kimi-api-key" type="password" autocomplete="off" placeholder="填入 AI API 密钥" data-i18n-placeholder="settings.apiKeyPlaceholder">
+          </div>
+          <div class="field">
+            <label for="kimi-model" data-i18n="settings.modelLabel">模型</label>
+            <input id="kimi-model" type="text" value="kimi-k2.6" autocomplete="off">
+          </div>
+        </div>
 
-      <div class="panel-actions">
-        <button class="pill" id="save-config" type="button" data-i18n="settings.save">保存设置</button>
-        <button class="pill" id="test-config" type="button" data-i18n="settings.test">测试连接</button>
-        <button class="text-button" id="clear-config" type="button" data-i18n="settings.clear">清空密钥</button>
-      </div>
+        <div class="field">
+          <label for="kimi-endpoint" data-i18n="settings.endpointLabel">接口地址</label>
+          <input id="kimi-endpoint" type="text" value="https://api.moonshot.cn/v1/chat/completions" autocomplete="off">
+        </div>
 
-      <p class="note" data-i18n="settings.note">可以把密钥保存在当前浏览器本地，也可以填入 configs/secrets/kimi.local.json；音乐台会通过 /api/ai/kimi/chat 让本地后端代理转发。</p>
-      <div class="status" id="settings-status"></div>
+        <div class="panel-actions">
+          <button class="pill" id="save-config" type="button" data-i18n="settings.save">保存设置</button>
+          <button class="pill" id="test-config" type="button" data-i18n="settings.test">测试连接</button>
+          <button class="text-button" id="clear-config" type="button" data-i18n="settings.clear">清空密钥</button>
+        </div>
+
+        <p class="note" data-i18n="settings.note">可以把密钥保存在当前浏览器本地，也可以填入本地后端配置文件；音乐台会通过本地后端代理转发 AI 请求。</p>
+        <div class="status" id="settings-status"></div>
+      </div>
     </section>
   </main>
 
@@ -283,6 +452,9 @@
   <script>
     const els = {
       language: document.getElementById("app-language"),
+      coverModeButtons: Array.from(document.querySelectorAll("[data-cover-mode]")),
+      coverRatioPanel: document.getElementById("cover-ratio-panel"),
+      coverRatioGrid: document.getElementById("cover-ratio-grid"),
       apiKey: document.getElementById("kimi-api-key"),
       model: document.getElementById("kimi-model"),
       endpoint: document.getElementById("kimi-endpoint"),
@@ -291,9 +463,54 @@
       clear: document.getElementById("clear-config"),
       status: document.getElementById("settings-status")
     };
+    const coverConfigKey = "echo-cover-config";
+    const coverRatios = [10, 20, 30, 40, 50, 60, 70, 80, 90];
 
     function t(key, params = {}) {
       return window.EchoI18n?.t(key, params) || key;
+    }
+
+    function readCoverConfig() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(coverConfigKey) || "{}");
+        const mode = ["color", "mono", "mixed"].includes(parsed.mode) ? parsed.mode : "mixed";
+        const colorRatio = coverRatios.includes(Number(parsed.colorRatio)) ? Number(parsed.colorRatio) : 30;
+        return { mode, colorRatio };
+      } catch (error) {
+        return { mode: "mixed", colorRatio: 30 };
+      }
+    }
+
+    function saveCoverConfig(config = readCoverConfig(), announce = true) {
+      localStorage.setItem(coverConfigKey, JSON.stringify(config));
+      window.dispatchEvent(new CustomEvent("echo-cover-settings-change", { detail: config }));
+      if (announce) els.status.textContent = t("settings.coverSaved");
+    }
+
+    function renderCoverRatioButtons(config = readCoverConfig()) {
+      els.coverRatioGrid.innerHTML = coverRatios.map((ratio) => `
+        <button class="ratio-button${ratio === config.colorRatio ? " is-active" : ""}" type="button" data-cover-ratio="${ratio}">
+          ${ratio}%
+        </button>
+      `).join("");
+      els.coverRatioGrid.querySelectorAll("[data-cover-ratio]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const next = { ...readCoverConfig(), mode: "mixed", colorRatio: Number(button.dataset.coverRatio) };
+          saveCoverConfig(next);
+          renderCoverSettings(next);
+        });
+      });
+    }
+
+    function renderCoverSettings(config = readCoverConfig()) {
+      els.coverModeButtons.forEach((button) => {
+        const active = button.dataset.coverMode === config.mode;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-checked", active ? "true" : "false");
+        button.setAttribute("role", "radio");
+      });
+      els.coverRatioPanel.classList.toggle("is-enabled", config.mode === "mixed");
+      renderCoverRatioButtons(config);
     }
 
     function populateLanguageOptions() {
@@ -311,6 +528,7 @@
         els.endpoint.value = local.endpoint || "https://api.moonshot.cn/v1/chat/completions";
         els.apiKey.value = local.apiKey || session.apiKey || "";
         els.language.value = window.EchoI18n?.getLanguage() || "zh-CN";
+        renderCoverSettings(readCoverConfig());
       } catch (error) {
         els.status.textContent = t("settings.readFailed");
       }
@@ -336,6 +554,7 @@
       const endpoint = els.endpoint.value.trim() || "https://api.moonshot.cn/v1/chat/completions";
       const apiKey = els.apiKey.value.trim();
       const language = window.EchoI18n?.setLanguage(els.language.value) || els.language.value;
+      saveCoverConfig(readCoverConfig(), false);
       localStorage.setItem("echo-kimi-config", JSON.stringify({ model, endpoint, apiKey, language }));
       sessionStorage.setItem("echo-kimi-session", JSON.stringify({ apiKey }));
       els.status.textContent = t("settings.saved");
@@ -353,7 +572,7 @@
           endpoint,
           messages: [
             { role: "system", content: "你是 Echo 设置页的连通性测试助手。" },
-            { role: "user", content: "请只回复：KIMI_OK" }
+            { role: "user", content: "请只回复：AI_OK" }
           ],
           max_completion_tokens: 1024,
           timeout_seconds: 45
@@ -393,9 +612,17 @@
     }
 
     populateLanguageOptions();
+    renderCoverSettings(readCoverConfig());
     els.save.addEventListener("click", saveConfig);
     els.test.addEventListener("click", testConfig);
     els.clear.addEventListener("click", clearConfig);
+    els.coverModeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const next = { ...readCoverConfig(), mode: button.dataset.coverMode };
+        saveCoverConfig(next);
+        renderCoverSettings(next);
+      });
+    });
     els.language.addEventListener("change", () => {
       window.EchoI18n?.setLanguage(els.language.value);
       els.status.textContent = t("settings.languageSaved");
