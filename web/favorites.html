@@ -868,7 +868,7 @@
         <label class="meta-label" for="source-filter" data-i18n="favorites.sourceFilter">来源筛选</label>
         <select id="source-filter">
           <option value="" data-i18n="favorites.allSources">全部来源</option>
-          <option value="favorite" data-i18n="favorites.source.favorite">收藏</option>
+          <option value="favorite" data-i18n="favorites.source.favorite" selected>收藏</option>
           <option value="itunes">iTunes</option>
           <option value="jamendo">Jamendo</option>
           <option value="upload" data-i18n="favorites.localUpload">本地导入</option>
@@ -1299,6 +1299,11 @@
 
     async function loadCatalog() {
       els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.loading"))}</div>`;
+      if (window.EchoFavoriteStore?.hydrateFromServer) {
+        await window.EchoFavoriteStore.hydrateFromServer({ seed: true }).catch((error) => {
+          console.warn("favorite server hydrate failed", error);
+        });
+      }
       const response = await fetch("/api/mainline/catalog?limit=160&random_seed=20260525&exclude_low_signal=true");
       if (!response.ok) {
         throw new Error(`catalog ${response.status}`);

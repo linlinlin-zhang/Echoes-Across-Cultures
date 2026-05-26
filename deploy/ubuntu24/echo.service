@@ -1,0 +1,17 @@
+[Unit]
+Description=Echo FastAPI web app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=echo
+Group=echo
+WorkingDirectory=/srv/echo
+EnvironmentFile=/etc/echo/echo.env
+ExecStart=/srv/echo/.venv/bin/python -m uvicorn dcas_server.app:app --host 127.0.0.1 --port 18010 --proxy-headers
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -3560,6 +3560,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     });
     syncTrackReadouts();
     loadMainlineStatus();
+    window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).then(() => {
+      renderRecommendations();
+    }).catch(() => {});
     renderRecommendations();
     renderParameterPanel();
     renderAiMessages();

@@ -1,5 +1,8 @@
 (function () {
   const STORAGE_KEY = "echo-favorite-tracks";
+  const API_BASE = "/api/favorites";
+  let hydrationPromise = null;
+  let serverAvailable = false;
 
   function read() {
     try {
@@ -51,6 +54,64 @@
     };
   }
 
+  async function fetchJson(url, options = {}) {
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {})
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`favorites api ${response.status}`);
+    }
+    return response.json();
+  }
+
+  function dispatch(items, source = "local") {
+    window.dispatchEvent(new CustomEvent("echo-favorites-change", { detail: { items, source } }));
+  }
+
+  function syncAdd(track) {
+    fetchJson(API_BASE, {
+      method: "POST",
+      body: JSON.stringify({ track: normalize(track) })
+    }).then((data) => {
+      serverAvailable = true;
+      if (Array.isArray(data.items)) write(data.items);
+    }).catch(() => {
+      serverAvailable = false;
+    });
+  }
+
+  function syncRemove(id) {
+    fetchJson(`${API_BASE}?track_key=${encodeURIComponent(id)}`, { method: "DELETE" }).then((data) => {
+      serverAvailable = true;
+      if (Array.isArray(data.items)) write(data.items);
+    }).catch(() => {
+      serverAvailable = false;
+    });
+  }
+
+  async function hydrateFromServer(options = {}) {
+    const seed = options.seed !== false;
+    if (hydrationPromise) return hydrationPromise;
+    hydrationPromise = fetchJson(`${API_BASE}?seed=${seed ? "true" : "false"}`).then((data) => {
+      serverAvailable = true;
+      const items = Array.isArray(data.items) ? data.items : [];
+      write(items);
+      dispatch(items, "server");
+      return items;
+    }).catch((error) => {
+      serverAvailable = false;
+      return read();
+    }).finally(() => {
+      hydrationPromise = null;
+    });
+    return hydrationPromise;
+  }
+
   function isFavorite(track) {
     const id = trackKey(track);
     if (!id) return false;
@@ -63,7 +124,8 @@
     const items = read().filter((item) => trackKey(item) !== next.id);
     items.unshift(next);
     write(items);
-    window.dispatchEvent(new CustomEvent("echo-favorites-change", { detail: { items } }));
+    dispatch(items);
+    syncAdd(next);
     return items;
   }
 
@@ -71,7 +133,8 @@
     const id = trackKey(track);
     const items = read().filter((item) => trackKey(item) !== id);
     write(items);
-    window.dispatchEvent(new CustomEvent("echo-favorites-change", { detail: { items } }));
+    dispatch(items);
+    if (id) syncRemove(id);
     return items;
   }
 
@@ -90,6 +153,10 @@
     isFavorite,
     add,
     remove,
-    toggle
+    toggle,
+    hydrateFromServer,
+    get serverAvailable() {
+      return serverAvailable;
+    }
   };
 }());

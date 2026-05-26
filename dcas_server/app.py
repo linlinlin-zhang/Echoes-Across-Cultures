@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+import os
+import re
+import sqlite3
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -81,6 +85,156 @@ DEFAULT_UPLOAD_COMPRESSION_CHANNELS = 2
 ALLOWED_UPLOAD_COMPRESSION_BITRATES = {"96k", "128k", "160k", "192k", "224k", "256k", "320k"}
 ALLOWED_UPLOAD_COMPRESSION_SAMPLE_RATES = {24_000, 32_000, 44_100, 48_000}
 ALLOWED_UPLOAD_COMPRESSION_CHANNELS = {1, 2}
+ANON_SESSION_COOKIE = "echo_anon_id"
+ANON_SESSION_RE = re.compile(r"^[a-f0-9]{32}$")
+DEFAULT_INITIAL_FAVORITES = 20
+
+
+def _track_key(track: dict[str, Any]) -> str:
+    return str(
+        track.get("track_id")
+        or track.get("trackId")
+        or track.get("id")
+        or f"{track.get('title', '')}::{track.get('artist', '')}::{track.get('album', '')}"
+    ).strip()
+
+
+def _stable_seed(value: str) -> int:
+    import hashlib
+
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16)
+
+
+def _safe_anon_session(value: str | None) -> str:
+    raw = str(value or "").strip().lower()
+    return raw if ANON_SESSION_RE.match(raw) else uuid4().hex
+
+
+class AnonymousFavoriteStore:
+    def __init__(self, db_path: Path) -> None:
+        self.db_path = db_path
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._init_db()
+
+    def _connect(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(str(self.db_path), timeout=30)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        return conn
+
+    def _init_db(self) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS anonymous_sessions (
+                    session_id TEXT PRIMARY KEY,
+                    created_at REAL NOT NULL,
+                    last_seen_at REAL NOT NULL
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS favorite_tracks (
+                    session_id TEXT NOT NULL,
+                    track_key TEXT NOT NULL,
+                    track_json TEXT NOT NULL,
+                    created_at REAL NOT NULL,
+                    updated_at REAL NOT NULL,
+                    PRIMARY KEY (session_id, track_key),
+                    FOREIGN KEY (session_id) REFERENCES anonymous_sessions(session_id) ON DELETE CASCADE
+                )
+                """
+            )
+
+    def touch_session(self, session_id: str) -> None:
+        now = time.time()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO anonymous_sessions (session_id, created_at, last_seen_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(session_id) DO UPDATE SET last_seen_at=excluded.last_seen_at
+                """,
+                (session_id, now, now),
+            )
+
+    def list_favorites(self, session_id: str) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT track_json
+                FROM favorite_tracks
+                WHERE session_id = ?
+                ORDER BY created_at DESC
+                """,
+                (session_id,),
+            ).fetchall()
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                item = json.loads(str(row["track_json"]))
+            except Exception:
+                continue
+            if isinstance(item, dict):
+                item["favorite"] = True
+                items.append(item)
+        return items
+
+    def upsert_favorite(self, session_id: str, track: dict[str, Any]) -> dict[str, Any]:
+        item = dict(track)
+        key = _track_key(item)
+        if not key:
+            raise ValueError("favorite track requires an id, track_id, or title")
+        item.setdefault("id", key)
+        item.setdefault("track_id", key)
+        item["favorite"] = True
+        item["favorite_added_at"] = item.get("favorite_added_at") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        now = time.time()
+        self.touch_session(session_id)
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO favorite_tracks (session_id, track_key, track_json, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(session_id, track_key) DO UPDATE SET
+                    track_json=excluded.track_json,
+                    updated_at=excluded.updated_at
+                """,
+                (session_id, key, json.dumps(item, ensure_ascii=False), now, now),
+            )
+        return item
+
+    def remove_favorite(self, session_id: str, track_key: str) -> bool:
+        with self._connect() as conn:
+            cursor = conn.execute(
+                "DELETE FROM favorite_tracks WHERE session_id = ? AND track_key = ?",
+                (session_id, track_key),
+            )
+        return bool(cursor.rowcount)
+
+
+def _cookie_secure_default() -> bool:
+    return str(os.environ.get("ECHO_COOKIE_SECURE", "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _session_id_from_request(request: Request, response: Response, store: AnonymousFavoriteStore) -> str:
+    previous = str(request.cookies.get(ANON_SESSION_COOKIE) or "").strip()
+    session_id = _safe_anon_session(previous)
+    if session_id != previous:
+        response.set_cookie(
+            ANON_SESSION_COOKIE,
+            session_id,
+            max_age=60 * 60 * 24 * 365 * 5,
+            httponly=True,
+            samesite="lax",
+            secure=_cookie_secure_default(),
+            path="/",
+        )
+    store.touch_session(session_id)
+    return session_id
 
 
 def _validate_upload_audio(filename: str, content_type: str | None) -> str:
@@ -308,7 +462,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    storage = Storage(root=Path("storage"))
+    storage = Storage(root=Path(os.environ.get("ECHO_STORAGE_ROOT", "storage")))
     storage.ensure_dir("datasets")
     storage.ensure_dir("models")
     storage.ensure_dir("uploads")
@@ -317,11 +471,75 @@ def create_app() -> FastAPI:
     storage.ensure_dir("ontology")
     storage.ensure_dir("prototype")
     ontology = OntologyStore(storage.resolve_rel("ontology/state.json"))
+    user_data_root = Path(os.environ.get("ECHO_USER_DATA_DIR", str(storage.resolve_rel("user_data"))))
+    favorite_store = AnonymousFavoriteStore(user_data_root / "echo.sqlite3")
     app.include_router(create_prototype_router(storage))
+
+    def seed_initial_favorites(session_id: str, *, prefer_cuda: bool = False) -> tuple[list[dict[str, Any]], bool]:
+        existing = favorite_store.list_favorites(session_id)
+        if existing:
+            return existing, False
+        try:
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            catalog_result = platform.catalog(
+                limit=DEFAULT_INITIAL_FAVORITES,
+                random_seed=_stable_seed(session_id),
+                exclude_low_signal=True,
+            )
+        except Exception:
+            return [], False
+        items = catalog_result.get("items") or []
+        seeded: list[dict[str, Any]] = []
+        for item in items[:DEFAULT_INITIAL_FAVORITES]:
+            if not isinstance(item, dict):
+                continue
+            seeded.append(favorite_store.upsert_favorite(session_id, item))
+        return favorite_store.list_favorites(session_id), bool(seeded)
 
     @app.get("/api/health")
     def health():
         return {"ok": True, "time": time.time()}
+
+    @app.get("/api/session")
+    def api_session(request: Request, response: Response):
+        session_id = _session_id_from_request(request, response, favorite_store)
+        return {"ok": True, "session_id": session_id, "cookie": ANON_SESSION_COOKIE}
+
+    @app.get("/api/favorites")
+    def api_list_favorites(
+        request: Request,
+        response: Response,
+        seed: bool = True,
+        prefer_cuda: bool = False,
+    ):
+        session_id = _session_id_from_request(request, response, favorite_store)
+        if seed:
+            items, seeded = seed_initial_favorites(session_id, prefer_cuda=prefer_cuda)
+        else:
+            items, seeded = favorite_store.list_favorites(session_id), False
+        return {"ok": True, "session_id": session_id, "count": len(items), "seeded": seeded, "items": items}
+
+    @app.post("/api/favorites")
+    def api_add_favorite(payload: dict[str, Any], request: Request, response: Response):
+        session_id = _session_id_from_request(request, response, favorite_store)
+        track = payload.get("track") if isinstance(payload.get("track"), dict) else payload
+        try:
+            item = favorite_store.upsert_favorite(session_id, track)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return {"ok": True, "session_id": session_id, "item": item, "items": favorite_store.list_favorites(session_id)}
+
+    @app.delete("/api/favorites")
+    def api_remove_favorite_by_query(track_key: str, request: Request, response: Response):
+        session_id = _session_id_from_request(request, response, favorite_store)
+        removed = favorite_store.remove_favorite(session_id, track_key)
+        return {"ok": True, "session_id": session_id, "removed": removed, "items": favorite_store.list_favorites(session_id)}
+
+    @app.delete("/api/favorites/{track_key:path}")
+    def api_remove_favorite(track_key: str, request: Request, response: Response):
+        session_id = _session_id_from_request(request, response, favorite_store)
+        removed = favorite_store.remove_favorite(session_id, track_key)
+        return {"ok": True, "session_id": session_id, "removed": removed, "items": favorite_store.list_favorites(session_id)}
 
     @app.get("/api/files")
     def list_files():
