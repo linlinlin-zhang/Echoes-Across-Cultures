@@ -84,6 +84,7 @@ WORKER_RELATIVE_URL_KEYS: set[str] = set()
 DEFAULT_MAINLINE_TRACKS_REL = "public/merged/tracks_culturemert.npz"
 DEFAULT_MAINLINE_METADATA_REL = "public/merged/metadata_merged.csv"
 DEFAULT_MAINLINE_MODEL_REL = "models/dcas_full_v4_main_culturemert_stage3.pt"
+DEFAULT_CULTUREMERT_MODEL_ID = "ntua-slp/CultureMERT-95M"
 
 
 def _mainline_metadata_setting() -> str:
@@ -116,6 +117,33 @@ def _mainline_platform_paths() -> dict[str, str]:
         "metadata_rel": _mainline_metadata_setting(),
         "model_rel": _mainline_model_setting(),
     }
+
+
+def _culturemert_runtime_settings() -> dict[str, Any]:
+    return {
+        "culturemert_model_id": str(os.environ.get("ECHO_CULTUREMERT_MODEL_ID") or DEFAULT_CULTUREMERT_MODEL_ID).strip(),
+        "culturemert_cache_dir": str(os.environ.get("ECHO_CULTUREMERT_CACHE_DIR") or "").strip() or None,
+        "culturemert_revision": str(os.environ.get("ECHO_CULTUREMERT_REVISION") or "").strip() or None,
+        "culturemert_local_files_only": _env_bool("ECHO_CULTUREMERT_LOCAL_FILES_ONLY", False),
+    }
+
+
+def _looks_like_culturemert_load_error(exc: Exception) -> bool:
+    text = f"{type(exc).__name__}: {exc}".lower()
+    terms = (
+        "culturemert",
+        "huggingface",
+        "from_pretrained",
+        "processor_config",
+        "preprocessor_config",
+        "local_files_only",
+        "ssl",
+        "couldn't connect",
+        "could not connect",
+        "model id",
+        "transformers",
+    )
+    return any(term in text for term in terms)
 
 
 def _mainline_catalog(storage: Storage):
@@ -441,6 +469,38 @@ def _proxy_worker_upload_recommend(
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
     return _rewrite_worker_urls(data, _mainline_worker_url())
+
+
+def _hydrate_worker_mainline_metadata(data: dict[str, Any], storage: Storage) -> dict[str, Any]:
+    try:
+        catalog = _mainline_catalog(storage)
+    except Exception:
+        return data
+
+    def hydrate_item(item: Any) -> None:
+        if not isinstance(item, dict):
+            return
+        track_id = str(item.get("track_id") or item.get("trackId") or "").strip()
+        if not track_id:
+            return
+        try:
+            metadata = catalog.track(track_id)
+        except Exception:
+            return
+        for field in ("album_id", "release_date", "release_year", "year", "era"):
+            value = str(metadata.get(field) or "").strip()
+            if value and not str(item.get(field) or "").strip():
+                item[field] = value
+
+    for key in ("seeds", "recommendations", "items"):
+        value = data.get(key)
+        if isinstance(value, list):
+            for item in value:
+                hydrate_item(item)
+        else:
+            hydrate_item(value)
+    hydrate_item(data.get("track"))
+    return data
 
 
 def _validate_upload_audio(filename: str, content_type: str | None) -> str:
@@ -1022,7 +1082,10 @@ def create_app() -> FastAPI:
     def api_mainline_recommend(req: MainlineRecommendRequest, request: Request):
         _require_worker_token(request)
         if _mainline_worker_url():
-            return _proxy_worker_json("/api/mainline/recommend", req.dict())
+            return _hydrate_worker_mainline_metadata(
+                _proxy_worker_json("/api/mainline/recommend", req.dict()),
+                storage,
+            )
         from .mainline_platform import MainlineWeights, get_mainline_platform
 
         seed_track_ids = list(req.seed_track_ids)
@@ -1066,6 +1129,12 @@ def create_app() -> FastAPI:
             "extensions": sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS),
             "accept": UPLOAD_ACCEPT_ATTRIBUTE,
             "max_upload_mb": 200,
+            "culturemert": {
+                "model_id": _culturemert_runtime_settings()["culturemert_model_id"],
+                "cache_dir": _culturemert_runtime_settings()["culturemert_cache_dir"] or "",
+                "revision": _culturemert_runtime_settings()["culturemert_revision"] or "",
+                "local_files_only": bool(_culturemert_runtime_settings()["culturemert_local_files_only"]),
+            },
             "default_compression": {
                 "enabled": True,
                 "codec": "mp3",
@@ -1116,31 +1185,34 @@ def create_app() -> FastAPI:
         if len(content) > max_bytes:
             raise HTTPException(status_code=413, detail="uploaded audio is larger than 200MB")
         if _mainline_worker_url():
-            return _proxy_worker_upload_recommend(
-                fields={
-                    "title": title,
-                    "artist": artist,
-                    "seed_culture": seed_culture,
-                    "target_culture": target_culture,
-                    "mode": mode,
-                    "k": k,
-                    "recall_k": recall_k,
-                    "random_seed": random_seed,
-                    "prefer_cuda": prefer_cuda,
-                    "exclude_same_artist": exclude_same_artist,
-                    "exclude_low_signal": exclude_low_signal,
-                    "max_seconds": max_seconds,
-                    "window_count": window_count,
-                    "window_strategy": window_strategy,
-                    "window_aggregate": window_aggregate,
-                    "compress_upload": compress_upload,
-                    "compression_bitrate": compression_bitrate,
-                    "compression_sample_rate_hz": compression_sample_rate_hz,
-                    "compression_channels": compression_channels,
-                },
-                file_bytes=content,
-                filename=filename,
-                content_type=file.content_type,
+            return _hydrate_worker_mainline_metadata(
+                _proxy_worker_upload_recommend(
+                    fields={
+                        "title": title,
+                        "artist": artist,
+                        "seed_culture": seed_culture,
+                        "target_culture": target_culture,
+                        "mode": mode,
+                        "k": k,
+                        "recall_k": recall_k,
+                        "random_seed": random_seed,
+                        "prefer_cuda": prefer_cuda,
+                        "exclude_same_artist": exclude_same_artist,
+                        "exclude_low_signal": exclude_low_signal,
+                        "max_seconds": max_seconds,
+                        "window_count": window_count,
+                        "window_strategy": window_strategy,
+                        "window_aggregate": window_aggregate,
+                        "compress_upload": compress_upload,
+                        "compression_bitrate": compression_bitrate,
+                        "compression_sample_rate_hz": compression_sample_rate_hz,
+                        "compression_channels": compression_channels,
+                    },
+                    file_bytes=content,
+                    filename=filename,
+                    content_type=file.content_type,
+                ),
+                storage,
             )
         _require_worker_token(request)
         from .mainline_platform import MainlineWeights, get_mainline_platform
@@ -1230,6 +1302,7 @@ def create_app() -> FastAPI:
                 window_count=window_count,
                 window_strategy=window_strategy,
                 window_aggregate=window_aggregate,
+                **_culturemert_runtime_settings(),
             )
             return result
         except (KeyError, ValueError) as e:
@@ -1237,6 +1310,23 @@ def create_app() -> FastAPI:
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
+            if _looks_like_culturemert_load_error(e):
+                settings = _culturemert_runtime_settings()
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "error": "culturemert_model_unavailable",
+                        "message": str(e)[:2000],
+                        "model_id": settings["culturemert_model_id"],
+                        "cache_dir": settings["culturemert_cache_dir"] or "",
+                        "revision": settings["culturemert_revision"] or "",
+                        "local_files_only": bool(settings["culturemert_local_files_only"]),
+                        "hint": (
+                            "Run scripts/preload_culturemert_model.py on the local worker machine, "
+                            "or set ECHO_CULTUREMERT_LOCAL_FILES_ONLY=true after the model is cached."
+                        ),
+                    },
+                )
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/api/ai/kimi/status")

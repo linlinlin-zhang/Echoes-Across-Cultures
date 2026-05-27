@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import math
 import random
+import re
 import time
 from collections import Counter
 from pathlib import Path
@@ -51,6 +52,15 @@ def _first_clean(row: dict[str, Any], keys: tuple[str, ...]) -> str:
     return ""
 
 
+def _release_year_from_text(value: Any) -> str:
+    match = re.search(r"(?:19|20)\d{2}", _clean(value))
+    return match.group(0) if match else ""
+
+
+def _release_year(row: dict[str, Any], release_date: str = "") -> str:
+    return _first_clean(row, ("release_year", "year")) or _release_year_from_text(release_date)
+
+
 def _media_type(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".mp3":
@@ -94,12 +104,25 @@ class LightweightMainlineCatalog:
         if not self.metadata_path.exists():
             raise FileNotFoundError(f"mainline metadata missing: {self.metadata_path}")
         self.loaded_at = time.time()
+        self.metadata_mtime_ns = self.metadata_path.stat().st_mtime_ns
+        self.rows = self._load_rows()
+        self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
+        self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
+        self.source_counts = Counter(_clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset")))
+
+    def _refresh_metadata_if_needed(self) -> None:
+        mtime_ns = self.metadata_path.stat().st_mtime_ns
+        if mtime_ns == self.metadata_mtime_ns:
+            return
+        self.loaded_at = time.time()
+        self.metadata_mtime_ns = mtime_ns
         self.rows = self._load_rows()
         self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
         self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
         self.source_counts = Counter(_clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset")))
 
     def status(self) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         description_count = sum(1 for row in self.rows if _clean(row.get("description")))
         album_description_count = sum(1 for row in self.rows if _clean(row.get("album_description")))
         tag_count = sum(1 for row in self.rows if _clean(row.get("tags")))
@@ -124,6 +147,7 @@ class LightweightMainlineCatalog:
         }
 
     def cultures(self) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         return {
             "ok": True,
             "mode": "lightweight_catalog",
@@ -147,6 +171,7 @@ class LightweightMainlineCatalog:
         random_seed: int | None = 42,
         exclude_low_signal: bool = True,
     ) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         limit = max(1, min(200, int(limit)))
         culture_key = _clean(culture)
         source_key = _clean(source_dataset)
@@ -204,12 +229,14 @@ class LightweightMainlineCatalog:
         return {"ok": True, "mode": "lightweight_catalog", "track": items[0], "request": result["request"], "total_available": result["total_available"]}
 
     def track(self, track_id: str) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         row = self.by_id.get(str(track_id))
         if row is None:
             raise KeyError(f"track not found: {track_id}")
         return self._track_payload(row)
 
     def audio_file(self, track_id: str) -> tuple[Path, str]:
+        self._refresh_metadata_if_needed()
         row = self.by_id.get(str(track_id))
         if row is None:
             raise KeyError(f"track not found: {track_id}")
@@ -229,6 +256,19 @@ class LightweightMainlineCatalog:
 
     def _track_payload(self, row: dict[str, Any]) -> dict[str, Any]:
         track_id = _clean(row.get("track_id"))
+        release_date = _first_clean(
+            row,
+            (
+                "release_date",
+                "releaseDate",
+                "releaseDateTime",
+                "album_release_date",
+                "collection_release_date",
+                "date",
+                "fma_track_date_recorded",
+            ),
+        )
+        release_year = _release_year(row, release_date)
         return {
             "track_id": track_id,
             "rank": None,
@@ -248,6 +288,10 @@ class LightweightMainlineCatalog:
             "musicinfo_vocalinstrumental": _clean(row.get("musicinfo_vocalinstrumental")),
             "musicinfo_speed": _clean(row.get("musicinfo_speed")),
             "country": _clean(row.get("country")),
+            "release_date": release_date,
+            "release_year": release_year,
+            "year": release_year,
+            "era": _clean(row.get("era")),
             "duration_ms": _safe_float(row.get("duration_ms"), default=0.0),
             "audio_is_preview": _clean(row.get("audio_is_preview")),
             "preview_available": _clean(row.get("preview_available")),

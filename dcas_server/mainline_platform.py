@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import math
+import re
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -118,6 +119,15 @@ def _first_clean(row: dict[str, Any], keys: tuple[str, ...]) -> str:
     return ""
 
 
+def _release_year_from_text(value: Any) -> str:
+    match = re.search(r"(?:19|20)\d{2}", _clean(value))
+    return match.group(0) if match else ""
+
+
+def _release_year(row: dict[str, Any], release_date: str = "") -> str:
+    return _first_clean(row, ("release_year", "year")) or _release_year_from_text(release_date)
+
+
 class MainlineRecommendationPlatform:
     """Cached service wrapper for the DCAS mainline recommender.
 
@@ -149,6 +159,7 @@ class MainlineRecommendationPlatform:
         self.loaded_at = time.time()
         self.tracks: Tracks = load_tracks(str(self.tracks_path))
         self.track_id_to_idx = {str(tid): int(i) for i, tid in enumerate(self.tracks.track_id.tolist())}
+        self.metadata_mtime_ns = self.metadata_path.stat().st_mtime_ns
         self.metadata_by_id, self.metadata_fields = self._load_metadata(self.metadata_path)
         self.culture_counts = Counter(str(c) for c in self.tracks.culture.tolist())
         self.source_counts = Counter(str(s) for s in (self.tracks.source_dataset.tolist() if self.tracks.source_dataset is not None else []))
@@ -159,7 +170,16 @@ class MainlineRecommendationPlatform:
         self.culture_names, self.culture_centroids = self._build_culture_centroids()
         self._culturemert_embedders: dict[tuple[Any, ...], CultureMERTEmbedder] = {}
 
+    def _refresh_metadata_if_needed(self) -> None:
+        mtime_ns = self.metadata_path.stat().st_mtime_ns
+        if mtime_ns == self.metadata_mtime_ns:
+            return
+        self.metadata_mtime_ns = mtime_ns
+        self.metadata_by_id, self.metadata_fields = self._load_metadata(self.metadata_path)
+        self.loaded_at = time.time()
+
     def status(self) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         rows = list(self.metadata_by_id.values())
         description_count = sum(1 for row in rows if _clean(row.get("description")))
         album_description_count = sum(1 for row in rows if _clean(row.get("album_description")))
@@ -289,6 +309,9 @@ class MainlineRecommendationPlatform:
         *,
         model_id: str = "ntua-slp/CultureMERT-95M",
         pooling: str = "mean",
+        cache_dir: str | None = None,
+        revision: str | None = None,
+        local_files_only: bool = False,
         max_seconds: float | None = 30.0,
         window_count: int = 1,
         window_strategy: str = "single",
@@ -299,6 +322,9 @@ class MainlineRecommendationPlatform:
             str(model_id),
             str(self.device),
             str(pooling),
+            str(cache_dir or ""),
+            str(revision or ""),
+            bool(local_files_only),
             max_seconds_key,
             int(window_count),
             str(window_strategy),
@@ -310,6 +336,9 @@ class MainlineRecommendationPlatform:
                 model_id=str(model_id),
                 device=str(self.device),
                 pooling=str(pooling),
+                cache_dir=str(cache_dir) if cache_dir else None,
+                revision=str(revision) if revision else None,
+                local_files_only=bool(local_files_only),
                 max_seconds=max_seconds,
                 window_count=int(window_count),
                 window_strategy=str(window_strategy),
@@ -341,16 +370,23 @@ class MainlineRecommendationPlatform:
         weights: MainlineWeights | None = None,
         culturemert_model_id: str = "ntua-slp/CultureMERT-95M",
         pooling: str = "mean",
+        culturemert_cache_dir: str | None = None,
+        culturemert_revision: str | None = None,
+        culturemert_local_files_only: bool = False,
         max_seconds: float | None = 30.0,
         window_count: int = 1,
         window_strategy: str = "single",
         window_aggregate: str = "mean",
     ) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         started = time.time()
         emb = self.embed_audio_file(
             audio_path,
             model_id=culturemert_model_id,
             pooling=pooling,
+            cache_dir=culturemert_cache_dir,
+            revision=culturemert_revision,
+            local_files_only=culturemert_local_files_only,
             max_seconds=max_seconds,
             window_count=window_count,
             window_strategy=window_strategy,
@@ -373,6 +409,9 @@ class MainlineRecommendationPlatform:
             "model_id": str(culturemert_model_id),
             "pooling": str(pooling),
             "dim": int(emb.shape[0]),
+            "cache_dir": str(culturemert_cache_dir or ""),
+            "revision": str(culturemert_revision or ""),
+            "local_files_only": bool(culturemert_local_files_only),
             "max_seconds": max_seconds,
             "window_count": int(window_count),
             "window_strategy": str(window_strategy),
@@ -396,6 +435,7 @@ class MainlineRecommendationPlatform:
         exclude_low_signal: bool = True,
         weights: MainlineWeights | None = None,
     ) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         weights = weights or MainlineWeights()
         mode = str(mode or "open").strip().lower()
         if mode not in {"open", "target"}:
@@ -545,6 +585,7 @@ class MainlineRecommendationPlatform:
         }
 
     def audio_file(self, track_id: str) -> tuple[Path, str]:
+        self._refresh_metadata_if_needed()
         idx = self._require_track(track_id)
         row = self.metadata_by_id.get(str(self.tracks.track_id[idx]), {})
         audio_path = _clean(row.get("audio_path"))
@@ -569,6 +610,7 @@ class MainlineRecommendationPlatform:
         exclude_low_signal: bool = True,
         weights: MainlineWeights | None = None,
     ) -> dict[str, Any]:
+        self._refresh_metadata_if_needed()
         weights = weights or MainlineWeights()
         mode = str(mode or "open").strip().lower()
         if mode not in {"open", "target"}:
@@ -693,7 +735,7 @@ class MainlineRecommendationPlatform:
 
     def _load_metadata(self, path: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
         rows: dict[str, dict[str, str]] = {}
-        with path.open("r", encoding="utf-8", newline="") as f:
+        with path.open("r", encoding="utf-8-sig", newline="") as f:
             reader = csv.DictReader(f)
             fields = list(reader.fieldnames or [])
             for row in reader:
@@ -915,6 +957,19 @@ class MainlineRecommendationPlatform:
     ) -> dict[str, Any]:
         track_id = str(self.tracks.track_id[int(idx)])
         row = self.metadata_by_id.get(track_id, {})
+        release_date = _first_clean(
+            row,
+            (
+                "release_date",
+                "releaseDate",
+                "releaseDateTime",
+                "album_release_date",
+                "collection_release_date",
+                "date",
+                "fma_track_date_recorded",
+            ),
+        )
+        release_year = _release_year(row, release_date)
         payload: dict[str, Any] = {
             "track_id": track_id,
             "rank": rank,
@@ -956,6 +1011,10 @@ class MainlineRecommendationPlatform:
             "musicinfo_vocalinstrumental": _clean(row.get("musicinfo_vocalinstrumental")),
             "musicinfo_speed": _clean(row.get("musicinfo_speed")),
             "country": _clean(row.get("country")),
+            "release_date": release_date,
+            "release_year": release_year,
+            "year": release_year,
+            "era": _clean(row.get("era")),
             "duration_ms": _safe_float(row.get("duration_ms"), default=0.0),
             "audio_is_preview": _clean(row.get("audio_is_preview")),
             "preview_available": _clean(row.get("preview_available")),
