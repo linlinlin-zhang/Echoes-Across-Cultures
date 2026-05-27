@@ -693,12 +693,12 @@
           <div class="globe-overlay" aria-hidden="true">
             <div class="globe-overlay-row">
               <span data-i18n="index.globe.surface">全球音乐表面</span>
-              <span id="region-name" data-i18n="index.globe.regionInitializing">区域初始化中</span>
+              <span id="region-name">区域初始化中</span>
             </div>
             <div class="globe-overlay-spacer"></div>
             <div class="globe-overlay-row">
               <span data-i18n="index.globe.autoRotate">自动旋转</span>
-              <span id="region-style" data-i18n="index.globe.genreSignal">流派信号已激活</span>
+              <span id="region-style">流派信号已激活</span>
             </div>
           </div>
         </div>
@@ -852,17 +852,17 @@
     const pretextCanvas = document.getElementById("pretext-canvas");
     const ctx2d = pretextCanvas.getContext("2d");
 
-    let width = Math.max(1, container.clientWidth);
-    let height = Math.max(1, container.clientHeight);
+    let width = Math.max(1, Math.round(container.getBoundingClientRect().width));
+    let height = Math.max(1, Math.round(container.getBoundingClientRect().height));
 
     const renderer = new THREE.WebGLRenderer({
       canvas: webglCanvas,
       antialias: false,
       powerPreference: "low-power"
     });
-    renderer.setClearColor(0xffffff, 1);
-    renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+    renderer.setClearColor(0xffffff, 1);
+    renderer.setSize(width, height, false);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
@@ -950,8 +950,12 @@
     let needsTextRedraw = true;
 
     const resize = () => {
-      width = Math.max(1, container.clientWidth);
-      height = Math.max(1, container.clientHeight);
+      const rect = container.getBoundingClientRect();
+      const nextWidth = Math.max(1, Math.round(rect.width));
+      const nextHeight = Math.max(1, Math.round(rect.height));
+      if (nextWidth === width && nextHeight === height && pretextCanvas.width === width && pretextCanvas.height === height) return;
+      width = nextWidth;
+      height = nextHeight;
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();

@@ -480,7 +480,7 @@ def _hydrate_worker_mainline_metadata(data: dict[str, Any], storage: Storage) ->
     def hydrate_item(item: Any) -> None:
         if not isinstance(item, dict):
             return
-        track_id = str(item.get("track_id") or item.get("trackId") or "").strip()
+        track_id = str(item.get("track_id") or item.get("trackId") or item.get("id") or "").strip()
         if not track_id:
             return
         try:

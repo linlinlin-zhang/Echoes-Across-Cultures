@@ -782,7 +782,7 @@
       border-radius: 0.5rem;
       object-fit: cover;
       background:
-        linear-gradient(135deg, rgba(255, 61, 69, 0.9), rgba(30, 42, 68, 0.9)),
+        linear-gradient(135deg, rgba(183, 39, 39, 0.94), rgba(30, 42, 68, 0.92)),
         repeating-linear-gradient(45deg, transparent 0 0.5rem, rgba(255, 255, 255, 0.25) 0.5rem 0.68rem);
     }
 
@@ -909,7 +909,7 @@
       height: 100%;
       padding: 0 0.88rem;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--alert), #d23a3a);
+      background: linear-gradient(90deg, var(--alert), #9f1f1f);
       color: #ffffff;
       font-size: 1.22rem;
       font-weight: 800;
@@ -2414,6 +2414,7 @@
 
     function trackFromApiItem(item, index = 0) {
       const culture = String(item.culture || "").trim();
+      const metadata = item.metadata || {};
       const place = placeForApiItem(item);
       const title = String(item.title || item.track_id || "未知曲目").trim();
       const artist = String(item.artist || item.source_dataset || "未知艺术家").trim();
@@ -2422,11 +2423,16 @@
       const label = cleanMetaText(item.label || genre);
       const durationMs = Number(item.duration_ms || 0);
       const releaseDate = cleanMetaText(
-        item.release_date || item.releaseDate || item.releaseDateTime || item.album_release_date || item.collection_release_date || item.date
+        item.release_date || item.releaseDate || item.releasedate || item.releaseDateTime || item.album_release_date
+          || item.collection_release_date || item.date || metadata.release_date || metadata.releaseDate || metadata.releasedate
       );
-      const releaseYear = parseReleaseYear(item.release_year || item.releaseYear || item.year || releaseDate);
+      const releaseYear = parseReleaseYear(
+        item.release_year || item.releaseYear || item.year || metadata.release_year || metadata.releaseYear || metadata.year || releaseDate
+      );
+      const coverArtUrl = item.cover_art_url_large || item.cover_art_url || item.coverArtUrl || item.cover_url || item.coverUrl
+        || item.image || item.album_image || metadata.cover_art_url_large || metadata.cover_art_url || metadata.cover_url || "";
       return {
-        trackId: String(item.track_id || ""),
+        trackId: String(item.track_id || item.trackId || item.id || ""),
         title,
         artist,
         album: String(item.album || "").trim(),
@@ -2452,7 +2458,7 @@
         why: "",
         metrics: metricsFromApiItem(item, index),
         durationSeconds: durationMs > 0 ? durationMs / 1000 : undefined,
-        coverArtUrl: item.cover_art_url_large || item.cover_art_url || "",
+        coverArtUrl,
         platformTrackUrl: item.platform_track_url || item.full_track_url || item.spotify_url || "",
         fullTrackUrl: item.full_track_url || item.platform_track_url || "",
         previewUrl: item.preview_url || "",
