@@ -60,7 +60,7 @@ python -m dcas.cli.recommend --model ./toy/model.pt --tracks ./toy/tracks.npz --
 python -m dcas.cli.pal_loop --model ./toy/model.pt --tracks ./toy/tracks.npz --out ./toy/pal_tasks.jsonl --n 50
 ```
 
-## 全栈控制台（现代前端 + API）
+## 全栈控制台（静态前端 + API）
 
 一键脚本（Windows PowerShell）：
 
@@ -75,30 +75,19 @@ python -m dcas.cli.pal_loop --model ./toy/model.pt --tracks ./toy/tracks.npz --o
 python -m pip install -r requirements.txt
 ```
 
-2) 安装前端依赖
-
-```bash
-cd web
-npm install
-```
-
-3) 启动后端（FastAPI）
+2) 启动后端（FastAPI）
 
 ```bash
 python -m dcas_server
 ```
 
-4) 启动前端（Vite）
+3) 打开控制台
 
-```bash
-cd web
-npm run dev -- --host 0.0.0.0 --port 5173
-```
-
-5) 打开控制台
-
-- http://localhost:5173/
+- http://localhost:8000/
+- 音乐台：http://localhost:8000/music.html
 - API 文档：http://localhost:8000/docs
+
+说明：当前原型前端是 `web/` 下的静态 HTML/JS，启动 FastAPI 后会由服务端直接挂载；不再需要单独的 npm/Vite 开发服务器。
 
 ## 数据格式
 
