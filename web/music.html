@@ -45,7 +45,7 @@
       background-size: 72px 72px;
     }
 
-    @media (min-width: 961px) {
+    @media (min-width: 1121px) {
       html,
       body {
         height: 100%;
@@ -249,7 +249,7 @@
       border-right: 1px solid var(--line);
     }
 
-    @media (min-width: 961px) {
+    @media (min-width: 1121px) {
       .station-shell {
         height: calc(100vh - 4.8rem);
         min-height: 0;
@@ -1701,11 +1701,29 @@
         border-bottom: 1px solid var(--line);
       }
 
+      .ai-strip {
+        grid-template-columns: 1fr;
+        white-space: normal;
+      }
+
       .parameter-grid,
       .parameter-metrics,
       .ai-panel-head,
       .ai-body {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .distribution-summary {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .parameter-panel {
+        min-height: auto;
+      }
+
+      .parameter-breakdown,
+      .parameter-distribution {
+        min-height: auto;
       }
 
       .side-panel {
@@ -1736,7 +1754,9 @@
       .console-top,
       .console-bottom,
       .side-head,
-      .rec-card {
+      .rec-card,
+      .ai-lab,
+      .parameter-lab {
         padding-left: 1rem;
         padding-right: 1rem;
       }
@@ -1752,17 +1772,36 @@
 
       .console-top {
         grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+        padding-top: 0.9rem;
+        padding-bottom: 0.9rem;
+      }
+
+      .console {
+        grid-template-rows: auto minmax(300px, 1fr) auto auto;
       }
 
       .map-stage {
-        min-height: 430px;
+        min-height: 300px;
       }
 
       .console-bottom {
         grid-template-columns: 1fr;
       }
 
-      .parameter-metrics,
+      .parameter-metrics {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .parameter-metric {
+        min-height: auto;
+        padding: 0.9rem 1rem;
+      }
+
+      .parameter-value {
+        font-size: clamp(1.8rem, 3.5vw, 3rem);
+      }
+
       .parameter-grid,
       .ai-strip,
       .ai-panel-head,
@@ -1770,6 +1809,10 @@
       .config-row,
       .ai-context-grid,
       .ai-composer {
+        grid-template-columns: 1fr;
+      }
+
+      .distribution-summary {
         grid-template-columns: 1fr;
       }
 
@@ -1789,14 +1832,23 @@
         font-size: 2.8rem;
       }
 
+      .era-row {
+        grid-template-columns: minmax(3.2rem, 0.8fr) 1rem minmax(2.8rem, 0.6fr) minmax(2.6rem, 0.5fr);
+        gap: 0.5rem;
+      }
+
+      .era-label {
+        font-size: 1.8rem;
+      }
+
       .era-label,
       .genre-title {
-        font-size: 2.35rem;
+        font-size: 2rem;
       }
 
       .era-count,
       .genre-percent {
-        font-size: 1.85rem;
+        font-size: 1.5rem;
       }
 
       .parameter-panel-head {
@@ -1806,6 +1858,16 @@
 
       .parameter-panel .head-meta {
         justify-content: flex-start;
+      }
+
+      .parameter-panel {
+        min-height: auto;
+        padding: 1rem;
+      }
+
+      .parameter-breakdown,
+      .parameter-distribution {
+        min-height: auto;
       }
 
       .score-row,
@@ -1819,8 +1881,34 @@
         text-align: left;
       }
 
+      .ai-strip {
+        padding: 0.9rem 1rem;
+        gap: 0.6rem;
+      }
+
       .ai-strip p {
         white-space: normal;
+      }
+
+      .ai-context,
+      .ai-chat {
+        min-height: auto;
+      }
+
+      .ai-messages {
+        min-height: 16rem;
+        max-height: 60vh;
+        padding: 1rem;
+      }
+
+      .ai-title,
+      .ai-config {
+        padding: 1rem;
+      }
+
+      .ai-composer {
+        padding: 0.9rem 1rem;
+        gap: 0.6rem;
       }
 
       .transport {
