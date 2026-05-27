@@ -826,6 +826,14 @@
       text-align: center;
     }
 
+    .era-row.is-rank-2 .era-label {
+      font-size: 2.08rem;
+    }
+
+    .era-row.is-rank-3 .era-label {
+      font-size: 1.72rem;
+    }
+
     .era-label .top-label {
       display: block;
       margin-bottom: 0.25rem;
@@ -856,6 +864,14 @@
       font-weight: 800;
       line-height: 1;
       white-space: nowrap;
+    }
+
+    .era-row.is-rank-2 .era-count {
+      font-size: 1.82rem;
+    }
+
+    .era-row.is-rank-3 .era-count {
+      font-size: 1.56rem;
     }
 
     .genre-hero {
@@ -1419,18 +1435,27 @@
 
     .ai-message.is-user {
       align-self: flex-end;
+      display: grid;
+      gap: 0.35rem;
       max-width: min(38rem, 80%);
-      padding: 0.65rem 1rem;
+      padding: 0.58rem 0.86rem;
       border: 1px solid var(--line);
       border-radius: 6px;
       background: var(--soft);
       color: var(--ink);
-      white-space: pre-wrap;
+      line-height: 1.45;
+      text-align: left;
+      white-space: normal;
     }
 
     .ai-message.is-user .meta-label {
-      margin-bottom: 0.2rem;
+      justify-self: start;
+      margin-bottom: 0;
       color: var(--muted);
+    }
+
+    .ai-message.is-user .message-text {
+      white-space: pre-wrap;
     }
 
     .ai-message.is-system {
@@ -1453,13 +1478,20 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 0.8rem;
-      align-items: end;
+      align-items: start;
       padding: 1.1rem 1.85rem 1.35rem;
       border-top: 1px solid var(--line);
     }
 
     .ai-composer .field {
       gap: 0.35rem;
+    }
+
+    .ai-composer .field textarea {
+      min-height: 3.35rem;
+      max-height: 8rem;
+      padding: 0.68rem 0.85rem;
+      line-height: 1.4;
     }
 
     .ai-send,
@@ -1846,9 +1878,25 @@
         font-size: 2rem;
       }
 
+      .era-row.is-rank-2 .era-label {
+        font-size: 1.72rem;
+      }
+
+      .era-row.is-rank-3 .era-label {
+        font-size: 1.48rem;
+      }
+
       .era-count,
       .genre-percent {
         font-size: 1.5rem;
+      }
+
+      .era-row.is-rank-2 .era-count {
+        font-size: 1.35rem;
+      }
+
+      .era-row.is-rank-3 .era-count {
+        font-size: 1.22rem;
       }
 
       .parameter-panel-head {
@@ -2097,6 +2145,7 @@
     const apiPreferCuda = ["1", "true", "yes"].includes(String(urlParams.get("cuda") || "").toLowerCase());
     const appConfigKey = "echo-app-config";
     const lastStartupTrackKey = "echo-last-startup-track";
+    const stationStateKey = "echo-music-station-state";
     const pendingLocalPlayKey = "echo-pending-local-play";
     const localAudioDbName = "echo-local-audio";
     const localAudioStore = "tracks";
@@ -2625,6 +2674,7 @@
     let uploadedAudioMeta = null;
     let uploadedAudioFile = null;
     let mainlineStatus = null;
+    let recommendationsPersistable = false;
 
     function formatCount(value) {
       return Number(value || 0).toLocaleString("zh-CN");
@@ -2779,7 +2829,7 @@
         "trackId", "track_id", "localAudioId", "title", "artist", "album", "country", "city", "province",
         "capital", "lat", "lng", "locationPrecision", "culture", "sourceDataset", "platform", "genre",
         "label", "style", "note", "metrics", "durationSeconds", "releaseDate", "releaseYear", "era", "language", "coverArtUrl", "platformTrackUrl",
-        "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "albumDescription", "tags"
+        "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "albumDescription", "tags", "aiDescription", "fromFavorites"
       ];
       return allowed.reduce((snapshot, key) => {
         if (track[key] !== undefined && track[key] !== null && track[key] !== "") {
@@ -2796,6 +2846,65 @@
         localStorage.setItem(lastStartupTrackKey, JSON.stringify(snapshot));
       } catch (error) {
         console.warn(error);
+      }
+    }
+
+    function compactTrackSnapshot(track) {
+      const snapshot = startupTrackSnapshot(track);
+      if (!snapshot) return null;
+      return {
+        ...snapshot,
+        trackId: snapshot.trackId || snapshot.track_id || track.trackId || track.track_id || "",
+        metrics: snapshot.metrics || defaultMetrics
+      };
+    }
+
+    function clearMusicStationState() {
+      try {
+        localStorage.removeItem(stationStateKey);
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+
+    function persistMusicStationState() {
+      if (!recommendationsPersistable || !activeRecommendations.length) return;
+      const activeSnapshot = activeRecommendations.map(compactTrackSnapshot).filter(Boolean);
+      if (!activeSnapshot.length) return;
+      const snapshot = {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        primaryTrack: compactTrackSnapshot(primaryTrack),
+        currentTrack: compactTrackSnapshot(currentTrack),
+        activeRecommendations: activeSnapshot,
+        currentQueueIndex,
+        centerLng,
+        centerLat,
+        mapZoom,
+        mapStatus: els.mapStatus?.textContent || "",
+        mapMode: els.mapMode?.textContent || "",
+        uploadedAudioMeta,
+        aiConversationMessages: aiConversationMessages.slice(-12).map((message) => ({
+          role: message.role,
+          content: message.content,
+          displayContent: message.displayContent || ""
+        }))
+      };
+      try {
+        localStorage.setItem(stationStateKey, JSON.stringify(snapshot));
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+
+    function readMusicStationState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(stationStateKey) || "null");
+        if (!saved || saved.version !== 1 || !Array.isArray(saved.activeRecommendations)) return null;
+        if (!saved.activeRecommendations.length) return null;
+        return saved;
+      } catch (error) {
+        return null;
       }
     }
 
@@ -2872,7 +2981,9 @@
         source: metadata.source || "本地上传",
         fromFavorites: Boolean(metadata.fromFavorites)
       };
+      recommendationsPersistable = false;
       activeRecommendations = [];
+      clearMusicStationState();
       const track = localTrackFromFile(file, metadata);
       primaryTrack = { ...track };
       currentQueueIndex = 0;
@@ -2927,6 +3038,7 @@
       drawMap();
       updateProgressUI();
       persistLastStartupTrack();
+      persistMusicStationState();
     }
 
     function playQueueDelta(delta) {
@@ -3106,8 +3218,8 @@
       const rows = groupedInsightRows(items, (item) => eraBucket(item).key, 3)
         .map((row) => ({ ...row, html: eraBucket(row.item).html }));
       const body = rows.length
-        ? `<div class="era-timeline">${rows.map((row) => `
-            <div class="era-row${row.accent ? " is-top" : ""}">
+        ? `<div class="era-timeline">${rows.map((row, index) => `
+            <div class="era-row is-rank-${index + 1}${row.accent ? " is-top" : ""}">
               <div class="era-label">${row.accent ? "<span class=\"top-label\">TOP</span>" : ""}${row.html}</div>
               <span class="era-dot" aria-hidden="true"></span>
               ${coverMarkup(row.item)}
@@ -3124,7 +3236,7 @@
     }
 
     function renderGenreCard(items) {
-      const rows = groupedInsightRows(items, chartGenreLabel, 3);
+      const rows = groupedInsightRows(items, chartGenreLabel, 5);
       if (!rows.length) {
         return `
           <article class="insight-card insight-genre" aria-label="推荐歌曲曲风">
@@ -3313,10 +3425,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         .map((message) => {
           const roleLabel = message.role === "assistant" ? t("music.ai.assistantLabel") : t("music.ai.userLabel");
           const roleClass = message.role === "assistant" ? "is-assistant" : "is-user";
-          const visibleContent = message.displayContent || message.content;
+          const visibleContent = String(message.displayContent || message.content || "").trim();
           const bodyHtml = message.role === "assistant"
             ? `<div class="md-body">${renderMarkdown(visibleContent)}</div>`
-            : `<div>${escapeHtml(visibleContent)}</div>`;
+            : `<div class="message-text">${escapeHtml(visibleContent)}</div>`;
           return `
             <div class="ai-message ${roleClass}">
               <div class="meta-label">${escapeHtml(roleLabel)}</div>
@@ -3586,6 +3698,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         });
         writeDescriptionCache(cache);
         renderRecommendations();
+        persistMusicStationState();
       }
     }
 
@@ -3615,6 +3728,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         const result = await requestKimi(aiConversationMessages);
         aiConversationMessages.push({ role: "assistant", content: result });
         renderAiMessages();
+        persistMusicStationState();
       } catch (error) {
         addAiNotice(kimiErrorMessage(error));
       } finally {
@@ -3640,6 +3754,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         const result = await requestKimi(aiConversationMessages);
         aiConversationMessages.push({ role: "assistant", content: result });
         renderAiMessages();
+        persistMusicStationState();
       } catch (error) {
         addAiNotice(kimiErrorMessage(error));
       } finally {
@@ -3944,7 +4059,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       els.recommendButton.classList.add("is-running");
       els.recommendButton.textContent = "推荐计算中...";
       els.mapStatus.textContent = "正在生成跨文化路径";
+      recommendationsPersistable = false;
       activeRecommendations = [];
+      clearMusicStationState();
       renderRecommendations();
       renderParameterPanel();
       drawMap();
@@ -4049,6 +4166,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         }
         recommendations = (data.recommendations || []).map((item, index) => trackFromApiItem(item, index));
         activeRecommendations = recommendations;
+        recommendationsPersistable = true;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.textContent = "重新生成推荐";
@@ -4060,9 +4178,11 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         hydrateRecommendationDescriptions(activeRecommendations);
         renderParameterPanel();
         drawMap();
+        persistMusicStationState();
       } catch (error) {
         console.error(error);
         activeRecommendations = recommendations;
+        recommendationsPersistable = false;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.textContent = "重新生成推荐";
@@ -4140,8 +4260,61 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       event.stopPropagation();
     }
 
+    function restoreMusicStationState() {
+      const saved = readMusicStationState();
+      if (!saved) return false;
+      const restoredRecommendations = saved.activeRecommendations
+        .map((item, index) => ({ ...item, metrics: item.metrics || metricsFromApiItem(item, index) }))
+        .filter((item) => item.title);
+      if (!restoredRecommendations.length) return false;
+
+      recommendationsPersistable = true;
+      recommendations = restoredRecommendations.map((item) => ({ ...item }));
+      activeRecommendations = restoredRecommendations;
+      primaryTrack = {
+        ...(saved.primaryTrack || restoredRecommendations[0]),
+        metrics: saved.primaryTrack?.metrics || defaultMetrics
+      };
+      uploadedAudioMeta = saved.uploadedAudioMeta || null;
+      uploadedAudioFile = null;
+      if (Array.isArray(saved.aiConversationMessages)) {
+        aiConversationMessages = saved.aiConversationMessages
+          .filter((message) => message && (message.role === "system" || message.role === "user" || message.role === "assistant"))
+          .map((message) => ({
+            role: message.role,
+            content: String(message.content || ""),
+            displayContent: String(message.displayContent || "")
+          }));
+      }
+
+      const selectedTrack = saved.currentTrack || primaryTrack;
+      selectTrack(selectedTrack, { autoplay: false });
+      if (Number.isFinite(Number(saved.centerLng)) && Number.isFinite(Number(saved.centerLat))) {
+        centerLng = Number(saved.centerLng);
+        centerLat = Number(saved.centerLat);
+      }
+      if (Number.isFinite(Number(saved.mapZoom))) {
+        mapZoom = Math.max(0.9, Math.min(1.3, Number(saved.mapZoom)));
+      }
+      els.recommendButton.classList.remove("is-running");
+      els.recommendButton.textContent = "重新生成推荐";
+      els.mapStatus.textContent = saved.mapStatus || `${activeRecommendations.length} 条真实连接已恢复`;
+      els.mapMode.textContent = saved.mapMode || "推荐网络已恢复";
+      applyCachedDescriptions(activeRecommendations);
+      renderRecommendations();
+      hydrateRecommendationDescriptions(activeRecommendations);
+      renderParameterPanel();
+      renderAiMessages();
+      drawMap();
+      updateProgressUI();
+      persistMusicStationState();
+      return true;
+    }
+
     function setNoStartupTrack(statusText = "已按设置跳过初始加载") {
+      recommendationsPersistable = false;
       activeRecommendations = [];
+      clearMusicStationState();
       primaryTrack = {
         ...currentTrack,
         title: "未加载歌曲",
@@ -4184,6 +4357,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     async function loadInitialTrack(options = {}) {
+      recommendationsPersistable = false;
+      clearMusicStationState();
       els.mapStatus.textContent = "正在连接后端曲库";
       try {
         const randomSeed = options.randomSeed ?? Date.now();
@@ -4213,6 +4388,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     async function loadLastStartupTrack() {
+      recommendationsPersistable = false;
       let saved = null;
       try {
         saved = JSON.parse(localStorage.getItem(lastStartupTrackKey) || "null");
@@ -4248,6 +4424,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     async function loadRandomFavoriteTrack() {
+      recommendationsPersistable = false;
       await window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).catch(() => null);
       const favorites = window.EchoFavoriteStore?.read?.() || [];
       if (!favorites.length) {
@@ -4271,6 +4448,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         await loadInitialTrack({ randomSeed: Date.now() });
         return;
       }
+      if (restoreMusicStationState()) return;
       const mode = startupTrackMode();
       if (mode === "last") {
         await loadLastStartupTrack();
@@ -4359,6 +4537,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         els.mapStage.releasePointerCapture(event.pointerId);
       }
     });
+
 
     els.mapStage.addEventListener("pointerleave", () => {
       dragging = false;
@@ -4453,7 +4632,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       renderAiMessages();
       setAiBusy(aiBusy);
     });
-    window.addEventListener("pagehide", persistLastStartupTrack);
+    window.addEventListener("pagehide", () => {
+      persistLastStartupTrack();
+      persistMusicStationState();
+    });
     syncTrackReadouts();
     loadMainlineStatus();
     window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).then(() => {
