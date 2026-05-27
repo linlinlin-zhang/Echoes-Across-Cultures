@@ -78,12 +78,19 @@ def _metadata_audio_path(value: str, metadata_path: Path) -> Path:
     return path
 
 
+def _storage_or_absolute_path(storage: Storage, value: str) -> Path:
+    path = Path(_clean(value))
+    if path.is_absolute():
+        return path.resolve()
+    return storage.resolve_rel(value)
+
+
 class LightweightMainlineCatalog:
     """Metadata-only catalog used by cloud deployments that do not run models."""
 
     def __init__(self, storage: Storage, *, metadata_rel: str = DEFAULT_METADATA_REL) -> None:
         self.storage = storage
-        self.metadata_path = storage.resolve_rel(metadata_rel)
+        self.metadata_path = _storage_or_absolute_path(storage, metadata_rel)
         if not self.metadata_path.exists():
             raise FileNotFoundError(f"mainline metadata missing: {self.metadata_path}")
         self.loaded_at = time.time()

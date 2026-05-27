@@ -64,6 +64,9 @@
       "index.signal.node.zc": "ZC<br>旋律 / 节奏",
       "index.signal.node.zs": "ZS<br>文化 / 风格",
       "index.signal.node.za": "ZA<br>情绪效价 / 唤醒度",
+      "settings.recommendCountLabel": "每次推荐歌曲数量",
+      "settings.recommendCountHelp": "控制每次跨文化推荐返回的歌曲数量，范围 1-30，默认 10。",
+      "settings.recommendCountSaved": "推荐数量设置已保存。",
       "index.globe.surface": "全球音乐表面",
       "index.globe.autoRotate": "自动旋转",
       "index.globe.regionInitializing": "区域初始化中",
@@ -125,6 +128,9 @@
       "index.signal.node.zc": "ZC<br>melody / rhythm",
       "index.signal.node.zs": "ZS<br>culture / style",
       "index.signal.node.za": "ZA<br>valence / arousal",
+      "settings.recommendCountLabel": "Recommendations per request",
+      "settings.recommendCountHelp": "Number of songs returned per cross-cultural recommendation (1-30, default 10).",
+      "settings.recommendCountSaved": "Recommendation count saved.",
       "index.globe.surface": "Global Music Surface",
       "index.globe.autoRotate": "Auto Rotate",
       "index.globe.regionInitializing": "Region Initializing",
@@ -183,6 +189,417 @@
     }
   };
 
+  const localizedHomeOverrides = {
+    de: {
+      "index.heroLabel": "Interkulturelle Musikentdeckung",
+      "index.stat.tracksLabel": "Titel",
+      "index.stat.tracksCopy": "Echte Musik aus aller Welt",
+      "index.stat.culturesLabel": "Kulturen",
+      "index.stat.culturesCopy": "Kulturräume von Ost bis West",
+      "index.stat.readyLabel": "Bereit",
+      "index.stat.readyCopy": "Cover, Notizen und Tags sind vorhanden",
+      "index.feature.startLabel": "01 / Dein Startpunkt",
+      "index.feature.startCopy": "Lade einen Song hoch oder wähle einen aus 30.000 Titeln. Dort beginnt deine Musikreise.",
+      "index.feature.aiLabel": "02 / AI führt",
+      "index.feature.aiCopy": "AI liest die musikalische DNA und empfiehlt verwandte Klänge aus anderen Kulturen.",
+      "index.feature.memoryLabel": "03 / Erinnerungen sammeln",
+      "index.feature.memoryCopy": "Speichere Songs, die dir gefallen; daraus wächst deine persönliche Weltmusikkarte.",
+      "index.method.label": "So funktioniert es",
+      "index.method.copy": "Starte mit einem Song. AI liest Melodie, Rhythmus und Stimmung und führt dich zu verwandten Klängen weltweit.",
+      "index.method.bigCopy": "Jeder Song trägt seine eigene <span class=\"highlight\">Klang-DNA</span>. Lade Musik hoch, die du liebst, und AI findet unbekannte Klänge, die sich sofort nah anfühlen können.",
+      "index.signal.label": "Musikreise",
+      "index.signal.title": "Klang<br>Route",
+      "index.signal.copy": "Lade einen Song hoch; AI zeichnet daraus eine Hörroute über sprachliche und kulturelle Grenzen hinweg.",
+      "index.signal.orbit": "Inhalt - Stil - Affekt - Feedback - Route -",
+      "index.signal.node.zc": "ZC<br>Melodie / Rhythmus",
+      "index.signal.node.zs": "ZS<br>Kultur / Stil",
+      "index.signal.node.za": "ZA<br>Valenz / Erregung",
+      "index.globe.surface": "Globale Musikoberfläche",
+      "index.globe.autoRotate": "Automatische Drehung",
+      "index.globe.regionInitializing": "Region wird geladen",
+      "index.globe.genreSignal": "Genre-Signal aktiv"
+    },
+    es: {
+      "index.heroLabel": "Descubrimiento musical intercultural",
+      "index.stat.tracksLabel": "Pistas",
+      "index.stat.tracksCopy": "Música real de todo el mundo",
+      "index.stat.culturesLabel": "Culturas",
+      "index.stat.culturesCopy": "dominios culturales de este a oeste",
+      "index.stat.readyLabel": "Listo",
+      "index.stat.readyCopy": "Con portadas, notas y etiquetas",
+      "index.feature.startLabel": "01 / Tu punto de partida",
+      "index.feature.startCopy": "Sube una canción o elige una entre 30.000 pistas. Ahí empieza tu viaje musical.",
+      "index.feature.aiLabel": "02 / Ruta de AI",
+      "index.feature.aiCopy": "La AI lee el ADN musical y recomienda sonidos cercanos de otras culturas.",
+      "index.feature.memoryLabel": "03 / Recuerdos guardados",
+      "index.feature.memoryCopy": "Guarda las canciones que te gusten y tus favoritos formarán un mapa musical personal.",
+      "index.method.label": "Cómo funciona",
+      "index.method.copy": "Empieza con una canción. La AI lee melodía, ritmo y emoción, y te guía hacia sonidos afines del mundo.",
+      "index.method.bigCopy": "Cada canción tiene su propio <span class=\"highlight\">ADN sonoro</span>. Sube música que amas y la AI encontrará sonidos desconocidos que pueden sentirse cercanos.",
+      "index.signal.label": "Viaje musical",
+      "index.signal.title": "Ruta<br>sonora",
+      "index.signal.copy": "Sube una canción y la AI dibuja una ruta de escucha que cruza lenguas y culturas desde tu punto de partida.",
+      "index.signal.orbit": "contenido - estilo - afecto - feedback - ruta -",
+      "index.signal.node.zc": "ZC<br>melodía / ritmo",
+      "index.signal.node.zs": "ZS<br>cultura / estilo",
+      "index.signal.node.za": "ZA<br>valencia / activación",
+      "index.globe.surface": "Superficie musical global",
+      "index.globe.autoRotate": "Rotación automática",
+      "index.globe.regionInitializing": "Región iniciando",
+      "index.globe.genreSignal": "Señal de género activa"
+    },
+    pt: {
+      "index.heroLabel": "Descoberta musical intercultural",
+      "index.stat.tracksLabel": "Faixas",
+      "index.stat.tracksCopy": "Música real do mundo todo",
+      "index.stat.culturesLabel": "Culturas",
+      "index.stat.culturesCopy": "domínios culturais de leste a oeste",
+      "index.stat.readyLabel": "Pronto",
+      "index.stat.readyCopy": "Capas, notas e etiquetas incluídas",
+      "index.feature.startLabel": "01 / Seu ponto de partida",
+      "index.feature.startCopy": "Envie uma música ou escolha uma entre 30.000 faixas. A viagem começa ali.",
+      "index.feature.aiLabel": "02 / Rota da AI",
+      "index.feature.aiCopy": "A AI lê o DNA musical e recomenda sons relacionados de outras culturas.",
+      "index.feature.memoryLabel": "03 / Memórias salvas",
+      "index.feature.memoryCopy": "Salve as faixas que você gosta e seus favoritos viram um mapa musical pessoal.",
+      "index.method.label": "Como funciona",
+      "index.method.copy": "Comece com uma faixa. A AI lê melodia, ritmo e afeto, e guia você a sons próximos pelo mundo.",
+      "index.method.bigCopy": "Cada música carrega seu próprio <span class=\"highlight\">DNA sonoro</span>. Envie uma faixa querida e a AI encontrará sons desconhecidos que podem parecer próximos.",
+      "index.signal.label": "Viagem musical",
+      "index.signal.title": "Rota<br>sonora",
+      "index.signal.copy": "Envie uma faixa e a AI desenha uma rota de escuta que cruza línguas e culturas a partir do seu ponto inicial.",
+      "index.signal.orbit": "conteúdo - estilo - afeto - feedback - rota -",
+      "index.signal.node.zc": "ZC<br>melodia / ritmo",
+      "index.signal.node.zs": "ZS<br>cultura / estilo",
+      "index.signal.node.za": "ZA<br>valência / ativação",
+      "index.globe.surface": "Superfície musical global",
+      "index.globe.autoRotate": "Rotação automática",
+      "index.globe.regionInitializing": "Região inicializando",
+      "index.globe.genreSignal": "Sinal de gênero ativo"
+    },
+    ja: {
+      "index.heroLabel": "越境する音楽発見",
+      "index.stat.tracksLabel": "楽曲",
+      "index.stat.tracksCopy": "世界各地の実際の音楽",
+      "index.stat.culturesLabel": "文化圏",
+      "index.stat.culturesCopy": "東から西までの文化圏",
+      "index.stat.readyLabel": "準備完了",
+      "index.stat.readyCopy": "カバー、解説、タグを収録",
+      "index.feature.startLabel": "01 / あなたの出発点",
+      "index.feature.startCopy": "曲をアップロードするか、30,000曲から選びます。そこが音楽の旅の始まりです。",
+      "index.feature.aiLabel": "02 / AI が案内",
+      "index.feature.aiCopy": "AI が音楽のDNAを読み、別の文化から近い響きを推薦します。",
+      "index.feature.memoryLabel": "03 / 記憶を保存",
+      "index.feature.memoryCopy": "好きな曲を保存すると、お気に入りが自分だけの世界音楽地図になります。",
+      "index.method.label": "仕組み",
+      "index.method.copy": "一曲から始めます。AI が旋律、リズム、感情を読み取り、世界の近い響きへ案内します。",
+      "index.method.bigCopy": "すべての曲には固有の<span class=\"highlight\">音のDNA</span>があります。好きな音楽をアップロードすると、AI が未知なのに近しく感じる音を探します。",
+      "index.signal.label": "音楽の旅",
+      "index.signal.title": "音の<br>ルート",
+      "index.signal.copy": "曲をアップロードすると、AI が言語と文化を越えるリスニングルートを描きます。",
+      "index.signal.orbit": "内容 - スタイル - 感情 - フィードバック - ルート -",
+      "index.signal.node.zc": "ZC<br>旋律 / リズム",
+      "index.signal.node.zs": "ZS<br>文化 / スタイル",
+      "index.signal.node.za": "ZA<br>快不快 / 覚醒度",
+      "index.globe.surface": "グローバル音楽面",
+      "index.globe.autoRotate": "自動回転",
+      "index.globe.regionInitializing": "地域を初期化中",
+      "index.globe.genreSignal": "ジャンル信号が有効"
+    },
+    ko: {
+      "index.heroLabel": "교차 문화 음악 발견",
+      "index.stat.tracksLabel": "트랙",
+      "index.stat.tracksCopy": "세계 각지의 실제 음악",
+      "index.stat.culturesLabel": "문화권",
+      "index.stat.culturesCopy": "동쪽에서 서쪽까지의 문화권",
+      "index.stat.readyLabel": "준비됨",
+      "index.stat.readyCopy": "커버, 설명, 태그 포함",
+      "index.feature.startLabel": "01 / 나의 출발점",
+      "index.feature.startCopy": "곡을 업로드하거나 30,000곡 중 하나를 고르세요. 거기서 음악 여행이 시작됩니다.",
+      "index.feature.aiLabel": "02 / AI 안내",
+      "index.feature.aiCopy": "AI가 음악 DNA를 읽고 다른 문화의 가까운 소리를 추천합니다.",
+      "index.feature.memoryLabel": "03 / 기억 저장",
+      "index.feature.memoryCopy": "좋아하는 곡을 저장하면 즐겨찾기가 나만의 세계 음악 지도가 됩니다.",
+      "index.method.label": "작동 방식",
+      "index.method.copy": "한 곡에서 시작합니다. AI가 멜로디, 리듬, 정서를 읽고 세계의 가까운 소리로 안내합니다.",
+      "index.method.bigCopy": "모든 곡은 고유한 <span class=\"highlight\">사운드 DNA</span>를 지닙니다. 좋아하는 음악을 올리면 AI가 낯설지만 가깝게 느껴질 소리를 찾아냅니다.",
+      "index.signal.label": "음악 여행",
+      "index.signal.title": "소리<br>경로",
+      "index.signal.copy": "곡을 업로드하면 AI가 언어와 문화를 가로지르는 청취 경로를 그립니다.",
+      "index.signal.orbit": "콘텐츠 - 스타일 - 정서 - 피드백 - 경로 -",
+      "index.signal.node.zc": "ZC<br>멜로디 / 리듬",
+      "index.signal.node.zs": "ZS<br>문화 / 스타일",
+      "index.signal.node.za": "ZA<br>정서가 / 각성도",
+      "index.globe.surface": "글로벌 음악 표면",
+      "index.globe.autoRotate": "자동 회전",
+      "index.globe.regionInitializing": "지역 초기화 중",
+      "index.globe.genreSignal": "장르 신호 활성화"
+    }
+  };
+
+  const localizedGlobeRegions = {
+    de: {
+      eastAsia: {
+        name: "OSTASIEN",
+        style: "GUQIN / ENKA / PANSORI / CITY POP",
+        ring: "OSTASIEN - GUQIN - PIPA - ERHU - ENKA - J-POP - K-POP - CITY POP - PANSORI - ",
+        text: "OSTASIEN MUSIKOBERFLAECHE: GUQIN FINGERGERAEUSCH. PIPA TREMOLO. ERHU PORTAMENTO. SHAKUHACHI ATEM. GAGAKU DRONE. ENKA VIBRATO. PANSORI ERZAEHLRUF. K-POP HOOK-DICHTE. CITY POP BRASS. CANTONPOP BALLADENKONTUR. PENTATONISCHE MOTIVE AKTIV. "
+      },
+      southeastAsia: {
+        name: "SUEDOSTASIEN",
+        style: "GAMELAN / DANGDUT / KULINTANG",
+        ring: "SUEDOSTASIEN - GAMELAN - DANGDUT - KULINTANG - PINPEAT - MOR LAM - KERONCONG - ",
+        text: "SUEDOSTASIEN MUSIKOBERFLAECHE: GAMELAN VERZAHNTE METALLOPHONE. DANGDUT TROMMELPULS. KULINTANG GONGREIHEN. PINPEAT ZEREMONIELLER SCHUB. MOR LAM VOKALORNAMENT. KERONCONG STRUM. SCHATTENSPIEL-KLANG. "
+      },
+      southAsia: {
+        name: "SUEDASIEN",
+        style: "RAGA / QAWWALI / FILMI / BHANGRA",
+        ring: "SUEDASIEN - RAGA - TABLA - QAWWALI - FILMI - BHANGRA - GHAZAL - KARNATIK - ",
+        text: "SUEDASIEN MUSIKOBERFLAECHE: HINDUSTANI RAGA AUFSTIEG. KARNATISCHE KRITI STRUKTUR. TABLA BOL-ZYKLEN. QAWWALI KLATSCH-ANTWORT. FILMI ORCHESTERWELLE. BHANGRA TANZGROOVE. GHAZAL POETISCHE LINIE. "
+      },
+      mena: {
+        name: "NAHOST UND NORDAFRIKA",
+        style: "MAQAM / OUD / RAI / GNAWA",
+        ring: "NAHOST NORDAFRIKA - MAQAM - OUD - QANUN - RAI - GNAWA - DABKE - TAQSIM - ",
+        text: "NAHOST NORDAFRIKA MUSIKOBERFLAECHE: MAQAM MIKROTONALER WEG. OUD ZUPFRESONANZ. QANUN GLISSANDO. NAY ATEMTON. RAI ELEKTRISCHE STIMME. GNAWA GUEMBRI TRANCE. DABKE TANZPULS. "
+      },
+      europe: {
+        name: "EUROPA",
+        style: "FADO / FLAMENCO / CHANSON / TECHNO",
+        ring: "EUROPA - FADO - FLAMENCO - CHANSON - KELTISCH - TECHNO - POLYPHONIE - KRAUTROCK - ",
+        text: "EUROPA MUSIKOBERFLAECHE: FADO SAUDADE-LINIE. FLAMENCO PALMAS UND RASGUEADO. CHANSON TEXT IM VORDERGRUND. KELTISCHE REEL-BEWEGUNG. BALKAN UNGERADER TAKT. TECHNO FOUR ON THE FLOOR. KRAUTROCK MOTORIK. "
+      },
+      westAfrica: {
+        name: "WESTAFRIKA",
+        style: "AFROBEAT / HIGHLIFE / MBALAX / KORA",
+        ring: "WESTAFRIKA - AFROBEAT - HIGHLIFE - MBALAX - KORA - JUJU - PALM WINE - ",
+        text: "WESTAFRIKA MUSIKOBERFLAECHE: AFROBEAT BLAESER-OSTINATO. HIGHLIFE GITARRENGEFLECHT. MBALAX SABAR POLYRHYTHMUS. GRIOT KORA ARPEGGIO. JUJU SPRECHTROMMEL. PALM-WINE-GITARRE. CALL AND RESPONSE AKTIV. "
+      },
+      americas: {
+        name: "AMERIKA",
+        style: "JAZZ / BLUES / SALSA / SAMBA",
+        ring: "AMERIKA - JAZZ - BLUES - GOSPEL - SALSA - SAMBA - CUMBIA - HIP HOP - REGGAETON - ",
+        text: "AMERIKA MUSIKOBERFLAECHE: BLUES BENT NOTE. JAZZ SWING RIDE. GOSPEL CALL AND RESPONSE. SALSA CLAVE. SAMBA BATUCADA. CUMBIA AKKORDEONLINIE. HIP HOP BREAKBEAT. REGGAETON DEMBOW. COUNTRY FIDDLE. "
+      },
+      oceania: {
+        name: "OZEANIEN / PAZIFIK",
+        style: "HULA / HAKA / YIDAKI / ISLAND REGGAE",
+        ring: "OZEANIEN PAZIFIK - HULA - HAKA - YIDAKI - ISLAND REGGAE - CHORALER GESANG - ",
+        text: "OZEANIEN PAZIFIK MUSIKOBERFLAECHE: HULA MELODIE UND STEEL GUITAR. HAKA GRUPPENCHANT. YIDAKI DRONE-TEXTUR. ISLAND REGGAE SKANK. POLYNESISCHER CHORSTAPEL. ZEREMONIELLER RHYTHMUS. "
+      }
+    },
+    es: {
+      eastAsia: {
+        name: "ASIA ORIENTAL",
+        style: "GUQIN / ENKA / PANSORI / CITY POP",
+        ring: "ASIA ORIENTAL - GUQIN - PIPA - ERHU - ENKA - J-POP - K-POP - CITY POP - PANSORI - ",
+        text: "ASIA ORIENTAL SUPERFICIE MUSICAL: GUQIN RUIDO DE DEDOS. PIPA TREMOLO. ERHU PORTAMENTO. SHAKUHACHI RESPIRACION. GAGAKU DRONE. ENKA VIBRATO. PANSORI LLAMADO NARRATIVO. K-POP DENSIDAD DE HOOKS. CITY POP METALES. MOTIVO PENTATONICO ACTIVO. "
+      },
+      southeastAsia: {
+        name: "SUDESTE ASIATICO",
+        style: "GAMELAN / DANGDUT / KULINTANG",
+        ring: "SUDESTE ASIATICO - GAMELAN - DANGDUT - KULINTANG - PINPEAT - MOR LAM - KERONCONG - ",
+        text: "SUDESTE ASIATICO SUPERFICIE MUSICAL: GAMELAN METALOFONOS ENTRELAZADOS. DANGDUT PULSO DE TAMBOR. KULINTANG FILAS DE GONGS. PINPEAT IMPULSO CEREMONIAL. MOR LAM ORNAMENTO VOCAL. KERONCONG RASGUEO. TIMBRE DE TEATRO DE SOMBRAS. "
+      },
+      southAsia: {
+        name: "ASIA DEL SUR",
+        style: "RAGA / QAWWALI / FILMI / BHANGRA",
+        ring: "ASIA DEL SUR - RAGA - TABLA - QAWWALI - FILMI - BHANGRA - GHAZAL - CARNATICO - ",
+        text: "ASIA DEL SUR SUPERFICIE MUSICAL: RAGA HINDUSTANI ASCENSO. KRITI CARNATICA ESTRUCTURA. TABLA CICLOS BOL. QAWWALI PALMAS Y RESPUESTA. FILMI OLEAJE ORQUESTAL. BHANGRA GROOVE DE BAILE. GHAZAL LINEA POETICA. "
+      },
+      mena: {
+        name: "ORIENTE MEDIO Y NORTE DE AFRICA",
+        style: "MAQAM / OUD / RAI / GNAWA",
+        ring: "ORIENTE MEDIO NORTE DE AFRICA - MAQAM - OUD - QANUN - RAI - GNAWA - DABKE - TAQSIM - ",
+        text: "ORIENTE MEDIO NORTE DE AFRICA SUPERFICIE MUSICAL: MAQAM RUTA MICROTONAL. OUD RESONANCIA PUNTEADA. QANUN GLISSANDO. NAY TONO DE ALIENTO. RAI VOZ ELECTRICA. GNAWA GUEMBRI TRANCE. DABKE PULSO DE DANZA. "
+      },
+      europe: {
+        name: "EUROPA",
+        style: "FADO / FLAMENCO / CHANSON / TECHNO",
+        ring: "EUROPA - FADO - FLAMENCO - CHANSON - CELTA - TECHNO - POLIFONIA - KRAUTROCK - ",
+        text: "EUROPA SUPERFICIE MUSICAL: FADO LINEA DE SAUDADE. FLAMENCO PALMAS Y RASGUEADO. CHANSON TEXTO AL FRENTE. CELTA MOVIMIENTO DE REEL. BALCANES METRO ASIMETRICO. TECHNO CUATRO AL PISO. KRAUTROCK MOTORIK. "
+      },
+      westAfrica: {
+        name: "AFRICA OCCIDENTAL",
+        style: "AFROBEAT / HIGHLIFE / MBALAX / KORA",
+        ring: "AFRICA OCCIDENTAL - AFROBEAT - HIGHLIFE - MBALAX - KORA - JUJU - PALM WINE - ",
+        text: "AFRICA OCCIDENTAL SUPERFICIE MUSICAL: AFROBEAT OSTINATO DE METALES. HIGHLIFE MALLA DE GUITARRAS. MBALAX POLIRRITMO SABAR. GRIOT KORA ARPEGIO. JUJU TAMBOR PARLANTE. GUITARRA PALM WINE. LLAMADA Y RESPUESTA ACTIVA. "
+      },
+      americas: {
+        name: "AMERICAS",
+        style: "JAZZ / BLUES / SALSA / SAMBA",
+        ring: "AMERICAS - JAZZ - BLUES - GOSPEL - SALSA - SAMBA - CUMBIA - HIP HOP - REGGAETON - ",
+        text: "AMERICAS SUPERFICIE MUSICAL: BLUES NOTA DOBLADA. JAZZ SWING RIDE. GOSPEL LLAMADA Y RESPUESTA. SALSA CLAVE. SAMBA BATUCADA. CUMBIA LINEA DE ACORDEON. HIP HOP BREAKBEAT. REGGAETON DEMBOW. COUNTRY FIDDLE. "
+      },
+      oceania: {
+        name: "OCEANIA / PACIFICO",
+        style: "HULA / HAKA / YIDAKI / REGGAE ISLENO",
+        ring: "OCEANIA PACIFICO - HULA - HAKA - YIDAKI - REGGAE ISLENO - CANTO CORAL - ",
+        text: "OCEANIA PACIFICO SUPERFICIE MUSICAL: HULA MELODIA Y STEEL GUITAR. HAKA CANTO GRUPAL. YIDAKI DRONE. REGGAE ISLENO SKANK. CORO POLINESIO APILADO. RITMO CEREMONIAL FIJO. "
+      }
+    },
+    pt: {
+      eastAsia: {
+        name: "ASIA ORIENTAL",
+        style: "GUQIN / ENKA / PANSORI / CITY POP",
+        ring: "ASIA ORIENTAL - GUQIN - PIPA - ERHU - ENKA - J-POP - K-POP - CITY POP - PANSORI - ",
+        text: "ASIA ORIENTAL SUPERFICIE MUSICAL: GUQIN RUIDO DOS DEDOS. PIPA TREMOLO. ERHU PORTAMENTO. SHAKUHACHI RESPIRACAO. GAGAKU DRONE. ENKA VIBRATO. PANSORI CHAMADO NARRATIVO. K-POP DENSIDADE DE HOOKS. CITY POP METAIS. MOTIVO PENTATONICO ATIVO. "
+      },
+      southeastAsia: {
+        name: "SUDESTE ASIATICO",
+        style: "GAMELAO / DANGDUT / KULINTANG",
+        ring: "SUDESTE ASIATICO - GAMELAO - DANGDUT - KULINTANG - PINPEAT - MOR LAM - KERONCONG - ",
+        text: "SUDESTE ASIATICO SUPERFICIE MUSICAL: GAMELAO METALOFONES ENTRECRUZADOS. DANGDUT PULSO DE TAMBOR. KULINTANG FILEIRAS DE GONGOS. PINPEAT IMPULSO CERIMONIAL. MOR LAM ORNAMENTO VOCAL. KERONCONG BATIDA DE CORDAS. TIMBRE DE SOMBRAS. "
+      },
+      southAsia: {
+        name: "ASIA DO SUL",
+        style: "RAGA / QAWWALI / FILMI / BHANGRA",
+        ring: "ASIA DO SUL - RAGA - TABLA - QAWWALI - FILMI - BHANGRA - GHAZAL - CARNATICO - ",
+        text: "ASIA DO SUL SUPERFICIE MUSICAL: RAGA HINDUSTANI ASCENSAO. KRITI CARNATICA ESTRUTURA. TABLA CICLOS BOL. QAWWALI PALMAS E RESPOSTA. FILMI ONDA ORQUESTRAL. BHANGRA GROOVE DE DANCA. GHAZAL LINHA POETICA. "
+      },
+      mena: {
+        name: "ORIENTE MEDIO E NORTE DA AFRICA",
+        style: "MAQAM / OUD / RAI / GNAWA",
+        ring: "ORIENTE MEDIO NORTE DA AFRICA - MAQAM - OUD - QANUN - RAI - GNAWA - DABKE - TAQSIM - ",
+        text: "ORIENTE MEDIO NORTE DA AFRICA SUPERFICIE MUSICAL: MAQAM CAMINHO MICROTONAL. OUD RESSONANCIA DEDILHADA. QANUN GLISSANDO. NAY SOM DE SOPRO. RAI VOZ ELETRICA. GNAWA GUEMBRI TRANCE. DABKE PULSO DE DANCA. "
+      },
+      europe: {
+        name: "EUROPA",
+        style: "FADO / FLAMENCO / CHANSON / TECHNO",
+        ring: "EUROPA - FADO - FLAMENCO - CHANSON - CELTA - TECHNO - POLIFONIA - KRAUTROCK - ",
+        text: "EUROPA SUPERFICIE MUSICAL: FADO LINHA DE SAUDADE. FLAMENCO PALMAS E RASGUEADO. CHANSON TEXTO EM PRIMEIRO PLANO. CELTA MOVIMENTO DE REEL. BALCAS METRO ASSIMETRICO. TECHNO QUATRO NO CHAO. KRAUTROCK MOTORIK. "
+      },
+      westAfrica: {
+        name: "AFRICA OCIDENTAL",
+        style: "AFROBEAT / HIGHLIFE / MBALAX / KORA",
+        ring: "AFRICA OCIDENTAL - AFROBEAT - HIGHLIFE - MBALAX - KORA - JUJU - PALM WINE - ",
+        text: "AFRICA OCIDENTAL SUPERFICIE MUSICAL: AFROBEAT OSTINATO DE METAIS. HIGHLIFE MALHA DE GUITARRAS. MBALAX POLIRRITMO SABAR. GRIOT KORA ARPEGIO. JUJU TAMBOR FALANTE. GUITARRA PALM WINE. CHAMADA E RESPOSTA ATIVA. "
+      },
+      americas: {
+        name: "AMERICAS",
+        style: "JAZZ / BLUES / SALSA / SAMBA",
+        ring: "AMERICAS - JAZZ - BLUES - GOSPEL - SALSA - SAMBA - CUMBIA - HIP HOP - REGGAETON - ",
+        text: "AMERICAS SUPERFICIE MUSICAL: BLUES NOTA DOBRADA. JAZZ SWING RIDE. GOSPEL CHAMADA E RESPOSTA. SALSA CLAVE. SAMBA BATUCADA. CUMBIA LINHA DE ACORDEAO. HIP HOP BREAKBEAT. REGGAETON DEMBOW. COUNTRY FIDDLE. "
+      },
+      oceania: {
+        name: "OCEANIA / PACIFICO",
+        style: "HULA / HAKA / YIDAKI / REGGAE INSULAR",
+        ring: "OCEANIA PACIFICO - HULA - HAKA - YIDAKI - REGGAE INSULAR - CANTO CORAL - ",
+        text: "OCEANIA PACIFICO SUPERFICIE MUSICAL: HULA MELODIA E STEEL GUITAR. HAKA CANTO COLETIVO. YIDAKI DRONE. REGGAE INSULAR SKANK. CORO POLINESIO EM CAMADAS. RITMO CERIMONIAL FIXO. "
+      }
+    },
+    ja: {
+      eastAsia: {
+        name: "東アジア",
+        style: "古琴 / 演歌 / パンソリ / シティポップ",
+        ring: "東アジア - 古琴 - 琵琶 - 二胡 - 演歌 - J-POP - K-POP - シティポップ - パンソリ - ",
+        text: "東アジア 音楽面：古琴 指のノイズ。琵琶 トレモロ。二胡 ポルタメント。尺八の息。雅楽 ドローン。演歌 ビブラート。パンソリ 物語の呼び声。K-POP フック密度。シティポップ ブラス。五声音階モチーフ 活性。 "
+      },
+      southeastAsia: {
+        name: "東南アジア",
+        style: "ガムラン / ダンドゥット / クリンタン",
+        ring: "東南アジア - ガムラン - ダンドゥット - クリンタン - ピンピート - モーラム - クロンチョン - ",
+        text: "東南アジア 音楽面：ガムラン 交差する金属打楽器。ダンドゥット 太鼓のパルス。クリンタン ゴング列。ピンピート 儀礼的推進。モーラム 声の装飾。クロンチョン 弦のストラム。影絵の音色。 "
+      },
+      southAsia: {
+        name: "南アジア",
+        style: "ラーガ / カッワーリー / 映画音楽 / バングラ",
+        ring: "南アジア - ラーガ - タブラ - カッワーリー - 映画音楽 - バングラ - ガザル - カルナータカ - ",
+        text: "南アジア 音楽面：ヒンドゥスターニー ラーガ上行。カルナータカ クリティ構造。タブラ ボル周期。カッワーリー 手拍子と応答。映画音楽 オーケストラの高まり。バングラ 舞踊グルーヴ。ガザル 詩の旋律。 "
+      },
+      mena: {
+        name: "中東・北アフリカ",
+        style: "マカーム / ウード / ライ / グナワ",
+        ring: "中東 北アフリカ - マカーム - ウード - カーヌーン - ライ - グナワ - ダブケ - タクシーム - ",
+        text: "中東 北アフリカ 音楽面：マカーム 微分音の道筋。ウード 撥弦の共鳴。カーヌーン グリッサンド。ナーイ 息の音。ライ 電子的な声の縁。グナワ ゲンブリのトランス。ダブケ 舞踊パルス。 "
+      },
+      europe: {
+        name: "ヨーロッパ",
+        style: "ファド / フラメンコ / シャンソン / テクノ",
+        ring: "ヨーロッパ - ファド - フラメンコ - シャンソン - ケルト - テクノ - ポリフォニー - クラウトロック - ",
+        text: "ヨーロッパ 音楽面：ファド サウダージの線。フラメンコ 手拍子とラスゲアード。シャンソン テキスト前景。ケルト リールの動き。バルカン 非対称拍子。テクノ 四つ打ち。クラウトロック モトリック。 "
+      },
+      westAfrica: {
+        name: "西アフリカ",
+        style: "アフロビート / ハイライフ / ンバラ / コラ",
+        ring: "西アフリカ - アフロビート - ハイライフ - ンバラ - コラ - ジュジュ - パームワイン - ",
+        text: "西アフリカ 音楽面：アフロビート ホーンのオスティナート。ハイライフ ギター格子。ンバラ サバールのポリリズム。グリオ コラのアルペジオ。ジュジュ トーキングドラム。パームワインギター。呼応唱法 活性。 "
+      },
+      americas: {
+        name: "アメリカ大陸",
+        style: "ジャズ / ブルース / サルサ / サンバ",
+        ring: "アメリカ大陸 - ジャズ - ブルース - ゴスペル - サルサ - サンバ - クンビア - ヒップホップ - レゲトン - ",
+        text: "アメリカ大陸 音楽面：ブルース ベントノート。ジャズ スウィングライド。ゴスペル 呼びかけと応答。サルサ クラーベ。サンバ バトゥカーダ。クンビア アコーディオン線。ヒップホップ ブレイクビート。レゲトン デンボウ。 "
+      },
+      oceania: {
+        name: "オセアニア / 太平洋",
+        style: "フラ / ハカ / イダキ / アイランドレゲエ",
+        ring: "オセアニア 太平洋 - フラ - ハカ - イダキ - アイランドレゲエ - 合唱チャント - ",
+        text: "オセアニア 太平洋 音楽面：フラ 旋律とスチールギター。ハカ 集団チャント。イダキ ドローン。アイランドレゲエ スカンク。ポリネシア合唱の積層。儀礼リズム 固定。 "
+      }
+    },
+    ko: {
+      eastAsia: {
+        name: "동아시아",
+        style: "구친 / 엔카 / 판소리 / 시티팝",
+        ring: "동아시아 - 구친 - 비파 - 얼후 - 엔카 - J-POP - K-POP - 시티팝 - 판소리 - ",
+        text: "동아시아 음악 표면: 구친 손가락 소음. 비파 트레몰로. 얼후 포르타멘토. 샤쿠하치 숨결. 가가쿠 드론. 엔카 비브라토. 판소리 서사적 호출. K-POP 훅 밀도. 시티팝 브라스. 오음계 동기 활성. "
+      },
+      southeastAsia: {
+        name: "동남아시아",
+        style: "가믈란 / 당둣 / 쿨린탕",
+        ring: "동남아시아 - 가믈란 - 당둣 - 쿨린탕 - 핀피트 - 모람 - 크론총 - ",
+        text: "동남아시아 음악 표면: 가믈란 교차 금속타악. 당둣 드럼 펄스. 쿨린탕 공 배열. 핀피트 의례적 추진. 모람 보컬 장식. 크론총 현 스트럼. 그림자극 음색. "
+      },
+      southAsia: {
+        name: "남아시아",
+        style: "라가 / 카왈리 / 영화음악 / 방그라",
+        ring: "남아시아 - 라가 - 타블라 - 카왈리 - 영화음악 - 방그라 - 가잘 - 카르나틱 - ",
+        text: "남아시아 음악 표면: 힌두스타니 라가 상승. 카르나틱 크리티 구조. 타블라 볼 주기. 카왈리 박수 응답. 영화음악 오케스트라 고조. 방그라 댄스 그루브. 가잘 시적 선율. "
+      },
+      mena: {
+        name: "중동과 북아프리카",
+        style: "마캄 / 우드 / 라이 / 그나와",
+        ring: "중동 북아프리카 - 마캄 - 우드 - 카눈 - 라이 - 그나와 - 다브케 - 탁심 - ",
+        text: "중동 북아프리카 음악 표면: 마캄 미분음 경로. 우드 발현 공명. 카눈 글리산도. 네이 숨소리. 라이 전자적 보컬. 그나와 겜브리 트랜스. 다브케 춤 펄스. "
+      },
+      europe: {
+        name: "유럽",
+        style: "파두 / 플라멩코 / 샹송 / 테크노",
+        ring: "유럽 - 파두 - 플라멩코 - 샹송 - 켈틱 - 테크노 - 폴리포니 - 크라우트록 - ",
+        text: "유럽 음악 표면: 파두 사우다드 선율. 플라멩코 팔마스와 라스게아도. 샹송 텍스트 전경. 켈틱 릴 움직임. 발칸 비대칭 박자. 테크노 포 온 더 플로어. 크라우트록 모토릭. "
+      },
+      westAfrica: {
+        name: "서아프리카",
+        style: "아프로비트 / 하이라이프 / 음발라 / 코라",
+        ring: "서아프리카 - 아프로비트 - 하이라이프 - 음발라 - 코라 - 주주 - 팜와인 - ",
+        text: "서아프리카 음악 표면: 아프로비트 혼 오스티나토. 하이라이프 기타 격자. 음발라 사바르 폴리리듬. 그리오 코라 아르페지오. 주주 토킹드럼. 팜와인 기타. 콜 앤 리스폰스 활성. "
+      },
+      americas: {
+        name: "아메리카",
+        style: "재즈 / 블루스 / 살사 / 삼바",
+        ring: "아메리카 - 재즈 - 블루스 - 가스펠 - 살사 - 삼바 - 쿰비아 - 힙합 - 레게톤 - ",
+        text: "아메리카 음악 표면: 블루스 벤트 노트. 재즈 스윙 라이드. 가스펠 콜 앤 리스폰스. 살사 클라베. 삼바 바투카다. 쿰비아 아코디언 라인. 힙합 브레이크비트. 레게톤 뎀보우. "
+      },
+      oceania: {
+        name: "오세아니아 / 태평양",
+        style: "훌라 / 하카 / 이다키 / 아일랜드 레게",
+        ring: "오세아니아 태평양 - 훌라 - 하카 - 이다키 - 아일랜드 레게 - 합창 챈트 - ",
+        text: "오세아니아 태평양 음악 표면: 훌라 선율과 스틸 기타. 하카 집단 챈트. 이다키 드론. 아일랜드 레게 스캥크. 폴리네시아 합창 층. 의례 리듬 고정. "
+      }
+    }
+  };
+
+  function flattenGlobeRegions(regions = {}) {
+    const result = {};
+    Object.entries(regions).forEach(([key, region]) => {
+      Object.entries(region).forEach(([field, value]) => {
+        result[`index.globe.region.${key}.${field}`] = value;
+      });
+    });
+    return result;
+  }
+
   Object.entries(fallbackGlobeRegions).forEach(([key, region]) => {
     Object.entries(region).forEach(([field, value]) => {
       homeIndexTranslations.en[`index.globe.region.${key}.${field}`] = value;
@@ -192,7 +609,8 @@
   ["de", "es", "pt", "ja", "ko"].forEach((language) => {
     homeIndexTranslations[language] = {
       ...homeIndexTranslations.en,
-      ...(homeIndexTranslations[language] || {})
+      ...(localizedHomeOverrides[language] || {}),
+      ...flattenGlobeRegions(localizedGlobeRegions[language])
     };
   });
 
@@ -506,7 +924,10 @@
       "settings.save": "Speichern",
       "settings.test": "Verbindung testen",
       "settings.clear": "Schlüssel löschen",
-      "settings.startupTrackSaved": "Starttitel-Einstellung gespeichert."
+      "settings.startupTrackSaved": "Starttitel-Einstellung gespeichert.",
+      "settings.recommendCountLabel": "Empfehlungen pro Anfrage",
+      "settings.recommendCountHelp": "Anzahl der Titel pro interkultureller Empfehlung (1-30, Standard 10).",
+      "settings.recommendCountSaved": "Empfehlungsanzahl gespeichert."
     },
     es: {
       ...homeIndexTranslations.es,

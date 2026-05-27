@@ -81,6 +81,45 @@ ANON_SESSION_COOKIE = "echo_anon_id"
 ANON_SESSION_RE = re.compile(r"^[a-f0-9]{32}$")
 DEFAULT_INITIAL_FAVORITES = 20
 WORKER_RELATIVE_URL_KEYS: set[str] = set()
+DEFAULT_MAINLINE_TRACKS_REL = "public/merged/tracks_culturemert.npz"
+DEFAULT_MAINLINE_METADATA_REL = "public/merged/metadata_merged.csv"
+DEFAULT_MAINLINE_MODEL_REL = "models/dcas_full_v4_main_culturemert_stage3.pt"
+
+
+def _mainline_metadata_setting() -> str:
+    return (
+        os.environ.get("ECHO_MAINLINE_METADATA_PATH")
+        or os.environ.get("ECHO_MAINLINE_METADATA_REL")
+        or DEFAULT_MAINLINE_METADATA_REL
+    )
+
+
+def _mainline_tracks_setting() -> str:
+    return (
+        os.environ.get("ECHO_MAINLINE_TRACKS_PATH")
+        or os.environ.get("ECHO_MAINLINE_TRACKS_REL")
+        or DEFAULT_MAINLINE_TRACKS_REL
+    )
+
+
+def _mainline_model_setting() -> str:
+    return (
+        os.environ.get("ECHO_MAINLINE_MODEL_PATH")
+        or os.environ.get("ECHO_MAINLINE_MODEL_REL")
+        or DEFAULT_MAINLINE_MODEL_REL
+    )
+
+
+def _mainline_platform_paths() -> dict[str, str]:
+    return {
+        "tracks_rel": _mainline_tracks_setting(),
+        "metadata_rel": _mainline_metadata_setting(),
+        "model_rel": _mainline_model_setting(),
+    }
+
+
+def _mainline_catalog(storage: Storage):
+    return get_lightweight_catalog(storage, metadata_rel=_mainline_metadata_setting())
 
 
 def _track_key(track: dict[str, Any]) -> str:
@@ -660,7 +699,7 @@ def create_app() -> FastAPI:
         if existing:
             return existing, False
         try:
-            catalog = get_lightweight_catalog(storage)
+            catalog = _mainline_catalog(storage)
             catalog_result = catalog.catalog(
                 limit=DEFAULT_INITIAL_FAVORITES,
                 random_seed=_stable_seed(session_id),
@@ -870,7 +909,7 @@ def create_app() -> FastAPI:
                 return data
             except HTTPException as e:
                 try:
-                    data = get_lightweight_catalog(storage).status()
+                    data = _mainline_catalog(storage).status()
                 except Exception:
                     raise e
                 data["worker"] = {
@@ -881,7 +920,7 @@ def create_app() -> FastAPI:
                 }
                 return data
         try:
-            data = get_lightweight_catalog(storage).status()
+            data = _mainline_catalog(storage).status()
             data["worker"] = {"configured": False, "online": False, "url": ""}
             return data
         except FileNotFoundError as e:
@@ -892,7 +931,7 @@ def create_app() -> FastAPI:
     @app.get("/api/mainline/cultures")
     def api_mainline_cultures(prefer_cuda: bool = False):
         try:
-            return get_lightweight_catalog(storage).cultures()
+            return _mainline_catalog(storage).cultures()
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
@@ -909,7 +948,7 @@ def create_app() -> FastAPI:
         prefer_cuda: bool = False,
     ):
         try:
-            catalog = get_lightweight_catalog(storage)
+            catalog = _mainline_catalog(storage)
             return catalog.catalog(
                 culture=culture,
                 source_dataset=source_dataset,
@@ -934,7 +973,7 @@ def create_app() -> FastAPI:
         prefer_cuda: bool = False,
     ):
         try:
-            catalog = get_lightweight_catalog(storage)
+            catalog = _mainline_catalog(storage)
             return catalog.random_track(
                 culture=culture,
                 source_dataset=source_dataset,
@@ -951,7 +990,7 @@ def create_app() -> FastAPI:
     @app.get("/api/mainline/tracks/{track_id}")
     def api_mainline_track(track_id: str, prefer_cuda: bool = False):
         try:
-            return get_lightweight_catalog(storage).track(track_id)
+            return _mainline_catalog(storage).track(track_id)
         except KeyError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
@@ -960,14 +999,14 @@ def create_app() -> FastAPI:
     @app.get("/api/mainline/audio/{track_id}")
     def api_mainline_audio(track_id: str, prefer_cuda: bool = False):
         try:
-            catalog = get_lightweight_catalog(storage)
+            catalog = _mainline_catalog(storage)
             path, media_type = catalog.audio_file(track_id)
             return FileResponse(str(path), media_type=media_type, headers={"Accept-Ranges": "bytes"})
         except KeyError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except FileNotFoundError:
             try:
-                track = get_lightweight_catalog(storage).track(track_id)
+                track = _mainline_catalog(storage).track(track_id)
             except Exception as e:
                 raise HTTPException(status_code=404, detail=str(e))
             preview_url = str(track.get("preview_url") or "").strip()
@@ -998,7 +1037,7 @@ def create_app() -> FastAPI:
             diversity_lambda=req.diversity_lambda,
         )
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=req.prefer_cuda)
+            platform = get_mainline_platform(storage, prefer_cuda=req.prefer_cuda, **_mainline_platform_paths())
             return platform.recommend(
                 seed_track_ids=seed_track_ids,
                 seed_culture=req.seed_culture,
@@ -1174,7 +1213,7 @@ def create_app() -> FastAPI:
             "compression": compression_info,
         }
         try:
-            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda)
+            platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda, **_mainline_platform_paths())
             result = platform.recommend_audio_file(
                 audio_path=analysis_path,
                 upload_info=upload_info,

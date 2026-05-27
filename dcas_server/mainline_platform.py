@@ -93,6 +93,13 @@ def _metadata_audio_path(value: str, metadata_path: Path) -> Path:
     return path
 
 
+def _storage_or_absolute_path(storage: Storage, value: str) -> Path:
+    path = Path(_clean(value))
+    if path.is_absolute():
+        return path.resolve()
+    return storage.resolve_rel(value)
+
+
 def _safe_float(value: Any, default: float = 0.0) -> float:
     try:
         out = float(value)
@@ -131,9 +138,9 @@ class MainlineRecommendationPlatform:
         self.storage = storage
         self.prefer_cuda = bool(prefer_cuda)
         self.device = torch.device("cuda" if self.prefer_cuda and torch.cuda.is_available() else "cpu")
-        self.tracks_path = storage.resolve_rel(tracks_rel)
-        self.metadata_path = storage.resolve_rel(metadata_rel)
-        self.model_path = storage.resolve_rel(model_rel)
+        self.tracks_path = _storage_or_absolute_path(storage, tracks_rel)
+        self.metadata_path = _storage_or_absolute_path(storage, metadata_rel)
+        self.model_path = _storage_or_absolute_path(storage, model_rel)
 
         missing = [str(p) for p in [self.tracks_path, self.metadata_path, self.model_path] if not p.exists()]
         if missing:
@@ -1028,13 +1035,32 @@ class MainlineRecommendationPlatform:
         return _norm_key(row.get("artist"))
 
 
-_PLATFORMS: dict[tuple[str, bool], MainlineRecommendationPlatform] = {}
+_PLATFORMS: dict[tuple[str, bool, str, str, str], MainlineRecommendationPlatform] = {}
 
 
-def get_mainline_platform(storage: Storage, *, prefer_cuda: bool = False) -> MainlineRecommendationPlatform:
-    key = (str(storage.root.resolve()), bool(prefer_cuda and torch.cuda.is_available()))
+def get_mainline_platform(
+    storage: Storage,
+    *,
+    prefer_cuda: bool = False,
+    tracks_rel: str = DEFAULT_TRACKS_REL,
+    metadata_rel: str = DEFAULT_METADATA_REL,
+    model_rel: str = DEFAULT_MODEL_REL,
+) -> MainlineRecommendationPlatform:
+    key = (
+        str(storage.root.resolve()),
+        bool(prefer_cuda and torch.cuda.is_available()),
+        str(tracks_rel),
+        str(metadata_rel),
+        str(model_rel),
+    )
     platform = _PLATFORMS.get(key)
     if platform is None:
-        platform = MainlineRecommendationPlatform(storage=storage, prefer_cuda=bool(prefer_cuda))
+        platform = MainlineRecommendationPlatform(
+            storage=storage,
+            prefer_cuda=bool(prefer_cuda),
+            tracks_rel=tracks_rel,
+            metadata_rel=metadata_rel,
+            model_rel=model_rel,
+        )
         _PLATFORMS[key] = platform
     return platform

@@ -9,6 +9,7 @@ The cloud server can run in a lightweight mode. In that mode it reads the catalo
 - App checkout: `/srv/echo`
 - Python virtualenv: `/srv/echo/.venv`
 - Runtime data: `/srv/echo/storage`
+- Compressed public audio copy: `/srv/echo/cloud_audio_10gb`
 - Environment file: `/etc/echo/echo.env`
 - Service: `echo.service`
 - Reverse proxy: Nginx to `127.0.0.1:18010`
@@ -36,13 +37,19 @@ sudo editor /etc/echo/echo.env
 
 Keep `ECHO_COOKIE_SECURE=false` while testing on plain HTTP. Change it to `true` after you enable HTTPS in Nginx.
 
-The mainline recommender expects the model and public catalog artifacts under `storage/`. Put these files in place before starting the service:
+The mainline recommender expects the model and public catalog artifacts under `storage/` by default. Put these files in place before starting the service:
 
 - `storage/public/merged/tracks_culturemert.npz`
 - `storage/public/merged/metadata_merged.csv`
 - `storage/models/dcas_full_v4_main_culturemert_stage3.pt`
 
-For a small cloud server, only `storage/public/merged/metadata_merged.csv` is required for browsing and first-visit favorites. The `.npz` and `.pt` files can stay on the local worker machine.
+For a small cloud server, only the metadata CSV plus audio files are required for browsing, streaming, and first-visit favorites. If you upload the compressed audio bundle to `/srv/echo/cloud_audio_10gb`, set this in `/etc/echo/echo.env`:
+
+```bash
+ECHO_MAINLINE_METADATA_PATH=/srv/echo/cloud_audio_10gb/metadata_merged.csv
+```
+
+The frontend should keep using `/api/mainline/catalog`, `/api/mainline/random`, and `/api/mainline/audio/{track_id}`. Do not put `/srv/echo/cloud_audio_10gb` into the HTML; that path is only for the backend to resolve files on disk. The `.npz` and `.pt` files can stay on the local worker machine.
 
 ## Local Mainline Worker
 
