@@ -144,6 +144,8 @@ class JamendoTrackRecord:
     title: str
     artist: str
     album: str
+    album_id: str
+    release_date: str
     duration_ms: int
     culture: str
     label: str  # primary tag used for search
@@ -166,6 +168,9 @@ class JamendoTrackRecord:
             "title": self.title,
             "artist": self.artist,
             "album": self.album,
+            "album_id": self.album_id,
+            "release_date": self.release_date,
+            "release_year": self.release_date[:4] if re.match(r"(?:19|20)\d{2}", self.release_date or "") else "",
             "duration_ms": str(self.duration_ms),
             "tags": self.tags,
             "jamendo_id": self.jamendo_id,
@@ -309,6 +314,7 @@ class JamendoCrawler:
         self._fieldnames = [
             "track_id", "culture", "audio_path", "source_dataset", "label",
             "title", "artist", "album", "duration_ms",
+            "album_id", "release_date", "release_year",
             "tags", "jamendo_id", "jamendo_url", "audio_url",
             "image_url", "license_url",
         ]
@@ -366,6 +372,8 @@ class JamendoCrawler:
             title=str(item.get("name", "")),
             artist=str(item.get("artist_name", "Unknown")),
             album=str(item.get("album_name", "")),
+            album_id=str(item.get("album_id", "")),
+            release_date=str(item.get("releasedate", "")),
             duration_ms=int(item.get("duration", 0)) * 1000,
             culture=culture,
             label=label,

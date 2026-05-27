@@ -24,6 +24,9 @@ class CultureMERTConfig:
     model_id: str = "ntua-slp/CultureMERT-95M"
     device: str | None = None
     pooling: str = "mean"
+    cache_dir: str | None = None
+    revision: str | None = None
+    local_files_only: bool = False
     layer_indices: list[int] | None = None
     layer_weights: list[float] | None = None
     max_seconds: float | None = 30.0
@@ -52,14 +55,16 @@ class CultureMERTEmbedder:
         if cfg.pooling not in {"mean", "cls"}:
             raise ValueError("pooling must be one of: mean, cls")
         self.device = torch.device(cfg.device or ("cuda" if torch.cuda.is_available() else "cpu"))
-        self.feature_extractor = AutoFeatureExtractor.from_pretrained(
-            cfg.model_id,
-            trust_remote_code=cfg.trust_remote_code,
-        )
-        self.model = AutoModel.from_pretrained(
-            cfg.model_id,
-            trust_remote_code=cfg.trust_remote_code,
-        )
+        load_kwargs = {
+            "trust_remote_code": cfg.trust_remote_code,
+            "local_files_only": bool(cfg.local_files_only),
+        }
+        if cfg.cache_dir:
+            load_kwargs["cache_dir"] = str(cfg.cache_dir)
+        if cfg.revision:
+            load_kwargs["revision"] = str(cfg.revision)
+        self.feature_extractor = AutoFeatureExtractor.from_pretrained(cfg.model_id, **load_kwargs)
+        self.model = AutoModel.from_pretrained(cfg.model_id, **load_kwargs)
         self.model.eval()
         self.model.to(self.device)
 
