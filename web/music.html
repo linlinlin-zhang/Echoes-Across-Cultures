@@ -2030,20 +2030,20 @@
     <section class="console" aria-label="音乐播放与地图">
       <div class="console-top">
         <div class="readout">
-          <div class="meta-label">曲目</div>
-          <strong id="readout-track">正在连接曲库</strong>
+          <div class="meta-label" data-i18n="music.readout.track">曲目</div>
+          <strong id="readout-track" data-i18n="music.default.connecting">正在连接曲库</strong>
         </div>
         <div class="readout">
-          <div class="meta-label">地理位置</div>
+          <div class="meta-label" data-i18n="music.readout.origin">地理位置</div>
           <strong id="readout-origin">等待位置</strong>
         </div>
         <div class="readout">
-          <div class="meta-label">风格</div>
-          <strong id="readout-style">未知</strong>
+          <div class="meta-label" data-i18n="music.readout.style">风格</div>
+          <strong id="readout-style" data-i18n="music.default.unknown">未知</strong>
         </div>
         <div class="readout">
-          <div class="meta-label">来源</div>
-          <strong id="readout-source">后端曲库</strong>
+          <div class="meta-label" data-i18n="music.readout.source">来源</div>
+          <strong id="readout-source" data-i18n="music.default.source">后端曲库</strong>
         </div>
       </div>
 
@@ -2051,40 +2051,40 @@
         <svg id="map-svg"></svg>
         <canvas id="map-canvas"></canvas>
         <div class="map-ui" id="map-ui">
-          <div class="map-corner top-left">平面地球 / 音乐地图</div>
-          <div class="map-corner top-right" id="map-mode">当前曲目居中</div>
-          <div class="map-corner bottom-left">拖动地图 / 边缘控制</div>
-          <div class="map-corner bottom-right" id="map-status">推荐连接待机</div>
+          <div class="map-corner top-left" data-i18n="music.map.flatEarth">平面地球 / 音乐地图</div>
+          <div class="map-corner top-right" id="map-mode" data-i18n="music.map.currentCenter">当前曲目居中</div>
+          <div class="map-corner bottom-left" data-i18n="music.map.dragMap">拖动地图 / 边缘控制</div>
+          <div class="map-corner bottom-right" id="map-status" data-i18n="music.map.recStandby">推荐连接待机</div>
         </div>
         <div class="pan-zone left">
-          <button class="pan-button" type="button" data-pan-x="-1" data-pan-y="0" aria-label="向左移动地图">‹</button>
+          <button class="pan-button" type="button" data-pan-x="-1" data-pan-y="0" data-i18n-aria="music.pan.left" aria-label="向左移动地图">‹</button>
         </div>
         <div class="pan-zone right">
-          <button class="pan-button" type="button" data-pan-x="1" data-pan-y="0" aria-label="向右移动地图">›</button>
+          <button class="pan-button" type="button" data-pan-x="1" data-pan-y="0" data-i18n-aria="music.pan.right" aria-label="向右移动地图">›</button>
         </div>
         <div class="pan-zone up">
-          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="1" aria-label="向上移动地图">⌃</button>
+          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="1" data-i18n-aria="music.pan.up" aria-label="向上移动地图">⌃</button>
         </div>
         <div class="pan-zone down">
-          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="-1" aria-label="向下移动地图">⌄</button>
+          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="-1" data-i18n-aria="music.pan.down" aria-label="向下移动地图">⌄</button>
         </div>
       </div>
 
       <div class="console-bottom">
         <div class="transport">
-          <button class="skip-button" id="prev-button" type="button" aria-label="上一首">‹</button>
-          <button class="play-button" id="play-button" type="button" aria-label="播放或暂停"><span></span></button>
-          <button class="skip-button" id="next-button" type="button" aria-label="下一首">›</button>
+          <button class="skip-button" id="prev-button" type="button" data-i18n-aria="music.transport.prev" aria-label="上一首">‹</button>
+          <button class="play-button" id="play-button" type="button" data-i18n-aria="music.transport.playPause" aria-label="播放或暂停"><span></span></button>
+          <button class="skip-button" id="next-button" type="button" data-i18n-aria="music.transport.next" aria-label="下一首">›</button>
           <div class="progress-wrap">
             <div class="progress-meta">
               <span id="play-state">正在连接曲库 - Echo</span>
               <span id="time-code">00:00:00 / 03:42</span>
             </div>
-            <div class="progress-track" id="progress-track" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-track" id="progress-track" role="slider" data-i18n-aria="music.transport.progress" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
           </div>
         </div>
 
-        <button class="recommend-button" id="recommend-button" type="button">跨文化音乐推荐</button>
+        <button class="recommend-button" id="recommend-button" type="button" data-i18n="music.recommend.start">跨文化音乐推荐</button>
       </div>
 
       <audio class="audio-el" id="audio-player"></audio>
@@ -2118,15 +2118,15 @@
       </section>
     </section>
 
-    <aside class="side-panel" aria-label="跨文化推荐列表">
-      <div class="side-head">
-        <div class="meta-label">推荐说明</div>
-        <h1>跨文化<br>路线</h1>
+    <aside class=”side-panel” aria-label=”跨文化推荐列表”>
+      <div class=”side-head”>
+        <div class=”meta-label” data-i18n=”music.side.description”>推荐说明</div>
+        <h1 data-i18n-html=”music.side.routeTitle”>跨文化<br>路线</h1>
       </div>
-      <div class="recommend-list" id="recommend-list">
-        <article class="rec-card is-placeholder">
-          <div class="meta-label">等待推荐</div>
-          <p>点击左下方的“跨文化音乐推荐”后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
+      <div class=”recommend-list” id=”recommend-list”>
+        <article class=”rec-card is-placeholder”>
+          <div class=”meta-label” data-i18n=”music.side.waiting”>等待推荐</div>
+          <p data-i18n=”music.side.waitingCopy”>点击左下方的”跨文化音乐推荐”后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
         </article>
       </div>
     </aside>
@@ -2151,11 +2151,11 @@
     const localAudioDbName = "echo-local-audio";
     const localAudioStore = "tracks";
     const mysteryPlace = {
-      country: "神秘的地方",
-      city: "太平洋中部",
+      country: t("music.mysteryPlace.country"),
+      city: t("music.mysteryPlace.city"),
       lat: 0,
       lng: -160,
-      precision: "太平洋默认坐标"
+      precision: t("music.mysteryPlace.precision")
     };
 
     function openLocalAudioDb() {
@@ -2189,18 +2189,18 @@
     }
 
     const currentTrack = {
-      title: "正在连接曲库",
-      artist: "Echo",
+      title: t("music.default.connecting"),
+      artist: t("music.default.artist"),
       city: mysteryPlace.city,
       province: "",
       country: mysteryPlace.country,
       capital: "",
       lat: mysteryPlace.lat,
       lng: mysteryPlace.lng,
-      genre: "未知",
-      sourceDataset: "后端曲库",
-      style: "未知",
-      note: "正在连接后端曲库。",
+      genre: t("music.default.unknown"),
+      sourceDataset: t("music.default.source"),
+      style: t("music.default.unknown"),
+      note: t("music.default.connectingNote"),
       metrics: {
         serendipity: 0.832,
         calibrationKl: 2.03,
@@ -2264,76 +2264,15 @@
       andean: { country: "秘鲁", city: "库斯科", lat: -13.5319, lng: -71.9675 }
     };
 
-    const cultureLabels = {
-      west: "西方",
-      china: "中国",
-      southeast_asia: "东南亚",
-      eastern_europe: "东欧",
-      japan: "日本",
-      africa: "非洲",
-      middle_east: "中东",
-      celtic: "凯尔特",
-      korea: "韩国",
-      caribbean: "加勒比",
-      brazil: "巴西",
-      india: "印度",
-      nordic: "北欧",
-      latin: "拉丁",
-      balkans: "巴尔干",
-      central_asia: "中亚",
-      andean: "安第斯"
-    };
+    function cultureLabel(key) { return t("culture." + key); }
 
-    const countryNameLookup = {
-      US: "美国",
-      GB: "英国",
-      CN: "中国",
-      SG: "新加坡",
-      MY: "马来西亚",
-      TH: "泰国",
-      VN: "越南",
-      PH: "菲律宾",
-      TW: "中国台湾",
-      台湾: "中国台湾",
-      HK: "中国香港",
-      JP: "日本",
-      KR: "韩国",
-      IN: "印度",
-      ID: "印度尼西亚",
-      BR: "巴西",
-      MX: "墨西哥",
-      AR: "阿根廷",
-      CL: "智利",
-      PE: "秘鲁",
-      TR: "土耳其",
-      IR: "伊朗",
-      SA: "沙特阿拉伯",
-      AE: "阿联酋",
-      IE: "爱尔兰",
-      SE: "瑞典",
-      NO: "挪威",
-      FI: "芬兰",
-      DK: "丹麦",
-      PL: "波兰",
-      RS: "塞尔维亚",
-      MK: "北马其顿",
-      KZ: "哈萨克斯坦",
-      KG: "吉尔吉斯斯坦",
-      TJ: "塔吉克斯坦",
-      JM: "牙买加",
-      HT: "海地",
-      TT: "特立尼达和多巴哥",
-      ML: "马里",
-      TZ: "坦桑尼亚",
-      ZA: "南非",
-      AU: "澳大利亚",
-      NZ: "新西兰",
-      DE: "德国",
-      FR: "法国",
-      IT: "意大利",
-      ES: "西班牙",
-      CA: "加拿大"
-    };
+    const countryIsoCodes = ["US","GB","CN","SG","MY","TH","VN","PH","TW","HK","JP","KR","IN","ID","BR","MX","AR","CL","PE","TR","IR","SA","AE","IE","SE","NO","FI","DK","PL","RS","MK","KZ","KG","TJ","JM","HT","TT","ML","TZ","ZA","AU","NZ","DE","FR","IT","ES","CA"];
+    function countryNameLookupFn(code) {
+      const upper = String(code || "").toUpperCase().trim();
+      if (countryIsoCodes.includes(upper)) return t("music.country." + upper);
+      if (code === "台湾") return t("music.country.TW");
+      return "";
+    }
 
     const southChinaSeaSourceSegments = [
       [
@@ -2468,7 +2407,7 @@
     function cleanMetaText(value) {
       const text = String(value ?? "").trim();
       if (!text) return "";
-      if (["nan", "none", "null", "undefined", "unknown", "n/a", "uploaded_audio", "未标注风格", "未知"].includes(text.toLowerCase())) return "";
+      if (["nan", "none", "null", "undefined", "unknown", "n/a", "uploaded_audio", "未标注风格", "未知", "unknown style"].includes(text.toLowerCase())) return "";
       return text;
     }
 
@@ -2481,10 +2420,10 @@
 
     function readableCountry(value, culture) {
       const text = cleanMetaText(value);
-      const mapped = countryNameLookup[text] || countryNameLookup[text.toUpperCase()];
+      const mapped = countryNameLookupFn(text) || countryNameLookupFn(text.toUpperCase());
       if (mapped) return mapped;
       if (text) return text;
-      return (culturePlaces[culture] && culturePlaces[culture].country) || cultureLabels[culture] || mysteryPlace.country;
+      return (culturePlaces[culture] && culturePlaces[culture].country) || cultureLabel(culture) || mysteryPlace.country;
     }
 
     function placeForApiItem(item) {
@@ -2501,7 +2440,7 @@
           city: explicitCity || countryCapital?.city || country,
           lat,
           lng,
-          precision: cleanMetaText(item.location_precision) || "音频标签位置"
+          precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag")
         };
       }
       if (String(item.source_dataset || item.platform || "").trim().toLowerCase() === "upload" && !rawCountry) {
@@ -2516,7 +2455,7 @@
         city: explicitCity || countryCapital?.city || (rawCountry ? country : fallback.city || country),
         lat: countryCapital?.lat ?? fallback.lat ?? mysteryPlace.lat,
         lng: countryCapital?.lng ?? fallback.lng ?? mysteryPlace.lng,
-        precision: countryCapital ? "国家首府坐标" : "文化域中心坐标"
+        precision: countryCapital ? t("music.precision.capitalCity") : t("music.precision.cultureCenter")
       };
     }
 
@@ -2554,8 +2493,8 @@
       const culture = String(item.culture || "").trim();
       const metadata = item.metadata || {};
       const place = placeForApiItem(item);
-      const title = String(item.title || item.track_id || "未知曲目").trim();
-      const artist = String(item.artist || item.source_dataset || "未知艺术家").trim();
+      const title = String(item.title || item.track_id || t("music.default.noTrack")).trim();
+      const artist = String(item.artist || item.source_dataset || t("music.default.unknown")).trim();
       const platform = cleanMetaText(item.platform || item.source_dataset || item.source);
       const genre = cleanMetaText(item.genre || item.primaryGenreName || item.primary_genre_name || item.label || firstTagValue(item.tags));
       const label = cleanMetaText(item.label || genre);
@@ -2591,8 +2530,8 @@
         culture,
         sourceDataset: String(item.source_dataset || platform || "").trim(),
         platform,
-        style: genre || label || "未知",
-        note: item.audio_is_preview === "true" ? "平台试听音频，已接入本地音频流。" : "平台音频，已接入本地音频流。",
+        style: genre || label || t("music.default.unknown"),
+        note: item.audio_is_preview === "true" ? t("music.local.uploadedNote") : t("music.local.platformNote"),
         why: "",
         metrics: metricsFromApiItem(item, index),
         durationSeconds: durationMs > 0 ? durationMs / 1000 : undefined,
@@ -2608,7 +2547,7 @@
 
     function recommendationMatchLabel(item, index) {
       const score = Number(item.metrics?.score ?? 0.82 + index * 0.01);
-      return `${Math.round(Math.max(0.1, Math.min(0.99, score)) * 100)}% 桥接匹配`;
+      return `${Math.round(Math.max(0.1, Math.min(0.99, score)) * 100)}% ${t("music.match.bridging")}`;
     }
 
     const emptyMetrics = {
@@ -2625,12 +2564,12 @@
 
     const defaultMetrics = { ...currentTrack.metrics };
     const rerankWeights = [
-      { label: "相关性", code: "相关", value: 0.62, signal: "ZA 内容潜变量与用户历史的最优传输近邻度" },
-      { label: "新颖度", code: "新颖", value: 0.12, signal: "ZS 风格潜变量相对历史均值的距离" },
-      { label: "目标亲和", code: "目标", value: 0.14, signal: "目标文化中心的软概率" },
-      { label: "长尾提升", code: "长尾", value: 0.08, signal: "按交互热度反向加权的长尾提升" },
-      { label: "来源平衡", code: "来源", value: 0.04, signal: "来源数据集的逆热度评分" },
-      { label: "多样性", code: "多样", value: 0.03, signal: "多样化候选集的潜变量排斥" }
+      { label: t("music.rerank.relevance"), code: t("music.rerank.relevanceCode"), value: 0.62, signal: t("music.rerank.relevanceSignal") },
+      { label: t("music.rerank.novelty"), code: t("music.rerank.noveltyCode"), value: 0.12, signal: t("music.rerank.noveltySignal") },
+      { label: t("music.rerank.serendipity"), code: t("music.rerank.serendipityCode"), value: 0.14, signal: t("music.rerank.serendipitySignal") },
+      { label: t("music.rerank.exposure"), code: t("music.rerank.exposureCode"), value: 0.08, signal: t("music.rerank.exposureSignal") },
+      { label: t("music.rerank.coverage"), code: t("music.rerank.coverageCode"), value: 0.04, signal: t("music.rerank.coverageSignal") },
+      { label: t("music.rerank.alignment"), code: t("music.rerank.alignmentCode"), value: 0.03, signal: t("music.rerank.alignmentSignal") }
     ];
 
     const els = {
@@ -2678,7 +2617,7 @@
     let recommendationsPersistable = false;
 
     function formatCount(value) {
-      return Number(value || 0).toLocaleString("zh-CN");
+      return Number(value || 0).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN");
     }
 
     function catalogCoverageLabel(status) {
@@ -2687,12 +2626,12 @@
       const described = Number(coverage.description_rows || 0);
       const missing = Number(coverage.missing_description_rows || Math.max(0, total - described));
       if (described > 0 && missing <= 0) {
-        return `${formatCount(described)}/${formatCount(total)} 描述`;
+        return `${formatCount(described)}/${formatCount(total)} ${t("music.desc.genre")}`;
       }
       if (described > 0) {
-        return `${formatCount(described)}/${formatCount(total)} 描述`;
+        return `${formatCount(described)}/${formatCount(total)} ${t("music.desc.genre")}`;
       }
-      return "30k 描述接入";
+      return `30k ${t("music.desc.genre")}`;
     }
 
     async function loadMainlineStatus() {
@@ -2734,15 +2673,15 @@
 
     function locateTrack(track) {
       if (Number.isFinite(track.lat) && Number.isFinite(track.lng)) {
-        return { lat: track.lat, lng: track.lng, precision: track.locationPrecision || (track.city ? "城市坐标" : "国家坐标") };
+        return { lat: track.lat, lng: track.lng, precision: track.locationPrecision || (track.city ? t("music.precision.cityCoord") : t("music.precision.countryCoord")) };
       }
       const fallback = capitalLookup[track.country] || mysteryPlace;
-      return { ...fallback, precision: fallback.precision || "首都坐标兜底" };
+      return { ...fallback, precision: fallback.precision || t("music.precision.capitalFallback") };
     }
 
     function formatOrigin(track) {
       if (track.country === mysteryPlace.country) {
-        return "来自神秘的地方";
+        return t("music.desc.songFrom") + t("music.mysteryPlace.country");
       }
       const parts = [track.country, track.province, track.city]
         .map(cleanMetaText)
@@ -2763,7 +2702,7 @@
         || cleanMetaText(track.label)
         || cleanMetaText(track.style)
         || firstTagValue(track.tags || raw.tags)
-        || "未知";
+        || t("music.default.unknown");
     }
 
     function displaySource(track) {
@@ -2776,12 +2715,12 @@
         || cleanMetaText(raw.source);
       if (/itunes/i.test(value)) return "iTunes";
       if (/jamendo/i.test(value)) return "Jamendo";
-      if (/upload|local|本地|用户|收藏夹/i.test(value) || track.fileObjectUrl || track.localAudioId) return "用户上传";
-      return value || "未知";
+      if (/upload|local|本地|用户|收藏夹/i.test(value) || track.fileObjectUrl || track.localAudioId) return t("music.source.userUpload");
+      return value || t("music.default.unknown");
     }
 
     function playbackTrackLabel(track = currentTrack) {
-      return `${track.title || "未知曲目"} - ${track.artist || "未知创作者"}`;
+      return `${track.title || t("music.default.noTrack")} - ${track.artist || t("music.default.unknown")}`;
     }
 
     function syncTopCover() {
@@ -2820,7 +2759,7 @@
     }
 
     function startupTrackSnapshot(track = currentTrack) {
-      if (!track?.title || track.title === "正在连接曲库" || track.title === "未加载歌曲") {
+      if (!track?.title || track.title === t("music.default.connecting") || track.title === t("music.default.noTrack")) {
         return null;
       }
       if (track.fileObjectUrl && !track.localAudioId) {
@@ -2927,13 +2866,13 @@
     }
 
     function localTrackFromFile(file, metadata = {}) {
-      const title = String(metadata.title || file.name.replace(/\.[^.]+$/, "") || "本地音频").trim();
+      const title = String(metadata.title || file.name.replace(/\.[^.]+$/, "") || t("music.local.audio")).trim();
       const genre = cleanMetaText(metadata.genre || metadata.primaryGenreName || metadata.label);
       const releaseDate = cleanMetaText(metadata.releaseDate || metadata.release_date || metadata.date);
       return {
         localAudioId: metadata.id || metadata.localAudioId || "",
         title,
-        artist: metadata.artist || "本地上传音频",
+        artist: metadata.artist || t("music.local.uploadArtist"),
         city: metadata.city || mysteryPlace.city,
         province: metadata.province || "",
         country: metadata.country || mysteryPlace.country,
@@ -2950,8 +2889,8 @@
         era: cleanMetaText(metadata.era),
         language: cleanMetaText(metadata.language || metadata.lang),
         label: genre,
-        style: metadata.style || "上传音频 / 等待分析",
-        note: metadata.note || "本地文件已载入；点击推荐后会上传到后端走 CultureMERT 与 DCAS 主线。",
+        style: metadata.style || t("music.local.waitingAnalysis"),
+        note: metadata.note || t("music.local.loadedNote"),
         metrics: {
           ...defaultMetrics,
           serendipity: 0.5,
@@ -2976,10 +2915,10 @@
       uploadedAudioFile = file;
       uploadedAudioMeta = {
         name: file.name,
-        type: file.type || metadata.fileType || "未知格式",
+        type: file.type || metadata.fileType || t("music.local.unknownFormat"),
         sizeMB: Number(((file.size || metadata.fileSize || 0) / 1024 / 1024).toFixed(2)),
         lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : "",
-        source: metadata.source || "本地上传",
+        source: metadata.source || t("music.local.uploadSource"),
         fromFavorites: Boolean(metadata.fromFavorites)
       };
       recommendationsPersistable = false;
@@ -3110,28 +3049,28 @@
       const isWaitingForRecommendation = !activeRecommendations.length;
       const cards = [
         {
-          label: "文化惊喜度",
+          label: t("music.param.serendipity"),
           code: "01",
           value: isWaitingForRecommendation ? "0%" : Number(metrics.serendipity).toFixed(3),
-          sub: "惊喜度 = 相关性 x 意外性"
+          sub: t("music.param.serendipityDesc")
         },
         {
-          label: "校准 KL",
+          label: t("music.param.calibrationKl"),
           code: "02",
           value: isWaitingForRecommendation ? "0%" : Number(metrics.calibrationKl).toFixed(2),
-          sub: "推荐文化分布与目标先验的距离"
+          sub: t("music.param.calibrationKlDesc")
         },
         {
-          label: "目标亲和",
+          label: t("music.param.targetAffinity"),
           code: "03",
           value: formatPct(metrics.targetAffinity),
-          sub: "目标文化中心的软概率"
+          sub: t("music.param.targetAffinityDesc")
         },
         {
-          label: "长尾曝光",
+          label: t("music.param.minorityExposure"),
           code: "04",
           value: formatPct(metrics.minorityExposure),
-          sub: "按热度分位计算的长尾曝光",
+          sub: t("music.param.minorityExposureDesc"),
           dark: true
         }
       ];
@@ -3151,12 +3090,12 @@
     }
 
     function coverMarkup(item, className = "insight-cover") {
-      const title = escapeHtml(item?.title || "推荐曲目");
+      const title = escapeHtml(item?.title || t("music.cover.recommended"));
       const url = item?.coverArtUrl || item?.cover_art_url || item?.raw?.cover_art_url_large || item?.raw?.cover_art_url || "";
       if (url) {
-        return `<img class="${className}" src="${escapeHtml(url)}" alt="${title} 封面" loading="lazy">`;
+        return `<img class="${className}" src="${escapeHtml(url)}" alt="${title}${t("music.cover.suffix")}" loading="lazy">`;
       }
-      return `<div class="${className} insight-cover-fallback" aria-label="${title} 封面">ECHO</div>`;
+      return `<div class="${className} insight-cover-fallback" aria-label="${title}${t("music.cover.suffix")}">ECHO</div>`;
     }
 
     function groupedInsightRows(items, getKey, limit = 3) {
@@ -3172,7 +3111,7 @@
         group.items.push(item);
       });
       return [...groups.values()]
-        .sort((a, b) => b.count - a.count || a.firstIndex - b.firstIndex || a.label.localeCompare(b.label, "zh-CN"))
+        .sort((a, b) => b.count - a.count || a.firstIndex - b.firstIndex || a.label.localeCompare(b.label, window.EchoI18n?.currentLanguage || "zh-CN"))
         .slice(0, limit)
         .map((row, index) => ({
           ...row,
@@ -3195,24 +3134,24 @@
       if (!era) return "";
       const normalized = era.toLowerCase();
       const labels = {
-        traditional: "传统",
-        modern: "现代",
-        contemporary: "当代",
-        mixed: "混合"
+        traditional: t("music.era.traditional"),
+        modern: t("music.era.modern"),
+        contemporary: t("music.era.contemporary"),
+        mixed: t("music.era.mixed")
       };
       return labels[normalized] || era;
     }
 
     function eraBucket(item) {
       const year = releaseYearForTrack(item);
-      if (year >= 2020) return { key: "2020年后", html: "2020<br>年后" };
+      if (year >= 2020) return { key: t("music.era.after2020"), html: `2020<br>${t("music.era.after2020")}` };
       if (year) {
         const start = Math.floor(year / 10) * 10;
         return { key: `${start}-${start + 9}`, html: `${start}<br>-<br>${start + 9}` };
       }
       const era = eraLabelForTrack(item);
-      if (era) return { key: `${era}年代`, html: `${escapeHtml(era)}<br>年代` };
-      return { key: "未知年代", html: "未知<br>年代" };
+      if (era) return { key: `${era}${t("music.era.yearSuffix")}`, html: `${escapeHtml(era)}<br>${t("music.era.yearSuffix")}` };
+      return { key: t("music.era.unknownEra"), html: `${t("music.era.unknownEra")}<br>${t("music.era.yearSuffix")}` };
     }
 
     function renderEraCard(items) {
@@ -3224,13 +3163,13 @@
               <div class="era-label">${row.accent ? "<span class=\"top-label\">TOP</span>" : ""}${row.html}</div>
               <span class="era-dot" aria-hidden="true"></span>
               ${coverMarkup(row.item)}
-              <div class="era-count">${row.count} 首</div>
+              <div class="era-count">${row.count}${t("music.insight.songCount")}</div>
             </div>
           `).join("")}</div>`
-        : `<div class="insight-empty">生成推荐后显示年代分布</div>`;
+        : `<div class="insight-empty">${t("music.insight.emptyEra")}</div>`;
       return `
-        <article class="insight-card insight-era" aria-label="推荐歌曲年代">
-          <div class="insight-card-title">推荐歌曲年代</div>
+        <article class="insight-card insight-era" aria-label="${t("music.insight.eraTitle")}">
+          <div class="insight-card-title">${t("music.insight.eraTitle")}</div>
           <div class="insight-card-body">${body}</div>
         </article>
       `;
@@ -3240,9 +3179,9 @@
       const rows = groupedInsightRows(items, chartGenreLabel, 5);
       if (!rows.length) {
         return `
-          <article class="insight-card insight-genre" aria-label="推荐歌曲曲风">
-            <div class="insight-card-title">推荐歌曲曲风</div>
-            <div class="insight-card-body"><div class="insight-empty">生成推荐后显示曲风分布</div></div>
+          <article class="insight-card insight-genre" aria-label="${t("music.insight.genreTitle")}">
+            <div class="insight-card-title">${t("music.insight.genreTitle")}</div>
+            <div class="insight-card-body"><div class="insight-empty">${t("music.insight.emptyGenre")}</div></div>
           </article>
         `;
       }
@@ -3251,13 +3190,13 @@
       const topTrackLabel = [topTrack.title, topTrack.artist].map(cleanMetaText).filter(Boolean).join(" / ");
       const maxCount = Math.max(...rows.map((row) => row.count), 1);
       return `
-        <article class="insight-card insight-genre" aria-label="推荐歌曲曲风">
-          <div class="insight-card-title">推荐歌曲曲风</div>
+        <article class="insight-card insight-genre" aria-label="${t("music.insight.genreTitle")}">
+          <div class="insight-card-title">${t("music.insight.genreTitle")}</div>
           <div class="insight-card-body">
             <div class="genre-hero">
               <div class="insight-top"><span class="insight-spark" aria-hidden="true"></span><span>TOP</span></div>
               <div class="genre-title">${escapeHtml(top.label)}</div>
-              <div class="genre-sub">${escapeHtml(topTrackLabel || "等待推荐曲目")}</div>
+              <div class="genre-sub">${escapeHtml(topTrackLabel || t("music.insight.waitingTracks"))}</div>
             </div>
             <div class="genre-bars">
               ${rows.map((row) => `
@@ -3284,7 +3223,7 @@
       if (!items.length) {
         els.recommendationInsights.classList.add("is-empty");
         els.recommendationInsights.innerHTML = `
-          <div class="insights-empty-bar">生成推荐后显示曲风分布和年代分布</div>
+          <div class="insights-empty-bar">${t("music.insight.emptyGenre")}${t("music.insight.emptyEra")}</div>
         `;
         return;
       }
@@ -3322,57 +3261,57 @@
     function summarizeTrack(track) {
       const loc = locateTrack(track);
       return {
-        曲名: track.title,
-        艺术家: track.artist,
-        地点: formatOrigin(track),
-        国家: track.country,
-        城市: track.city || "",
-        风格: displayGenre(track),
-        来源: displaySource(track),
-        推荐说明: track.why || track.note || "",
-        坐标: { 纬度: loc.lat, 经度: loc.lng, 精度: loc.precision },
-        参数: track.metrics || defaultMetrics
+        title: track.title,
+        artist: track.artist,
+        origin: formatOrigin(track),
+        country: track.country,
+        city: track.city || "",
+        style: displayGenre(track),
+        source: displaySource(track),
+        description: track.why || track.note || "",
+        coordinates: { lat: loc.lat, lng: loc.lng, precision: loc.precision },
+        metrics: track.metrics || defaultMetrics
       };
     }
 
     function buildAiPayload() {
       const metrics = activeMetrics();
       return {
-        项目: "Echo 跨文化音乐推荐原型",
-        数据时间: new Date().toISOString(),
-        数据限制: "当前前端只发送曲目信息、推荐列表、地图位置和参数读数；不会把音频二进制直接上传给模型。",
-        上传文件: uploadedAudioMeta || "尚未上传本地音频，当前使用后端主线曲库起点。",
-        用户上传或起点曲目: summarizeTrack(primaryTrack),
-        当前播放曲目: summarizeTrack(currentTrack),
-        推荐状态: activeRecommendations.length ? `${activeRecommendations.length} 首推荐已生成` : "尚未生成跨文化推荐",
-        推荐曲目: activeRecommendations.map((item, index) => ({
-          序号: index + 1,
+        project: "Echo Cross-Cultural Music Recommendation",
+        timestamp: new Date().toISOString(),
+        dataNote: "Frontend sends track info, recommendation list, map positions and parameter readings; audio binaries are not uploaded to the model.",
+        uploadedFile: uploadedAudioMeta || "No local audio uploaded; using backend mainline library seed.",
+        seedTrack: summarizeTrack(primaryTrack),
+        currentTrack: summarizeTrack(currentTrack),
+        recommendationStatus: activeRecommendations.length ? `${activeRecommendations.length} recommendations generated` : "No cross-cultural recommendations yet",
+        recommendations: activeRecommendations.map((item, index) => ({
+          index: index + 1,
           ...summarizeTrack(item)
         })),
-        当前参数: {
-          文化惊喜度: Number(metrics.serendipity),
-          校准KL: Number(metrics.calibrationKl),
-          目标亲和: Number(metrics.targetAffinity),
-          长尾曝光: Number(metrics.minorityExposure),
-          DCAS最优传输路线评分: Number(metrics.score),
-          相关性: Number(metrics.relevance),
-          意外性: Number(metrics.unexpectedness),
-          人工回路不确定性: Number(metrics.palUncertainty),
-          用户回路KL: Number(metrics.userAlignmentKl)
+        parameters: {
+          serendipity: Number(metrics.serendipity),
+          calibrationKl: Number(metrics.calibrationKl),
+          targetAffinity: Number(metrics.targetAffinity),
+          minorityExposure: Number(metrics.minorityExposure),
+          dcasScore: Number(metrics.score),
+          relevance: Number(metrics.relevance),
+          unexpectedness: Number(metrics.unexpectedness),
+          palUncertainty: Number(metrics.palUncertainty),
+          userAlignmentKl: Number(metrics.userAlignmentKl)
         },
-        重排权重: rerankWeights.map((item) => ({
-          名称: item.label,
-          权重: item.value,
-          信号: item.signal
+        rerankWeights: rerankWeights.map((item) => ({
+          name: item.label,
+          weight: item.value,
+          signal: item.signal
         })),
-        地图状态: {
-          地图中心经度: centerLng,
-          地图中心纬度: centerLat,
-          当前曲目位置: locateTrack(currentTrack),
-          推荐位置: activeRecommendations.map((item) => ({
-            曲名: item.title,
-            地点: formatOrigin(item),
-            坐标: locateTrack(item)
+        mapState: {
+          centerLng,
+          centerLat,
+          currentTrackLocation: locateTrack(currentTrack),
+          recommendationLocations: activeRecommendations.map((item) => ({
+            title: item.title,
+            origin: formatOrigin(item),
+            coordinates: locateTrack(item)
           }))
         }
       };
@@ -3380,21 +3319,21 @@
 
     function buildAiInitialPrompt(extraQuestion = "") {
       const responseLanguage = aiResponseLanguageName();
-      const followup = extraQuestion ? `\n\n用户还问了：${extraQuestion}` : "";
-      return `下面是 Echo 这次推荐的完整数据。请帮我用聊天的语气给用户讲讲这次推荐。
+      const followup = extraQuestion ? `\n\n${t("music.ai.followup")}: ${extraQuestion}` : "";
+      return `Below is the complete data from this Echo recommendation. Please explain this recommendation to the user in a conversational tone.
 
-用 ${responseLanguage} 回答。
+Respond in ${responseLanguage}.
 
-请大致覆盖这些内容，但不用死板地按顺序来：
-1. 先用一两句话说说用户选的这首歌有什么特点，它来自哪里。
-2. 这次推荐的歌单整体感觉怎么样——是风格很接近还是比较跳跃？为什么这些歌可以放在一起？
-3. 挑几首最值得先听的推荐，简单说说为什么用户可能会喜欢它（比如节奏感、氛围、乐器特色等）。
-4. 如果有哪首歌比较"意外"、用户可能没接触过这个风格，提一下，说不定会有惊喜。
-5. 最后轻松地问用户一两个问题，比如想深入了解哪个地区、或者想换个方向推荐之类的。
+Cover roughly these points, but don't follow a rigid order:
+1. Briefly describe the user's selected song — what's notable about it, where it comes from.
+2. How does the overall recommendation set feel — are the styles close or quite different? Why do these songs work together?
+3. Pick a few recommendations worth listening to first, briefly explain why the user might enjoy them (rhythm, atmosphere, instruments, etc.).
+4. If any song is particularly "unexpected" — a style the user might not have explored — mention it as a potential surprise.
+5. End casually by asking the user one or two questions, like which region they'd like to explore deeper, or if they want a different direction.
 
-语气要像朋友聊天，不要写成报告。用短句、口语化表达。如果要提到推荐参数，翻译成日常感受就行。
+Tone: like a friend chatting, not a report. Use short sentences, conversational language. If mentioning recommendation parameters, translate them into everyday feelings.
 
-推荐数据：
+Recommendation data:
 ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
@@ -3514,7 +3453,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Kimi 请求失败：${response.status} ${errorText}`);
+        throw new Error(`${t("music.status.kimiFailed")}${response.status} ${errorText}`);
       }
 
       const data = await response.json();
@@ -3574,22 +3513,22 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
     function fallbackDescription(item) {
       const parts = [
-        item.album ? `专辑《${item.album}》` : "",
-        item.label ? `流派 ${item.label}` : "",
-        item.culture ? `文化域 ${cultureLabels[item.culture] || item.culture}` : "",
-        item.tags ? `标签 ${item.tags}` : ""
+        item.album ? `${t("music.desc.albumPrefix")}${item.album}${t("music.desc.albumSuffix")}` : "",
+        item.label ? `${t("music.desc.genre")} ${item.label}` : "",
+        item.culture ? `${t("music.desc.culture")} ${cultureLabel(item.culture) || item.culture}` : "",
+        item.tags ? `${t("music.desc.tags")} ${item.tags}` : ""
       ].filter(Boolean);
       if (parts.length) {
-        return `这首歌来自 ${item.artist || "未知创作者"}，${parts.join("，")}。`;
+        return `${t("music.desc.songFrom")}${item.artist || t("music.default.unknown")}，${parts.join("，")}${t("music.desc.candidateSuffix")}`;
       }
-      return `${item.artist || "未知创作者"} 的曲目，已进入当前跨文化推荐候选。`;
+      return `${t("music.desc.songFrom")}${item.artist || t("music.default.unknown")}${t("music.desc.candidateSuffix")}`;
     }
 
     function recommendationDescription(item) {
       const fromMetadata = metadataDescription(item);
       if (fromMetadata) return conciseText(fromMetadata.text);
       if (item.aiDescription) return conciseText(item.aiDescription);
-      if (item.descriptionLoading) return "正在补充音乐介绍...";
+      if (item.descriptionLoading) return t("music.recommend.running");
       return conciseText(fallbackDescription(item));
     }
 
@@ -3638,10 +3577,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 曲名：${item.title || ""}
 艺术家：${item.artist || ""}
 专辑：${item.album || ""}
-流派/标签：${[item.label, item.tags].filter(Boolean).join(" / ")}
-文化域：${cultureLabels[item.culture] || item.culture || ""}
+${t("music.desc.genre")}：${[item.label, item.tags].filter(Boolean).join(" / ")}
+${t("music.desc.culture")}：${cultureLabel(item.culture) || item.culture || ""}
 国家/城市：${[item.country, item.city].filter(Boolean).join(" / ")}
-来源：${item.sourceDataset || item.platform || ""}`;
+${t("music.readout.source")}：${item.sourceDataset || item.platform || ""}`;
     }
 
     async function generateKimiDescription(item) {
@@ -3649,7 +3588,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         [
           {
             role: "system",
-            content: `你是 Echo 的音乐资料撰写助手。请使用 ${aiResponseLanguageName()}，只输出音乐介绍正文，不输出标题、项目符号或免责声明。`
+            content: `You are Echo's music description writer. Use ${aiResponseLanguageName()}. Only output the music introduction text — no titles, bullet points, or disclaimers.`
           },
           {
             role: "user",
@@ -3709,13 +3648,13 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       aiConversationMessages = [
         {
           role: "system",
-          content: `你是一个热爱世界音乐的朋友，正在帮用户理解 Echo 推荐给他的歌单。你的风格温暖、自然、口语化，就像一个懂音乐的朋友在聊天。请用 ${aiResponseLanguageName()} 回答。
+          content: `You are a friend who loves world music, helping the user understand the playlist Echo recommended. Your style is warm, natural, conversational — like a music-savvy friend chatting. Respond in ${aiResponseLanguageName()}.
 
-注意：
-- 用普通人能听懂的话解释，不要用学术术语或论文腔。
-- 如果提到参数，翻译成日常感受（比如"惊喜度高"说成"你可能没想到会喜欢这个风格"）。
-- 每首歌的介绍要有趣，像在给朋友安利，不要写成论文摘要。
-- 可以适当加一些关于当地音乐文化的有趣冷知识。`
+Guidelines:
+- Explain in everyday language, avoid academic jargon or paper-like tone.
+- If mentioning parameters, translate them into everyday feelings (e.g., "high serendipity" → "you might not expect to like this style").
+- Each song introduction should be fun, like recommending to a friend, not a thesis abstract.
+- Feel free to add interesting trivia about local music culture.`
         },
         {
           role: "user",
@@ -3774,7 +3713,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
       function syncTrackReadouts() {
         els.topTitle.textContent = currentTrack.title;
-      els.topMeta.textContent = currentTrack.artist || "未知创作者";
+      els.topMeta.textContent = currentTrack.artist || t("music.default.unknown");
       els.playState.textContent = playbackTrackLabel(currentTrack);
       els.readoutTrack.textContent = currentTrack.title;
       els.readoutOrigin.textContent = formatOrigin(currentTrack);
@@ -3819,9 +3758,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         label.dataset.recIndex = String(index);
         label.setAttribute("role", "button");
         label.tabIndex = 0;
-        label.setAttribute("aria-label", `播放推荐音乐 ${item.title}`);
+        label.setAttribute("aria-label", `${t("music.recommend.start")} ${item.title}`);
       }
-      const placeLabel = item.country === mysteryPlace.country ? "来自神秘的地方" : (item.city || item.country);
+      const placeLabel = item.country === mysteryPlace.country ? t("music.mysteryPlace.country") : (item.city || item.country);
       const styleLabel = item.country === mysteryPlace.country ? item.city : displayGenre(item);
       label.innerHTML = `${placeLabel}<br>${styleLabel}`;
       label.addEventListener("pointerdown", (event) => {
@@ -3989,9 +3928,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       els.sidePanel?.classList.toggle("has-recommendations", hasRecommendations);
       if (!hasRecommendations) {
         els.recommendList.innerHTML = `
-          <article class="rec-card is-placeholder">
-            <div class="meta-label">等待推荐</div>
-            <p>点击左下方的“跨文化音乐推荐”后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
+          <article class=”rec-card is-placeholder”>
+            <div class=”meta-label”>${t(“music.rec.waitingLabel”)}</div>
+            <p>${t(“music.side.waitingCopy”)}</p>
           </article>
         `;
         return;
@@ -4001,16 +3940,16 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         const isFavorite = window.EchoFavoriteStore?.isFavorite(item);
         const cover = item.coverArtUrl
           ? `<img class="rec-cover" src="${escapeHtml(item.coverArtUrl)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`
-          : `<div class="rec-cover is-empty" aria-hidden="true">Cover</div>`;
+          : `<div class="rec-cover is-empty" aria-hidden="true">ECHO</div>`;
         const platformLink = item.platformTrackUrl
-          ? `<a class="rec-link" href="${escapeHtml(item.platformTrackUrl)}" target="_blank" rel="noopener">平台播放</a>`
+          ? `<a class="rec-link" href="${escapeHtml(item.platformTrackUrl)}" target="_blank" rel="noopener">${t("music.rec.platformPlay")}</a>`
           : "";
         const fullLink = item.fullTrackUrl && item.fullTrackUrl !== item.platformTrackUrl
-          ? `<a class="rec-link" href="${escapeHtml(item.fullTrackUrl)}" target="_blank" rel="noopener">原站链接</a>`
+          ? `<a class="rec-link" href="${escapeHtml(item.fullTrackUrl)}" target="_blank" rel="noopener">${t("music.rec.originalLink")}</a>`
           : "";
         return `
         <article class="rec-card${isSameTrack(item, currentTrack) ? " is-selected" : ""}" role="button" tabindex="0" data-rec-index="${index}">
-          <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite-index="${index}" aria-label="${isFavorite ? "取消收藏" : "收藏"} ${escapeHtml(item.title)}" title="${isFavorite ? "取消收藏" : "收藏"}">
+          <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite-index="${index}" aria-label="${isFavorite ? t("music.rec.unfavorite") : t("music.rec.favorite")} ${escapeHtml(item.title)}" title="${isFavorite ? t("music.rec.unfavorite") : t("music.rec.favorite")}">
             ${isFavorite ? "★" : "☆"}
           </button>
           <div class="rec-card-main">
@@ -4058,8 +3997,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
     async function startRecommendations() {
       els.recommendButton.classList.add("is-running");
-      els.recommendButton.textContent = "推荐计算中...";
-      els.mapStatus.textContent = "正在生成跨文化路径";
+      els.recommendButton.textContent = t("music.recommend.running");
+      els.mapStatus.textContent = t("music.status.generatingPath");
       recommendationsPersistable = false;
       activeRecommendations = [];
       clearMusicStationState();
@@ -4153,7 +4092,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
           const inferredCulture = data.culture_inference?.culture;
           if (inferredCulture) {
             currentTrack.culture = inferredCulture;
-            currentTrack.style = `上传音频 / CultureMERT / ${cultureLabels[inferredCulture] || inferredCulture}`;
+            currentTrack.style = `${t("music.local.uploadArtist")} / CultureMERT / ${cultureLabel(inferredCulture) || inferredCulture}`;
           }
           primaryTrack = { ...currentTrack };
         }
@@ -4170,10 +4109,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         recommendationsPersistable = true;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
-        els.recommendButton.textContent = "重新生成推荐";
+        els.recommendButton.textContent = t("music.recommend.regenerate");
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
-        els.mapStatus.textContent = `${activeRecommendations.length} 条真实连接已激活${embeddingTime}`;
-        els.mapMode.textContent = "推荐网络已展开";
+        els.mapStatus.textContent = `${activeRecommendations.length}${t("music.status.connectionsActive")}${embeddingTime}`;
+        els.mapMode.textContent = t("music.status.networkExpanded");
         syncTrackReadouts();
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
@@ -4186,8 +4125,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         recommendationsPersistable = false;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
-        els.recommendButton.textContent = "重新生成推荐";
-        els.mapStatus.textContent = "推荐接口暂不可用，已回退到本地演示";
+        els.recommendButton.textContent = t("music.recommend.regenerate");
+        els.mapStatus.textContent = t("music.status.apiFallback");
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
         renderParameterPanel();
@@ -4298,9 +4237,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         mapZoom = Math.max(0.9, Math.min(1.3, Number(saved.mapZoom)));
       }
       els.recommendButton.classList.remove("is-running");
-      els.recommendButton.textContent = "重新生成推荐";
-      els.mapStatus.textContent = saved.mapStatus || `${activeRecommendations.length} 条真实连接已恢复`;
-      els.mapMode.textContent = saved.mapMode || "推荐网络已恢复";
+      els.recommendButton.textContent = t("music.recommend.regenerate");
+      els.mapStatus.textContent = saved.mapStatus || `${activeRecommendations.length}${t("music.status.connectionsRestored")}`;
+      els.mapMode.textContent = saved.mapMode || t("music.status.networkRestored");
       applyCachedDescriptions(activeRecommendations);
       renderRecommendations();
       hydrateRecommendationDescriptions(activeRecommendations);
@@ -4312,24 +4251,24 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       return true;
     }
 
-    function setNoStartupTrack(statusText = "已按设置跳过初始加载") {
+    function setNoStartupTrack(statusText = t("music.status.skipStartup")) {
       recommendationsPersistable = false;
       activeRecommendations = [];
       clearMusicStationState();
       primaryTrack = {
         ...currentTrack,
-        title: "未加载歌曲",
-        artist: "等待选择",
+        title: t("music.default.noTrack"),
+        artist: t("music.default.waiting"),
         city: mysteryPlace.city,
         province: "",
         country: mysteryPlace.country,
         lat: mysteryPlace.lat,
         lng: mysteryPlace.lng,
         locationPrecision: mysteryPlace.precision,
-        genre: "未知",
-        sourceDataset: "未加载",
-        style: "未知",
-        note: "当前未预载歌曲；可以上传音乐、打开收藏夹曲目，或手动请求推荐。",
+        genre: t("music.default.unknown"),
+        sourceDataset: t("music.default.notLoaded"),
+        style: t("music.default.unknown"),
+        note: t("music.default.noStartupHint"),
         trackId: "",
         track_id: "",
         coverArtUrl: "",
@@ -4349,7 +4288,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       centerLng = currentTrack.lng;
       centerLat = currentTrack.lat;
       els.mapStatus.textContent = statusText;
-      els.mapMode.textContent = "等待曲目";
+      els.mapMode.textContent = t("music.status.waitingTrack");
       syncTrackReadouts();
       renderRecommendations();
       renderParameterPanel();
@@ -4360,7 +4299,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     async function loadInitialTrack(options = {}) {
       recommendationsPersistable = false;
       clearMusicStationState();
-      els.mapStatus.textContent = "正在连接后端曲库";
+      els.mapStatus.textContent = t("music.status.connectingLibrary");
       try {
         const randomSeed = options.randomSeed ?? Date.now();
         const cultureQuery = initialSeedCulture ? `culture=${encodeURIComponent(initialSeedCulture)}&` : "";
@@ -4378,12 +4317,12 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         primaryTrack = track;
         activeRecommendations = [];
         selectTrack(track, { autoplay: false });
-        els.mapStatus.textContent = "后端曲库已连接";
-        els.mapMode.textContent = "真实起点已载入";
+        els.mapStatus.textContent = t("music.status.libraryConnected");
+        els.mapMode.textContent = t("music.status.realLoaded");
         return true;
       } catch (error) {
         console.error(error);
-        els.mapStatus.textContent = "后端曲库暂不可用，保留本地演示";
+        els.mapStatus.textContent = t("music.status.libraryUnavailable");
         return false;
       }
     }
@@ -4397,7 +4336,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         saved = null;
       }
       if (!saved?.title) {
-        setNoStartupTrack("暂无上次关闭时的曲目");
+        setNoStartupTrack(t("music.status.noPrevTrack"));
         return false;
       }
       if (saved.localAudioId) {
@@ -4408,8 +4347,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
               type: record.fileType || record.blob.type || "audio/mpeg",
               lastModified: record.lastModified || Date.now()
             });
-            applyLocalAudioFile(file, { ...saved, ...record, source: "上次关闭时的歌", fromFavorites: true });
-            els.mapStatus.textContent = "已载入上次关闭时的本地曲目";
+            applyLocalAudioFile(file, { ...saved, ...record, source: t("music.status.favLocalLoaded"), fromFavorites: true });
+            els.mapStatus.textContent = t("music.status.favLocalLoaded");
             return true;
           }
         } catch (error) {
@@ -4419,8 +4358,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       primaryTrack = { ...saved, metrics: saved.metrics || defaultMetrics };
       activeRecommendations = [];
       selectTrack(primaryTrack, { autoplay: false });
-      els.mapStatus.textContent = "已载入上次关闭时的曲目";
-      els.mapMode.textContent = "上次曲目";
+      els.mapStatus.textContent = t("music.status.favLocalLoaded");
+      els.mapMode.textContent = t("music.status.favRandom");
       return true;
     }
 
@@ -4429,7 +4368,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       await window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).catch(() => null);
       const favorites = window.EchoFavoriteStore?.read?.() || [];
       if (!favorites.length) {
-        setNoStartupTrack("收藏夹暂无可随机载入的曲目");
+        setNoStartupTrack(t("music.status.noFavRandom"));
         return false;
       }
       const item = favorites[Math.floor(Math.random() * favorites.length)];
@@ -4437,8 +4376,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       primaryTrack = track;
       activeRecommendations = [];
       selectTrack(track, { autoplay: false });
-      els.mapStatus.textContent = "已从收藏夹随机载入";
-      els.mapMode.textContent = "收藏夹随机";
+      els.mapStatus.textContent = t("music.status.favRandomLoaded");
+      els.mapMode.textContent = t("music.status.favRandom");
       return true;
     }
 
@@ -4480,7 +4419,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       try {
         const record = await getLocalAudioRecord(localId);
         if (!record?.blob) {
-          els.mapStatus.textContent = "收藏夹本地音频未找到";
+          els.mapStatus.textContent = t("music.status.favLocalNotFound");
           return false;
         }
         const fileName = record.fileName || metadata.fileName || `${record.title || metadata.title || "local-audio"}.mp3`;
@@ -4493,15 +4432,15 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
           ...record,
           ...metadata,
           id: localId,
-          source: "收藏夹",
+          source: t("music.rec.favorite"),
           fromFavorites: true
         });
         sessionStorage.removeItem(pendingLocalPlayKey);
-        els.mapStatus.textContent = "收藏夹本地音频已载入";
+        els.mapStatus.textContent = t("music.status.favLocalLoaded");
         return true;
       } catch (error) {
         console.error(error);
-        els.mapStatus.textContent = "收藏夹本地音频载入失败";
+        els.mapStatus.textContent = t("music.status.favLocalFailed");
         return false;
       }
     }
@@ -4619,7 +4558,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     els.upload.addEventListener("change", (event) => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-      applyLocalAudioFile(file, { source: "本地上传" });
+      applyLocalAudioFile(file, { source: t("music.local.uploadSource") });
     });
 
     setInterval(() => {
@@ -4647,10 +4586,10 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     renderAiMessages();
     initializeStartupTrack().catch((error) => {
       console.error(error);
-      setNoStartupTrack("音乐台初始载入失败");
+      setNoStartupTrack(t("music.status.initFailed"));
     });
     loadMap().catch((error) => {
-      els.mapStatus.textContent = "地图数据加载失败";
+      els.mapStatus.textContent = t("music.status.mapDataFailed");
       console.error(error);
     });
     if (window.location.hash === "#ai-analysis") {

@@ -659,16 +659,16 @@ def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
             "city": _tag_first(tags, "city", "venue") or country,
             "lat": None,
             "lng": None,
-            "location_precision": "音频标签位置",
-            "location_note": "来自音频文件内嵌 metadata",
+            "location_precision": "audio_tag",
+            "location_note": "From embedded audio file metadata",
         }
     return {
-        "country": "神秘的地方",
-        "city": "太平洋中部",
+        "country": "mystery_place",
+        "city": "central_pacific",
         "lat": 0.0,
         "lng": -160.0,
-        "location_precision": "太平洋默认坐标",
-        "location_note": "上传音频没有提供地区信息，默认标注为来自神秘的地方",
+        "location_precision": "pacific_default",
+        "location_note": "Upload audio has no region info, defaulting to mystery place",
     }
 
 
