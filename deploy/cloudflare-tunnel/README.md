@@ -30,7 +30,21 @@ Then start the worker:
 .\scripts\run_local_mainline_worker.ps1 -Port 18011
 ```
 
+If the tunnel is launched from WSL, bind the worker to Windows host networking instead:
+
+```powershell
+.\scripts\run_local_mainline_worker.ps1 -HostName 0.0.0.0 -Port 18012
+```
+
 When `ECHO_WORKER_REQUIRE_TOKEN=true`, the worker only exposes `/api/mainline/*` and requires the `X-Echo-Worker-Token` header. The public tunnel URL should not be used as a normal Echo website.
+
+Before testing uploaded-audio recommendation, preload the CultureMERT model once:
+
+```powershell
+.\.venv-gpu\Scripts\python.exe .\scripts\preload_culturemert_model.py --env-file configs/local_worker.env --local-files-only
+```
+
+After the model is cached, keep `ECHO_CULTUREMERT_LOCAL_FILES_ONLY=true` in `configs/local_worker.env` so live requests do not perform Hugging Face network checks.
 
 ## 2. Temporary Quick Tunnel
 
@@ -40,10 +54,16 @@ Install `cloudflared`, then run:
 .\scripts\run_cloudflare_quick_tunnel.ps1 -Port 18011
 ```
 
+If `cloudflared` is not installed on Windows or QUIC/UDP is blocked, use the WSL fallback:
+
+```bash
+PORT=18012 ./scripts/run_cloudflare_quick_tunnel_wsl.sh
+```
+
 or directly:
 
 ```powershell
-cloudflared tunnel --url http://127.0.0.1:18011
+cloudflared tunnel --protocol http2 --url http://127.0.0.1:18011
 ```
 
 Copy the generated `https://*.trycloudflare.com` URL into the cloud server env:
