@@ -432,6 +432,12 @@
           </div>
           <p class="note" data-i18n="settings.startupTrackHelp">控制打开音乐台时播放器预先载入哪一首歌；通过收藏夹或链接进入的指定曲目仍会优先生效。</p>
         </div>
+
+        <div class="field">
+          <label for="recommend-count" data-i18n="settings.recommendCountLabel">每次推荐歌曲数量</label>
+          <input id="recommend-count" type="number" min="1" max="30" value="10" step="1">
+          <p class="note" data-i18n="settings.recommendCountHelp">控制每次跨文化推荐返回的歌曲数量，范围 1-30，默认 10。</p>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -470,6 +476,7 @@
       language: document.getElementById("app-language"),
       coverModeButtons: Array.from(document.querySelectorAll("[data-cover-mode]")),
       startupTrackButtons: Array.from(document.querySelectorAll("[data-startup-track]")),
+      recommendCount: document.getElementById("recommend-count"),
       coverRatioPanel: document.getElementById("cover-ratio-panel"),
       coverRatioGrid: document.getElementById("cover-ratio-grid"),
       apiKey: document.getElementById("kimi-api-key"),
@@ -512,6 +519,20 @@
     function readStartupTrackMode() {
       const mode = readAppConfig().startupTrackMode;
       return startupTrackModes.includes(mode) ? mode : "library-random";
+    }
+
+    function readRecommendCount() {
+      const raw = Number(readAppConfig().recommendCount);
+      return raw >= 1 && raw <= 30 ? raw : 10;
+    }
+
+    function saveRecommendCount(value = readRecommendCount(), announce = true) {
+      const clamped = Math.max(1, Math.min(30, Math.round(Number(value) || 10)));
+      const config = readAppConfig();
+      config.recommendCount = clamped;
+      localStorage.setItem(appConfigKey, JSON.stringify(config));
+      if (announce) els.status.textContent = t("settings.recommendCountSaved");
+      return clamped;
     }
 
     function saveStartupTrackMode(mode = readStartupTrackMode(), announce = true) {
@@ -580,6 +601,7 @@
         els.language.value = window.EchoI18n?.getLanguage() || "zh-CN";
         renderCoverSettings(readCoverConfig());
         renderStartupTrackSettings(readStartupTrackMode());
+        els.recommendCount.value = readRecommendCount();
       } catch (error) {
         els.status.textContent = t("settings.readFailed");
       }
@@ -607,6 +629,7 @@
       const language = window.EchoI18n?.setLanguage(els.language.value) || els.language.value;
       saveCoverConfig(readCoverConfig(), false);
       saveStartupTrackMode(readStartupTrackMode(), false);
+      saveRecommendCount(els.recommendCount.value, false);
       localStorage.setItem("echo-kimi-config", JSON.stringify({ model, endpoint, apiKey, language }));
       sessionStorage.setItem("echo-kimi-session", JSON.stringify({ apiKey }));
       els.status.textContent = t("settings.saved");
@@ -681,6 +704,10 @@
         const mode = saveStartupTrackMode(button.dataset.startupTrack);
         renderStartupTrackSettings(mode);
       });
+    });
+    els.recommendCount.addEventListener("change", () => {
+      const value = saveRecommendCount(els.recommendCount.value);
+      els.recommendCount.value = value;
     });
     els.language.addEventListener("change", () => {
       window.EchoI18n?.setLanguage(els.language.value);

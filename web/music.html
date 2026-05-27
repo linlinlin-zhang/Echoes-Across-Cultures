@@ -76,7 +76,7 @@
       top: 0;
       z-index: 30;
       display: grid;
-      grid-template-columns: minmax(620px, 1.45fr) minmax(360px, 0.55fr);
+      grid-template-columns: minmax(720px, 1.55fr) minmax(420px, 0.45fr);
       align-items: stretch;
       gap: 0;
       padding: 0;
@@ -240,11 +240,11 @@
     }
 
     .station-shell {
-      width: min(calc(100% - 7rem), 1800px);
-      margin: 0 auto;
+      width: 100%;
+      margin: 0;
       min-height: calc(100vh - 73px);
       display: grid;
-      grid-template-columns: minmax(620px, 1.45fr) minmax(360px, 0.55fr);
+      grid-template-columns: minmax(720px, 1.55fr) minmax(420px, 0.45fr);
       border-left: 1px solid var(--line);
       border-right: 1px solid var(--line);
     }
@@ -684,6 +684,248 @@
       background: var(--line);
     }
 
+    .recommendation-insights-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+      background: #f4f4f4;
+    }
+
+    .recommendation-insights-grid.is-empty {
+      grid-template-columns: 1fr;
+      padding: 0.8rem 1rem;
+    }
+
+    .insights-empty-bar {
+      display: flex;
+      align-items: center;
+      min-height: 4.2rem;
+      padding: 0.9rem 1.2rem;
+      border: 1px solid rgba(17, 17, 17, 0.08);
+      border-radius: 0.5rem;
+      background: #ffffff;
+      box-shadow: 0 0.75rem 1.8rem rgba(17, 17, 17, 0.06);
+      color: #7b8290;
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+
+    .insight-card {
+      position: relative;
+      min-height: 30rem;
+      overflow: hidden;
+      border: 1px solid rgba(17, 17, 17, 0.06);
+      border-radius: 0.5rem;
+      background: #ffffff;
+      box-shadow: 0 1.15rem 2.6rem rgba(17, 17, 17, 0.08);
+      color: #1e2a44;
+    }
+
+    .insight-card-title {
+      position: absolute;
+      top: 1.45rem;
+      left: 1.35rem;
+      right: 1.35rem;
+      z-index: 0;
+      overflow: hidden;
+      color: rgba(30, 42, 68, 0.08);
+      font-size: 3.6rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .insight-card-body {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 5.9rem 1.35rem 1.35rem;
+    }
+
+    .insight-empty {
+      display: grid;
+      min-height: 20rem;
+      place-items: center;
+      color: #7b8290;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .insight-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--alert);
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .insight-spark {
+      width: 1.6rem;
+      aspect-ratio: 1;
+      border-radius: 38% 62% 45% 55%;
+      background: var(--alert);
+      transform: rotate(45deg);
+    }
+
+    .insight-cover,
+    .insight-cover-fallback {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 1px solid rgba(17, 17, 17, 0.08);
+      border-radius: 0.5rem;
+      object-fit: cover;
+      background:
+        linear-gradient(135deg, rgba(255, 61, 69, 0.9), rgba(30, 42, 68, 0.9)),
+        repeating-linear-gradient(45deg, transparent 0 0.5rem, rgba(255, 255, 255, 0.25) 0.5rem 0.68rem);
+    }
+
+    .insight-cover-fallback {
+      display: grid;
+      place-items: center;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .era-timeline {
+      position: relative;
+      display: grid;
+      gap: 1.35rem;
+      padding-left: 0.15rem;
+    }
+
+    .era-timeline::before {
+      content: "";
+      position: absolute;
+      top: 0.25rem;
+      bottom: 0.25rem;
+      left: 35.5%;
+      width: 1px;
+      background: rgba(30, 42, 68, 0.11);
+    }
+
+    .era-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(4.4rem, 0.86fr) 1.2rem minmax(3.6rem, 0.68fr) minmax(3.4rem, 0.54fr);
+      gap: 0.72rem;
+      align-items: center;
+    }
+
+    .era-label {
+      font-size: 2.45rem;
+      font-weight: 800;
+      line-height: 0.98;
+      text-align: center;
+    }
+
+    .era-label .top-label {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--alert);
+      font-size: 1.05rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .era-dot {
+      position: relative;
+      z-index: 1;
+      justify-self: center;
+      width: 0.58rem;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #aab0bd;
+      box-shadow: 0 0 0 0.35rem #ffffff;
+    }
+
+    .era-row.is-top .era-dot {
+      width: 1.2rem;
+      background: #aeb4c0;
+    }
+
+    .era-count {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .genre-hero {
+      display: grid;
+      gap: 0.7rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .genre-title {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.04;
+      word-break: break-word;
+    }
+
+    .genre-sub {
+      overflow: hidden;
+      color: #7b8290;
+      font-size: 0.98rem;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .genre-bars {
+      display: grid;
+      gap: 0.88rem;
+    }
+
+    .genre-bar-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.72rem;
+      align-items: center;
+    }
+
+    .genre-bar-track {
+      min-width: 0;
+      height: 3rem;
+      border-radius: 999px;
+      background: #f2f3f6;
+      overflow: hidden;
+    }
+
+    .genre-bar {
+      display: flex;
+      align-items: center;
+      min-width: 5.8rem;
+      width: var(--bar-width);
+      max-width: 100%;
+      height: 100%;
+      padding: 0 0.88rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--alert), #d23a3a);
+      color: #ffffff;
+      font-size: 1.22rem;
+      font-weight: 800;
+      line-height: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .genre-percent {
+      font-size: 2.05rem;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
     .parameter-panel {
       min-height: 380px;
       display: flex;
@@ -1015,7 +1257,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
+      gap: 0.5rem;
       padding: 1.35rem 1.85rem;
       overflow: auto;
       min-height: 24rem;
@@ -1023,37 +1265,188 @@
     }
 
     .ai-message {
-      max-width: min(72rem, 100%);
+      max-width: min(52rem, 92%);
       padding: 0;
       border: 0;
       border-radius: 0;
       background: transparent;
-      line-height: 1.58;
-      white-space: pre-wrap;
+      line-height: 1.65;
     }
 
     .ai-message .meta-label {
-      display: none;
+      display: block;
+      margin-bottom: 0.35rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .ai-message.is-assistant {
+      align-self: flex-start;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .ai-message.is-assistant .md-body {
+      font-size: 0.94rem;
+      line-height: 1.72;
+      color: var(--ink);
+    }
+
+    .ai-message.is-assistant .md-body h1,
+    .ai-message.is-assistant .md-body h2,
+    .ai-message.is-assistant .md-body h3,
+    .ai-message.is-assistant .md-body h4 {
+      margin: 1.2em 0 0.45em;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .ai-message.is-assistant .md-body h1 { font-size: 1.35rem; }
+    .ai-message.is-assistant .md-body h2 { font-size: 1.18rem; }
+    .ai-message.is-assistant .md-body h3 { font-size: 1.05rem; }
+    .ai-message.is-assistant .md-body h4 { font-size: 0.98rem; }
+
+    .ai-message.is-assistant .md-body h1:first-child,
+    .ai-message.is-assistant .md-body h2:first-child,
+    .ai-message.is-assistant .md-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .ai-message.is-assistant .md-body p {
+      margin: 0.6em 0;
+    }
+
+    .ai-message.is-assistant .md-body p:first-child {
+      margin-top: 0;
+    }
+
+    .ai-message.is-assistant .md-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .ai-message.is-assistant .md-body ul,
+    .ai-message.is-assistant .md-body ol {
+      margin: 0.5em 0;
+      padding-left: 1.6em;
+    }
+
+    .ai-message.is-assistant .md-body li {
+      margin: 0.3em 0;
+    }
+
+    .ai-message.is-assistant .md-body li > ul,
+    .ai-message.is-assistant .md-body li > ol {
+      margin: 0.2em 0;
+    }
+
+    .ai-message.is-assistant .md-body strong {
+      font-weight: 600;
+    }
+
+    .ai-message.is-assistant .md-body em {
+      font-style: italic;
+    }
+
+    .ai-message.is-assistant .md-body code {
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+      background: rgba(17, 17, 17, 0.06);
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+    }
+
+    .ai-message.is-assistant .md-body pre {
+      margin: 0.7em 0;
+      padding: 0.9rem 1.1rem;
+      border-radius: 4px;
+      background: #1a1a1a;
+      color: #e4e4e4;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.55;
+    }
+
+    .ai-message.is-assistant .md-body pre code {
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      font-size: inherit;
+    }
+
+    .ai-message.is-assistant .md-body blockquote {
+      margin: 0.6em 0;
+      padding: 0.4em 1em;
+      border-left: 3px solid var(--line-strong);
+      color: var(--muted);
+    }
+
+    .ai-message.is-assistant .md-body table {
+      margin: 0.7em 0;
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.88rem;
+    }
+
+    .ai-message.is-assistant .md-body th,
+    .ai-message.is-assistant .md-body td {
+      padding: 0.45em 0.75em;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .ai-message.is-assistant .md-body th {
+      background: rgba(17, 17, 17, 0.04);
+      font-weight: 600;
+    }
+
+    .ai-message.is-assistant .md-body hr {
+      margin: 1em 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .ai-message.is-assistant .md-body a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
     }
 
     .ai-message.is-user {
       align-self: flex-end;
-      max-width: min(42rem, 86%);
-      padding: 0.85rem 1.15rem;
-      border-radius: 999px;
-      background: var(--soft-2);
+      max-width: min(38rem, 80%);
+      padding: 0.65rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--soft);
       color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    .ai-message.is-user .meta-label {
+      margin-bottom: 0.2rem;
+      color: var(--muted);
     }
 
     .ai-message.is-system {
       align-self: center;
       max-width: min(48rem, 88%);
-      padding: 1rem 1.05rem;
+      padding: 0.8rem 1.05rem;
       border: 1px dashed var(--line-strong);
-      border-radius: 8px;
+      border-radius: 6px;
       background: #ffffff;
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .ai-message.is-system .meta-label {
+      display: none;
     }
 
     .ai-composer {
@@ -1298,7 +1691,7 @@
       }
 
       .station-shell {
-        width: min(100%, 1800px);
+        width: 100%;
         grid-template-columns: 1fr;
       }
 
@@ -1318,6 +1711,19 @@
       .side-panel {
         min-height: auto;
       }
+
+      .recommendation-insights-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .insight-card-title {
+        font-size: 2.65rem;
+      }
+
+      .genre-title {
+        font-size: 2.45rem;
+      }
+
     }
 
     @media (max-width: 720px) {
@@ -1365,6 +1771,32 @@
       .ai-context-grid,
       .ai-composer {
         grid-template-columns: 1fr;
+      }
+
+      .recommendation-insights-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .insight-card {
+        min-height: auto;
+      }
+
+      .insight-card-body {
+        padding-top: 6rem;
+      }
+
+      .insight-card-title {
+        font-size: 2.8rem;
+      }
+
+      .era-label,
+      .genre-title {
+        font-size: 2.35rem;
+      }
+
+      .era-count,
+      .genre-percent {
+        font-size: 1.85rem;
       }
 
       .parameter-panel-head {
@@ -1523,30 +1955,7 @@
       <section class="parameter-lab" aria-label="推荐参数展示">
         <div class="parameter-metrics" id="parameter-metrics"></div>
 
-        <div class="parameter-grid">
-          <article class="parameter-panel" aria-label="推荐得分构成">
-            <div class="parameter-panel-head">
-              <div>
-                <div class="meta-label">推荐依据</div>
-                <h2>得分<br>构成</h2>
-              </div>
-              <div class="head-meta">
-                <span>越长表示影响越强</span>
-              </div>
-            </div>
-            <div class="parameter-breakdown" id="parameter-breakdown"></div>
-          </article>
-
-          <article class="parameter-panel" aria-label="推荐结果分布">
-            <div class="parameter-panel-head">
-              <div>
-                <div class="meta-label">结果概览</div>
-                <h2>推荐<br>分布</h2>
-              </div>
-            </div>
-            <div class="parameter-distribution" id="parameter-distribution"></div>
-          </article>
-        </div>
+        <div class="parameter-grid recommendation-insights-grid" id="recommendation-insights" aria-label="推荐歌曲年代和曲风"></div>
       </section>
 
       <section class="ai-lab" id="ai-analysis" aria-label="AI 推荐分析">
@@ -1588,6 +1997,7 @@
 
   <script src="./vendor/d3.v7.min.js"></script>
   <script src="./vendor/topojson-client.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="i18n.js"></script>
   <script src="favorite-store.js"></script>
   <script>
@@ -1847,9 +2257,11 @@
         title: "巴伊亚镜像",
         artist: "安娜·莉拉",
         country: "巴西",
+        culture: "brazil",
         city: "萨尔瓦多",
         lat: -12.9777,
         lng: -38.5016,
+        releaseYear: 2022,
         style: "桑巴雷鬼 / 坎东布雷节奏",
         why: "保留明亮拨弦的轮廓，同时把律动推进到更温暖的狂欢打击乐场域。",
         metrics: { serendipity: 0.821, calibrationKl: 2.04, targetAffinity: 0.205, minorityExposure: 0.38, userAlignmentKl: 0.009, palUncertainty: 0.57, score: 0.88, relevance: 0.8, unexpectedness: 0.9 }
@@ -1858,9 +2270,11 @@
         title: "雨后科拉琴",
         artist: "穆萨·迪亚拉",
         country: "马里",
+        culture: "africa",
         city: "巴马科",
         lat: 12.6392,
         lng: -8.0029,
+        releaseYear: 2016,
         style: "科拉琴 / 曼德赞歌",
         why: "把琵琶式的级联线条接到西非竖琴鲁特琴的短句语法上。",
         metrics: { serendipity: 0.846, calibrationKl: 2.01, targetAffinity: 0.214, minorityExposure: 0.46, userAlignmentKl: 0.013, palUncertainty: 0.72, score: 0.91, relevance: 0.77, unexpectedness: 0.96 }
@@ -1869,9 +2283,11 @@
         title: "里斯本低潮",
         artist: "玛塔·瓦莱",
         country: "葡萄牙",
+        culture: "west",
         city: "里斯本",
         lat: 38.7223,
         lng: -9.1393,
+        releaseYear: 2011,
         style: "法朵 / 环境吉他",
         why: "延续夜色里的忧郁感，同时替换成人声装饰和更海岸化的和声色彩。",
         metrics: { serendipity: 0.802, calibrationKl: 2.08, targetAffinity: 0.181, minorityExposure: 0.34, userAlignmentKl: 0.006, palUncertainty: 0.49, score: 0.84, relevance: 0.83, unexpectedness: 0.84 }
@@ -1880,9 +2296,11 @@
         title: "加美兰轨道",
         artist: "莎丽·乌兰",
         country: "印度尼西亚",
+        culture: "southeast_asia",
         city: "日惹",
         lat: -7.7956,
         lng: 110.3695,
+        releaseYear: 2020,
         style: "加美兰 / 柔和电子",
         why: "用互锁的金属键盘循环重构原曲的旋律轮廓。",
         metrics: { serendipity: 0.858, calibrationKl: 1.99, targetAffinity: 0.231, minorityExposure: 0.5, userAlignmentKl: 0.017, palUncertainty: 0.76, score: 0.93, relevance: 0.75, unexpectedness: 0.98 }
@@ -1891,9 +2309,11 @@
         title: "伊斯坦布尔即兴漂流",
         artist: "埃姆雷·艾登",
         country: "土耳其",
+        culture: "middle_east",
         city: "伊斯坦布尔",
         lat: 41.0082,
         lng: 28.9784,
+        releaseYear: 2018,
         style: "乌德琴 / 木卡姆 / 慢拍",
         why: "把丝路调式感接入带有木卡姆转音的即兴段落。",
         metrics: { serendipity: 0.835, calibrationKl: 2.02, targetAffinity: 0.202, minorityExposure: 0.42, userAlignmentKl: 0.011, palUncertainty: 0.68, score: 0.9, relevance: 0.81, unexpectedness: 0.89 }
@@ -1962,6 +2382,15 @@
       };
     }
 
+    function parseReleaseYear(value) {
+      const text = String(value ?? "").trim();
+      if (!text) return 0;
+      const match = text.match(/(?:19|20)\d{2}/);
+      if (!match) return 0;
+      const year = Number(match[0]);
+      return Number.isFinite(year) ? year : 0;
+    }
+
     function metricsFromApiItem(item, index = 0) {
       const components = item.score_components || {};
       const relevance = Number(components.relevance ?? item.score ?? defaultMetrics.relevance);
@@ -1992,6 +2421,10 @@
       const genre = cleanMetaText(item.genre || item.primaryGenreName || item.primary_genre_name || item.label || firstTagValue(item.tags));
       const label = cleanMetaText(item.label || genre);
       const durationMs = Number(item.duration_ms || 0);
+      const releaseDate = cleanMetaText(
+        item.release_date || item.releaseDate || item.releaseDateTime || item.album_release_date || item.collection_release_date || item.date
+      );
+      const releaseYear = parseReleaseYear(item.release_year || item.releaseYear || item.year || releaseDate);
       return {
         trackId: String(item.track_id || ""),
         title,
@@ -1999,6 +2432,10 @@
         album: String(item.album || "").trim(),
         label,
         genre,
+        releaseDate,
+        releaseYear,
+        era: cleanMetaText(item.era),
+        language: cleanMetaText(item.language || item.lang),
         description: String(item.description || item.track_description || "").trim(),
         albumDescription: String(item.album_description || "").trim(),
         tags: String(item.tags || "").trim(),
@@ -2029,6 +2466,18 @@
       const score = Number(item.metrics?.score ?? 0.82 + index * 0.01);
       return `${Math.round(Math.max(0.1, Math.min(0.99, score)) * 100)}% 桥接匹配`;
     }
+
+    const emptyMetrics = {
+      serendipity: 0,
+      calibrationKl: 0,
+      targetAffinity: 0,
+      minorityExposure: 0,
+      userAlignmentKl: 0,
+      palUncertainty: 0,
+      score: 0,
+      relevance: 0,
+      unexpectedness: 0
+    };
 
     const defaultMetrics = { ...currentTrack.metrics };
     const rerankWeights = [
@@ -2069,8 +2518,7 @@
       mapCanvas: document.getElementById("map-canvas"),
       mapUi: document.getElementById("map-ui"),
       parameterMetrics: document.getElementById("parameter-metrics"),
-      parameterBreakdown: document.getElementById("parameter-breakdown"),
-      parameterDistribution: document.getElementById("parameter-distribution"),
+      recommendationInsights: document.getElementById("recommendation-insights"),
       aiRunButton: document.getElementById("ai-run-button"),
       aiMessages: document.getElementById("ai-messages"),
       aiComposer: document.getElementById("ai-composer"),
@@ -2168,6 +2616,7 @@
         || cleanMetaText(raw.primaryGenreName)
         || cleanMetaText(raw.primary_genre_name)
         || cleanMetaText(track.label)
+        || cleanMetaText(track.style)
         || firstTagValue(track.tags || raw.tags)
         || "未知";
     }
@@ -2220,6 +2669,11 @@
       return ["last", "favorite-random", "library-random", "none"].includes(mode) ? mode : "library-random";
     }
 
+    function getRecommendCount() {
+      const raw = Number(readAppConfig().recommendCount);
+      return raw >= 1 && raw <= 30 ? raw : 10;
+    }
+
     function startupTrackSnapshot(track = currentTrack) {
       if (!track?.title || track.title === "正在连接曲库" || track.title === "未加载歌曲") {
         return null;
@@ -2230,7 +2684,7 @@
       const allowed = [
         "trackId", "track_id", "localAudioId", "title", "artist", "album", "country", "city", "province",
         "capital", "lat", "lng", "locationPrecision", "culture", "sourceDataset", "platform", "genre",
-        "label", "style", "note", "metrics", "durationSeconds", "coverArtUrl", "platformTrackUrl",
+        "label", "style", "note", "metrics", "durationSeconds", "releaseDate", "releaseYear", "era", "language", "coverArtUrl", "platformTrackUrl",
         "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "albumDescription", "tags"
       ];
       return allowed.reduce((snapshot, key) => {
@@ -2271,6 +2725,7 @@
     function localTrackFromFile(file, metadata = {}) {
       const title = String(metadata.title || file.name.replace(/\.[^.]+$/, "") || "本地音频").trim();
       const genre = cleanMetaText(metadata.genre || metadata.primaryGenreName || metadata.label);
+      const releaseDate = cleanMetaText(metadata.releaseDate || metadata.release_date || metadata.date);
       return {
         localAudioId: metadata.id || metadata.localAudioId || "",
         title,
@@ -2286,6 +2741,10 @@
         sourceDataset: metadata.sourceDataset || metadata.source || "upload",
         platform: metadata.platform || "upload",
         genre,
+        releaseDate,
+        releaseYear: parseReleaseYear(metadata.releaseYear || metadata.release_year || metadata.year || releaseDate),
+        era: cleanMetaText(metadata.era),
+        language: cleanMetaText(metadata.language || metadata.lang),
         label: genre,
         style: metadata.style || "上传音频 / 等待分析",
         note: metadata.note || "本地文件已载入；点击推荐后会上传到后端走 CultureMERT 与 DCAS 主线。",
@@ -2429,6 +2888,9 @@
     }
 
     function activeMetrics() {
+      if (!activeRecommendations.length) {
+        return emptyMetrics;
+      }
       return currentTrack.metrics || defaultMetrics;
     }
 
@@ -2438,17 +2900,18 @@
 
     function renderParameterMetrics() {
       const metrics = activeMetrics();
+      const isWaitingForRecommendation = !activeRecommendations.length;
       const cards = [
         {
           label: "文化惊喜度",
           code: "01",
-          value: Number(metrics.serendipity).toFixed(3),
+          value: isWaitingForRecommendation ? "0%" : Number(metrics.serendipity).toFixed(3),
           sub: "惊喜度 = 相关性 x 意外性"
         },
         {
           label: "校准 KL",
           code: "02",
-          value: Number(metrics.calibrationKl).toFixed(2),
+          value: isWaitingForRecommendation ? "0%" : Number(metrics.calibrationKl).toFixed(2),
           sub: "推荐文化分布与目标先验的距离"
         },
         {
@@ -2480,109 +2943,154 @@
       `).join("");
     }
 
-    function normalizedMetric(value) {
-      const number = Number(value);
-      if (!Number.isFinite(number)) return 0;
-      return Math.max(0, Math.min(1, number));
+    function coverMarkup(item, className = "insight-cover") {
+      const title = escapeHtml(item?.title || "推荐曲目");
+      const url = item?.coverArtUrl || item?.cover_art_url || item?.raw?.cover_art_url_large || item?.raw?.cover_art_url || "";
+      if (url) {
+        return `<img class="${className}" src="${escapeHtml(url)}" alt="${title} 封面" loading="lazy">`;
+      }
+      return `<div class="${className} insight-cover-fallback" aria-label="${title} 封面">ECHO</div>`;
     }
 
-    function renderParameterBreakdown() {
-      const metrics = activeMetrics();
-      const scoreRows = [
-        {
-          label: "相关性",
-          hint: "与当前曲目的声音和内容接近",
-          value: normalizedMetric(metrics.relevance),
-          accent: true
-        },
-        {
-          label: "新颖度",
-          hint: "与已有聆听路径拉开距离",
-          value: normalizedMetric(metrics.unexpectedness)
-        },
-        {
-          label: "目标亲和",
-          hint: "靠近目标文化中心的程度",
-          value: normalizedMetric(metrics.targetAffinity)
-        },
-        {
-          label: "长尾覆盖",
-          hint: "偏向较少曝光曲目的程度",
-          value: normalizedMetric(metrics.minorityExposure)
-        },
-        {
-          label: "不确定性",
-          hint: "需要人工反馈校正的程度",
-          value: normalizedMetric(metrics.palUncertainty)
-        }
-      ];
-      els.parameterBreakdown.innerHTML = scoreRows.map((row) => `
-        <div class="score-row${row.accent ? " is-accent" : ""}">
-          <div class="score-label">
-            <strong>${escapeHtml(row.label)}</strong>
-            <span>${escapeHtml(row.hint)}</span>
-          </div>
-          <div class="score-track" aria-hidden="true">
-            <div class="score-fill" style="--fill-width:${(row.value * 100).toFixed(1)}%"></div>
-          </div>
-          <div class="score-value">${formatPct(row.value)}</div>
-        </div>
-      `).join("");
-    }
-
-    function countBy(items, getKey) {
-      return items.reduce((acc, item) => {
-        const key = getKey(item) || "未知";
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-    }
-
-    function topDistributionRows(counter, total, limit = 5) {
-      return Object.entries(counter)
-        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-CN"))
-        .slice(0, limit)
-        .map(([label, count], index) => ({ label, count, pct: total ? count / total : 0, accent: index === 0 }));
-    }
-
-    function renderParameterDistribution() {
-      const items = activeRecommendations;
+    function groupedInsightRows(items, getKey, limit = 3) {
       const total = items.length;
-      const cultureCount = countBy(items, (item) => cultureLabels[item.culture] || item.culture || item.country);
-      const sourceCount = countBy(items, (item) => displaySource(item));
-      const countries = new Set(items.map((item) => item.country).filter(Boolean));
-      const rows = [
-        ...topDistributionRows(cultureCount, total, 3),
-        ...topDistributionRows(sourceCount, total, 2).map((row) => ({ ...row, label: `来源：${row.label}` }))
-      ];
-      const summary = `
-        <div class="distribution-summary">
-          <div class="distribution-stat"><strong>${total}</strong><span>推荐曲目</span></div>
-          <div class="distribution-stat"><strong>${Object.keys(cultureCount).length}</strong><span>文化域</span></div>
-          <div class="distribution-stat"><strong>${countries.size}</strong><span>国家/地区</span></div>
-        </div>
+      const groups = new Map();
+      items.forEach((item, index) => {
+        const label = getKey(item, index) || "未知";
+        if (!groups.has(label)) {
+          groups.set(label, { label, count: 0, items: [], firstIndex: index });
+        }
+        const group = groups.get(label);
+        group.count += 1;
+        group.items.push(item);
+      });
+      return [...groups.values()]
+        .sort((a, b) => b.count - a.count || a.firstIndex - b.firstIndex || a.label.localeCompare(b.label, "zh-CN"))
+        .slice(0, limit)
+        .map((row, index) => ({
+          ...row,
+          pct: total ? row.count / total : 0,
+          accent: index === 0,
+          item: row.items.find((item) => item.coverArtUrl) || row.items[0]
+        }));
+    }
+
+    function releaseYearForTrack(item) {
+      return parseReleaseYear(
+        item.releaseYear || item.release_year || item.year || item.releaseDate || item.release_date || item.releasedate
+          || item.raw?.release_year || item.raw?.release_date || item.raw?.releaseDate || item.raw?.releasedate
+          || item.raw?.year || item.raw?.collection_release_date
+      );
+    }
+
+    function eraLabelForTrack(item) {
+      const era = cleanMetaText(item.era || item.raw?.era);
+      if (!era) return "";
+      const normalized = era.toLowerCase();
+      const labels = {
+        traditional: "传统",
+        modern: "现代",
+        contemporary: "当代",
+        mixed: "混合"
+      };
+      return labels[normalized] || era;
+    }
+
+    function eraBucket(item) {
+      const year = releaseYearForTrack(item);
+      if (year >= 2020) return { key: "2020年后", html: "2020<br>年后" };
+      if (year) {
+        const start = Math.floor(year / 10) * 10;
+        return { key: `${start}-${start + 9}`, html: `${start}<br>-<br>${start + 9}` };
+      }
+      const era = eraLabelForTrack(item);
+      if (era) return { key: `${era}年代`, html: `${escapeHtml(era)}<br>年代` };
+      return { key: "未知年代", html: "未知<br>年代" };
+    }
+
+    function renderEraCard(items) {
+      const rows = groupedInsightRows(items, (item) => eraBucket(item).key, 3)
+        .map((row) => ({ ...row, html: eraBucket(row.item).html }));
+      const body = rows.length
+        ? `<div class="era-timeline">${rows.map((row) => `
+            <div class="era-row${row.accent ? " is-top" : ""}">
+              <div class="era-label">${row.accent ? "<span class=\"top-label\">TOP</span>" : ""}${row.html}</div>
+              <span class="era-dot" aria-hidden="true"></span>
+              ${coverMarkup(row.item)}
+              <div class="era-count">${row.count} 首</div>
+            </div>
+          `).join("")}</div>`
+        : `<div class="insight-empty">生成推荐后显示年代分布</div>`;
+      return `
+        <article class="insight-card insight-era" aria-label="推荐歌曲年代">
+          <div class="insight-card-title">推荐歌曲年代</div>
+          <div class="insight-card-body">${body}</div>
+        </article>
       `;
-      const body = total
-        ? rows.map((row) => `
-          <div class="distribution-row${row.accent ? " is-accent" : ""}">
-            <div class="distribution-label">
-              <strong>${escapeHtml(row.label)}</strong>
-              <span>${row.count} 首</span>
+    }
+
+    function renderGenreCard(items) {
+      const rows = groupedInsightRows(items, chartGenreLabel, 3);
+      if (!rows.length) {
+        return `
+          <article class="insight-card insight-genre" aria-label="推荐歌曲曲风">
+            <div class="insight-card-title">推荐歌曲曲风</div>
+            <div class="insight-card-body"><div class="insight-empty">生成推荐后显示曲风分布</div></div>
+          </article>
+        `;
+      }
+      const top = rows[0];
+      const topTrack = top.item || items[0] || {};
+      const topTrackLabel = [topTrack.title, topTrack.artist].map(cleanMetaText).filter(Boolean).join(" / ");
+      const maxCount = Math.max(...rows.map((row) => row.count), 1);
+      return `
+        <article class="insight-card insight-genre" aria-label="推荐歌曲曲风">
+          <div class="insight-card-title">推荐歌曲曲风</div>
+          <div class="insight-card-body">
+            <div class="genre-hero">
+              <div class="insight-top"><span class="insight-spark" aria-hidden="true"></span><span>TOP</span></div>
+              <div class="genre-title">${escapeHtml(top.label)}</div>
+              <div class="genre-sub">${escapeHtml(topTrackLabel || "等待推荐曲目")}</div>
             </div>
-            <div class="distribution-track" aria-hidden="true">
-              <div class="distribution-fill" style="--fill-width:${(row.pct * 100).toFixed(1)}%"></div>
+            <div class="genre-bars">
+              ${rows.map((row) => `
+                <div class="genre-bar-row">
+                  <div class="genre-bar-track">
+                    <div class="genre-bar" style="--bar-width:${Math.max(24, (row.count / maxCount) * 100).toFixed(1)}%">${escapeHtml(row.label)}</div>
+                  </div>
+                  <div class="genre-percent">${formatPct(row.pct)}</div>
+                </div>
+              `).join("")}
             </div>
-            <div class="distribution-value">${formatPct(row.pct)}</div>
           </div>
-        `).join("")
-        : `<p class="distribution-empty">生成推荐后，这里会显示推荐结果覆盖了哪些文化域、国家/地区和平台来源。</p>`;
-      els.parameterDistribution.innerHTML = `${summary}${body}`;
+        </article>
+      `;
+    }
+
+    function chartGenreLabel(item) {
+      const text = displayGenre(item);
+      return text.split(/[\/|,，、;]/).map((part) => part.trim()).filter(Boolean)[0] || text;
+    }
+
+    function renderRecommendationInsights() {
+      const items = activeRecommendations;
+      if (!items.length) {
+        els.recommendationInsights.classList.add("is-empty");
+        els.recommendationInsights.innerHTML = `
+          <div class="insights-empty-bar">生成推荐后显示曲风分布和年代分布</div>
+        `;
+        return;
+      }
+      els.recommendationInsights.classList.remove("is-empty");
+      els.recommendationInsights.innerHTML = [
+        renderEraCard(items),
+        renderGenreCard(items)
+      ].join("");
     }
 
     function renderParameterPanel() {
       renderParameterMetrics();
-      renderParameterBreakdown();
-      renderParameterDistribution();
+      renderRecommendationInsights();
       renderAiContextPreview();
     }
 
@@ -2665,22 +3173,21 @@
 
     function buildAiInitialPrompt(extraQuestion = "") {
       const responseLanguage = aiResponseLanguageName();
-      const followup = extraQuestion ? `\n\n用户本次还特别追问：${extraQuestion}` : "";
-      return `请基于下面的 Echo 跨文化音乐推荐数据，进行一次面向音乐产品用户的详细分析。
+      const followup = extraQuestion ? `\n\n用户还问了：${extraQuestion}` : "";
+      return `下面是 Echo 这次推荐的完整数据。请帮我用聊天的语气给用户讲讲这次推荐。
 
-请使用 ${responseLanguage} 回答。
+用 ${responseLanguage} 回答。
 
-请覆盖：
-1. 当前曲目或上传曲目的音乐线索与文化起点。
-2. 推荐路线整体是否顺滑，为什么这些地区或风格可以连接。
-3. 每首推荐曲目的连接理由，包括听感相似处和文化差异处。
-4. 文化惊喜度、相关性、意外性、目标亲和、长尾曝光、人工回路不确定性等参数如何共同影响结果。
-5. 哪些推荐最值得用户先听，哪些需要人工反馈或再次校准。
-6. 最后给出 3 个用户可以继续对话的问题。
+请大致覆盖这些内容，但不用死板地按顺序来：
+1. 先用一两句话说说用户选的这首歌有什么特点，它来自哪里。
+2. 这次推荐的歌单整体感觉怎么样——是风格很接近还是比较跳跃？为什么这些歌可以放在一起？
+3. 挑几首最值得先听的推荐，简单说说为什么用户可能会喜欢它（比如节奏感、氛围、乐器特色等）。
+4. 如果有哪首歌比较"意外"、用户可能没接触过这个风格，提一下，说不定会有惊喜。
+5. 最后轻松地问用户一两个问题，比如想深入了解哪个地区、或者想换个方向推荐之类的。
 
-请不要把参数解释成逐秒听音后的结论；它基于后端主线推荐结果、曲目元数据和推荐参数读数。
+语气要像朋友聊天，不要写成报告。用短句、口语化表达。如果要提到推荐参数，翻译成日常感受就行。
 
-推荐数据如下：
+推荐数据：
 ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
@@ -2689,6 +3196,17 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         return t("music.ai.displayFollowup", { question: extraQuestion });
       }
       return t("music.ai.displayPrompt");
+    }
+
+    function renderMarkdown(text) {
+      if (typeof marked !== "undefined" && marked.parse) {
+        try {
+          return marked.parse(String(text || ""), { breaks: true, gfm: true });
+        } catch (error) {
+          console.warn("Markdown render failed:", error);
+        }
+      }
+      return escapeHtml(text);
     }
 
     function renderAiMessages() {
@@ -2702,10 +3220,13 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
           const roleLabel = message.role === "assistant" ? t("music.ai.assistantLabel") : t("music.ai.userLabel");
           const roleClass = message.role === "assistant" ? "is-assistant" : "is-user";
           const visibleContent = message.displayContent || message.content;
+          const bodyHtml = message.role === "assistant"
+            ? `<div class="md-body">${renderMarkdown(visibleContent)}</div>`
+            : `<div>${escapeHtml(visibleContent)}</div>`;
           return `
             <div class="ai-message ${roleClass}">
-              <div class="meta-label">${roleLabel}</div>
-              <div>${escapeHtml(visibleContent)}</div>
+              <div class="meta-label">${escapeHtml(roleLabel)}</div>
+              ${bodyHtml}
             </div>
           `;
         })
@@ -2980,7 +3501,13 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       aiConversationMessages = [
         {
           role: "system",
-          content: `你是 Echo 项目的跨文化音乐推荐解释助手。你擅长解释音乐风格、文化路线、推荐参数和人类反馈风险。请使用 ${aiResponseLanguageName()} 回答；回答要具体、克制，不编造真实音频内容。`
+          content: `你是一个热爱世界音乐的朋友，正在帮用户理解 Echo 推荐给他的歌单。你的风格温暖、自然、口语化，就像一个懂音乐的朋友在聊天。请用 ${aiResponseLanguageName()} 回答。
+
+注意：
+- 用普通人能听懂的话解释，不要用学术术语或论文腔。
+- 如果提到参数，翻译成日常感受（比如"惊喜度高"说成"你可能没想到会喜欢这个风格"）。
+- 每首歌的介绍要有趣，像在给朋友安利，不要写成论文摘要。
+- 可以适当加一些关于当地音乐文化的有趣冷知识。`
         },
         {
           role: "user",
@@ -3340,7 +3867,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
             form.append("seed_culture", currentTrack.culture);
           }
           form.append("mode", "open");
-          form.append("k", "10");
+          form.append("k", String(getRecommendCount()));
           form.append("recall_k", "900");
           form.append("random_seed", String(Date.now() % 100000));
           form.append("prefer_cuda", String(apiPreferCuda));
@@ -3362,7 +3889,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
             seed_track_id: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId || null,
             seed_culture: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId ? null : (initialSeedCulture || null),
             mode: "open",
-            k: 10,
+            k: getRecommendCount(),
             recall_k: 900,
             random_seed: Date.now() % 100000,
             prefer_cuda: apiPreferCuda,

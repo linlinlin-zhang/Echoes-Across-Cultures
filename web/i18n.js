@@ -971,7 +971,10 @@
       "settings.save": "Guardar",
       "settings.test": "Probar conexión",
       "settings.clear": "Borrar clave",
-      "settings.startupTrackSaved": "Ajuste de pista inicial guardado."
+      "settings.startupTrackSaved": "Ajuste de pista inicial guardado.",
+      "settings.recommendCountLabel": "Recomendaciones por solicitud",
+      "settings.recommendCountHelp": "Número de pistas por recomendación intercultural (1-30, predeterminado 10).",
+      "settings.recommendCountSaved": "Cantidad de recomendaciones guardada."
     },
     pt: {
       ...homeIndexTranslations.pt,
@@ -1015,7 +1018,10 @@
       "settings.save": "Salvar",
       "settings.test": "Testar conexão",
       "settings.clear": "Limpar chave",
-      "settings.startupTrackSaved": "Configuração de faixa inicial salva."
+      "settings.startupTrackSaved": "Configuração de faixa inicial salva.",
+      "settings.recommendCountLabel": "Recomendações por solicitação",
+      "settings.recommendCountHelp": "Número de faixas por recomendação intercultural (1-30, padrão 10).",
+      "settings.recommendCountSaved": "Quantidade de recomendações salva."
     },
     ja: {
       ...homeIndexTranslations.ja,
@@ -1059,7 +1065,10 @@
       "settings.save": "保存",
       "settings.test": "接続テスト",
       "settings.clear": "キーを消去",
-      "settings.startupTrackSaved": "初期曲の設定を保存しました。"
+      "settings.startupTrackSaved": "初期曲の設定を保存しました。",
+      "settings.recommendCountLabel": "リクエストごとの推薦数",
+      "settings.recommendCountHelp": "異文化推薦で返される曲数を設定します（1-30、デフォルト10）。",
+      "settings.recommendCountSaved": "推薦数を保存しました。"
     },
     ko: {
       ...homeIndexTranslations.ko,
@@ -1103,7 +1112,10 @@
       "settings.save": "저장",
       "settings.test": "연결 테스트",
       "settings.clear": "키 지우기",
-      "settings.startupTrackSaved": "시작 곡 설정이 저장되었습니다."
+      "settings.startupTrackSaved": "시작 곡 설정이 저장되었습니다.",
+      "settings.recommendCountLabel": "요청당 추천 수",
+      "settings.recommendCountHelp": "교차 문화 추천에서 반환되는 곡 수를 설정합니다 (1-30, 기본값 10).",
+      "settings.recommendCountSaved": "추천 수가 저장되었습니다."
     }
   };
 
