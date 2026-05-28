@@ -737,9 +737,18 @@ def create_app() -> FastAPI:
             "http://127.0.0.1:8000",
         ],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "X-Echo-Worker-Token"],
     )
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
     storage = Storage(root=Path(os.environ.get("ECHO_STORAGE_ROOT", "storage")))
     storage.ensure_dir("datasets")
@@ -1551,7 +1560,7 @@ def create_app() -> FastAPI:
     @app.get("/api/pal/tasks")
     def get_pal_tasks():
         """Load enriched PAL tasks JSON."""
-        tasks_path = Path("storage/pal/v4_main_annotation/pal_tasks.json")
+        tasks_path = storage.resolve_rel("pal/v4_main_annotation/pal_tasks.json")
         if not tasks_path.exists():
             raise HTTPException(status_code=404, detail="PAL tasks not found. Run pal_tasks first.")
         with open(tasks_path, "r", encoding="utf-8") as f:
@@ -1559,12 +1568,13 @@ def create_app() -> FastAPI:
 
     @app.get("/api/pal/audio")
     def stream_audio(path: str):
-        """Stream an audio file by absolute or relative path."""
-        p = Path(path)
-        if not p.is_absolute():
-            p = Path("E:/Desktop/Echo") / p
+        """Stream an audio file by path (resolved relative to storage root)."""
+        try:
+            p = storage.resolve_rel(path)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid path")
         if not p.exists() or not p.is_file():
-            raise HTTPException(status_code=404, detail=f"audio not found: {path}")
+            raise HTTPException(status_code=404, detail="audio not found")
         ext = p.suffix.lower()
         media_type = "audio/mpeg" if ext == ".mp3" else "audio/wav" if ext == ".wav" else "audio/octet-stream"
         return FileResponse(str(p), media_type=media_type, headers={"Accept-Ranges": "bytes"})
@@ -1572,8 +1582,7 @@ def create_app() -> FastAPI:
     @app.post("/api/pal/annotate")
     def save_annotation(ann: dict):
         """Save a single annotation to JSONL file."""
-        out_dir = Path("storage/pal/v4_main_annotation")
-        out_dir.mkdir(parents=True, exist_ok=True)
+        out_dir = storage.ensure_dir("pal/v4_main_annotation")
         out_file = out_dir / "annotations.jsonl"
         record = {
             "task_id": ann.get("task_id", ""),
@@ -1591,7 +1600,7 @@ def create_app() -> FastAPI:
     @app.get("/api/pal/progress")
     def get_pal_progress():
         """Return how many annotations have been saved."""
-        out_file = Path("storage/pal/v4_main_annotation/annotations.jsonl")
+        out_file = storage.resolve_rel("pal/v4_main_annotation/annotations.jsonl")
         if not out_file.exists():
             return {"count": 0, "total": 60}
         with open(out_file, "r", encoding="utf-8") as f:
@@ -1601,8 +1610,8 @@ def create_app() -> FastAPI:
     @app.post("/api/pal/export")
     def export_annotations():
         """Export annotations as CSV for constraint building."""
-        out_file = Path("storage/pal/v4_main_annotation/annotations.jsonl")
-        csv_file = Path("storage/pal/v4_main_annotation/annotated.csv")
+        out_file = storage.resolve_rel("pal/v4_main_annotation/annotations.jsonl")
+        csv_file = storage.resolve_rel("pal/v4_main_annotation/annotated.csv")
         if not out_file.exists():
             raise HTTPException(status_code=404, detail="no annotations yet")
 
@@ -1617,7 +1626,7 @@ def create_app() -> FastAPI:
 
         # Load tasks for enrichment
         tasks_map = {}
-        tasks_json = Path("storage/pal/v4_main_annotation/pal_tasks.json")
+        tasks_json = storage.resolve_rel("pal/v4_main_annotation/pal_tasks.json")
         if tasks_json.exists():
             with open(tasks_json, "r", encoding="utf-8") as f:
                 for t in json.load(f):

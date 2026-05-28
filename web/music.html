@@ -2664,7 +2664,7 @@
         }
       } catch (error) {
         if (els.readoutCatalog) {
-          els.readoutCatalog.textContent = "曲库状态待刷新";
+          els.readoutCatalog.textContent = t("music.default.catalogRefresh");
         }
       }
     }
@@ -3784,7 +3784,7 @@ Guidelines:
       }
       const placeLabel = item.country === mysteryPlace.country ? t("music.mysteryPlace.country") : (item.city || item.country);
       const styleLabel = item.country === mysteryPlace.country ? item.city : displayGenre(item);
-      label.innerHTML = `${placeLabel}<br>${styleLabel}`;
+      label.innerHTML = `${escapeHtml(placeLabel)}<br>${escapeHtml(styleLabel)}`;
       label.addEventListener("pointerdown", (event) => {
         event.stopPropagation();
       });
