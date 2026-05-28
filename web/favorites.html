@@ -168,7 +168,7 @@
     }
 
     .hero-panel::before {
-      content: "收藏索引";
+      content: var(--favorites-hero-panel-index, "收藏索引");
       position: absolute;
       top: 2rem;
       left: 2rem;
@@ -179,7 +179,7 @@
     }
 
     .hero-panel::after {
-      content: "音乐索引";
+      content: var(--favorites-hero-panel-music, "音乐索引");
       position: absolute;
       top: 3.6rem;
       right: 2rem;
@@ -816,7 +816,7 @@
       <span class="brand-sub" data-i18n="favorites.brandSub">收藏夹</span>
     </a>
     <div></div>
-    <nav class="top-actions" aria-label="主导航">
+    <nav class="top-actions" aria-label="主导航" data-i18n-aria-label="common.aria.mainNav">
       <a class="pill" href="music.html" data-i18n="common.nav.music">音乐台</a>
       <a class="pill is-active" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
       <a class="pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
@@ -824,14 +824,14 @@
   </header>
 
   <main class="library-shell">
-    <section class="library-hero" aria-label="收藏夹总览">
+    <section class="library-hero" aria-label="收藏夹总览" data-i18n-aria-label="favorites.aria.heroOverview">
       <div class="hero-copy">
         <div class="meta-label" data-i18n="favorites.heroMeta">曲库界面</div>
         <h1 data-i18n-html="favorites.heroTitle">音乐<br>收藏夹</h1>
         <p data-i18n="favorites.heroCopy">把来自 iTunes、Jamendo 与上传音频的曲目整理成可浏览、可筛选、可继续接入推荐反馈的音乐集合。</p>
       </div>
-      <div class="hero-panel">
-        <div class="hero-stat-grid" aria-label="曲库统计">
+      <div class="hero-panel" data-i18n-css="--favorites-hero-panel-index=favorites.heroPanelIndex;--favorites-hero-panel-music=favorites.heroPanelMusic">
+        <div class="hero-stat-grid" aria-label="曲库统计" data-i18n-aria-label="favorites.aria.stats">
           <article class="hero-stat">
             <span class="meta-label" data-i18n="favorites.stat.tracks">曲目</span>
             <strong id="stat-count">--</strong>
@@ -848,7 +848,7 @@
       </div>
     </section>
 
-    <section class="toolbar" aria-label="收藏夹工具栏">
+    <section class="toolbar" aria-label="收藏夹工具栏" data-i18n-aria-label="favorites.aria.toolbar">
       <label class="pill" for="favorite-import" data-i18n="favorites.import">点击导入歌曲</label>
       <input class="upload-input" id="favorite-import" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma" multiple>
 
@@ -887,7 +887,7 @@
       </div>
     </section>
 
-    <section class="masonry-wrap" aria-label="收藏曲目">
+    <section class="masonry-wrap" aria-label="收藏曲目" data-i18n-aria-label="favorites.aria.tracks">
       <div class="masonry-grid" id="masonry-grid"></div>
     </section>
   </main>
@@ -1332,7 +1332,7 @@
           id,
           localAudioId: id,
           title,
-          artist: "本地上传音频",
+          artist: t("music.local.uploadArtist"),
           genre: "",
           culture: "",
           country: "",

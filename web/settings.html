@@ -377,7 +377,7 @@
       <span class="brand-sub" data-i18n="settings.brandSub">设置界面</span>
     </a>
     <div></div>
-    <nav class="top-actions" aria-label="主导航">
+    <nav class="top-actions" aria-label="主导航" data-i18n-aria-label="common.aria.mainNav">
       <a class="pill" href="music.html" data-i18n="common.nav.music">音乐台</a>
       <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
       <a class="pill is-active" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
@@ -398,7 +398,7 @@
       </div>
     </section>
 
-    <section class="settings-panel" aria-label="设置">
+    <section class="settings-panel" aria-label="设置" data-i18n-aria-label="settings.aria.panel">
       <div class="settings-section">
         <div class="section-kicker" data-i18n="settings.generalSection">通用功能</div>
         <div class="field">
@@ -409,7 +409,7 @@
 
         <div class="field">
           <label data-i18n="settings.coverModeLabel">专辑封面显示</label>
-          <div class="choice-grid" role="radiogroup" aria-label="专辑封面显示">
+          <div class="choice-grid" role="radiogroup" aria-label="专辑封面显示" data-i18n-aria-label="settings.coverModeLabel">
             <button class="choice-button" type="button" data-cover-mode="color" data-i18n="settings.coverMode.color">全部彩色</button>
             <button class="choice-button" type="button" data-cover-mode="mono" data-i18n="settings.coverMode.mono">全部黑白</button>
             <button class="choice-button" type="button" data-cover-mode="mixed" data-i18n="settings.coverMode.mixed">部分彩色</button>
@@ -419,12 +419,12 @@
 
         <div class="ratio-panel" id="cover-ratio-panel">
           <div class="section-kicker" data-i18n="settings.coverRatioLabel">彩色比例</div>
-          <div class="ratio-grid" id="cover-ratio-grid" role="radiogroup" aria-label="彩色比例"></div>
+          <div class="ratio-grid" id="cover-ratio-grid" role="radiogroup" aria-label="彩色比例" data-i18n-aria-label="settings.coverRatioLabel"></div>
         </div>
 
         <div class="field">
           <label data-i18n="settings.startupTrackLabel">进入音乐台时加载</label>
-          <div class="choice-grid is-startup" role="radiogroup" aria-label="进入音乐台时加载">
+          <div class="choice-grid is-startup" role="radiogroup" aria-label="进入音乐台时加载" data-i18n-aria-label="settings.startupTrackLabel">
             <button class="choice-button" type="button" data-startup-track="last" data-i18n="settings.startupTrack.last">上次关闭时的歌</button>
             <button class="choice-button" type="button" data-startup-track="favorite-random" data-i18n="settings.startupTrack.favorite">从收藏夹随机</button>
             <button class="choice-button" type="button" data-startup-track="library-random" data-i18n="settings.startupTrack.library">从音乐库随机</button>
@@ -646,8 +646,8 @@
           model,
           endpoint,
           messages: [
-            { role: "system", content: "你是 Echo 设置页的连通性测试助手。" },
-            { role: "user", content: "请只回复：AI_OK" }
+            { role: "system", content: t("settings.testSystemPrompt") },
+            { role: "user", content: t("settings.testUserPrompt") }
           ],
           max_completion_tokens: 1024,
           timeout_seconds: 45
