@@ -14,7 +14,11 @@
   }
 
   function write(items) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.warn("Failed to write favorites to localStorage:", error);
+    }
   }
 
   function trackKey(track) {
@@ -79,7 +83,6 @@
       body: JSON.stringify({ track: normalize(track) })
     }).then((data) => {
       serverAvailable = true;
-      if (Array.isArray(data.items)) write(data.items);
     }).catch(() => {
       serverAvailable = false;
     });
@@ -88,7 +91,6 @@
   function syncRemove(id) {
     fetchJson(`${API_BASE}?track_key=${encodeURIComponent(id)}`, { method: "DELETE" }).then((data) => {
       serverAvailable = true;
-      if (Array.isArray(data.items)) write(data.items);
     }).catch(() => {
       serverAvailable = false;
     });
@@ -105,9 +107,8 @@
       return items;
     }).catch((error) => {
       serverAvailable = false;
-      return read();
-    }).finally(() => {
       hydrationPromise = null;
+      return read();
     });
     return hydrationPromise;
   }

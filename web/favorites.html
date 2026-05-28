@@ -910,7 +910,7 @@
     let catalog = [];
     let imported = [];
     let storedFavorites = [];
-    let shuffleSeed = 17;
+    let shuffleSeed = Math.floor(Math.random() * 1000003);
     const visualSeed = Math.floor(Math.random() * 1000003);
     const removedStorageKey = "echo-favorite-hidden-tracks";
     const coverConfigKey = "echo-cover-config";
@@ -936,6 +936,12 @@
         "\"": "&quot;",
         "'": "&#039;"
       })[char]);
+    }
+
+    function safeUrl(value) {
+      const str = String(value || "").trim();
+      if (/^(https?:\/\/|\/)/i.test(str)) return str;
+      return "";
     }
 
     function openLocalAudioDb() {
@@ -1110,8 +1116,9 @@
         ? `<img class="cover" src="${escapeHtml(item.cover)}" alt="${escapeHtml(itemTitle(item))}" loading="lazy">`
         : `<div class="cover cover-fallback" role="img" aria-label="${escapeHtml(t("favorites.noCover"))}"><span>${escapeHtml(t("favorites.noCover"))}</span></div>`;
       if (item.cover) {
-        return item.url
-          ? `<a class="cover-shell" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${media}</a>`
+        const href = safeUrl(item.url);
+        return href
+          ? `<a class="cover-shell" href="${escapeHtml(href)}" target="_blank" rel="noopener">${media}</a>`
           : `<div class="cover-shell">${media}</div>`;
       }
       return `<div class="cover-shell">${media}</div>`;
@@ -1134,8 +1141,8 @@
       ].filter(Boolean).join(" ");
       const platformLink = item.imported
         ? `<a class="track-open" href="music.html?local=${encodeURIComponent(item.localAudioId || key)}" data-local-play-id="${escapeHtml(item.localAudioId || key)}">${escapeHtml(t("favorites.playLocal"))}</a>`
-        : item.url
-        ? `<a class="track-open" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(t("favorites.openPlatform"))}</a>`
+        : safeUrl(item.url)
+        ? `<a class="track-open" href="${escapeHtml(safeUrl(item.url))}" target="_blank" rel="noopener">${escapeHtml(t("favorites.openPlatform"))}</a>`
         : `<span class="track-open">${escapeHtml(t("favorites.localTrack"))}</span>`;
       return `
         <article class="${classes}" data-track-id="${escapeHtml(key)}" data-span="${horizontal ? 2 : 1}" data-can-compact="${canCompact ? "true" : "false"}">
@@ -1486,8 +1493,8 @@
       });
     }
 
-    [els.search, els.culture, els.source, els.sort].forEach((control) => {
-      control.addEventListener("input", render);
+    els.search.addEventListener("input", render);
+    [els.culture, els.source, els.sort].forEach((control) => {
       control.addEventListener("change", render);
     });
     els.import.addEventListener("change", (event) => importFiles(event.target.files));

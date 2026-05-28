@@ -2078,7 +2078,7 @@
           <div class="progress-wrap">
             <div class="progress-meta">
               <span id="play-state">正在连接曲库 - Echo</span>
-              <span id="time-code">00:00:00 / 03:42</span>
+              <span id="time-code">00:00 / 03:42</span>
             </div>
             <div class="progress-track" id="progress-track" role="slider" data-i18n-aria="music.transport.progress" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
           </div>
@@ -2756,7 +2756,11 @@
     }
 
     function isSameTrack(a, b) {
-      return a && b && a.title === b.title && a.artist === b.artist && a.country === b.country;
+      if (!a || !b) return false;
+      const aId = a.trackId || a.id;
+      const bId = b.trackId || b.id;
+      if (aId && bId) return aId === bId;
+      return a.title === b.title && a.artist === b.artist && a.country === b.country;
     }
 
     function readAppConfig() {
@@ -2966,6 +2970,9 @@
     }
 
     function selectTrack(track, options = {}) {
+      if (currentTrack.fileObjectUrl && currentTrack.fileObjectUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(currentTrack.fileObjectUrl);
+      }
       replaceCurrentTrack(track);
       const loc = locateTrack(currentTrack);
       centerLng = loc.lng;
@@ -2977,8 +2984,8 @@
       if (audioSrc) {
         if (els.audio.src !== audioSrc) {
           els.audio.src = audioSrc;
+          els.audio.currentTime = 0;
         }
-        els.audio.currentTime = 0;
       } else {
         if (els.audio.src) {
           els.audio.pause();
@@ -3257,7 +3264,6 @@
     function renderParameterPanel() {
       renderParameterMetrics();
       renderRecommendationInsights();
-      renderAiContextPreview();
     }
 
     function escapeHtml(value) {
@@ -3729,10 +3735,6 @@ Guidelines:
       renderAiMessages();
     }
 
-    function renderAiContextPreview() {
-      return;
-      }
-
       function syncTrackReadouts() {
         els.topTitle.textContent = currentTrack.title;
       els.topMeta.textContent = currentTrack.artist || t("music.default.unknown");
@@ -3939,6 +3941,10 @@ Guidelines:
 
     async function loadMap() {
       mapData = await d3.json("./vendor/countries-110m.json");
+      if (!mapData || !mapData.objects) {
+        console.error("Failed to load map data");
+        return;
+      }
       worldFeatures = topojson.feature(mapData, mapData.objects.countries);
       borders = topojson.mesh(mapData, mapData.objects.countries, (a, b) => a !== b);
       resize();
@@ -4017,8 +4023,12 @@ Guidelines:
       });
     }
 
+    let recommendBusy = false;
     async function startRecommendations() {
+      if (recommendBusy) return;
+      recommendBusy = true;
       els.recommendButton.classList.add("is-running");
+      els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
       els.mapStatus.textContent = t("music.status.generatingPath");
       recommendationsPersistable = false;
@@ -4131,6 +4141,8 @@ Guidelines:
         recommendationsPersistable = true;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
+        els.recommendButton.classList.remove("is-disabled");
+        recommendBusy = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
         els.mapStatus.textContent = `${activeRecommendations.length}${t("music.status.connectionsActive")}${embeddingTime}`;
@@ -4147,6 +4159,8 @@ Guidelines:
         recommendationsPersistable = false;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
+        els.recommendButton.classList.remove("is-disabled");
+        recommendBusy = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         els.mapStatus.textContent = t("music.status.apiFallback");
         renderRecommendations();
