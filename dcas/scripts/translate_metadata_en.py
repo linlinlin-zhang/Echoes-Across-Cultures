@@ -1102,6 +1102,8 @@ def translate_description(desc):
     result = re.sub(r'\s+,', ',', result)
     result = re.sub(r',\s*\.', '.', result)
     result = result.strip(' ,.')
+    # 最终清理：移除所有残留中文字符
+    result = cleanup_residual_chinese(result)
     if result and not result.endswith(('.', '!', '?')):
         result += '.'
     if result:
@@ -1121,6 +1123,8 @@ def translate_clause(clause):
             translated = match.expand(replacement)
             # 对模板中的捕获组内容也做词组替换
             translated = _replace_longest_first(translated, PHRASE_MAP)
+            # 清理残留中文
+            translated = cleanup_residual_chinese(translated)
             return translated
 
     # 2. 用词组映射表替换
@@ -1352,6 +1356,7 @@ def semantic_translate(sentence):
         return "A track with expressive melodies and rich instrumental textures."
 
     result = ' '.join(parts)
+    result = cleanup_residual_chinese(result)
     if not result.endswith('.'):
         result += '.'
     return result
