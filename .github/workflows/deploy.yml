@@ -11,10 +11,6 @@ on:
         description: 'Branch to deploy (leave empty for current branch)'
         required: false
         default: ''
-      force:
-        description: 'Force deploy (skip confirmation)'
-        type: boolean
-        default: false
 
 concurrency:
   group: deploy-production
@@ -24,7 +20,7 @@ jobs:
   deploy:
     name: Deploy to Cloud Server
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Determine branch
@@ -38,12 +34,13 @@ jobs:
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.5
+        timeout-minutes: 12
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          script_stop: true
+          command_timeout: 12m
           script: |
             set -euo pipefail
             cd /root/workspace/Echoes-Across-Cultures
@@ -51,16 +48,16 @@ jobs:
             echo "=== Deploying branch: ${{ steps.branch.outputs.ref }} ==="
 
             echo "=== Fetching latest changes ==="
-            nice -n 19 ionice -c3 git fetch origin
+            git fetch origin
 
             echo "=== Checking out branch ==="
-            nice -n 19 ionice -c3 git checkout ${{ steps.branch.outputs.ref }}
+            git checkout ${{ steps.branch.outputs.ref }}
 
             echo "=== Pulling latest changes ==="
-            nice -n 19 ionice -c3 git pull --ff-only origin ${{ steps.branch.outputs.ref }}
+            git pull --ff-only origin ${{ steps.branch.outputs.ref }}
 
-            echo "=== Installing Python dependencies (low priority) ==="
-            nice -n 19 ionice -c3 .venv/bin/pip install \
+            echo "=== Installing Python dependencies ==="
+            .venv/bin/pip install \
               -r requirements.txt \
               --quiet \
               --prefer-binary \
