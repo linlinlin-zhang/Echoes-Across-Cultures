@@ -2,8 +2,19 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy (leave empty for current branch)'
+        required: false
+        default: ''
+      force:
+        description: 'Force deploy (skip confirmation)'
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-production
@@ -16,6 +27,15 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Determine branch
+        id: branch
+        run: |
+          if [ -n "${{ github.event.inputs.branch }}" ]; then
+            echo "ref=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.5
         with:
@@ -28,8 +48,16 @@ jobs:
             set -euo pipefail
             cd /root/workspace/Echoes-Across-Cultures
 
+            echo "=== Deploying branch: ${{ steps.branch.outputs.ref }} ==="
+
+            echo "=== Fetching latest changes ==="
+            nice -n 19 ionice -c3 git fetch origin
+
+            echo "=== Checking out branch ==="
+            nice -n 19 ionice -c3 git checkout ${{ steps.branch.outputs.ref }}
+
             echo "=== Pulling latest changes ==="
-            nice -n 19 ionice -c3 git pull --ff-only
+            nice -n 19 ionice -c3 git pull --ff-only origin ${{ steps.branch.outputs.ref }}
 
             echo "=== Installing Python dependencies (low priority) ==="
             nice -n 19 ionice -c3 .venv/bin/pip install \
@@ -46,3 +74,4 @@ jobs:
             systemctl is-active echo.service
 
             echo "=== Deploy complete ==="
+            echo "=== Deployed branch: ${{ steps.branch.outputs.ref }} ==="
