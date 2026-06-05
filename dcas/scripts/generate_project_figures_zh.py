@@ -56,7 +56,15 @@ def _series_barh(values: pd.Series, title: str, xlabel: str, path: Path, color: 
     _save(fig, path)
 
 
-def _hist(values: pd.Series, title: str, xlabel: str, ylabel: str, path: Path, color: str, bins: int = 20) -> None:
+def _hist(
+    values: pd.Series,
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    path: Path,
+    color: str,
+    bins: int = 20,
+) -> None:
     if values.empty:
         return
     fig, ax = plt.subplots(figsize=(8.4, 4.8))
@@ -79,10 +87,22 @@ def _stacked(frame: pd.DataFrame, title: str, ylabel: str, legend_title: str, pa
     _save(fig, path)
 
 
-def _heatmap(frame: pd.DataFrame, title: str, xlabel: str, ylabel: str, path: Path, cmap: str = "Blues") -> None:
+def _heatmap(
+    frame: pd.DataFrame,
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    path: Path,
+    cmap: str = "Blues",
+) -> None:
     if frame.empty:
         return
-    fig, ax = plt.subplots(figsize=(max(6.8, 0.55 * len(frame.columns) + 2.0), max(4.5, 0.24 * len(frame.index) + 2.0)))
+    fig, ax = plt.subplots(
+        figsize=(
+            max(6.8, 0.55 * len(frame.columns) + 2.0),
+            max(4.5, 0.24 * len(frame.index) + 2.0),
+        )
+    )
     arr = frame.to_numpy(dtype=float)
     im = ax.imshow(arr, cmap=cmap, aspect="auto")
     ax.set_title(title)
@@ -181,12 +201,25 @@ def _plot_embedding_pca(title: str, tracks_path: Path, path: Path) -> None:
         return
     tracks = load_tracks(str(tracks_path))
     coords = PCA(n_components=2, random_state=42).fit_transform(tracks.embedding.astype(np.float32))
-    frame = pd.DataFrame({"pc1": coords[:, 0], "pc2": coords[:, 1], "culture": tracks.culture.astype(str)})
+    frame = pd.DataFrame(
+        {
+            "pc1": coords[:, 0],
+            "pc2": coords[:, 1],
+            "culture": tracks.culture.astype(str),
+        }
+    )
     fig, ax = plt.subplots(figsize=(8.8, 6.4))
     cmap = plt.get_cmap("tab10")
     for idx, culture in enumerate(sorted(frame["culture"].unique().tolist())):
         subset = frame[frame["culture"] == culture]
-        ax.scatter(subset["pc1"], subset["pc2"], s=18, alpha=0.72, color=cmap(idx % 10), label=culture)
+        ax.scatter(
+            subset["pc1"],
+            subset["pc2"],
+            s=18,
+            alpha=0.72,
+            color=cmap(idx % 10),
+            label=culture,
+        )
     ax.set_title(f"{title}：曲目嵌入 PCA")
     ax.set_xlabel("PC1")
     ax.set_ylabel("PC2")
@@ -202,33 +235,132 @@ def _plot_dataset(bundle: dict[str, Any], out_dir: Path) -> dict[str, Any]:
     title = str(bundle["title"])
     name = str(bundle["name"])
 
-    _series_barh(md["culture"].fillna("unknown").astype(str).value_counts(), f"{title}：各文化曲目数", "曲目数", out_dir / f"{name}_counts_by_culture.png", "#1D3557")
+    _series_barh(
+        md["culture"].fillna("unknown").astype(str).value_counts(),
+        f"{title}：各文化曲目数",
+        "曲目数",
+        out_dir / f"{name}_counts_by_culture.png",
+        "#1D3557",
+    )
     if "source_dataset" in md.columns:
-        _series_barh(md["source_dataset"].fillna("unknown").astype(str).value_counts(), f"{title}：各来源曲目数", "曲目数", out_dir / f"{name}_counts_by_source.png", "#457B9D")
-        _stacked(pd.crosstab(md["culture"].astype(str), md["source_dataset"].fillna("unknown").astype(str)), f"{title}：文化与来源构成", "曲目数", "来源", out_dir / f"{name}_culture_by_source.png")
-    _hist(it["weight"], f"{title}：交互权重分布", "交互权重", "交互条数", out_dir / f"{name}_interaction_weight_hist.png", "#F4A261", 24)
+        _series_barh(
+            md["source_dataset"].fillna("unknown").astype(str).value_counts(),
+            f"{title}：各来源曲目数",
+            "曲目数",
+            out_dir / f"{name}_counts_by_source.png",
+            "#457B9D",
+        )
+        _stacked(
+            pd.crosstab(
+                md["culture"].astype(str),
+                md["source_dataset"].fillna("unknown").astype(str),
+            ),
+            f"{title}：文化与来源构成",
+            "曲目数",
+            "来源",
+            out_dir / f"{name}_culture_by_source.png",
+        )
+    _hist(
+        it["weight"],
+        f"{title}：交互权重分布",
+        "交互权重",
+        "交互条数",
+        out_dir / f"{name}_interaction_weight_hist.png",
+        "#F4A261",
+        24,
+    )
     by_user = it.groupby("user_id").size().rename("n")
-    _hist(by_user, f"{title}：每位用户交互数分布", "每位用户交互数", "用户数", out_dir / f"{name}_interactions_per_user_hist.png", "#4D908E", 20)
+    _hist(
+        by_user,
+        f"{title}：每位用户交互数分布",
+        "每位用户交互数",
+        "用户数",
+        out_dir / f"{name}_interactions_per_user_hist.png",
+        "#4D908E",
+        20,
+    )
     merged = it.merge(md[["track_id", "culture"]], on="track_id", how="left")
     culture_cov = merged.groupby("user_id")["culture"].nunique()
-    _hist(culture_cov, f"{title}：每位用户覆盖文化数", "覆盖文化数", "用户数", out_dir / f"{name}_culture_coverage_per_user.png", "#8D99AE", 10)
-    _series_barh(merged["culture"].fillna("unknown").astype(str).value_counts(), f"{title}：各文化交互量", "交互条数", out_dir / f"{name}_interaction_counts_by_culture.png", "#6D597A")
+    _hist(
+        culture_cov,
+        f"{title}：每位用户覆盖文化数",
+        "覆盖文化数",
+        "用户数",
+        out_dir / f"{name}_culture_coverage_per_user.png",
+        "#8D99AE",
+        10,
+    )
+    _series_barh(
+        merged["culture"].fillna("unknown").astype(str).value_counts(),
+        f"{title}：各文化交互量",
+        "交互条数",
+        out_dir / f"{name}_interaction_counts_by_culture.png",
+        "#6D597A",
+    )
 
     user_culture = merged.groupby(["user_id", "culture"]).size().unstack(fill_value=0)
     if not user_culture.empty:
-        top_users = user_culture.assign(total=user_culture.sum(axis=1)).sort_values("total", ascending=False).drop(columns=["total"]).head(40)
-        _heatmap(top_users, f"{title}：用户-文化交互热力图（前 40 位用户）", "文化", "用户", out_dir / f"{name}_user_culture_heatmap_top40.png", cmap="YlOrRd")
+        top_users = (
+            user_culture.assign(total=user_culture.sum(axis=1))
+            .sort_values("total", ascending=False)
+            .drop(columns=["total"])
+            .head(40)
+        )
+        _heatmap(
+            top_users,
+            f"{title}：用户-文化交互热力图（前 40 位用户）",
+            "文化",
+            "用户",
+            out_dir / f"{name}_user_culture_heatmap_top40.png",
+            cmap="YlOrRd",
+        )
 
     if "duration_sec" in md.columns:
-        _hist(md["duration_sec"].dropna(), f"{title}：音频时长分布", "时长（秒）", "曲目数", out_dir / f"{name}_duration_hist.png", "#43AA8B", 24)
+        _hist(
+            md["duration_sec"].dropna(),
+            f"{title}：音频时长分布",
+            "时长（秒）",
+            "曲目数",
+            out_dir / f"{name}_duration_hist.png",
+            "#43AA8B",
+            24,
+        )
 
     if "played_ratio_pct" in it.columns:
-        _hist(it["played_ratio_pct"].dropna(), f"{title}：played_ratio_pct 分布", "played_ratio_pct", "交互条数", out_dir / f"{name}_played_ratio_hist.png", "#F8961E", 20)
+        _hist(
+            it["played_ratio_pct"].dropna(),
+            f"{title}：played_ratio_pct 分布",
+            "played_ratio_pct",
+            "交互条数",
+            out_dir / f"{name}_played_ratio_hist.png",
+            "#F8961E",
+            20,
+        )
     if "track_length_seconds" in it.columns:
-        _hist(it["track_length_seconds"].dropna(), f"{title}：日志中的曲目时长分布", "时长（秒）", "交互条数", out_dir / f"{name}_track_length_seconds_hist.png", "#277DA1", 24)
+        _hist(
+            it["track_length_seconds"].dropna(),
+            f"{title}：日志中的曲目时长分布",
+            "时长（秒）",
+            "交互条数",
+            out_dir / f"{name}_track_length_seconds_hist.png",
+            "#277DA1",
+            24,
+        )
     if "is_organic" in it.columns:
-        organic = it["is_organic"].fillna(-1).astype(int).map({1: "organic", 0: "recommendation", -1: "unknown"}).value_counts()
-        _series_barh(organic, f"{title}：organic 标记分布", "交互条数", out_dir / f"{name}_organic_flag_counts.png", "#F3722C")
+        organic = (
+            it["is_organic"]
+            .fillna(-1)
+            .astype(int)
+            .map({1: "organic", 0: "recommendation", -1: "unknown"})
+            .value_counts()
+        )
+        _series_barh(
+            organic,
+            f"{title}：organic 标记分布",
+            "交互条数",
+            out_dir / f"{name}_organic_flag_counts.png",
+            "#F3722C",
+        )
 
     _plot_embedding_pca(title, bundle["tracks"], out_dir / f"{name}_embedding_pca.png")
 
@@ -246,7 +378,12 @@ def _plot_cross_suite(bundle: dict[str, Any], out_dir: Path) -> pd.DataFrame:
         return pd.DataFrame()
     df = _load_cross_metrics(bundle["summary"], bundle["title"])
     fig, axes = plt.subplots(2, 2, figsize=(12.8, 8.8))
-    specs = [("serendipity", "Serendipity", False, "#2A9D8F"), ("kl", "文化校准 KL", True, "#E76F51"), ("minority", "少数文化曝光", False, "#577590"), ("target", "目标文化概率", False, "#BC6C25")]
+    specs = [
+        ("serendipity", "Serendipity", False, "#2A9D8F"),
+        ("kl", "文化校准 KL", True, "#E76F51"),
+        ("minority", "少数文化曝光", False, "#577590"),
+        ("target", "目标文化概率", False, "#BC6C25"),
+    ]
     for ax, (col, label, ascending, color) in zip(axes.flatten(), specs):
         sub = df[["method", col]].sort_values(col, ascending=ascending)
         ax.barh(sub["method"], sub[col], color=color)
@@ -263,13 +400,25 @@ def _plot_cross_suite(bundle: dict[str, Any], out_dir: Path) -> pd.DataFrame:
     fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.8))
     axes[0].scatter(df["minority"], df["serendipity"], s=76, color="#2A9D8F")
     for _, row in df.iterrows():
-        axes[0].annotate(str(row["method"]), (float(row["minority"]), float(row["serendipity"])), textcoords="offset points", xytext=(4, 4), fontsize=8)
+        axes[0].annotate(
+            str(row["method"]),
+            (float(row["minority"]), float(row["serendipity"])),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=8,
+        )
     axes[0].set_title("Serendipity 与少数文化曝光")
     axes[0].set_xlabel("少数文化曝光")
     axes[0].set_ylabel("Serendipity")
     axes[1].scatter(df["target"], df["kl"], s=76, color="#577590")
     for _, row in df.iterrows():
-        axes[1].annotate(str(row["method"]), (float(row["target"]), float(row["kl"])), textcoords="offset points", xytext=(4, 4), fontsize=8)
+        axes[1].annotate(
+            str(row["method"]),
+            (float(row["target"]), float(row["kl"])),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=8,
+        )
     axes[1].set_title("目标文化概率 与文化校准 KL")
     axes[1].set_xlabel("目标文化概率")
     axes[1].set_ylabel("文化校准 KL")
@@ -286,7 +435,14 @@ def _plot_cross_suite(bundle: dict[str, Any], out_dir: Path) -> pd.DataFrame:
         },
         index=df["method"].astype(str),
     )
-    _heatmap(ranks, f"{bundle['title']}：方法名次热力图", "指标", "方法", out_dir / f"{bundle['name']}_rank_heatmap.png", cmap="YlGnBu_r")
+    _heatmap(
+        ranks,
+        f"{bundle['title']}：方法名次热力图",
+        "指标",
+        "方法",
+        out_dir / f"{bundle['name']}_rank_heatmap.png",
+        cmap="YlGnBu_r",
+    )
     return df
 
 
@@ -296,7 +452,12 @@ def _plot_log_suite(out_dir: Path) -> pd.DataFrame:
         return pd.DataFrame()
     df = _load_log_metrics(path, "Yambda-5B 子集日志排序基准")
     fig, axes = plt.subplots(2, 2, figsize=(12.6, 8.4))
-    specs = [("recall_at_10", "Recall@10", "#2A9D8F"), ("recall_at_20", "Recall@20", "#577590"), ("ndcg_at_20", "NDCG@20", "#BC6C25"), ("mrr_at_20", "MRR@20", "#E76F51")]
+    specs = [
+        ("recall_at_10", "Recall@10", "#2A9D8F"),
+        ("recall_at_20", "Recall@20", "#577590"),
+        ("ndcg_at_20", "NDCG@20", "#BC6C25"),
+        ("mrr_at_20", "MRR@20", "#E76F51"),
+    ]
     for ax, (col, label, color) in zip(axes.flatten(), specs):
         sub = df[["method", col]].sort_values(col, ascending=True)
         ax.barh(sub["method"], sub[col], color=color)
@@ -311,7 +472,13 @@ def _plot_log_suite(out_dir: Path) -> pd.DataFrame:
     fig, ax = plt.subplots(figsize=(8.2, 5.2))
     ax.scatter(df["coverage_at_20"], df["recall_at_20"], s=80, color="#43AA8B")
     for _, row in df.iterrows():
-        ax.annotate(str(row["method"]), (float(row["coverage_at_20"]), float(row["recall_at_20"])), textcoords="offset points", xytext=(4, 4), fontsize=8)
+        ax.annotate(
+            str(row["method"]),
+            (float(row["coverage_at_20"]), float(row["recall_at_20"])),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=8,
+        )
     ax.set_title("Yambda-5B 子集日志排序基准：Coverage@20 与 Recall@20")
     ax.set_xlabel("Coverage@20")
     ax.set_ylabel("Recall@20")
@@ -342,7 +509,12 @@ def _plot_pal(out_dir: Path) -> None:
         axes[0].plot(rows["tag"], rows["serendipity_mean"], marker="o", color="#2A9D8F")
         axes[0].set_title("PAL 的 Serendipity 轨迹")
         axes[0].set_ylabel("Serendipity")
-        axes[1].plot(rows["tag"], rows["cultural_calibration_kl_mean"], marker="o", color="#E76F51")
+        axes[1].plot(
+            rows["tag"],
+            rows["cultural_calibration_kl_mean"],
+            marker="o",
+            color="#E76F51",
+        )
         axes[1].set_title("PAL 的文化校准 KL 轨迹")
         axes[1].set_ylabel("文化校准 KL")
         _save(fig, out_dir / "pal_round_metric_trajectory_zh.png")
@@ -350,7 +522,13 @@ def _plot_pal(out_dir: Path) -> None:
         fig, ax = plt.subplots(figsize=(8.8, 4.8))
         x = rounds["round"].astype(str)
         ax.bar(x, rounds["positive"], color="#2A9D8F", label="正约束")
-        ax.bar(x, rounds["negative"], bottom=rounds["positive"], color="#E76F51", label="负约束")
+        ax.bar(
+            x,
+            rounds["negative"],
+            bottom=rounds["positive"],
+            color="#E76F51",
+            label="负约束",
+        )
         ax.plot(x, rounds["merged"], marker="o", color="#264653", label="累计合并约束")
         ax.set_title("PAL 约束流转")
         ax.set_xlabel("轮次")
@@ -359,11 +537,21 @@ def _plot_pal(out_dir: Path) -> None:
         _save(fig, out_dir / "pal_constraint_flow_zh.png")
 
 
-def _plot_overview(dataset_summaries: list[dict[str, Any]], cross_rows: list[pd.DataFrame], log_df: pd.DataFrame, out_dir: Path) -> None:
+def _plot_overview(
+    dataset_summaries: list[dict[str, Any]],
+    cross_rows: list[pd.DataFrame],
+    log_df: pd.DataFrame,
+    out_dir: Path,
+) -> None:
     if dataset_summaries:
         frame = pd.DataFrame(dataset_summaries)
         fig, axes = plt.subplots(1, 3, figsize=(13.8, 4.6))
-        for ax, col, title, color in zip(axes, ["n_tracks", "n_users", "n_interactions"], ["曲目数", "用户数", "交互数"], ["#1D3557", "#457B9D", "#E76F51"]):
+        for ax, col, title, color in zip(
+            axes,
+            ["n_tracks", "n_users", "n_interactions"],
+            ["曲目数", "用户数", "交互数"],
+            ["#1D3557", "#457B9D", "#E76F51"],
+        ):
             ax.bar(frame["title"], frame[col].astype(float), color=color)
             ax.set_title(title)
             ax.tick_params(axis="x", rotation=25)
@@ -378,7 +566,11 @@ def _plot_overview(dataset_summaries: list[dict[str, Any]], cross_rows: list[pd.
             ["数据来源", "公共音频数据 + 自建文化编排", "Yambda-5B 官方日志子集"],
             ["用户交互", "合成或弱监督交互", "真实平台日志交互"],
             ["核心目标", "跨文化探索与校准", "标准排序准确率"],
-            ["主要指标", "Serendipity / KL / target / minority", "Recall@K / NDCG@K / MRR@K"],
+            [
+                "主要指标",
+                "Serendipity / KL / target / minority",
+                "Recall@K / NDCG@K / MRR@K",
+            ],
             ["推荐语义", "有明确文化目标", "target_culture 退化为 global"],
         ],
         colLabels=["维度", "跨文化主线", "公开日志补充线"],
@@ -395,7 +587,13 @@ def _plot_overview(dataset_summaries: list[dict[str, Any]], cross_rows: list[pd.
     fig, ax = plt.subplots(figsize=(13.2, 4.2))
     ax.axis("off")
     boxes = [
-        (0.04, 0.35, 0.16, 0.32, "公共音频与元数据\nResearch Dataset V3 / RouteA / Yambda"),
+        (
+            0.04,
+            0.35,
+            0.16,
+            0.32,
+            "公共音频与元数据\nResearch Dataset V3 / RouteA / Yambda",
+        ),
         (0.24, 0.35, 0.16, 0.32, "嵌入构建与 tracks.npz\nCultureMERT / Gemini"),
         (0.44, 0.35, 0.16, 0.32, "交互层\n合成交互 / 公开日志 / PAL 约束"),
         (0.64, 0.35, 0.16, 0.32, "模型层\nBPR / LambdaMART / DCAS"),
@@ -403,13 +601,26 @@ def _plot_overview(dataset_summaries: list[dict[str, Any]], cross_rows: list[pd.
     ]
     colors = ["#DCEAF7", "#EAF4E2", "#FDEBD0", "#F5D7D7", "#E8DAEF"]
     for idx, (x, y, w, h, text) in enumerate(boxes):
-        patch = FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02", facecolor=colors[idx], edgecolor="#355070", linewidth=1.2)
+        patch = FancyBboxPatch(
+            (x, y),
+            w,
+            h,
+            boxstyle="round,pad=0.02",
+            facecolor=colors[idx],
+            edgecolor="#355070",
+            linewidth=1.2,
+        )
         ax.add_patch(patch)
         ax.text(x + w / 2.0, y + h / 2.0, text, ha="center", va="center", fontsize=10)
     for idx in range(len(boxes) - 1):
         x1 = boxes[idx][0] + boxes[idx][2]
         x2 = boxes[idx + 1][0]
-        ax.annotate("", xy=(x2 - 0.01, 0.51), xytext=(x1 + 0.01, 0.51), arrowprops=dict(arrowstyle="->", lw=1.5, color="#355070"))
+        ax.annotate(
+            "",
+            xy=(x2 - 0.01, 0.51),
+            xytext=(x1 + 0.01, 0.51),
+            arrowprops=dict(arrowstyle="->", lw=1.5, color="#355070"),
+        )
     ax.set_title("项目全流程总览")
     _save(fig, out_dir / "project_pipeline_overview.png")
 
@@ -429,9 +640,27 @@ def _plot_overview(dataset_summaries: list[dict[str, Any]], cross_rows: list[pd.
         fig, ax = plt.subplots(figsize=(9.8, 4.8))
         x = np.arange(len(best_df))
         width = 0.25
-        ax.bar(x - width, best_df["best_serendipity"], width=width, color="#2A9D8F", label="最佳 Serendipity")
-        ax.bar(x, best_df["best_minority"], width=width, color="#577590", label="最佳少数文化曝光")
-        ax.bar(x + width, best_df["best_target"], width=width, color="#BC6C25", label="最佳目标文化概率")
+        ax.bar(
+            x - width,
+            best_df["best_serendipity"],
+            width=width,
+            color="#2A9D8F",
+            label="最佳 Serendipity",
+        )
+        ax.bar(
+            x,
+            best_df["best_minority"],
+            width=width,
+            color="#577590",
+            label="最佳少数文化曝光",
+        )
+        ax.bar(
+            x + width,
+            best_df["best_target"],
+            width=width,
+            color="#BC6C25",
+            label="最佳目标文化概率",
+        )
         ax.set_xticks(x)
         ax.set_xticklabels(best_df["suite"].astype(str).tolist(), rotation=20, ha="right")
         ax.set_ylabel("数值")
@@ -467,10 +696,26 @@ def generate(out_dir: Path) -> dict[str, Any]:
     _plot_pal(out_dir)
     _plot_overview(dataset_summaries, cross_rows, log_df, out_dir)
 
-    lines = ["# 中文图表包", "", f"- 输出目录：`{out_dir.resolve()}`", "", "## 数据集",]
+    lines = [
+        "# 中文图表包",
+        "",
+        f"- 输出目录：`{out_dir.resolve()}`",
+        "",
+        "## 数据集",
+    ]
     for item in dataset_summaries:
-        lines.append(f"- {item['title']}：{item['n_tracks']} 首曲目，{item['n_cultures']} 个文化域，{item['n_users']} 位用户，{item['n_interactions']} 条交互")
-    lines.extend(["", "## 说明", "- 这套图表以中文标题、中文坐标名和中文说明为主。", "- 专有名词如 Research Dataset V3、CultureMERT、Yambda-5B、LambdaMART、DCAS 保持原文。", "- `Yambda-5B` 图表属于补充线，不替代跨文化主线图。"])
+        lines.append(
+            f"- {item['title']}：{item['n_tracks']} 首曲目，{item['n_cultures']} 个文化域，{item['n_users']} 位用户，{item['n_interactions']} 条交互"
+        )
+    lines.extend(
+        [
+            "",
+            "## 说明",
+            "- 这套图表以中文标题、中文坐标名和中文说明为主。",
+            "- 专有名词如 Research Dataset V3、CultureMERT、Yambda-5B、LambdaMART、DCAS 保持原文。",
+            "- `Yambda-5B` 图表属于补充线，不替代跨文化主线图。",
+        ]
+    )
     (out_dir / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     manifest = {

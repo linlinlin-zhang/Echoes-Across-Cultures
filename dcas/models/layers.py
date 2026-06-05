@@ -22,4 +22,3 @@ class GradientReversal(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return _GradReverseFn.apply(x, self.scale)
-

@@ -104,7 +104,9 @@ def probe_external_benchmarks(out_path: Path) -> dict[str, Any]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Probe public recsys benchmarks against the current repository assumptions.")
+    ap = argparse.ArgumentParser(
+        description="Probe public recsys benchmarks against the current repository assumptions."
+    )
     ap.add_argument(
         "--out",
         default=str(REPO_ROOT / "reports/external_benchmarks/public_benchmark_probe_2026-03-19.json"),

@@ -215,7 +215,11 @@ def _parse_python_imports(path: Path, module_name: str) -> dict[str, Any]:
             elif node.module:
                 imports.append(node.module)
                 external_roots.add(node.module.split(".", 1)[0])
-    return {"imports": imports, "external_roots": sorted(external_roots), "syntax_ok": True}
+    return {
+        "imports": imports,
+        "external_roots": sorted(external_roots),
+        "syntax_ok": True,
+    }
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -275,14 +279,15 @@ def _collect_python_modules() -> tuple[list[dict[str, Any]], list[dict[str, str]
         "n_python_modules": len(module_rows),
         "n_internal_edges": len(edges),
         "top_incoming_modules": [
-            {"module": module, "incoming_edges": count}
-            for module, count in incoming.most_common(15)
+            {"module": module, "incoming_edges": count} for module, count in incoming.most_common(15)
         ],
     }
     return module_rows, edges, graph_summary
 
 
-def _collect_external_import_findings(module_rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _collect_external_import_findings(
+    module_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
     tracked_modules = {row["module"].split(".", 1)[0] for row in module_rows}
     declared = _requirements_declared_packages()
     external_roots = Counter()
@@ -297,9 +302,7 @@ def _collect_external_import_findings(module_rows: list[dict[str, Any]]) -> dict
                 missing[pkg] += 1
     return {
         "external_import_frequency": dict(sorted(external_roots.items())),
-        "candidate_undeclared_packages": [
-            {"package": pkg, "count": count} for pkg, count in missing.most_common()
-        ],
+        "candidate_undeclared_packages": [{"package": pkg, "count": count} for pkg, count in missing.most_common()],
     }
 
 
@@ -357,7 +360,10 @@ def _undefined_name_scan() -> list[dict[str, str]]:
 
 
 def _hardcoded_path_scan() -> list[dict[str, Any]]:
-    patterns = [re.compile(r"(?<![A-Za-z])[A-Za-z]:\\\\"), re.compile(r"(?<![A-Za-z])[A-Za-z]:/")]
+    patterns = [
+        re.compile(r"(?<![A-Za-z])[A-Za-z]:\\\\"),
+        re.compile(r"(?<![A-Za-z])[A-Za-z]:/"),
+    ]
     findings: list[dict[str, Any]] = []
     for root in CODE_ROOTS:
         for path in sorted((REPO_ROOT / root).rglob("*.py")):
@@ -397,7 +403,9 @@ def _config_flavor(name: str) -> str:
     return "other"
 
 
-def _collect_configs(tracked_files: set[str]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+def _collect_configs(
+    tracked_files: set[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     config_rows: list[dict[str, Any]] = []
     param_rows: list[dict[str, Any]] = []
     category_counter = Counter()
@@ -441,13 +449,19 @@ def _collect_configs(tracked_files: set[str]) -> tuple[list[dict[str, Any]], lis
                     "param_value": json.dumps(value, ensure_ascii=False),
                 }
             )
-    return config_rows, param_rows, {
-        "config_count_by_category": dict(sorted(category_counter.items())),
-        "tracked_status_by_category": dict(sorted(run_status_counter.items())),
-    }
+    return (
+        config_rows,
+        param_rows,
+        {
+            "config_count_by_category": dict(sorted(category_counter.items())),
+            "tracked_status_by_category": dict(sorted(run_status_counter.items())),
+        },
+    )
 
 
-def _experiment_settings_table(config_rows: list[dict[str, Any]], param_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _experiment_settings_table(
+    config_rows: list[dict[str, Any]], param_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     by_config: dict[str, dict[str, str]] = {}
     for row in param_rows:
         by_config.setdefault(row["config_path"], {})[row["param_key"]] = row["param_value"]
@@ -663,15 +677,19 @@ def _collect_datasets() -> tuple[list[dict[str, Any]], dict[str, Any]]:
             continue
         dataset_dir = path.parent
         metadata_file = _choose_metadata_file(dataset_dir)
-        profile = _csv_profile(metadata_file) if metadata_file else {
-            "metadata_file": "",
-            "metadata_rows": None,
-            "n_columns": None,
-            "culture_unique": None,
-            "source_unique": None,
-            "top_cultures": "",
-            "top_sources": "",
-        }
+        profile = (
+            _csv_profile(metadata_file)
+            if metadata_file
+            else {
+                "metadata_file": "",
+                "metadata_rows": None,
+                "n_columns": None,
+                "culture_unique": None,
+                "source_unique": None,
+                "top_cultures": "",
+                "top_sources": "",
+            }
+        )
         top_dataset = rel.split("/")[2] if rel.startswith("storage/public/") else dataset_dir.name
         top_dataset_counter[top_dataset] += 1
         rows.append(
@@ -821,32 +839,162 @@ def _collect_environment(config_param_rows: list[dict[str, Any]]) -> dict[str, A
 def _core_file_inventory(tracked_files: set[str]) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     curated = [
-        ("dcas/models/dcas_vae.py", "core_method", "Method", "Main disentanglement / recommendation backbone implementation."),
-        ("dcas/recommender.py", "core_method", "Method", "Core recommendation scoring and evaluation-facing inference entry."),
-        ("dcas/embedding_recommenders.py", "baseline_family", "Method", "Industrial-style embedding, KNN, cosine, BPR and hybrid recommenders."),
-        ("dcas/pipelines.py", "pipeline_orchestration", "Method", "Shared wiring between data, training, evaluation, and PAL stages."),
-        ("dcas/scripts/build_research_dataset_v4.py", "dataset_pipeline", "Dataset", "End-to-end V4 dataset build orchestration."),
-        ("dcas/scripts/harmonize_v4_metadata.py", "dataset_pipeline", "Dataset", "Metadata normalization and field alignment for V4."),
-        ("dcas/scripts/build_tracks_from_audio.py", "embedding_pipeline", "Method", "Audio-to-embedding builder for CultureMERT and related backbones."),
-        ("dcas/scripts/build_tracks_with_gemini.py", "embedding_pipeline", "Method", "Gemini embedding extraction pipeline with API/window controls."),
-        ("dcas/scripts/synthesize_interactions.py", "dataset_pipeline", "Dataset", "Synthetic interaction generation used by released benchmark datasets."),
-        ("dcas/scripts/run_train_from_json.py", "experiment_runner", "Appendix", "Reusable training entrypoint driven by JSON configs."),
-        ("dcas/scripts/run_recommender_benchmarks.py", "experiment_runner", "Experiments", "Main benchmark runner used for V3/V4 result matrices."),
-        ("dcas/scripts/evaluate_recommender.py", "experiment_runner", "Experiments", "Computes benchmark metrics and comparison outputs."),
-        ("dcas/scripts/prepare_real_pal_bundle.py", "pal_human_loop", "Method", "Builds the real PAL task packet and candidate pool."),
-        ("dcas/scripts/run_phase3_pal.py", "pal_human_loop", "Method", "Closes the PAL feedback loop from constraints to retraining."),
-        ("dcas/scripts/build_pal_constraints_from_annotations.py", "pal_human_loop", "Method", "Transforms human annotation sheets into PAL constraints."),
-        ("configs/dataset/research_dataset_v4_main_from_v3.json", "config_primary", "Appendix", "Primary V4 main dataset contract."),
-        ("configs/dataset/research_dataset_v4_routeA_small.json", "config_primary", "Appendix", "Primary V4 small dataset contract."),
-        ("configs/train/train_v4_main_culturemert_stage3.run.json", "config_primary", "Appendix", "Primary V4 main CultureMERT stage3 training setup."),
-        ("configs/train/train_v4_main_gemini_stage3.run.json", "config_primary", "Appendix", "Primary V4 main Gemini stage3 training setup."),
-        ("configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_lambdamart.run.json", "config_primary", "Appendix", "Primary V4 main CultureMERT benchmark setup."),
-        ("configs/benchmark/recommender_benchmark_v4_main_gemini_stage3_lambdamart.run.json", "config_primary", "Appendix", "Primary V4 main Gemini benchmark setup."),
-        ("configs/pal/pal_v4_main_culturemert_prepare.run.json", "config_primary", "Appendix", "Real PAL packet preparation setup."),
-        ("configs/pal/pal_v4_main_culturemert_real.run.json", "config_primary", "Appendix", "Real PAL round ingestion and retraining setup."),
-        ("paper/ismir2026_draft.tex", "paper_target", "Paper", "Draft paper still needs synchronization with current V4 evidence."),
-        ("dcas_server/app.py", "platform_support", "Appendix", "Serving/demo layer, not a primary research contribution file."),
-        ("web/package.json", "platform_support", "Appendix", "Web/demo dependency manifest, auxiliary to the research paper."),
+        (
+            "dcas/models/dcas_vae.py",
+            "core_method",
+            "Method",
+            "Main disentanglement / recommendation backbone implementation.",
+        ),
+        (
+            "dcas/recommender.py",
+            "core_method",
+            "Method",
+            "Core recommendation scoring and evaluation-facing inference entry.",
+        ),
+        (
+            "dcas/embedding_recommenders.py",
+            "baseline_family",
+            "Method",
+            "Industrial-style embedding, KNN, cosine, BPR and hybrid recommenders.",
+        ),
+        (
+            "dcas/pipelines.py",
+            "pipeline_orchestration",
+            "Method",
+            "Shared wiring between data, training, evaluation, and PAL stages.",
+        ),
+        (
+            "dcas/scripts/build_research_dataset_v4.py",
+            "dataset_pipeline",
+            "Dataset",
+            "End-to-end V4 dataset build orchestration.",
+        ),
+        (
+            "dcas/scripts/harmonize_v4_metadata.py",
+            "dataset_pipeline",
+            "Dataset",
+            "Metadata normalization and field alignment for V4.",
+        ),
+        (
+            "dcas/scripts/build_tracks_from_audio.py",
+            "embedding_pipeline",
+            "Method",
+            "Audio-to-embedding builder for CultureMERT and related backbones.",
+        ),
+        (
+            "dcas/scripts/build_tracks_with_gemini.py",
+            "embedding_pipeline",
+            "Method",
+            "Gemini embedding extraction pipeline with API/window controls.",
+        ),
+        (
+            "dcas/scripts/synthesize_interactions.py",
+            "dataset_pipeline",
+            "Dataset",
+            "Synthetic interaction generation used by released benchmark datasets.",
+        ),
+        (
+            "dcas/scripts/run_train_from_json.py",
+            "experiment_runner",
+            "Appendix",
+            "Reusable training entrypoint driven by JSON configs.",
+        ),
+        (
+            "dcas/scripts/run_recommender_benchmarks.py",
+            "experiment_runner",
+            "Experiments",
+            "Main benchmark runner used for V3/V4 result matrices.",
+        ),
+        (
+            "dcas/scripts/evaluate_recommender.py",
+            "experiment_runner",
+            "Experiments",
+            "Computes benchmark metrics and comparison outputs.",
+        ),
+        (
+            "dcas/scripts/prepare_real_pal_bundle.py",
+            "pal_human_loop",
+            "Method",
+            "Builds the real PAL task packet and candidate pool.",
+        ),
+        (
+            "dcas/scripts/run_phase3_pal.py",
+            "pal_human_loop",
+            "Method",
+            "Closes the PAL feedback loop from constraints to retraining.",
+        ),
+        (
+            "dcas/scripts/build_pal_constraints_from_annotations.py",
+            "pal_human_loop",
+            "Method",
+            "Transforms human annotation sheets into PAL constraints.",
+        ),
+        (
+            "configs/dataset/research_dataset_v4_main_from_v3.json",
+            "config_primary",
+            "Appendix",
+            "Primary V4 main dataset contract.",
+        ),
+        (
+            "configs/dataset/research_dataset_v4_routeA_small.json",
+            "config_primary",
+            "Appendix",
+            "Primary V4 small dataset contract.",
+        ),
+        (
+            "configs/train/train_v4_main_culturemert_stage3.run.json",
+            "config_primary",
+            "Appendix",
+            "Primary V4 main CultureMERT stage3 training setup.",
+        ),
+        (
+            "configs/train/train_v4_main_gemini_stage3.run.json",
+            "config_primary",
+            "Appendix",
+            "Primary V4 main Gemini stage3 training setup.",
+        ),
+        (
+            "configs/benchmark/recommender_benchmark_v4_main_culturemert_stage3_lambdamart.run.json",
+            "config_primary",
+            "Appendix",
+            "Primary V4 main CultureMERT benchmark setup.",
+        ),
+        (
+            "configs/benchmark/recommender_benchmark_v4_main_gemini_stage3_lambdamart.run.json",
+            "config_primary",
+            "Appendix",
+            "Primary V4 main Gemini benchmark setup.",
+        ),
+        (
+            "configs/pal/pal_v4_main_culturemert_prepare.run.json",
+            "config_primary",
+            "Appendix",
+            "Real PAL packet preparation setup.",
+        ),
+        (
+            "configs/pal/pal_v4_main_culturemert_real.run.json",
+            "config_primary",
+            "Appendix",
+            "Real PAL round ingestion and retraining setup.",
+        ),
+        (
+            "paper/ismir2026_draft.tex",
+            "paper_target",
+            "Paper",
+            "Draft paper still needs synchronization with current V4 evidence.",
+        ),
+        (
+            "dcas_server/app.py",
+            "platform_support",
+            "Appendix",
+            "Serving/demo layer, not a primary research contribution file.",
+        ),
+        (
+            "web/package.json",
+            "platform_support",
+            "Appendix",
+            "Web/demo dependency manifest, auxiliary to the research paper.",
+        ),
     ]
     for rel_path, bucket, paper_section, rationale in curated:
         path = REPO_ROOT / rel_path
@@ -871,16 +1019,16 @@ def _major_dataflow_mermaid() -> str:
             '  B --> C["Embedding Build\\nbuild_tracks_from_audio.py / build_tracks_with_gemini.py"]',
             '  B --> D["Interaction Synthesis\\nsynthesize_interactions.py"]',
             '  C --> E["Dataset Artifacts\\nstorage/public/research_dataset_v4/*"]',
-            '  D --> E',
+            "  D --> E",
             '  E --> F["Training\\nrun_train_from_json.py"]',
             '  E --> G["Benchmarking\\nrun_recommender_benchmarks.py"]',
-            '  F --> G',
+            "  F --> G",
             '  G --> H["Reports\\nreports/benchmarks/*"]',
             '  E --> I["PAL Packet Prep\\nprepare_real_pal_bundle.py"]',
             '  I --> J["Human Annotation CSV"]',
             '  J --> K["PAL Constraint Build\\nbuild_pal_constraints_from_annotations.py"]',
             '  K --> L["PAL Retraining\\nrun_phase3_pal.py"]',
-            '  L --> H',
+            "  L --> H",
         ]
     )
 
@@ -917,7 +1065,9 @@ def _summary_markdown(report: dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Scope")
     lines.append("")
-    lines.append("- Goal: repository-wide diagnostic for file structure, executability, configs, figures, datasets, results, and reproducibility.")
+    lines.append(
+        "- Goal: repository-wide diagnostic for file structure, executability, configs, figures, datasets, results, and reproducibility."
+    )
     lines.append(f"- Branch: `{env.get('git_branch')}`")
     lines.append(f"- Commit: `{env.get('git_commit')}`")
     lines.append("")
@@ -926,7 +1076,9 @@ def _summary_markdown(report: dict[str, Any]) -> str:
     lines.append("| top-level path | kind | file_count |")
     lines.append("|---|---|---:|")
     for row in top_dirs:
-        lines.append(f"| {row['path']} | {row['kind']} | {row['file_count'] if row['file_count'] is not None else ''} |")
+        lines.append(
+            f"| {row['path']} | {row['kind']} | {row['file_count'] if row['file_count'] is not None else ''} |"
+        )
     lines.append("")
     lines.append("## Code Dependency Graph")
     lines.append("")
@@ -945,11 +1097,15 @@ def _summary_markdown(report: dict[str, Any]) -> str:
     lines.append("| path | bucket | paper_section | tracked | rationale |")
     lines.append("|---|---|---|---|---|")
     for row in report["core_file_inventory"]:
-        lines.append(f"| {row['path']} | {row['bucket']} | {row['paper_section']} | {row['tracked']} | {row['rationale']} |")
+        lines.append(
+            f"| {row['path']} | {row['bucket']} | {row['paper_section']} | {row['tracked']} | {row['rationale']} |"
+        )
     lines.append("")
     lines.append("## Executability Check")
     lines.append("")
-    lines.append(f"- Python compile check: `{exec_checks['compile_check']['checked']}` files scanned, `{len(exec_checks['compile_check']['failed'])}` failures.")
+    lines.append(
+        f"- Python compile check: `{exec_checks['compile_check']['checked']}` files scanned, `{len(exec_checks['compile_check']['failed'])}` failures."
+    )
     if exec_checks["compile_check"]["failed"]:
         lines.append(f"- Compile failures: `{';'.join(exec_checks['compile_check']['failed'])}`")
     lines.append(f"- Hard-coded absolute path findings in Python code: `{len(exec_checks['hardcoded_paths'])}`.")
@@ -989,9 +1145,13 @@ def _summary_markdown(report: dict[str, Any]) -> str:
     lines.append("## Dataset Inventory")
     lines.append("")
     lines.append(f"- Track manifest rows scanned: `{len(report['dataset_inventory'])}`.")
-    lines.append(f"- Manifest rows by top dataset: `{json.dumps(datasets['manifest_rows_by_top_dataset'], ensure_ascii=False)}`")
+    lines.append(
+        f"- Manifest rows by top dataset: `{json.dumps(datasets['manifest_rows_by_top_dataset'], ensure_ascii=False)}`"
+    )
     lines.append("")
-    lines.append("| dataset_dir | track_artifact | n_tracks | dim | metadata_rows | culture_unique | source_unique | n_errors |")
+    lines.append(
+        "| dataset_dir | track_artifact | n_tracks | dim | metadata_rows | culture_unique | source_unique | n_errors |"
+    )
     lines.append("|---|---|---:|---:|---:|---:|---:|---:|")
     for row in sorted(report["dataset_inventory"], key=_dataset_sort_key)[:12]:
         lines.append(
@@ -1002,7 +1162,9 @@ def _summary_markdown(report: dict[str, Any]) -> str:
     lines.append("")
     lines.append(f"- Result files scanned (`.json/.csv/.log` under `reports/`): `{len(report['result_inventory'])}`.")
     lines.append(f"- Count by category: `{json.dumps(results['result_count_by_category'], ensure_ascii=False)}`")
-    lines.append(f"- Partial/failure-side assets (`smoke/probe/tmp` or `n_errors>0`): `{len(report['partial_failure_inventory'])}`.")
+    lines.append(
+        f"- Partial/failure-side assets (`smoke/probe/tmp` or `n_errors>0`): `{len(report['partial_failure_inventory'])}`."
+    )
     lines.append("")
     lines.append("## Reproducibility")
     lines.append("")
@@ -1019,14 +1181,26 @@ def _summary_markdown(report: dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Primary Findings")
     lines.append("")
-    lines.append("- The codebase centers on `dcas` data, embedding, recommendation, and PAL pipelines; V4 build/benchmark scripts form the core research path.")
-    lines.append(f"- `configs/` contains `{sum(config_summary['config_count_by_category'].values())}` JSON configs across dataset, embedding, training, benchmark, and PAL stages.")
-    lines.append("- Figure assets are concentrated in two overview bundles and currently rely almost entirely on PNG outputs.")
-    lines.append("- V4 benchmark and dataset artifacts are separated cleanly under `reports/benchmarks/v4_*` and `reports/datasets/research_dataset_v4/*`.")
+    lines.append(
+        "- The codebase centers on `dcas` data, embedding, recommendation, and PAL pipelines; V4 build/benchmark scripts form the core research path."
+    )
+    lines.append(
+        f"- `configs/` contains `{sum(config_summary['config_count_by_category'].values())}` JSON configs across dataset, embedding, training, benchmark, and PAL stages."
+    )
+    lines.append(
+        "- Figure assets are concentrated in two overview bundles and currently rely almost entirely on PNG outputs."
+    )
+    lines.append(
+        "- V4 benchmark and dataset artifacts are separated cleanly under `reports/benchmarks/v4_*` and `reports/datasets/research_dataset_v4/*`."
+    )
     if missing:
-        lines.append("- There are candidate undeclared Python packages that should be cross-checked before claiming full one-command reproducibility.")
+        lines.append(
+            "- There are candidate undeclared Python packages that should be cross-checked before claiming full one-command reproducibility."
+        )
     if low_res > 0:
-        lines.append("- Some figure assets are below a conservative 1200x800 raster threshold and may need re-export before paper submission.")
+        lines.append(
+            "- Some figure assets are below a conservative 1200x800 raster threshold and may need re-export before paper submission."
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -1090,7 +1264,9 @@ def main() -> None:
     (out_dir / "summary.md").write_text(_summary_markdown(report), encoding="utf-8")
     (out_dir / "code_dependency_graph.mmd").write_text(report["code_dependency_mermaid"] + "\n", encoding="utf-8")
     (out_dir / "dataflow_graph.mmd").write_text(report["dataflow_mermaid"] + "\n", encoding="utf-8")
-    (out_dir / "reproducibility_environment.json").write_text(json.dumps(environment, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "reproducibility_environment.json").write_text(
+        json.dumps(environment, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     _write_csv(out_dir / "python_module_inventory.csv", module_rows)
     _write_csv(out_dir / "dependency_edges.csv", dependency_edges)
     _write_csv(out_dir / "core_file_inventory.csv", core_files)
@@ -1102,8 +1278,14 @@ def main() -> None:
     _write_csv(out_dir / "result_inventory.csv", result_rows)
     _write_csv(out_dir / "partial_failure_inventory.csv", partial_failure_rows)
     _write_csv(out_dir / "hardcoded_path_findings.csv", executability["hardcoded_paths"])
-    _write_csv(out_dir / "undefined_name_findings.csv", executability["undefined_name_findings"])
-    _write_csv(out_dir / "candidate_undeclared_packages.csv", executability["external_import_findings"]["candidate_undeclared_packages"])
+    _write_csv(
+        out_dir / "undefined_name_findings.csv",
+        executability["undefined_name_findings"],
+    )
+    _write_csv(
+        out_dir / "candidate_undeclared_packages.csv",
+        executability["external_import_findings"]["candidate_undeclared_packages"],
+    )
     print(str(out_dir))
 
 

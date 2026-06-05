@@ -74,7 +74,15 @@ UPLOAD_ACCEPT_ATTRIBUTE = ",".join(
 DEFAULT_UPLOAD_COMPRESSION_BITRATE = "192k"
 DEFAULT_UPLOAD_COMPRESSION_SAMPLE_RATE_HZ = 44_100
 DEFAULT_UPLOAD_COMPRESSION_CHANNELS = 2
-ALLOWED_UPLOAD_COMPRESSION_BITRATES = {"96k", "128k", "160k", "192k", "224k", "256k", "320k"}
+ALLOWED_UPLOAD_COMPRESSION_BITRATES = {
+    "96k",
+    "128k",
+    "160k",
+    "192k",
+    "224k",
+    "256k",
+    "320k",
+}
 ALLOWED_UPLOAD_COMPRESSION_SAMPLE_RATES = {24_000, 32_000, 44_100, 48_000}
 ALLOWED_UPLOAD_COMPRESSION_CHANNELS = {1, 2}
 ANON_SESSION_COOKIE = "echo_anon_id"
@@ -121,7 +129,9 @@ def _mainline_platform_paths() -> dict[str, str]:
 
 def _culturemert_runtime_settings() -> dict[str, Any]:
     return {
-        "culturemert_model_id": str(os.environ.get("ECHO_CULTUREMERT_MODEL_ID") or DEFAULT_CULTUREMERT_MODEL_ID).strip(),
+        "culturemert_model_id": str(
+            os.environ.get("ECHO_CULTUREMERT_MODEL_ID") or DEFAULT_CULTUREMERT_MODEL_ID
+        ).strip(),
         "culturemert_cache_dir": str(os.environ.get("ECHO_CULTUREMERT_CACHE_DIR") or "").strip() or None,
         "culturemert_revision": str(os.environ.get("ECHO_CULTUREMERT_REVISION") or "").strip() or None,
         "culturemert_local_files_only": _env_bool("ECHO_CULTUREMERT_LOCAL_FILES_ONLY", False),
@@ -277,7 +287,12 @@ class AnonymousFavoriteStore:
 
 
 def _cookie_secure_default() -> bool:
-    return str(os.environ.get("ECHO_COOKIE_SECURE", "")).strip().lower() in {"1", "true", "yes", "on"}
+    return str(os.environ.get("ECHO_COOKIE_SECURE", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _session_id_from_request(request: Request, response: Response, store: AnonymousFavoriteStore) -> str:
@@ -319,6 +334,22 @@ def _mainline_worker_timeout() -> float:
         return 900.0
 
 
+def _mainline_local_recommender_enabled() -> bool:
+    return _env_bool("ECHO_MAINLINE_LOCAL_RECOMMENDER_ENABLED", True)
+
+
+def _raise_mainline_worker_required() -> None:
+    raise HTTPException(
+        status_code=503,
+        detail=(
+            "mainline worker is not configured. Set ECHO_MAINLINE_WORKER_URL "
+            "and ECHO_MAINLINE_WORKER_TOKEN, or enable the local recommender "
+            "with ECHO_MAINLINE_LOCAL_RECOMMENDER_ENABLED=true and install "
+            "the full research dependencies."
+        ),
+    )
+
+
 def _worker_url(path: str, query: dict[str, Any] | None = None) -> str:
     base = _mainline_worker_url()
     if not base:
@@ -342,9 +373,14 @@ def _worker_headers(extra: dict[str, str] | None = None) -> dict[str, str]:
 def _require_worker_token(request: Request) -> None:
     if not _env_bool("ECHO_WORKER_REQUIRE_TOKEN", False):
         return
-    expected = str(os.environ.get("ECHO_WORKER_SHARED_TOKEN", "") or os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")).strip()
+    expected = str(
+        os.environ.get("ECHO_WORKER_SHARED_TOKEN", "") or os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")
+    ).strip()
     if not expected:
-        raise HTTPException(status_code=500, detail="worker token enforcement is enabled but no token is configured")
+        raise HTTPException(
+            status_code=500,
+            detail="worker token enforcement is enabled but no token is configured",
+        )
     actual = str(request.headers.get("X-Echo-Worker-Token", "")).strip()
     if actual != expected:
         raise HTTPException(status_code=401, detail="invalid worker token")
@@ -510,7 +546,10 @@ def _validate_upload_audio(filename: str, content_type: str | None) -> str:
     if str(content_type or "").lower().startswith("audio/"):
         return suffix or ".audio"
     allowed = ", ".join(sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS))
-    raise HTTPException(status_code=415, detail=f"unsupported audio format. Supported extensions: {allowed}")
+    raise HTTPException(
+        status_code=415,
+        detail=f"unsupported audio format. Supported extensions: {allowed}",
+    )
 
 
 def _safe_compression_bitrate(value: str | None) -> str:
@@ -559,7 +598,18 @@ def _compress_audio_for_analysis(
     ]
     if float(max_seconds) > 0:
         cmd.extend(["-t", f"{float(max_seconds):.6f}"])
-    cmd.extend(["-vn", "-ac", str(channels), "-ar", str(sample_rate_hz), "-b:a", str(bitrate), str(target)])
+    cmd.extend(
+        [
+            "-vn",
+            "-ac",
+            str(channels),
+            "-ar",
+            str(sample_rate_hz),
+            "-b:a",
+            str(bitrate),
+            str(target),
+        ]
+    )
     timeout = max(90.0, float(max_seconds or 0) + 60.0)
     proc = subprocess.run(cmd, capture_output=True, timeout=timeout)
     if proc.returncode != 0:
@@ -719,11 +769,19 @@ def create_app() -> FastAPI:
     async def worker_token_guard(request: Request, call_next):
         if _env_bool("ECHO_WORKER_REQUIRE_TOKEN", False):
             if not request.url.path.startswith("/api/mainline"):
-                return JSONResponse(status_code=404, content={"detail": "worker mode only exposes mainline API"})
-            expected = str(os.environ.get("ECHO_WORKER_SHARED_TOKEN", "") or os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")).strip()
+                return JSONResponse(
+                    status_code=404,
+                    content={"detail": "worker mode only exposes mainline API"},
+                )
+            expected = str(
+                os.environ.get("ECHO_WORKER_SHARED_TOKEN", "") or os.environ.get("ECHO_MAINLINE_WORKER_TOKEN", "")
+            ).strip()
             actual = str(request.headers.get("X-Echo-Worker-Token", "")).strip()
             if not expected:
-                return JSONResponse(status_code=500, content={"detail": "worker token enforcement is enabled but no token is configured"})
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "worker token enforcement is enabled but no token is configured"},
+                )
             if actual != expected:
                 return JSONResponse(status_code=401, content={"detail": "invalid worker token"})
         return await call_next(request)
@@ -805,7 +863,13 @@ def create_app() -> FastAPI:
             items, seeded = seed_initial_favorites(session_id, prefer_cuda=prefer_cuda)
         else:
             items, seeded = favorite_store.list_favorites(session_id), False
-        return {"ok": True, "session_id": session_id, "count": len(items), "seeded": seeded, "items": items}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "count": len(items),
+            "seeded": seeded,
+            "items": items,
+        }
 
     @app.post("/api/favorites")
     def api_add_favorite(payload: dict[str, Any], request: Request, response: Response):
@@ -815,19 +879,34 @@ def create_app() -> FastAPI:
             item = favorite_store.upsert_favorite(session_id, track)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
-        return {"ok": True, "session_id": session_id, "item": item, "items": favorite_store.list_favorites(session_id)}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "item": item,
+            "items": favorite_store.list_favorites(session_id),
+        }
 
     @app.delete("/api/favorites")
     def api_remove_favorite_by_query(track_key: str, request: Request, response: Response):
         session_id = _session_id_from_request(request, response, favorite_store)
         removed = favorite_store.remove_favorite(session_id, track_key)
-        return {"ok": True, "session_id": session_id, "removed": removed, "items": favorite_store.list_favorites(session_id)}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "removed": removed,
+            "items": favorite_store.list_favorites(session_id),
+        }
 
     @app.delete("/api/favorites/{track_key:path}")
     def api_remove_favorite(track_key: str, request: Request, response: Response):
         session_id = _session_id_from_request(request, response, favorite_store)
         removed = favorite_store.remove_favorite(session_id, track_key)
-        return {"ok": True, "session_id": session_id, "removed": removed, "items": favorite_store.list_favorites(session_id)}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "removed": removed,
+            "items": favorite_store.list_favorites(session_id),
+        }
 
     @app.get("/api/files")
     def list_files():
@@ -974,7 +1053,11 @@ def create_app() -> FastAPI:
         if _mainline_worker_url():
             try:
                 data = _proxy_worker_get("/api/mainline/status", {"prefer_cuda": prefer_cuda})
-                data["worker"] = {"configured": True, "online": True, "url": _mainline_worker_url()}
+                data["worker"] = {
+                    "configured": True,
+                    "online": True,
+                    "url": _mainline_worker_url(),
+                }
                 return data
             except HTTPException as e:
                 try:
@@ -1095,6 +1178,8 @@ def create_app() -> FastAPI:
                 _proxy_worker_json("/api/mainline/recommend", req.dict()),
                 storage,
             )
+        if not _mainline_local_recommender_enabled():
+            _raise_mainline_worker_required()
         from .mainline_platform import MainlineWeights, get_mainline_platform
 
         seed_track_ids = list(req.seed_track_ids)
@@ -1131,10 +1216,13 @@ def create_app() -> FastAPI:
 
     @app.get("/api/mainline/upload_formats")
     def api_mainline_upload_formats():
+        worker_configured = bool(_mainline_worker_url())
+        local_recommender_enabled = _mainline_local_recommender_enabled()
         return {
             "ok": True,
-            "mode": "worker" if _mainline_worker_url() else "local",
-            "worker_configured": bool(_mainline_worker_url()),
+            "mode": "worker" if worker_configured else ("local" if local_recommender_enabled else "unavailable"),
+            "worker_configured": worker_configured,
+            "local_recommender_enabled": local_recommender_enabled,
             "extensions": sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS),
             "accept": UPLOAD_ACCEPT_ATTRIBUTE,
             "max_upload_mb": 200,
@@ -1223,6 +1311,8 @@ def create_app() -> FastAPI:
                 ),
                 storage,
             )
+        if not _mainline_local_recommender_enabled():
+            _raise_mainline_worker_required()
         _require_worker_token(request)
         from .mainline_platform import MainlineWeights, get_mainline_platform
 
@@ -1277,7 +1367,9 @@ def create_app() -> FastAPI:
             "track_id": f"upload_{dest.stem[:48]}",
             "filename": filename,
             "title": title or _tag_first(tag_info, "title") or Path(filename).stem,
-            "artist": artist or _tag_first(tag_info, "artist", "album_artist", "albumartist", "composer") or "Uploaded audio",
+            "artist": artist
+            or _tag_first(tag_info, "artist", "album_artist", "albumartist", "composer")
+            or "Uploaded audio",
             "album": _tag_first(tag_info, "album"),
             "genre": _tag_first(tag_info, "genre"),
             "release_date": _tag_first(tag_info, "date", "year"),
@@ -1358,7 +1450,9 @@ def create_app() -> FastAPI:
                 status_code=400,
                 detail="Kimi API key is not configured. Set it in settings.html, KIMI_API_KEY, or configs/secrets/kimi.local.json.",
             )
-        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions")
+        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get(
+            "endpoint", "https://api.moonshot.cn/v1/chat/completions"
+        )
         if not endpoint.startswith("https://"):
             raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
         model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
@@ -1390,7 +1484,10 @@ def create_app() -> FastAPI:
         except urllib.error.URLError as e:
             raise HTTPException(status_code=502, detail=str(e.reason))
         except TimeoutError:
-            raise HTTPException(status_code=504, detail=f"Kimi upstream timed out after {float(req.timeout_seconds):.0f}s")
+            raise HTTPException(
+                status_code=504,
+                detail=f"Kimi upstream timed out after {float(req.timeout_seconds):.0f}s",
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -1616,6 +1713,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="no annotations yet")
 
         import csv as _csv
+
         # Load annotations
         anns = []
         with open(out_file, "r", encoding="utf-8") as f:
@@ -1634,21 +1732,42 @@ def create_app() -> FastAPI:
 
         with open(csv_file, "w", encoding="utf-8-sig", newline="") as f:
             writer = _csv.writer(f)
-            writer.writerow(["task_id", "track_id_a", "track_id_b", "judgment", "similar", "rationale", "annotator"])
+            writer.writerow(
+                [
+                    "task_id",
+                    "track_id_a",
+                    "track_id_b",
+                    "judgment",
+                    "similar",
+                    "rationale",
+                    "annotator",
+                ]
+            )
             for a in anns:
                 judgment = a.get("judgment", "")
                 similar = "yes" if judgment in ("a", "b") else ("no" if judgment == "neither" else "")
-                writer.writerow([
-                    a["task_id"], a["track_id_a"], a["track_id_b"],
-                    judgment, similar, a.get("rationale", ""), a.get("annotator", ""),
-                ])
+                writer.writerow(
+                    [
+                        a["task_id"],
+                        a["track_id_a"],
+                        a["track_id_b"],
+                        judgment,
+                        similar,
+                        a.get("rationale", ""),
+                        a.get("annotator", ""),
+                    ]
+                )
         return {"csv": str(csv_file), "count": len(anns)}
 
     web_dir = Path("web")
     dist = Path("web/dist")
     prototype_dir = Path("web_prototype")
     if prototype_dir.exists():
-        app.mount("/prototype", StaticFiles(directory=str(prototype_dir), html=True), name="prototype")
+        app.mount(
+            "/prototype",
+            StaticFiles(directory=str(prototype_dir), html=True),
+            name="prototype",
+        )
     # PAL annotation UI
     pal_html = dist / "pal.html"
     if pal_html.exists():
@@ -1658,7 +1777,11 @@ def create_app() -> FastAPI:
     elif (dist / "index.html").exists():
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
     elif prototype_dir.exists():
-        app.mount("/", StaticFiles(directory=str(prototype_dir), html=True), name="prototype-root")
+        app.mount(
+            "/",
+            StaticFiles(directory=str(prototype_dir), html=True),
+            name="prototype-root",
+        )
     else:
         dist.mkdir(parents=True, exist_ok=True)
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="web-empty")

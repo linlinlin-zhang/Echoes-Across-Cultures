@@ -96,7 +96,11 @@ def _negative_candidate(a: dict[str, str], b: dict[str, str]) -> tuple[float, st
     if a["is_instrumental"] != "" and b["is_instrumental"] != "" and a["is_instrumental"] != b["is_instrumental"]:
         score += 2.0
         reasons.append(f"is_instrumental {a['is_instrumental']} vs {b['is_instrumental']}")
-    if a["instrument_family"] != "" and b["instrument_family"] != "" and a["instrument_family"] != b["instrument_family"]:
+    if (
+        a["instrument_family"] != ""
+        and b["instrument_family"] != ""
+        and a["instrument_family"] != b["instrument_family"]
+    ):
         score += 1.0
         reasons.append(f"instrument_family {a['instrument_family']} vs {b['instrument_family']}")
     if a["language"] != "" and b["language"] != "" and a["language"] != b["language"]:
@@ -180,7 +184,11 @@ def _negative_candidate_with_threshold(
     if a["is_instrumental"] != "" and b["is_instrumental"] != "" and a["is_instrumental"] != b["is_instrumental"]:
         score += 2.0
         reasons.append(f"is_instrumental {a['is_instrumental']} vs {b['is_instrumental']}")
-    if a["instrument_family"] != "" and b["instrument_family"] != "" and a["instrument_family"] != b["instrument_family"]:
+    if (
+        a["instrument_family"] != ""
+        and b["instrument_family"] != ""
+        and a["instrument_family"] != b["instrument_family"]
+    ):
         score += 1.0
         reasons.append(f"instrument_family {a['instrument_family']} vs {b['instrument_family']}")
     if a["language"] != "" and b["language"] != "" and a["language"] != b["language"]:

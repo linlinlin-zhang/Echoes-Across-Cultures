@@ -32,7 +32,12 @@ def to_windows_path_cached(path_text: str) -> str:
         drive = parts[2].upper()
         tail = "\\".join(parts[3:])
         return f"{drive}:\\{tail}" if tail else f"{drive}:\\"
-    result = subprocess.run(["wslpath", "-w", str(resolved)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(
+        ["wslpath", "-w", str(resolved)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
     if result.returncode == 0 and result.stdout.strip():
         return result.stdout.strip()
     return str(resolved)
@@ -198,7 +203,10 @@ def main() -> int:
     output_bytes = 0
     failures = []
     total = len(all_tasks)
-    print(f"compressing {total} files to {output_root} at {args.bitrate} with {args.workers} workers", flush=True)
+    print(
+        f"compressing {total} files to {output_root} at {args.bitrate} with {args.workers} workers",
+        flush=True,
+    )
 
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = [executor.submit(convert_one, task) for task in all_tasks]
@@ -236,7 +244,10 @@ def main() -> int:
     (output_root / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
     if failures:
-        print(f"completed with {len(failures)} failures; see {output_root / 'manifest.json'}", file=sys.stderr)
+        print(
+            f"completed with {len(failures)} failures; see {output_root / 'manifest.json'}",
+            file=sys.stderr,
+        )
         return 1
     print(f"done: {manifest['output_gb']} GiB in {output_root}")
     return 0

@@ -95,7 +95,12 @@ def main() -> None:
     ap.add_argument("--service_key_param", default="serviceKey")
     ap.add_argument("--format_param", default=None)
     ap.add_argument("--format_value", default=None)
-    ap.add_argument("--extra_param", action="append", default=[], help="Extra query param as KEY=VALUE")
+    ap.add_argument(
+        "--extra_param",
+        action="append",
+        default=[],
+        help="Extra query param as KEY=VALUE",
+    )
     ap.add_argument("--timeout_s", type=int, default=60)
     args = ap.parse_args()
 

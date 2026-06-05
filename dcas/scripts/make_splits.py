@@ -117,7 +117,11 @@ def _split_distribution_report(
 
     return {
         "global_distribution": [
-            {"culture": c, "count": int(global_counter[c]), "ratio": _round(global_dist[c])}
+            {
+                "culture": c,
+                "count": int(global_counter[c]),
+                "ratio": _round(global_dist[c]),
+            }
             for c in all_cultures
         ],
         "per_split": per_split,
@@ -420,7 +424,12 @@ def main() -> None:
         test_ratio=float(args.test_ratio),
         max_distribution_delta_warn=float(args.max_distribution_delta_warn),
     )
-    print(json.dumps({"status": report["status"], "summary": report["summary"]}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"status": report["status"], "summary": report["summary"]},
+            ensure_ascii=False,
+        )
+    )
     if args.strict and report["status"] == "fail":
         raise SystemExit(2)
 

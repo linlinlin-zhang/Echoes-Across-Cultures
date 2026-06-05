@@ -156,7 +156,9 @@ def build_research_dataset_v4(
     reports_root = REPO_ROOT / "reports" / "datasets" / str(manifest["dataset_name"]) / dataset_key
     out_root.mkdir(parents=True, exist_ok=True)
     reports_root.mkdir(parents=True, exist_ok=True)
-    selected_embedding_targets = {str(name).strip().lower() for name in (embedding_targets or []) if str(name).strip() != ""}
+    selected_embedding_targets = {
+        str(name).strip().lower() for name in (embedding_targets or []) if str(name).strip() != ""
+    }
 
     manifest_report = audit_manifest(manifest_file)
     manifest_audit_dir = reports_root / "manifest_audit"
@@ -292,7 +294,9 @@ def build_research_dataset_v4(
             if int(embed_report.get("n_tracks", 0)) < _count_csv_rows(metadata_release):
                 suffix = tracks_path.stem.replace("tracks_", "")
                 aligned_metadata = out_root / f"metadata_release_{suffix}.csv"
-                aligned_interactions = (out_root / f"interactions_synth_mixed_{suffix}.csv") if mixed_interactions else None
+                aligned_interactions = (
+                    (out_root / f"interactions_synth_mixed_{suffix}.csv") if mixed_interactions else None
+                )
                 align_report = align_assets_to_tracks(
                     tracks_path=tracks_path,
                     metadata_in=metadata_release,
@@ -360,7 +364,15 @@ def main() -> None:
         embedding_targets=list(args.embedding_targets or []),
         allow_manifest_errors=bool(args.allow_manifest_errors),
     )
-    print(json.dumps({"reports_root": report["reports_root"], "steps": sorted(report["steps"].keys())}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "reports_root": report["reports_root"],
+                "steps": sorted(report["steps"].keys()),
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

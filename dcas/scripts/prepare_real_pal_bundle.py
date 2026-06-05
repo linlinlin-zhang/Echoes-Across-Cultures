@@ -166,7 +166,9 @@ def prepare_real_pal_bundle(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Prepare a real-PAL bundle with candidates, pilot tasks, and round-1 sheets.")
+    ap = argparse.ArgumentParser(
+        description="Prepare a real-PAL bundle with candidates, pilot tasks, and round-1 sheets."
+    )
     ap.add_argument("--config", required=True)
     args = ap.parse_args()
 

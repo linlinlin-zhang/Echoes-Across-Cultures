@@ -19,4 +19,3 @@ __all__ = [
     "PAL_WEB_PROMPT_HINT_ZH",
     "PAL_README_REMINDER_EN",
 ]
-

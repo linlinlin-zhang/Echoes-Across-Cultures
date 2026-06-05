@@ -47,7 +47,13 @@ def _spectral_centroid(mag: torch.Tensor, sample_rate: int, n_fft: int) -> float
     if mag.numel() == 0:
         return 0.0
     freq_bins = mag.shape[0]
-    freqs = torch.linspace(0.0, float(sample_rate) / 2.0, steps=freq_bins, device=mag.device, dtype=mag.dtype)
+    freqs = torch.linspace(
+        0.0,
+        float(sample_rate) / 2.0,
+        steps=freq_bins,
+        device=mag.device,
+        dtype=mag.dtype,
+    )
     num = (freqs[:, None] * mag).sum(dim=0)
     den = mag.sum(dim=0).clamp_min(1e-8)
     cent = num / den

@@ -52,7 +52,16 @@ def merge_metadata(
             merged_rows.append(rr)
         sources.append({"path": str(p.resolve()), "rows": int(len(merged_rows) - n_before)})
 
-    preferred = ["track_id", "culture", "audio_path", "source_dataset", "source_split", "source_index", "label", "affect_label"]
+    preferred = [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label",
+        "affect_label",
+    ]
     extra = [c for c in all_fields if c not in preferred]
     cols = [c for c in preferred if c in seen_fields] + extra
 

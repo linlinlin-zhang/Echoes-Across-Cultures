@@ -55,7 +55,12 @@ class SourceVocab:
 
 
 class TrackDataset(Dataset):
-    def __init__(self, tracks: Tracks, vocab: CultureVocab, source_vocab: SourceVocab | None = None):
+    def __init__(
+        self,
+        tracks: Tracks,
+        vocab: CultureVocab,
+        source_vocab: SourceVocab | None = None,
+    ):
         self.tracks = tracks
         self.vocab = vocab
         self.source_vocab = source_vocab
@@ -96,4 +101,3 @@ def make_source_balanced_sampler(tracks: Tracks) -> WeightedRandomSampler | None
         num_samples=int(len(source_values)),
         replacement=True,
     )
-

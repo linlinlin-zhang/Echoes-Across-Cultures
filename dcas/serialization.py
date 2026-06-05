@@ -24,4 +24,3 @@ def load_checkpoint(path: str, map_location: str | None = None) -> tuple[DCASMod
     model.load_state_dict(obj["state_dict"])
     vocab = CultureVocab.from_dict(obj["culture_vocab"])
     return model, vocab
-

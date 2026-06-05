@@ -201,8 +201,18 @@ def _benchmark_frontier(df: pd.DataFrame, title: str, out_path: Path) -> None:
         return
     fig, axes = plt.subplots(1, 2, figsize=(12.2, 4.8))
     plots = [
-        ("minority_exposure_at_k", "target_culture_prob_mean", "Serendipity vs Minority", "#2A9D8F"),
-        ("target_culture_prob_mean", "cultural_calibration_kl", "Target Affinity vs Calibration", "#577590"),
+        (
+            "minority_exposure_at_k",
+            "target_culture_prob_mean",
+            "Serendipity vs Minority",
+            "#2A9D8F",
+        ),
+        (
+            "target_culture_prob_mean",
+            "cultural_calibration_kl",
+            "Target Affinity vs Calibration",
+            "#577590",
+        ),
     ]
     for ax, (x_metric, y_metric, subtitle, color) in zip(axes, plots):
         ax.scatter(df[x_metric], df[y_metric], s=72, color=color, alpha=0.85)
@@ -309,36 +319,70 @@ def _summarize_dataset(bundle: DatasetBundle, out_dir: Path) -> tuple[dict[str, 
     culture_csv = out_dir / f"{bundle.name}_counts_by_culture.csv"
     culture_counts.rename_axis("culture").reset_index(name="n_tracks").to_csv(culture_csv, index=False)
     culture_fig = out_dir / f"{bundle.name}_counts_by_culture.png"
-    _series_barh(culture_counts, f"{bundle.title}: tracks by culture", "tracks", culture_fig, color="#1D3557")
+    _series_barh(
+        culture_counts,
+        f"{bundle.title}: tracks by culture",
+        "tracks",
+        culture_fig,
+        color="#1D3557",
+    )
     figures.append({"name": f"{bundle.name}_counts_by_culture", "path": str(culture_fig.resolve())})
 
     if "source_dataset" in metadata.columns:
-        source_counts = metadata["source_dataset"].fillna("unknown").astype(str).value_counts().sort_values(ascending=False)
+        source_counts = (
+            metadata["source_dataset"].fillna("unknown").astype(str).value_counts().sort_values(ascending=False)
+        )
         source_csv = out_dir / f"{bundle.name}_counts_by_source.csv"
         source_counts.rename_axis("source_dataset").reset_index(name="n_tracks").to_csv(source_csv, index=False)
         source_fig = out_dir / f"{bundle.name}_counts_by_source.png"
-        _series_barh(source_counts, f"{bundle.title}: tracks by source", "tracks", source_fig, color="#457B9D")
-        figures.append({"name": f"{bundle.name}_counts_by_source", "path": str(source_fig.resolve())})
+        _series_barh(
+            source_counts,
+            f"{bundle.title}: tracks by source",
+            "tracks",
+            source_fig,
+            color="#457B9D",
+        )
+        figures.append(
+            {
+                "name": f"{bundle.name}_counts_by_source",
+                "path": str(source_fig.resolve()),
+            }
+        )
 
-        culture_source = pd.crosstab(metadata["culture"].astype(str), metadata["source_dataset"].fillna("unknown").astype(str))
+        culture_source = pd.crosstab(
+            metadata["culture"].astype(str),
+            metadata["source_dataset"].fillna("unknown").astype(str),
+        )
         culture_source_fig = out_dir / f"{bundle.name}_culture_by_source.png"
-        _stacked_bar(culture_source, f"{bundle.title}: culture/source composition", culture_source_fig)
-        figures.append({"name": f"{bundle.name}_culture_by_source", "path": str(culture_source_fig.resolve())})
+        _stacked_bar(
+            culture_source,
+            f"{bundle.title}: culture/source composition",
+            culture_source_fig,
+        )
+        figures.append(
+            {
+                "name": f"{bundle.name}_culture_by_source",
+                "path": str(culture_source_fig.resolve()),
+            }
+        )
 
-    label_col = "coarse_label" if "coarse_label" in metadata.columns else ("label" if "label" in metadata.columns else None)
+    label_col = (
+        "coarse_label" if "coarse_label" in metadata.columns else ("label" if "label" in metadata.columns else None)
+    )
     if label_col:
         label_counts = (
-            metadata[label_col]
-            .fillna("unknown")
-            .astype(str)
-            .value_counts()
-            .head(12)
-            .sort_values(ascending=False)
+            metadata[label_col].fillna("unknown").astype(str).value_counts().head(12).sort_values(ascending=False)
         )
         label_csv = out_dir / f"{bundle.name}_top_labels.csv"
         label_counts.rename_axis(label_col).reset_index(name="n_tracks").to_csv(label_csv, index=False)
         label_fig = out_dir / f"{bundle.name}_top_labels.png"
-        _series_barh(label_counts, f"{bundle.title}: top labels", "tracks", label_fig, color="#A8DADC")
+        _series_barh(
+            label_counts,
+            f"{bundle.title}: top labels",
+            "tracks",
+            label_fig,
+            color="#A8DADC",
+        )
         figures.append({"name": f"{bundle.name}_top_labels", "path": str(label_fig.resolve())})
 
     by_user = interactions.groupby("user_id").agg(
@@ -346,23 +390,57 @@ def _summarize_dataset(bundle: DatasetBundle, out_dir: Path) -> tuple[dict[str, 
         weight_sum=("weight", "sum"),
     )
     hist_fig = out_dir / f"{bundle.name}_interactions_per_user_hist.png"
-    _histogram(by_user["n_interactions"], f"{bundle.title}: interactions per user", "interactions per user", hist_fig, bins=20)
-    figures.append({"name": f"{bundle.name}_interactions_per_user_hist", "path": str(hist_fig.resolve())})
+    _histogram(
+        by_user["n_interactions"],
+        f"{bundle.title}: interactions per user",
+        "interactions per user",
+        hist_fig,
+        bins=20,
+    )
+    figures.append(
+        {
+            "name": f"{bundle.name}_interactions_per_user_hist",
+            "path": str(hist_fig.resolve()),
+        }
+    )
 
     weight_fig = out_dir / f"{bundle.name}_interaction_weight_hist.png"
-    _histogram(interactions["weight"], f"{bundle.title}: interaction weight distribution", "interaction weight", weight_fig, bins=24, color="#F4A261")
-    figures.append({"name": f"{bundle.name}_interaction_weight_hist", "path": str(weight_fig.resolve())})
+    _histogram(
+        interactions["weight"],
+        f"{bundle.title}: interaction weight distribution",
+        "interaction weight",
+        weight_fig,
+        bins=24,
+        color="#F4A261",
+    )
+    figures.append(
+        {
+            "name": f"{bundle.name}_interaction_weight_hist",
+            "path": str(weight_fig.resolve()),
+        }
+    )
 
     track_culture = metadata[["track_id", "culture"]].copy()
     merged = interactions.merge(track_culture, on="track_id", how="left")
     culture_cov = merged.groupby("user_id")["culture"].nunique().rename("n_cultures")
     cov_fig = out_dir / f"{bundle.name}_culture_coverage_per_user.png"
-    _histogram(culture_cov, f"{bundle.title}: culture coverage per user", "unique cultures per user", cov_fig, bins=10, color="#8D99AE")
-    figures.append({"name": f"{bundle.name}_culture_coverage_per_user", "path": str(cov_fig.resolve())})
+    _histogram(
+        culture_cov,
+        f"{bundle.title}: culture coverage per user",
+        "unique cultures per user",
+        cov_fig,
+        bins=10,
+        color="#8D99AE",
+    )
+    figures.append(
+        {
+            "name": f"{bundle.name}_culture_coverage_per_user",
+            "path": str(cov_fig.resolve()),
+        }
+    )
 
     figures.extend(
-        {"name": key, "path": value}
-        for key, value in _plot_embedding_pca(bundle=bundle, out_dir=out_dir).items()
+        {"name": key, "path": value} for key, value in _plot_embedding_pca(bundle=bundle, out_dir=out_dir).items()
     )
 
     summary = {
@@ -474,16 +552,31 @@ def _summarize_pal(summary_path: Path, out_dir: Path) -> tuple[dict[str, Any], l
         axes[0].plot(rows_df["tag"], rows_df["serendipity_mean"], marker="o", color="#2A9D8F")
         axes[0].set_title("PAL serendipity trajectory")
         axes[0].set_ylabel("serendipity_mean")
-        axes[1].plot(rows_df["tag"], rows_df["cultural_calibration_kl_mean"], marker="o", color="#E76F51")
+        axes[1].plot(
+            rows_df["tag"],
+            rows_df["cultural_calibration_kl_mean"],
+            marker="o",
+            color="#E76F51",
+        )
         axes[1].set_title("PAL calibration trajectory")
         axes[1].set_ylabel("cultural_calibration_kl_mean")
         pal_metric_path = out_dir / "pal_round_metric_trajectory.png"
         _save_figure(fig, pal_metric_path)
-        figures.append({"name": "pal_round_metric_trajectory", "path": str(pal_metric_path.resolve())})
+        figures.append(
+            {
+                "name": "pal_round_metric_trajectory",
+                "path": str(pal_metric_path.resolve()),
+            }
+        )
     if not rounds_df.empty:
         rounds_df.to_csv(out_dir / "pal_round_constraints.csv", index=False)
         fig, ax = plt.subplots(figsize=(8.8, 4.8))
-        ax.bar(rounds_df["round"].astype(str), rounds_df["n_positive"], label="positive", color="#2A9D8F")
+        ax.bar(
+            rounds_df["round"].astype(str),
+            rounds_df["n_positive"],
+            label="positive",
+            color="#2A9D8F",
+        )
         ax.bar(
             rounds_df["round"].astype(str),
             rounds_df["n_negative"],
@@ -491,7 +584,13 @@ def _summarize_pal(summary_path: Path, out_dir: Path) -> tuple[dict[str, Any], l
             label="negative",
             color="#E76F51",
         )
-        ax.plot(rounds_df["round"].astype(str), rounds_df["n_merged_constraints"], marker="o", color="#264653", label="merged")
+        ax.plot(
+            rounds_df["round"].astype(str),
+            rounds_df["n_merged_constraints"],
+            marker="o",
+            color="#264653",
+            label="merged",
+        )
         ax.set_title("PAL constraints by round")
         ax.set_xlabel("round")
         ax.set_ylabel("count")
@@ -515,7 +614,12 @@ def _summarize_pal(summary_path: Path, out_dir: Path) -> tuple[dict[str, Any], l
         culture_counts = pd.crosstab(task_df["culture"], task_df["round"])
         task_culture_path = out_dir / "pal_task_culture_distribution.png"
         _stacked_bar(culture_counts, "PAL task distribution by culture", task_culture_path)
-        figures.append({"name": "pal_task_culture_distribution", "path": str(task_culture_path.resolve())})
+        figures.append(
+            {
+                "name": "pal_task_culture_distribution",
+                "path": str(task_culture_path.resolve()),
+            }
+        )
 
         fig, ax = plt.subplots(figsize=(8.8, 4.6))
         for round_name, subset in task_df.groupby("round"):
@@ -526,7 +630,12 @@ def _summarize_pal(summary_path: Path, out_dir: Path) -> tuple[dict[str, Any], l
         ax.legend(frameon=False)
         uncertainty_path = out_dir / "pal_uncertainty_distribution.png"
         _save_figure(fig, uncertainty_path)
-        figures.append({"name": "pal_uncertainty_distribution", "path": str(uncertainty_path.resolve())})
+        figures.append(
+            {
+                "name": "pal_uncertainty_distribution",
+                "path": str(uncertainty_path.resolve()),
+            }
+        )
 
     summary = {
         "n_rounds": int(len(obj.get("rounds", []))),

@@ -217,7 +217,11 @@ def run_phase3_pal(
         cmp = compare_recommender_runs(
             base_eval_path=baseline_eval_path,
             candidate_eval_path=eval_path,
-            metrics=["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"],
+            metrics=[
+                "serendipity",
+                "cultural_calibration_kl",
+                "minority_exposure_at_k",
+            ],
             bootstrap_samples=int(bootstrap_samples),
             permutation_samples=int(permutation_samples),
             seed=int(seed) + ridx,

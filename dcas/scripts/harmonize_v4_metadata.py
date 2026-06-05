@@ -8,7 +8,10 @@ from typing import Any
 
 import torchaudio
 
-from dcas.scripts.harmonize_v3_metadata import DEFAULT_FMA_METADATA_ZIP, harmonize_metadata
+from dcas.scripts.harmonize_v3_metadata import (
+    DEFAULT_FMA_METADATA_ZIP,
+    harmonize_metadata,
+)
 
 
 REQUIRED_FIELDS = [
@@ -54,12 +57,7 @@ GOVERNANCE_FIELDS = [
     "drop_reason",
 ]
 
-FINAL_FIELD_ORDER = (
-    REQUIRED_FIELDS
-    + ["coarse_label", "is_instrumental"]
-    + RECOMMENDED_FIELDS
-    + GOVERNANCE_FIELDS
-)
+FINAL_FIELD_ORDER = REQUIRED_FIELDS + ["coarse_label", "is_instrumental"] + RECOMMENDED_FIELDS + GOVERNANCE_FIELDS
 
 
 def _read_rows(path: Path) -> tuple[list[dict[str, str]], list[str]]:

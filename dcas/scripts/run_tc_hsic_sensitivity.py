@@ -158,7 +158,9 @@ def run_tc_hsic_sensitivity(
                     "eval_path": str(eval_path),
                     "serendipity_mean": float(ev["summary"]["serendipity_mean"]),
                     "cultural_calibration_kl_mean": float(ev["summary"]["cultural_calibration_kl_mean"]),
-                    "minority_exposure_at_k_mean": float(ev["summary"].get("minority_exposure_at_k_mean", float("nan"))),
+                    "minority_exposure_at_k_mean": float(
+                        ev["summary"].get("minority_exposure_at_k_mean", float("nan"))
+                    ),
                 }
                 runs.append(row)
                 by_cell[key].append(row)
@@ -181,8 +183,14 @@ def run_tc_hsic_sensitivity(
         )
 
     ser_means = np.array([float(r["serendipity"]["mean"]) for r in grid_rows], dtype=np.float64)
-    ckl_means = np.array([float(r["cultural_calibration_kl"]["mean"]) for r in grid_rows], dtype=np.float64)
-    min_means = np.array([float(r["minority_exposure_at_k"]["mean"]) for r in grid_rows], dtype=np.float64)
+    ckl_means = np.array(
+        [float(r["cultural_calibration_kl"]["mean"]) for r in grid_rows],
+        dtype=np.float64,
+    )
+    min_means = np.array(
+        [float(r["minority_exposure_at_k"]["mean"]) for r in grid_rows],
+        dtype=np.float64,
+    )
     objective = _safe_z(ser_means) - _safe_z(ckl_means) + _safe_z(min_means)
     for i, r in enumerate(grid_rows):
         r["objective_zscore"] = float(objective[i])
@@ -202,9 +210,18 @@ def run_tc_hsic_sensitivity(
         rows_seed_map = {(float(r["lambda_tc"]), float(r["lambda_hsic"])): r for r in rows_seed}
         if any(k not in rows_seed_map for k in cell_order):
             continue
-        ser = np.array([float(rows_seed_map[k]["serendipity_mean"]) for k in cell_order], dtype=np.float64)
-        ckl = np.array([float(rows_seed_map[k]["cultural_calibration_kl_mean"]) for k in cell_order], dtype=np.float64)
-        minority = np.array([float(rows_seed_map[k]["minority_exposure_at_k_mean"]) for k in cell_order], dtype=np.float64)
+        ser = np.array(
+            [float(rows_seed_map[k]["serendipity_mean"]) for k in cell_order],
+            dtype=np.float64,
+        )
+        ckl = np.array(
+            [float(rows_seed_map[k]["cultural_calibration_kl_mean"]) for k in cell_order],
+            dtype=np.float64,
+        )
+        minority = np.array(
+            [float(rows_seed_map[k]["minority_exposure_at_k_mean"]) for k in cell_order],
+            dtype=np.float64,
+        )
         score = _safe_z(ser) - _safe_z(ckl) + _safe_z(minority)
         seed_scores[int(seed)] = score
         idx = int(np.argmax(score))
@@ -234,8 +251,12 @@ def run_tc_hsic_sensitivity(
         "best_config_frequency": best_counts,
         "dominant_best_config": dominant_key,
         "dominant_best_config_ratio": float(dominant_freq),
-        "rank_spearman_mean": float(np.mean(np.array(spearman_vals, dtype=np.float64))) if spearman_vals else float("nan"),
-        "rank_spearman_std": float(np.std(np.array(spearman_vals, dtype=np.float64))) if spearman_vals else float("nan"),
+        "rank_spearman_mean": float(np.mean(np.array(spearman_vals, dtype=np.float64)))
+        if spearman_vals
+        else float("nan"),
+        "rank_spearman_std": float(np.std(np.array(spearman_vals, dtype=np.float64)))
+        if spearman_vals
+        else float("nan"),
         "rank_spearman_pairs": int(len(spearman_vals)),
     }
 

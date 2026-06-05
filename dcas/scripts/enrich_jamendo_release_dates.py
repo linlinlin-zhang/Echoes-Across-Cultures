@@ -55,7 +55,10 @@ def _load_client_id() -> str:
     run_script = Path("run_jamendo_crawl.ps1")
     if not run_script.exists():
         return ""
-    match = re.search(r"\$JAMENDO_CLIENT_ID\s*=\s*\"([^\"]+)\"", run_script.read_text(encoding="utf-8", errors="ignore"))
+    match = re.search(
+        r"\$JAMENDO_CLIENT_ID\s*=\s*\"([^\"]+)\"",
+        run_script.read_text(encoding="utf-8", errors="ignore"),
+    )
     if not match:
         return ""
     value = _clean(match.group(1))
@@ -102,7 +105,7 @@ def _request_json(session: requests.Session, params: dict[str, Any], *, max_retr
     for attempt in range(max_retries):
         response = session.get(JAMENDO_TRACKS_URL, params=params, timeout=30)
         if response.status_code == 429:
-            time.sleep(min(45.0, 2.5 * (2 ** attempt)))
+            time.sleep(min(45.0, 2.5 * (2**attempt)))
             continue
         response.raise_for_status()
         data = response.json()
@@ -228,7 +231,10 @@ def enrich_files(
         if delay_seconds > 0:
             time.sleep(delay_seconds)
         if (start // batch_size + 1) % 25 == 0:
-            print(f"[INFO] album batches {start + len(batch)}/{len(album_list)}; resolved={len(release_by_id)}", flush=True)
+            print(
+                f"[INFO] album batches {start + len(batch)}/{len(album_list)}; resolved={len(release_by_id)}",
+                flush=True,
+            )
 
     unresolved_ids: set[str] = set(fallback_ids)
     for _path, rows, _fieldnames in loaded:
@@ -239,7 +245,10 @@ def enrich_files(
             if jid and jid not in release_by_id:
                 unresolved_ids.add(jid)
 
-    for pos, jid in enumerate(sorted(unresolved_ids, key=lambda value: int(value) if value.isdigit() else value), start=1):
+    for pos, jid in enumerate(
+        sorted(unresolved_ids, key=lambda value: int(value) if value.isdigit() else value),
+        start=1,
+    ):
         record, made = _fetch_track(session, client_id=client_id, jamendo_id=jid)
         api_requests += made
         if record.get("release_date"):
@@ -247,7 +256,10 @@ def enrich_files(
         if delay_seconds > 0:
             time.sleep(delay_seconds)
         if pos % 50 == 0:
-            print(f"[INFO] fallback tracks {pos}/{len(unresolved_ids)}; resolved={len(release_by_id)}", flush=True)
+            print(
+                f"[INFO] fallback tracks {pos}/{len(unresolved_ids)}; resolved={len(release_by_id)}",
+                flush=True,
+            )
 
     file_reports: list[dict[str, Any]] = []
     missing_after = 0
@@ -278,7 +290,14 @@ def enrich_files(
             _write_rows(path, rows, final_fields)
         total_updated += updated
         missing_after += file_missing_after
-        file_reports.append({"path": str(path), "rows": len(rows), "updated_cells": updated, "missing_release_date": file_missing_after})
+        file_reports.append(
+            {
+                "path": str(path),
+                "rows": len(rows),
+                "updated_cells": updated,
+                "missing_release_date": file_missing_after,
+            }
+        )
 
     return {
         "paths": [str(path) for path in paths],
@@ -296,8 +315,17 @@ def enrich_files(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fill Jamendo release_date/release_year fields from the Jamendo API.")
-    parser.add_argument("--metadata", nargs="+", required=True, help="Metadata CSV path(s) to update in place.")
-    parser.add_argument("--client_id", default="", help="Jamendo client id; defaults to JAMENDO_CLIENT_ID or run_jamendo_crawl.ps1.")
+    parser.add_argument(
+        "--metadata",
+        nargs="+",
+        required=True,
+        help="Metadata CSV path(s) to update in place.",
+    )
+    parser.add_argument(
+        "--client_id",
+        default="",
+        help="Jamendo client id; defaults to JAMENDO_CLIENT_ID or run_jamendo_crawl.ps1.",
+    )
     parser.add_argument("--album_batch_size", type=int, default=10)
     parser.add_argument("--delay_seconds", type=float, default=0.12)
     args = parser.parse_args()

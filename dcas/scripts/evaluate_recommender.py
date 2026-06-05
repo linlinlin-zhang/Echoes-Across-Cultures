@@ -12,7 +12,12 @@ import torch
 
 from dcas.data.interactions import load_interactions
 from dcas.data.npz_tracks import load_tracks
-from dcas.recommender import recommend_knn, recommend_knn_calibrated, recommend_ot, recommend_ot_calibrated
+from dcas.recommender import (
+    recommend_knn,
+    recommend_knn_calibrated,
+    recommend_ot,
+    recommend_ot_calibrated,
+)
 from dcas.serialization import load_checkpoint
 
 
@@ -207,7 +212,14 @@ def evaluate_recommender(
 
     per_culture: dict[str, dict[str, float]] = {}
     tmp: dict[str, dict[str, list[float]]] = defaultdict(
-        lambda: {"ser": [], "ckl": [], "legacy": [], "target_prob": [], "user_align_kl": [], "minority": []}
+        lambda: {
+            "ser": [],
+            "ckl": [],
+            "legacy": [],
+            "target_prob": [],
+            "user_align_kl": [],
+            "minority": [],
+        }
     )
     for r in rows:
         c = str(r["target_culture"])
@@ -275,7 +287,9 @@ def evaluate_recommender(
             "cultural_calibration_kl_ci95_low": float(ckl_ci_l),
             "cultural_calibration_kl_ci95_high": float(ckl_ci_h),
             "minority_exposure_at_k_mean": _safe_mean(minority),
-            "minority_exposure_at_k_std": float(np.std(np.array(minority, dtype=np.float64))) if minority else float("nan"),
+            "minority_exposure_at_k_std": float(np.std(np.array(minority, dtype=np.float64)))
+            if minority
+            else float("nan"),
             "minority_exposure_at_k_ci95_low": float(min_ci_l),
             "minority_exposure_at_k_ci95_high": float(min_ci_h),
         },
@@ -337,7 +351,11 @@ def main() -> None:
     ap.add_argument("--tracks", required=True)
     ap.add_argument("--interactions", required=True)
     ap.add_argument("--out_json", default=None)
-    ap.add_argument("--method", default="ot", choices=["ot", "knn", "ot_calibrated", "knn_calibrated"])
+    ap.add_argument(
+        "--method",
+        default="ot",
+        choices=["ot", "knn", "ot_calibrated", "knn_calibrated"],
+    )
     ap.add_argument("--k", type=int, default=20)
     ap.add_argument("--epsilon", type=float, default=0.1)
     ap.add_argument("--iters", type=int, default=200)

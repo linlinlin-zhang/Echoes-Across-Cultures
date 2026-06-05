@@ -36,7 +36,6 @@ import random
 import re
 import sys
 import time
-import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -57,17 +56,41 @@ PAGE_LIMIT = 200  # Jamendo max per page
 CULTURE_TAG_CONFIGS: dict[str, dict[str, Any]] = {
     "west": {
         "tags": [
-            "pop", "rock", "hip-hop", "electronic", "indie", "folk",
-            "jazz", "classical", "blues", "soul", "funk", "country",
-            "metal", "punk", "reggae", "ambient", "lo-fi", "edm",
+            "pop",
+            "rock",
+            "hip-hop",
+            "electronic",
+            "indie",
+            "folk",
+            "jazz",
+            "classical",
+            "blues",
+            "soul",
+            "funk",
+            "country",
+            "metal",
+            "punk",
+            "reggae",
+            "ambient",
+            "lo-fi",
+            "edm",
         ],
         "fuzzytags": "",
     },
     "china": {
         "tags": [
-            "chinese", "mandopop", "cantopop", "c-pop", "chinese folk",
-            "cantonese", "hakka", "hokkien", "taiwanese", "minnan",
-            "teochew", "shanghainese",
+            "chinese",
+            "mandopop",
+            "cantopop",
+            "c-pop",
+            "chinese folk",
+            "cantonese",
+            "hakka",
+            "hokkien",
+            "taiwanese",
+            "minnan",
+            "teochew",
+            "shanghainese",
         ],
         "fuzzytags": "chinese,china,mandarin,cantonese,hakka,hokkien,taiwanese,minnan,teochew,shanghainese",
     },
@@ -104,11 +127,27 @@ CULTURE_TAG_CONFIGS: dict[str, dict[str, Any]] = {
         "fuzzytags": "thai,vietnamese,philippine,malay,indonesian,dangdut",
     },
     "celtic": {
-        "tags": ["celtic", "irish", "scottish", "breton", "galician", "gaelic", "fiddle"],
+        "tags": [
+            "celtic",
+            "irish",
+            "scottish",
+            "breton",
+            "galician",
+            "gaelic",
+            "fiddle",
+        ],
         "fuzzytags": "celtic,irish,scottish,gaelic,breton,galician",
     },
     "nordic": {
-        "tags": ["nordic", "scandinavian", "swedish", "norwegian", "finnish", "danish", "icelandic"],
+        "tags": [
+            "nordic",
+            "scandinavian",
+            "swedish",
+            "norwegian",
+            "finnish",
+            "danish",
+            "icelandic",
+        ],
         "fuzzytags": "nordic,scandinavian,swedish,norwegian,finnish,danish,icelandic",
     },
     "eastern_europe": {
@@ -138,6 +177,7 @@ CULTURE_TAG_CONFIGS: dict[str, dict[str, Any]] = {
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class JamendoTrackRecord:
     track_id: str
@@ -149,7 +189,7 @@ class JamendoTrackRecord:
     duration_ms: int
     culture: str
     label: str  # primary tag used for search
-    tags: str   # all Jamendo tags joined
+    tags: str  # all Jamendo tags joined
     jamendo_id: str
     jamendo_url: str
     audio_url: str
@@ -209,6 +249,7 @@ class CrawlState:
 # HTTP helpers
 # ---------------------------------------------------------------------------
 
+
 class RateLimitedSession:
     def __init__(self, max_retries: int = 5, default_backoff: float = 3.0):
         self.max_retries = max_retries
@@ -219,12 +260,12 @@ class RateLimitedSession:
             try:
                 resp = requests.get(url, params=params, timeout=30)
                 if resp.status_code == 429:
-                    sleep_secs = self.default_backoff * (2 ** attempt)
+                    sleep_secs = self.default_backoff * (2**attempt)
                     print(f"[RATE LIMIT] 429; sleeping {sleep_secs:.1f}s")
                     time.sleep(sleep_secs)
                     continue
                 if resp.status_code in (502, 503, 504):
-                    sleep_secs = self.default_backoff * (2 ** attempt)
+                    sleep_secs = self.default_backoff * (2**attempt)
                     print(f"[SERVER ERROR] {resp.status_code}; sleeping {sleep_secs:.1f}s")
                     time.sleep(sleep_secs)
                     continue
@@ -232,13 +273,14 @@ class RateLimitedSession:
                 return resp.json()
             except requests.RequestException as e:
                 print(f"[REQUEST ERROR] {e} (attempt {attempt + 1}/{self.max_retries})")
-                time.sleep(self.default_backoff * (2 ** attempt))
+                time.sleep(self.default_backoff * (2**attempt))
         return {}
 
 
 # ---------------------------------------------------------------------------
 # Checkpoint Manager
 # ---------------------------------------------------------------------------
+
 
 class CheckpointManager:
     def __init__(self, out_dir: Path):
@@ -285,6 +327,7 @@ class CheckpointManager:
 # Crawler
 # ---------------------------------------------------------------------------
 
+
 class JamendoCrawler:
     def __init__(
         self,
@@ -312,11 +355,24 @@ class JamendoCrawler:
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
         self._fieldnames = [
-            "track_id", "culture", "audio_path", "source_dataset", "label",
-            "title", "artist", "album", "duration_ms",
-            "album_id", "release_date", "release_year",
-            "tags", "jamendo_id", "jamendo_url", "audio_url",
-            "image_url", "license_url",
+            "track_id",
+            "culture",
+            "audio_path",
+            "source_dataset",
+            "label",
+            "title",
+            "artist",
+            "album",
+            "duration_ms",
+            "album_id",
+            "release_date",
+            "release_year",
+            "tags",
+            "jamendo_id",
+            "jamendo_url",
+            "audio_url",
+            "image_url",
+            "license_url",
         ]
 
     def _fetch_page(
@@ -443,7 +499,9 @@ class JamendoCrawler:
         existing_meta_ids = self.checkpoint.read_existing_metadata_ids()
         downloaded_set |= existing_meta_ids
         if resume and state.completed_queries and not downloaded_set and not failed_set:
-            print("[RECOVERY] Existing checkpoint has completed queries but no downloaded/failed tracks; retrying queries.")
+            print(
+                "[RECOVERY] Existing checkpoint has completed queries but no downloaded/failed tracks; retrying queries."
+            )
             state.completed_queries.clear()
             state.total_collected = 0
             completed_set.clear()
@@ -513,7 +571,9 @@ class JamendoCrawler:
                     print(f"[TARGET REACHED] {state.total_collected} >= {self.target_total}")
                     break
 
-                print(f"[{qidx}/{total_queries}] culture={culture} tags={tags or '(fuzzy)'} fuzzytags={fuzzytags or '(none)'}")
+                print(
+                    f"[{qidx}/{total_queries}] culture={culture} tags={tags or '(fuzzy)'} fuzzytags={fuzzytags or '(none)'}"
+                )
 
                 all_records: list[JamendoTrackRecord] = []
                 remaining = max(0, self.target_total - state.total_collected)
@@ -583,15 +643,34 @@ class JamendoCrawler:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Bulk collect Jamendo CC-licensed tracks for DCAS.")
-    ap.add_argument("--client_id", default=os.environ.get("JAMENDO_CLIENT_ID", ""), help="Jamendo API Client ID (or set JAMENDO_CLIENT_ID)")
+    ap.add_argument(
+        "--client_id",
+        default=os.environ.get("JAMENDO_CLIENT_ID", ""),
+        help="Jamendo API Client ID (or set JAMENDO_CLIENT_ID)",
+    )
     ap.add_argument("--out_dir", required=True, help="Output directory for audio + metadata")
-    ap.add_argument("--cultures", default="", help="Comma-separated cultures to crawl (default: all)")
+    ap.add_argument(
+        "--cultures",
+        default="",
+        help="Comma-separated cultures to crawl (default: all)",
+    )
     ap.add_argument("--target_total", type=int, default=20_000, help="Target unique tracks")
     ap.add_argument("--workers", type=int, default=6, help="Parallel download workers")
-    ap.add_argument("--checkpoint_interval", type=int, default=300, help="Seconds between checkpoints")
-    ap.add_argument("--max_per_query", type=int, default=50, help="Max new tracks downloaded from a single culture/tag query")
+    ap.add_argument(
+        "--checkpoint_interval",
+        type=int,
+        default=300,
+        help="Seconds between checkpoints",
+    )
+    ap.add_argument(
+        "--max_per_query",
+        type=int,
+        default=50,
+        help="Max new tracks downloaded from a single culture/tag query",
+    )
     ap.add_argument("--resume", action="store_true", help="Resume from existing checkpoint")
     args = ap.parse_args()
 
@@ -625,17 +704,13 @@ def main() -> None:
         },
     )
     test_headers = (test_data or {}).get("headers") or {}
-    if (
-        not test_data
-        or "results" not in test_data
-        or str(test_headers.get("status", "")).lower() == "failed"
-    ):
+    if not test_data or "results" not in test_data or str(test_headers.get("status", "")).lower() == "failed":
         if test_headers.get("error_message"):
             print(f"[AUTH/API TEST FAILED] {test_headers.get('error_message')}")
         else:
             print("[AUTH/API TEST FAILED] Check your Jamendo Client ID.")
         sys.exit(1)
-    print(f"[AUTH OK] Jamendo API reachable.")
+    print("[AUTH OK] Jamendo API reachable.")
 
     crawler = JamendoCrawler(
         client_id=args.client_id,

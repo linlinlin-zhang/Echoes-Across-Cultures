@@ -185,16 +185,51 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Build tracks.npz from audio files using CultureMERT embeddings.",
     )
-    ap.add_argument("--metadata", required=True, help="CSV with columns: track_id,culture,audio_path[,affect_label]")
+    ap.add_argument(
+        "--metadata",
+        required=True,
+        help="CSV with columns: track_id,culture,audio_path[,affect_label]",
+    )
     ap.add_argument("--out", required=True, help="Output tracks.npz path")
     ap.add_argument("--model_id", default="ntua-slp/CultureMERT-95M")
     ap.add_argument("--device", default=None, help="cpu/cuda, default auto")
-    ap.add_argument("--pooling", default="mean", choices=["mean", "cls"], help="Embedding pooling strategy")
-    ap.add_argument("--layer_indices", nargs="*", type=int, default=None, help="Optional layer indices to aggregate")
-    ap.add_argument("--layer_weights", nargs="*", type=float, default=None, help="Optional normalized or unnormalized weights for selected layers")
-    ap.add_argument("--max_seconds", type=float, default=30.0, help="Trim each track to this duration before embedding")
-    ap.add_argument("--window_count", type=int, default=1, help="Number of windows to sample and aggregate per track")
-    ap.add_argument("--window_strategy", default="single", help="Window sampling strategy: single or uniform")
+    ap.add_argument(
+        "--pooling",
+        default="mean",
+        choices=["mean", "cls"],
+        help="Embedding pooling strategy",
+    )
+    ap.add_argument(
+        "--layer_indices",
+        nargs="*",
+        type=int,
+        default=None,
+        help="Optional layer indices to aggregate",
+    )
+    ap.add_argument(
+        "--layer_weights",
+        nargs="*",
+        type=float,
+        default=None,
+        help="Optional normalized or unnormalized weights for selected layers",
+    )
+    ap.add_argument(
+        "--max_seconds",
+        type=float,
+        default=30.0,
+        help="Trim each track to this duration before embedding",
+    )
+    ap.add_argument(
+        "--window_count",
+        type=int,
+        default=1,
+        help="Number of windows to sample and aggregate per track",
+    )
+    ap.add_argument(
+        "--window_strategy",
+        default="single",
+        help="Window sampling strategy: single or uniform",
+    )
     ap.add_argument("--window_aggregate", default="mean", help="Window aggregation strategy")
     ap.add_argument("--limit", type=int, default=None, help="Optional max number of rows")
     ap.add_argument("--skip_errors", action="store_true")

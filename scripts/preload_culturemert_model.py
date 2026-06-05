@@ -27,7 +27,9 @@ def _bool_env(name: str, default: bool = False) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Download and verify the CultureMERT model used by the local Echo worker.")
+    parser = argparse.ArgumentParser(
+        description="Download and verify the CultureMERT model used by the local Echo worker."
+    )
     parser.add_argument("--env-file", default="configs/local_worker.env")
     parser.add_argument("--model-id", default="")
     parser.add_argument("--cache-dir", default="")

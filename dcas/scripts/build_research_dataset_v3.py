@@ -23,6 +23,7 @@ import pandas as pd
 import requests
 import reverse_geocoder as rg
 import torchaudio
+
 ROOT = Path(__file__).resolve().parents[2]
 
 if str(ROOT) not in sys.path:
@@ -390,8 +391,7 @@ def _build_india(out_root: Path, raw_root: Path) -> Path:
         audio_names = sorted(
             n
             for n in zf.namelist()
-            if not n.startswith("__MACOSX/")
-            and os.path.splitext(n)[1].lower() in {".mp3", ".wav", ".flac"}
+            if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() in {".mp3", ".wav", ".flac"}
         )
         for idx, name in enumerate(audio_names):
             payload = zf.read(name)
@@ -489,9 +489,7 @@ def _build_jingju_rows(out_dir: Path, raw_root: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     with zipfile.ZipFile(zip_path) as zf:
         audio_names = sorted(
-            n
-            for n in zf.namelist()
-            if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() == ".wav"
+            n for n in zf.namelist() if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() == ".wav"
         )
         out_idx = 0
         for src_idx, name in enumerate(audio_names):
@@ -776,9 +774,7 @@ def _build_indonesia_probe(out_root: Path, raw_root: Path) -> Path:
     rows: list[dict[str, Any]] = []
     with zipfile.ZipFile(zip_path) as zf:
         audio_names = sorted(
-            n
-            for n in zf.namelist()
-            if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() == ".wav"
+            n for n in zf.namelist() if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() == ".wav"
         )
         out_idx = 0
         for src_idx, name in enumerate(audio_names):
@@ -936,7 +932,11 @@ def _build_fma_indonesia_targets(cache_root: Path) -> list[dict[str, Any]]:
 
     items = sorted(
         items,
-        key=lambda row: (-float(row["track_favorites"]), -float(row["track_listens"]), row["match_key"]),
+        key=lambda row: (
+            -float(row["track_favorites"]),
+            -float(row["track_listens"]),
+            row["match_key"],
+        ),
     )
     with open(cache_path, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
@@ -1036,9 +1036,7 @@ def _build_indonesia(out_root: Path, raw_root: Path, cache_root: Path, workers: 
     zip_path = raw_root / "gamelan_music_dataset.zip"
     with zipfile.ZipFile(zip_path) as zf:
         audio_names = sorted(
-            n
-            for n in zf.namelist()
-            if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() == ".wav"
+            n for n in zf.namelist() if not n.startswith("__MACOSX/") and os.path.splitext(n)[1].lower() == ".wav"
         )
         out_idx = 0
         for src_idx, name in enumerate(audio_names):
@@ -1110,10 +1108,7 @@ def _load_fma_tracks_and_genres() -> tuple[pd.DataFrame, pd.DataFrame]:
         raw_tracks = pd.read_csv(zf.open("fma_metadata/raw_tracks.csv"), low_memory=False)
         genres = pd.read_csv(zf.open("fma_metadata/genres.csv"))
     tracks = tracks.iloc[1:].copy()
-    tracks.columns = [
-        f"{a}__{b}" if not str(b).startswith("Unnamed") else str(a)
-        for a, b in tracks.columns.to_list()
-    ]
+    tracks.columns = [f"{a}__{b}" if not str(b).startswith("Unnamed") else str(a) for a, b in tracks.columns.to_list()]
     tracks["track_id"] = pd.to_numeric(tracks["Unnamed: 0_level_0"], errors="coerce").astype("Int64")
     raw_subset = raw_tracks[["track_id", "track_url", "track_file", "album_url", "artist_url"]].copy()
     raw_subset["track_id"] = pd.to_numeric(raw_subset["track_id"], errors="coerce").astype("Int64")
@@ -1236,7 +1231,11 @@ def _build_fma_selected_targets(cache_root: Path, per_country: int, strict_min: 
     for culture in sorted(FMA_COUNTRY_CODES.keys()):
         items = sorted(
             candidates_by_country[culture],
-            key=lambda row: (-float(row["track_favorites"]), -float(row["track_listens"]), row["match_key"]),
+            key=lambda row: (
+                -float(row["track_favorites"]),
+                -float(row["track_listens"]),
+                row["match_key"],
+            ),
         )
         wanted = min(per_country, len(items)) if not strict_min else per_country
         picked = _round_robin_diverse(items, wanted, artist_key="artist_key", max_per_artist=3)
@@ -1383,10 +1382,7 @@ def _download_fma_rows(
             batch = prepared[next_rank : next_rank + batch_size]
             next_rank += len(batch)
             with ThreadPoolExecutor(max_workers=max(2, workers)) as ex:
-                futures = {
-                    ex.submit(download_one, attempt_n + offset, item): item
-                    for offset, item in enumerate(batch)
-                }
+                futures = {ex.submit(download_one, attempt_n + offset, item): item for offset, item in enumerate(batch)}
                 for i, fut in enumerate(as_completed(futures), start=1):
                     item = futures[fut]
                     try:
@@ -1402,9 +1398,7 @@ def _download_fma_rows(
             attempt_n += len(batch)
 
         if len(rows_out) < target_per_culture:
-            raise RuntimeError(
-                f"FMA country '{culture}' only downloaded {len(rows_out)} rows (< {target_per_culture})"
-            )
+            raise RuntimeError(f"FMA country '{culture}' only downloaded {len(rows_out)} rows (< {target_per_culture})")
 
         selected_rows = sorted(rows_out, key=lambda row: row["source_index"])[:target_per_culture]
         keep_paths: set[Path] = set()
@@ -1520,7 +1514,9 @@ def build_research_dataset_v3(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Build research_dataset_v3 from locally audited sources and FMA country filters.")
+    ap = argparse.ArgumentParser(
+        description="Build research_dataset_v3 from locally audited sources and FMA country filters."
+    )
     ap.add_argument("--out_root", default=str(DEFAULT_OUT_ROOT))
     ap.add_argument("--raw_root", default=str(DEFAULT_RAW_ROOT))
     ap.add_argument("--cache_root", default=str(DEFAULT_CACHE_ROOT))

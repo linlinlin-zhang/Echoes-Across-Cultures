@@ -188,7 +188,11 @@ def run_baseline_comparison(
         }
 
     metrics = ["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"]
-    direction = {"serendipity": 1.0, "cultural_calibration_kl": -1.0, "minority_exposure_at_k": 1.0}
+    direction = {
+        "serendipity": 1.0,
+        "cultural_calibration_kl": -1.0,
+        "minority_exposure_at_k": 1.0,
+    }
     comparison_vs_full: dict[str, Any] = {}
     for variant in variants:
         name = str(variant["name"])
@@ -232,7 +236,9 @@ def run_baseline_comparison(
             metric_summary[m] = {
                 "delta_full_minus_baseline": _stats(deltas[m]),
                 "p_value": _stats(pvals[m]),
-                "full_better_rate": float(np.mean(np.array(better[m], dtype=np.float64))) if better[m] else float("nan"),
+                "full_better_rate": float(np.mean(np.array(better[m], dtype=np.float64)))
+                if better[m]
+                else float("nan"),
                 "n_seeds_compared": int(len(deltas[m])),
             }
         comparison_vs_full[name] = {"metrics": metric_summary, "per_seed": per_seed}
@@ -244,7 +250,9 @@ def run_baseline_comparison(
         ckl_ok = float(m["cultural_calibration_kl"]["delta_full_minus_baseline"]["mean"]) < 0
         min_ok = float(m["minority_exposure_at_k"]["delta_full_minus_baseline"]["mean"]) > 0
         necessity_checks[name] = bool(ser_ok and ckl_ok and min_ok)
-    necessity_checks["all_baselines_support_three_factor"] = bool(all(necessity_checks.values())) if necessity_checks else False
+    necessity_checks["all_baselines_support_three_factor"] = (
+        bool(all(necessity_checks.values())) if necessity_checks else False
+    )
 
     result: dict[str, Any] = {
         "config": {
@@ -306,8 +314,12 @@ def run_baseline_comparison(
             continue
         c = comparison_vs_full.get(name, {}).get("metrics", {})
         d_ser = float(c.get("serendipity", {}).get("delta_full_minus_baseline", {}).get("mean", float("nan")))
-        d_ckl = float(c.get("cultural_calibration_kl", {}).get("delta_full_minus_baseline", {}).get("mean", float("nan")))
-        d_min = float(c.get("minority_exposure_at_k", {}).get("delta_full_minus_baseline", {}).get("mean", float("nan")))
+        d_ckl = float(
+            c.get("cultural_calibration_kl", {}).get("delta_full_minus_baseline", {}).get("mean", float("nan"))
+        )
+        d_min = float(
+            c.get("minority_exposure_at_k", {}).get("delta_full_minus_baseline", {}).get("mean", float("nan"))
+        )
         lines.append(
             f"| {name} | {float(ser.get('mean', float('nan'))):.6f} +/- {float(ser.get('std', float('nan'))):.6f} | "
             f"{float(ckl.get('mean', float('nan'))):.6f} +/- {float(ckl.get('std', float('nan'))):.6f} | "

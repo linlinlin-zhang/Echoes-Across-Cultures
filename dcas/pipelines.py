@@ -12,12 +12,17 @@ from torch.utils.data import DataLoader
 from dcas.data.batch import collate_batch
 from dcas.data.interactions import Interaction, load_interactions
 from dcas.data.npz_tracks import Tracks, load_tracks
-from dcas.data.torch_dataset import CultureVocab, SourceVocab, TrackDataset, make_source_balanced_sampler
+from dcas.data.torch_dataset import (
+    CultureVocab,
+    SourceVocab,
+    TrackDataset,
+    make_source_balanced_sampler,
+)
 from dcas.models.dcas_vae import DCASConfig, DCASModel
 from dcas.pal.constraints import PairwiseConstraint, load_constraints
 from dcas.pal.uncertainty import rank_by_uncertainty
 from dcas.pal.wording import PAL_TASK_QUESTION_ZH
-from dcas.recommender import Recommendation, recommend_ot
+from dcas.recommender import recommend_ot
 from dcas.scripts.build_tracks_from_audio import build_tracks_from_audio
 from dcas.scripts.make_toy_data import generate_toy_data
 from dcas.serialization import load_checkpoint, save_checkpoint
@@ -257,7 +262,11 @@ def train_model(
             return torch.zeros((), device=device)
         idx_a = torch.tensor([track_id_to_idx[c.track_id_a] for c in pairs], device=device)
         idx_b = torch.tensor([track_id_to_idx[c.track_id_b] for c in pairs], device=device)
-        similar = torch.tensor([1.0 if c.similar else 0.0 for c in pairs], device=device, dtype=torch.float32)
+        similar = torch.tensor(
+            [1.0 if c.similar else 0.0 for c in pairs],
+            device=device,
+            dtype=torch.float32,
+        )
         za_a = za_all[idx_a]
         za_b = za_all[idx_b]
         dist = torch.norm(za_a - za_b, dim=-1)
@@ -287,7 +296,9 @@ def train_model(
             pos_vec = za_all[torch.tensor([int(ex.pos_idx)], dtype=torch.long, device=device)]
             pos_dist = torch.cdist(user_vec, pos_vec).squeeze()
 
-            same_pool = user_culture_neg_pools.get(str(ex.user_id), {}).get(str(ex.pos_culture), np.array([], dtype=np.int64))
+            same_pool = user_culture_neg_pools.get(str(ex.user_id), {}).get(
+                str(ex.pos_culture), np.array([], dtype=np.int64)
+            )
             global_pool = user_global_neg_pools.get(str(ex.user_id), np.array([], dtype=np.int64))
             neg_ids: list[int] = []
             for _ in range(max(1, int(ranking_negatives))):
@@ -351,18 +362,17 @@ def train_model(
             )
             loss = out["loss"]
             aux_za_all: torch.Tensor | None = None
-            need_aux = (
-                constraints is not None
-                and float(lambda_constraints) > 0
-                and float(constraint_scale) > 0
-            ) or (
-                rank_examples is not None
-                and float(lambda_rank) > 0
-                and float(rank_scale) > 0
+            need_aux = (constraints is not None and float(lambda_constraints) > 0 and float(constraint_scale) > 0) or (
+                rank_examples is not None and float(lambda_rank) > 0 and float(rank_scale) > 0
             )
             if need_aux:
                 _, _, aux_za_all = model.encode(x_all)
-            if constraints is not None and float(lambda_constraints) > 0 and float(constraint_scale) > 0 and aux_za_all is not None:
+            if (
+                constraints is not None
+                and float(lambda_constraints) > 0
+                and float(constraint_scale) > 0
+                and aux_za_all is not None
+            ):
                 sample_k = min(
                     int(len(constraints)),
                     int(max(constraint_batch_size, constraint_candidate_pool_size))
@@ -373,7 +383,12 @@ def train_model(
                 c_loss = constraint_loss(sample, aux_za_all)
                 loss = loss + float(lambda_constraints) * float(constraint_scale) * c_loss
                 constraint_losses.append(float(c_loss.detach().cpu().item()))
-            if rank_examples is not None and float(lambda_rank) > 0 and float(rank_scale) > 0 and aux_za_all is not None:
+            if (
+                rank_examples is not None
+                and float(lambda_rank) > 0
+                and float(rank_scale) > 0
+                and aux_za_all is not None
+            ):
                 r_loss = ranking_loss(aux_za_all)
                 loss = loss + float(lambda_rank) * float(rank_scale) * r_loss
                 rank_losses.append(float(r_loss.detach().cpu().item()))
@@ -560,4 +575,8 @@ def pal_tasks(
             }
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
-    return {"tasks": str(out_path), "count": int(len(top)), "uncertainty_method": str(uncertainty_method)}
+    return {
+        "tasks": str(out_path),
+        "count": int(len(top)),
+        "uncertainty_method": str(uncertainty_method),
+    }

@@ -30,10 +30,15 @@ Clone or copy the repository into `/srv/echo`, then install Python dependencies:
 cd /srv/echo
 sudo -u echo python3 -m venv .venv
 sudo -u echo .venv/bin/pip install --upgrade pip
-sudo -u echo .venv/bin/pip install -r requirements.txt
+sudo -u echo .venv/bin/pip install -r requirements-cloud.txt
 sudo -u echo cp configs/server.env.example /etc/echo/echo.env
 sudo editor /etc/echo/echo.env
 ```
+
+Use `requirements-cloud.txt` on the cloud web server. It intentionally excludes
+Torch, Transformers, and other research-worker packages. Install the full
+`requirements.txt` only on the local worker that runs CultureMERT/DCAS
+inference.
 
 Keep `ECHO_COOKIE_SECURE=false` while testing on plain HTTP. Change it to `true` after you enable HTTPS in Nginx.
 

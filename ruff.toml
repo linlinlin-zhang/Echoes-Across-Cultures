@@ -1,0 +1,17 @@
+# Ruff configuration
+# https://docs.astral.sh/ruff/configuration/
+
+target-version = "py311"
+line-length = 120
+
+[lint]
+# Rules to ignore globally
+ignore = [
+    "E402",  # Module level import not at top of file — scripts need sys.path.insert first
+]
+
+# Per-file overrides
+[lint.per-file-ignores]
+# Translation/metadata scripts have intentional duplicate keys for different contexts
+"dcas/scripts/translate_metadata_en.py" = ["F601"]
+"dcas/scripts/translate_metadata_zh.py" = ["F601"]

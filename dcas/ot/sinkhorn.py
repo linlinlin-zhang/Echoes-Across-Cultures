@@ -43,4 +43,3 @@ def sinkhorn_plan(
 
     log_P = log_K + u[:, None] + v[None, :]
     return torch.exp(log_P)
-

@@ -127,7 +127,14 @@ class DCASModel(nn.Module):
 
     def _heads_from_hidden(
         self, h: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+    ]:
         if self.z_shared_head is not None:
             z_mu, z_logvar = self.z_shared_head(h)
             zc_mu, zs_mu, za_mu = self._split_latent(z_mu)
@@ -163,7 +170,11 @@ class DCASModel(nn.Module):
         x_hat = self.decoder(z)
 
         recon = F.mse_loss(x_hat, x, reduction="mean")
-        kl = kl_standard_normal(zc_mu, zc_logvar) + kl_standard_normal(zs_mu, zs_logvar) + kl_standard_normal(za_mu, za_logvar)
+        kl = (
+            kl_standard_normal(zc_mu, zc_logvar)
+            + kl_standard_normal(zs_mu, zs_logvar)
+            + kl_standard_normal(za_mu, za_logvar)
+        )
 
         domain_logits = self.culture_disc(self.grl(za))
         domain = F.cross_entropy(domain_logits, batch.culture)
@@ -217,4 +228,3 @@ class DCASModel(nn.Module):
             "affect": affect.detach(),
             "affect_acc": affect_acc.detach(),
         }
-

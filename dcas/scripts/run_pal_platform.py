@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 
 from dcas.pipelines import pal_tasks, train_model
-from dcas.scripts.build_pal_constraints_from_annotations import build_constraints_from_annotations
+from dcas.scripts.build_pal_constraints_from_annotations import (
+    build_constraints_from_annotations,
+)
 from dcas.scripts.compare_recommender_runs import compare_recommender_runs
 from dcas.scripts.evaluate_recommender import evaluate_recommender
 from dcas.scripts.export_pal_annotation_sheet import export_pal_annotation_sheet
@@ -104,7 +106,8 @@ def _real_round(cfg: dict[str, Any]) -> dict[str, Any]:
         constraint_warmup_epochs=int(cfg.get("constraint_warmup_epochs", 0)),
         interactions_path=(
             str(cfg["interactions"])
-            if cfg.get("interactions") and (bool(cfg.get("preserve_ranking_signal", False)) or float(cfg.get("lambda_rank", 0.0)) > 0.0)
+            if cfg.get("interactions")
+            and (bool(cfg.get("preserve_ranking_signal", False)) or float(cfg.get("lambda_rank", 0.0)) > 0.0)
             else None
         ),
         lambda_rank=float(cfg.get("lambda_rank", 0.0)),

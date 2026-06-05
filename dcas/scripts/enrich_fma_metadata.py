@@ -85,10 +85,7 @@ def _load_fma_tracks(zip_path: Path) -> pd.DataFrame:
         tracks = pd.read_csv(zf.open("fma_metadata/tracks.csv"), header=[0, 1], low_memory=False)
         raw_tracks = pd.read_csv(zf.open("fma_metadata/raw_tracks.csv"), low_memory=False)
     tracks = tracks.iloc[1:].copy()
-    tracks.columns = [
-        f"{a}__{b}" if not str(b).startswith("Unnamed") else str(a)
-        for a, b in tracks.columns.to_list()
-    ]
+    tracks.columns = [f"{a}__{b}" if not str(b).startswith("Unnamed") else str(a) for a, b in tracks.columns.to_list()]
     tracks["track_id"] = pd.to_numeric(tracks["Unnamed: 0_level_0"], errors="coerce").astype("Int64")
     raw_subset = raw_tracks[["track_id", "track_url", "track_file", "album_url", "artist_url"]].copy()
     raw_subset["track_id"] = pd.to_numeric(raw_subset["track_id"], errors="coerce").astype("Int64")
@@ -116,7 +113,13 @@ def _best_row(candidates: list[pd.Series]) -> pd.Series:
     return ranked[0]
 
 
-def _build_lookup(df: pd.DataFrame) -> tuple[dict[str, pd.Series], dict[tuple[str, str, str], pd.Series], dict[tuple[str, str], pd.Series]]:
+def _build_lookup(
+    df: pd.DataFrame,
+) -> tuple[
+    dict[str, pd.Series],
+    dict[tuple[str, str, str], pd.Series],
+    dict[tuple[str, str], pd.Series],
+]:
     by_url: dict[str, pd.Series] = {}
     strict_groups: dict[tuple[str, str, str], list[pd.Series]] = {}
     loose_groups: dict[tuple[str, str], list[pd.Series]] = {}
@@ -251,10 +254,7 @@ def enrich_fma_metadata(
     if write_path != out_path:
         os.replace(write_path, out_path)
 
-    coverage = {
-        field: (float(field_nonempty[field]) / float(fma_rows) if fma_rows else 0.0)
-        for field in EXTRA_FIELDS
-    }
+    coverage = {field: (float(field_nonempty[field]) / float(fma_rows) if fma_rows else 0.0) for field in EXTRA_FIELDS}
     per_culture_report = []
     for culture in sorted(per_culture_artist_ids.keys() | per_culture_locations.keys()):
         artist_ids = per_culture_artist_ids.get(culture, set())
@@ -282,8 +282,7 @@ def enrich_fma_metadata(
                 "artist_location_coverage": (float(location_rows) / float(culture_rows) if culture_rows else 0.0),
                 "geo_coordinate_coverage": (float(geo_rows) / float(culture_rows) if culture_rows else 0.0),
                 "top_artist_locations": [
-                    {"location": loc, "count": int(count)}
-                    for loc, count in locations.most_common(15)
+                    {"location": loc, "count": int(count)} for loc, count in locations.most_common(15)
                 ],
             }
         )
@@ -300,8 +299,7 @@ def enrich_fma_metadata(
         "overall_unique_fma_artist_ids": len(overall_artist_ids),
         "overall_unique_artist_locations": len(overall_locations),
         "overall_top_artist_locations": [
-            {"location": loc, "count": int(count)}
-            for loc, count in overall_locations.most_common(25)
+            {"location": loc, "count": int(count)} for loc, count in overall_locations.most_common(25)
         ],
         "field_coverage_on_fma_rows": coverage,
         "per_culture": per_culture_report,
@@ -345,7 +343,9 @@ def enrich_fma_metadata(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Backfill FMA artist/location metadata into an existing metadata.csv file.")
+    ap = argparse.ArgumentParser(
+        description="Backfill FMA artist/location metadata into an existing metadata.csv file."
+    )
     ap.add_argument("--metadata", required=True)
     ap.add_argument("--out", default=None)
     ap.add_argument("--fma_metadata_zip", default=str(DEFAULT_FMA_METADATA_ZIP))

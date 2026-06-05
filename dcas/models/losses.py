@@ -94,10 +94,12 @@ def hsic_rbf(
         return torch.zeros((), device=x.device, dtype=x.dtype)
 
     k = _rbf_kernel(x, sigma=sigma_x, eps=eps)
-    l = _rbf_kernel(y, sigma=sigma_y, eps=eps)
-    h = torch.eye(n, device=x.device, dtype=x.dtype) - (1.0 / float(n)) * torch.ones((n, n), device=x.device, dtype=x.dtype)
+    l_y = _rbf_kernel(y, sigma=sigma_y, eps=eps)
+    h = torch.eye(n, device=x.device, dtype=x.dtype) - (1.0 / float(n)) * torch.ones(
+        (n, n), device=x.device, dtype=x.dtype
+    )
     kh = h @ k @ h
-    lh = h @ l @ h
+    lh = h @ l_y @ h
     hsic = torch.trace(kh @ lh) / ((n - 1) ** 2)
     return torch.clamp(hsic, min=0.0)
 
@@ -127,4 +129,3 @@ def schedule_grl_scale(step: int, max_step: int) -> float:
         return 1.0
     p = min(1.0, max(0.0, step / max_step))
     return float(2.0 / (1.0 + math.exp(-10.0 * p)) - 1.0)
-

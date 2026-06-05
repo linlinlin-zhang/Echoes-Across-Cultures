@@ -49,13 +49,22 @@ def _paper_placeholder_flags(path: Path) -> dict[str, bool]:
 
 def _bench_status() -> list[dict[str, Any]]:
     suites = [
-        ("v3_main_culturemert", "reports/benchmarks/v3_main_culturemert/benchmark_summary.json"),
-        ("v3_main_culturemert_stage3", "reports/benchmarks/v3_main_culturemert_stage3/benchmark_summary.json"),
+        (
+            "v3_main_culturemert",
+            "reports/benchmarks/v3_main_culturemert/benchmark_summary.json",
+        ),
+        (
+            "v3_main_culturemert_stage3",
+            "reports/benchmarks/v3_main_culturemert_stage3/benchmark_summary.json",
+        ),
         (
             "v3_main_culturemert_stage3_lambdamart",
             "reports/benchmarks/v3_main_culturemert_stage3_lambdamart/benchmark_summary.json",
         ),
-        ("v3_main_gemini_embedding2", "reports/benchmarks/v3_main_gemini_embedding2/benchmark_summary.json"),
+        (
+            "v3_main_gemini_embedding2",
+            "reports/benchmarks/v3_main_gemini_embedding2/benchmark_summary.json",
+        ),
         (
             "public_routeA_phase2_cn_lambdamart",
             "reports/benchmarks/public_routeA_phase2_cn_lambdamart/benchmark_summary.json",
@@ -64,7 +73,10 @@ def _bench_status() -> list[dict[str, Any]]:
             "yambda_5b_subset_global_log_benchmark",
             "reports/benchmarks/yambda_5b_subset_global_log_benchmark/benchmark_summary.json",
         ),
-        ("v3_main_gemini_stage3_expected", "reports/benchmarks/v3_main_gemini_stage3/benchmark_summary.json"),
+        (
+            "v3_main_gemini_stage3_expected",
+            "reports/benchmarks/v3_main_gemini_stage3/benchmark_summary.json",
+        ),
         (
             "v3_main_gemini_stage3_lambdamart_expected",
             "reports/benchmarks/v3_main_gemini_stage3_lambdamart/benchmark_summary.json",
@@ -99,7 +111,9 @@ def audit_project_state() -> dict[str, Any]:
         or {}
     )
     mw3_align_report = (
-        _read_json(REPO_ROOT / "storage/public/research_dataset_v3/metadata_v3_main_harmonized_mw3.csv.align_report.json")
+        _read_json(
+            REPO_ROOT / "storage/public/research_dataset_v3/metadata_v3_main_harmonized_mw3.csv.align_report.json"
+        )
         or {}
     )
     paper_flags = _paper_placeholder_flags(REPO_ROOT / "paper/ismir2026_draft.tex")
@@ -159,7 +173,9 @@ def audit_project_state() -> dict[str, Any]:
             }
         )
 
-    missing_expected = [row["suite"] for row in bench_rows if str(row["suite"]).endswith("_expected") and not row["exists"]]
+    missing_expected = [
+        row["suite"] for row in bench_rows if str(row["suite"]).endswith("_expected") and not row["exists"]
+    ]
     if missing_expected:
         findings.append(
             {
@@ -231,9 +247,19 @@ def _to_markdown(report: dict[str, Any]) -> str:
     lines.append(f"- mw3 metadata rows dropped: `{int(align.get('metadata_rows_dropped', 0) or 0)}`")
     lines.append(f"- mw3 interaction rows dropped: `{int(align.get('interactions_rows_dropped', 0) or 0)}`")
 
-    lines.extend(["", "## Benchmark Matrix", "", "| suite | exists | method_count |", "|---|---|---:|"])
+    lines.extend(
+        [
+            "",
+            "## Benchmark Matrix",
+            "",
+            "| suite | exists | method_count |",
+            "|---|---|---:|",
+        ]
+    )
     for row in report.get("benchmarks", []):
-        lines.append(f"| {row['suite']} | {str(bool(row['exists'])).lower()} | {row['method_count'] if row['method_count'] is not None else ''} |")
+        lines.append(
+            f"| {row['suite']} | {str(bool(row['exists'])).lower()} | {row['method_count'] if row['method_count'] is not None else ''} |"
+        )
 
     lines.extend(["", "## Paper Audit", "", "| flag | value |", "|---|---|"])
     for key, value in dict(report.get("paper", {})).items():
@@ -257,7 +283,12 @@ def main() -> None:
     report = audit_project_state()
     (out_dir / "audit_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "audit_report.md").write_text(_to_markdown(report), encoding="utf-8")
-    print(json.dumps({"out_dir": str(out_dir), "findings": len(report.get("findings", []))}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"out_dir": str(out_dir), "findings": len(report.get("findings", []))},
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

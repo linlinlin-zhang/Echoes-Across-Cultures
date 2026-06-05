@@ -104,11 +104,17 @@ def audit_collection(
             writer.writeheader()
             writer.writerows(items)
 
-    return {"summary": summary, "out_json": str(out_json_path), "out_csv": str(out_csv) if out_csv else None}
+    return {
+        "summary": summary,
+        "out_json": str(out_json_path),
+        "out_csv": str(out_csv) if out_csv else None,
+    }
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Audit Europeana collection search results for rights and audio proxy fields.")
+    ap = argparse.ArgumentParser(
+        description="Audit Europeana collection search results for rights and audio proxy fields."
+    )
     ap.add_argument("--query", required=True)
     ap.add_argument("--out_json", required=True)
     ap.add_argument("--out_csv", default=None)

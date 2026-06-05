@@ -4,4 +4,3 @@ __all__ = [
     "sinkhorn_plan",
     "squared_euclidean_cost",
 ]
-

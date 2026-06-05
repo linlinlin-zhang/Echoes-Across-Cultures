@@ -141,6 +141,7 @@ def normalize_culture(raw: str) -> str:
 # Row normalization
 # ---------------------------------------------------------------------------
 
+
 def normalize_spotify_row(row: dict[str, str]) -> dict[str, str]:
     """Convert a Spotify metadata row into the unified schema."""
     out: dict[str, str] = {col: "" for col in OUTPUT_COLUMNS}
@@ -158,9 +159,18 @@ def normalize_spotify_row(row: dict[str, str]) -> dict[str, str]:
 
     # Audio features
     for af in (
-        "danceability", "energy", "key", "loudness", "mode",
-        "speechiness", "acousticness", "instrumentalness",
-        "liveness", "valence", "tempo", "time_signature",
+        "danceability",
+        "energy",
+        "key",
+        "loudness",
+        "mode",
+        "speechiness",
+        "acousticness",
+        "instrumentalness",
+        "liveness",
+        "valence",
+        "tempo",
+        "time_signature",
     ):
         out[af] = str(row.get(af, "")).strip()
 
@@ -202,6 +212,7 @@ def normalize_jamendo_row(row: dict[str, str]) -> dict[str, str]:
 # File reading helpers
 # ---------------------------------------------------------------------------
 
+
 def expand_paths(patterns: list[str]) -> list[Path]:
     """Expand glob patterns to concrete paths."""
     paths: list[Path] = []
@@ -232,6 +243,7 @@ def read_csv_rows(path: Path) -> list[dict[str, str]]:
 # ---------------------------------------------------------------------------
 # Merge logic
 # ---------------------------------------------------------------------------
+
 
 def merge_metadata(
     spotify_paths: list[Path],
@@ -337,13 +349,28 @@ def merge_metadata(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Merge and align Spotify + Jamendo metadata.")
-    ap.add_argument("--spotify", nargs="+", default=[], help="Path(s) to Spotify metadata.csv (supports globs)")
-    ap.add_argument("--jamendo", nargs="+", default=[], help="Path(s) to Jamendo metadata.csv (supports globs)")
+    ap.add_argument(
+        "--spotify",
+        nargs="+",
+        default=[],
+        help="Path(s) to Spotify metadata.csv (supports globs)",
+    )
+    ap.add_argument(
+        "--jamendo",
+        nargs="+",
+        default=[],
+        help="Path(s) to Jamendo metadata.csv (supports globs)",
+    )
     ap.add_argument("--out", required=True, help="Output merged metadata_merged.csv path")
     ap.add_argument("--dedup_key", default="track_id", help="Column to use for deduplication")
-    ap.add_argument("--require_audio_exists", action="store_true", help="Skip rows whose audio file does not exist on disk")
+    ap.add_argument(
+        "--require_audio_exists",
+        action="store_true",
+        help="Skip rows whose audio file does not exist on disk",
+    )
     args = ap.parse_args()
 
     if not args.spotify and not args.jamendo:

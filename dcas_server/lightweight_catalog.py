@@ -108,7 +108,9 @@ class LightweightMainlineCatalog:
         self.rows = self._load_rows()
         self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
         self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
-        self.source_counts = Counter(_clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset")))
+        self.source_counts = Counter(
+            _clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset"))
+        )
 
     def _refresh_metadata_if_needed(self) -> None:
         mtime_ns = self.metadata_path.stat().st_mtime_ns
@@ -119,14 +121,18 @@ class LightweightMainlineCatalog:
         self.rows = self._load_rows()
         self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
         self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
-        self.source_counts = Counter(_clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset")))
+        self.source_counts = Counter(
+            _clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset"))
+        )
 
     def status(self) -> dict[str, Any]:
         self._refresh_metadata_if_needed()
         description_count = sum(1 for row in self.rows if _clean(row.get("description")))
         album_description_count = sum(1 for row in self.rows if _clean(row.get("album_description")))
         tag_count = sum(1 for row in self.rows if _clean(row.get("tags")))
-        description_sources = Counter(_clean(row.get("description_source")) or "unknown" for row in self.rows if _clean(row.get("description")))
+        description_sources = Counter(
+            _clean(row.get("description_source")) or "unknown" for row in self.rows if _clean(row.get("description"))
+        )
         return {
             "ok": True,
             "mode": "lightweight_catalog",
@@ -151,13 +157,9 @@ class LightweightMainlineCatalog:
         return {
             "ok": True,
             "mode": "lightweight_catalog",
-            "cultures": [
-                {"culture": name, "count": int(count)}
-                for name, count in sorted(self.culture_counts.items())
-            ],
+            "cultures": [{"culture": name, "count": int(count)} for name, count in sorted(self.culture_counts.items())],
             "sources": [
-                {"source_dataset": name, "count": int(count)}
-                for name, count in sorted(self.source_counts.items())
+                {"source_dataset": name, "count": int(count)} for name, count in sorted(self.source_counts.items())
             ],
         }
 
@@ -226,7 +228,13 @@ class LightweightMainlineCatalog:
         items = result.get("items", [])
         if not items:
             raise ValueError("no matching track available")
-        return {"ok": True, "mode": "lightweight_catalog", "track": items[0], "request": result["request"], "total_available": result["total_available"]}
+        return {
+            "ok": True,
+            "mode": "lightweight_catalog",
+            "track": items[0],
+            "request": result["request"],
+            "total_available": result["total_available"],
+        }
 
     def track(self, track_id: str) -> dict[str, Any]:
         self._refresh_metadata_if_needed()
@@ -275,8 +283,30 @@ class LightweightMainlineCatalog:
             "title": _first_clean(row, ("title", "name", "track_name")) or track_id,
             "artist": _first_clean(row, ("artist", "artist_name", "creator", "author")),
             "album": _first_clean(row, ("album", "collection_name", "release", "album_name")),
-            "description": _first_clean(row, ("description", "track_description", "track_desc", "track_summary", "summary", "notes", "note", "about")),
-            "album_description": _first_clean(row, ("album_description", "album_desc", "album_summary", "album_notes", "collection_description", "release_description")),
+            "description": _first_clean(
+                row,
+                (
+                    "description",
+                    "track_description",
+                    "track_desc",
+                    "track_summary",
+                    "summary",
+                    "notes",
+                    "note",
+                    "about",
+                ),
+            ),
+            "album_description": _first_clean(
+                row,
+                (
+                    "album_description",
+                    "album_desc",
+                    "album_summary",
+                    "album_notes",
+                    "collection_description",
+                    "release_description",
+                ),
+            ),
             "description_source": _clean(row.get("description_source")),
             "album_description_source": _clean(row.get("album_description_source")),
             "description_evidence_url": _clean(row.get("description_evidence_url")),
@@ -298,10 +328,16 @@ class LightweightMainlineCatalog:
             "duration_ms": _safe_float(row.get("duration_ms"), default=0.0),
             "audio_is_preview": _clean(row.get("audio_is_preview")),
             "preview_available": _clean(row.get("preview_available")),
-            "cover_art_url": _clean(row.get("cover_art_url")) or _clean(row.get("artwork_url_large")) or _clean(row.get("image_url")),
-            "cover_art_url_large": _clean(row.get("cover_art_url_large")) or _clean(row.get("cover_art_url")) or _clean(row.get("artwork_url_large")),
+            "cover_art_url": _clean(row.get("cover_art_url"))
+            or _clean(row.get("artwork_url_large"))
+            or _clean(row.get("image_url")),
+            "cover_art_url_large": _clean(row.get("cover_art_url_large"))
+            or _clean(row.get("cover_art_url"))
+            or _clean(row.get("artwork_url_large")),
             "platform": _clean(row.get("platform")) or _clean(row.get("source_dataset")),
-            "platform_track_url": _clean(row.get("platform_track_url")) or _clean(row.get("track_url")) or _clean(row.get("jamendo_url")),
+            "platform_track_url": _clean(row.get("platform_track_url"))
+            or _clean(row.get("track_url"))
+            or _clean(row.get("jamendo_url")),
             "platform_album_url": _clean(row.get("platform_album_url")) or _clean(row.get("collection_url")),
             "full_track_url": _clean(row.get("full_track_url")) or _clean(row.get("jamendo_url")),
             "preview_url": _clean(row.get("preview_url")) or _clean(row.get("audio_url")),
@@ -311,8 +347,7 @@ class LightweightMainlineCatalog:
 
     def _is_low_signal(self, row: dict[str, Any]) -> bool:
         text = " ".join(
-            _clean(row.get(key)).lower()
-            for key in ("title", "artist", "album", "label", "tags", "description")
+            _clean(row.get(key)).lower() for key in ("title", "artist", "album", "label", "tags", "description")
         )
         return any(term in text for term in LOW_SIGNAL_TERMS)
 
@@ -320,7 +355,16 @@ class LightweightMainlineCatalog:
         hay = _norm_key(
             " ".join(
                 _clean(row.get(key))
-                for key in ("title", "artist", "album", "label", "tags", "culture", "source_dataset", "country")
+                for key in (
+                    "title",
+                    "artist",
+                    "album",
+                    "label",
+                    "tags",
+                    "culture",
+                    "source_dataset",
+                    "country",
+                )
             )
         )
         return all(term in hay for term in query_terms)
@@ -329,7 +373,9 @@ class LightweightMainlineCatalog:
 _CATALOGS: dict[tuple[str, str], LightweightMainlineCatalog] = {}
 
 
-def get_lightweight_catalog(storage: Storage, *, metadata_rel: str = DEFAULT_METADATA_REL) -> LightweightMainlineCatalog:
+def get_lightweight_catalog(
+    storage: Storage, *, metadata_rel: str = DEFAULT_METADATA_REL
+) -> LightweightMainlineCatalog:
     key = (str(storage.root.resolve()), str(metadata_rel))
     catalog = _CATALOGS.get(key)
     if catalog is None:

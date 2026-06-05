@@ -158,7 +158,13 @@ class OntologyStore:
             state = self._load()
         scored: list[tuple[float, dict[str, Any]]] = []
         for c in state["concepts"]:
-            hay = " ".join([c.get("name", ""), c.get("description", ""), " ".join(c.get("aliases", []))])
+            hay = " ".join(
+                [
+                    c.get("name", ""),
+                    c.get("description", ""),
+                    " ".join(c.get("aliases", [])),
+                ]
+            )
             score = _token_overlap_score(q, hay)
             if score > 0:
                 scored.append((score, c))

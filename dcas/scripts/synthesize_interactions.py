@@ -94,7 +94,9 @@ def synthesize_interactions(
             pool = by_culture[culture]
             if not pool:
                 continue
-            genres = sorted({str(x.get(genre_column, "")).strip() for x in pool if str(x.get(genre_column, "")).strip() != ""})
+            genres = sorted(
+                {str(x.get(genre_column, "")).strip() for x in pool if str(x.get(genre_column, "")).strip() != ""}
+            )
             for i in range(int(users_per_culture)):
                 uid = f"{culture}_u{i:03d}"
                 n_users += 1
@@ -114,7 +116,11 @@ def synthesize_interactions(
                     selected_rows = _pick_rows(pool=pool, n_pick=home_n, preferred_genre=preferred_genre)
                     fallback_pools: list[list[dict[str, str]]] = [pool]
                     if picked_others and other_n > 0:
-                        splits = np.full((len(picked_others),), other_n // len(picked_others), dtype=np.int64)
+                        splits = np.full(
+                            (len(picked_others),),
+                            other_n // len(picked_others),
+                            dtype=np.int64,
+                        )
                         splits[: other_n % len(picked_others)] += 1
                         for other_culture, n_take in zip(picked_others, splits.tolist()):
                             other_pool = by_culture.get(str(other_culture), [])
@@ -129,13 +135,23 @@ def synthesize_interactions(
                             other_pref = None
                             if has_genre and other_genres:
                                 other_pref = str(rng.choice(np.array(other_genres, dtype=object)))
-                            selected_rows.extend(_pick_rows(pool=other_pool, n_pick=int(n_take), preferred_genre=other_pref))
+                            selected_rows.extend(
+                                _pick_rows(
+                                    pool=other_pool,
+                                    n_pick=int(n_take),
+                                    preferred_genre=other_pref,
+                                )
+                            )
                     for fallback_pool in fallback_pools:
                         selected_rows = _extend_unique(selected_rows, fallback_pool, total_pick)
                         if len(selected_rows) >= total_pick:
                             break
                 else:
-                    selected_rows = _pick_rows(pool=pool, n_pick=int(tracks_per_user), preferred_genre=preferred_genre)
+                    selected_rows = _pick_rows(
+                        pool=pool,
+                        n_pick=int(tracks_per_user),
+                        preferred_genre=preferred_genre,
+                    )
                     selected_rows = _extend_unique(selected_rows, pool, int(tracks_per_user))
                 for row in selected_rows:
                     tid = str(row["track_id"])

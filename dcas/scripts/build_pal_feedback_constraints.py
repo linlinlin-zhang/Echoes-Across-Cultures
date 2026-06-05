@@ -91,8 +91,16 @@ def build_constraints(
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Build pairwise constraints from PAL tasks and metadata labels.")
-    ap.add_argument("--tasks", required=True, help="pal tasks jsonl, each row has track_id and compare_to")
-    ap.add_argument("--metadata", required=True, help="metadata csv containing track_id and label columns")
+    ap.add_argument(
+        "--tasks",
+        required=True,
+        help="pal tasks jsonl, each row has track_id and compare_to",
+    )
+    ap.add_argument(
+        "--metadata",
+        required=True,
+        help="metadata csv containing track_id and label columns",
+    )
     ap.add_argument("--out", required=True, help="output constraints jsonl")
     ap.add_argument("--track_id_col", default="track_id")
     ap.add_argument("--label_col", default="label")
@@ -116,4 +124,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

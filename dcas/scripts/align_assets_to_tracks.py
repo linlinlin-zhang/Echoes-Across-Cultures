@@ -90,7 +90,8 @@ def align_assets_to_tracks(
         kept_constraints = [
             row
             for row in constraint_rows
-            if str(row.get("track_id_a", "")).strip() in track_ids and str(row.get("track_id_b", "")).strip() in track_ids
+            if str(row.get("track_id_a", "")).strip() in track_ids
+            and str(row.get("track_id_b", "")).strip() in track_ids
         ]
         _write_jsonl(constraints_out, kept_constraints)
         report.update(
@@ -110,7 +111,9 @@ def align_assets_to_tracks(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Filter metadata/interactions/constraints down to the track_ids present in a tracks.npz file.")
+    ap = argparse.ArgumentParser(
+        description="Filter metadata/interactions/constraints down to the track_ids present in a tracks.npz file."
+    )
     ap.add_argument("--tracks", required=True)
     ap.add_argument("--metadata_in", required=True)
     ap.add_argument("--metadata_out", required=True)

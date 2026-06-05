@@ -35,7 +35,9 @@ def _resolve_audio_paths(
         return source_audio, style_audio, {"source": "direct_audio_paths"}
 
     if not metadata or not source_track or not style_track:
-        raise ValueError("provide either (--source_audio and --style_audio) or (--metadata + --source_track + --style_track)")
+        raise ValueError(
+            "provide either (--source_audio and --style_audio) or (--metadata + --source_track + --style_track)"
+        )
 
     mp = _read_metadata_map(metadata, track_id_col=track_id_col)
     if source_track not in mp:
@@ -49,7 +51,15 @@ def _resolve_audio_paths(
         raise ValueError(f"source track missing audio path in column '{audio_col}'")
     if not sty_audio:
         raise ValueError(f"style track missing audio path in column '{audio_col}'")
-    return src_audio, sty_audio, {"source": "metadata_track_id", "source_track_id": source_track, "style_track_id": style_track}
+    return (
+        src_audio,
+        sty_audio,
+        {
+            "source": "metadata_track_id",
+            "source_track_id": source_track,
+            "style_track_id": style_track,
+        },
+    )
 
 
 def main() -> None:
@@ -59,7 +69,11 @@ def main() -> None:
     ap.add_argument("--source_audio", default=None, help="source wav/mp3 path")
     ap.add_argument("--style_audio", default=None, help="style wav/mp3 path")
 
-    ap.add_argument("--metadata", default=None, help="metadata csv containing track_id and audio_path")
+    ap.add_argument(
+        "--metadata",
+        default=None,
+        help="metadata csv containing track_id and audio_path",
+    )
     ap.add_argument("--source_track", default=None, help="source track_id in metadata")
     ap.add_argument("--style_track", default=None, help="style track_id in metadata")
     ap.add_argument("--track_id_col", default="track_id")
@@ -116,4 +130,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

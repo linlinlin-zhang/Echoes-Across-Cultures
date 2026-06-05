@@ -73,7 +73,9 @@ def _spectral_features(
     }
 
 
-def _quantile_bins(values: np.ndarray, n_bins: int = 3, labels: tuple[str, ...] | None = None) -> tuple[np.ndarray, list[float]]:
+def _quantile_bins(
+    values: np.ndarray, n_bins: int = 3, labels: tuple[str, ...] | None = None
+) -> tuple[np.ndarray, list[float]]:
     vals = values.astype(np.float64)
     n_bins = max(2, int(n_bins))
     edges = np.quantile(vals, np.linspace(0.0, 1.0, n_bins + 1))
@@ -248,4 +250,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

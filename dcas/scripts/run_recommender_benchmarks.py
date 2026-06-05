@@ -174,7 +174,10 @@ def _generic_metrics_from_recs(
     if not recs:
         raise ValueError("recommender returned no recommendations")
     track_id_to_idx = _track_id_to_idx(tracks)
-    rec_idx = np.array([track_id_to_idx[str(r.track_id)] for r in recs if str(r.track_id) in track_id_to_idx], dtype=np.int64)
+    rec_idx = np.array(
+        [track_id_to_idx[str(r.track_id)] for r in recs if str(r.track_id) in track_id_to_idx],
+        dtype=np.int64,
+    )
     if rec_idx.size == 0:
         raise ValueError("recommended track ids are not in tracks catalog")
 
@@ -199,7 +202,11 @@ def _generic_metrics_from_recs(
     else:
         target_dist[:] = 1.0 / max(1, len(culture_names))
 
-    target_prob = float(rec_soft[culture_names.index(str(target_culture))]) if str(target_culture) in culture_names else float("nan")
+    target_prob = (
+        float(rec_soft[culture_names.index(str(target_culture))])
+        if str(target_culture) in culture_names
+        else float("nan")
+    )
     return {
         "serendipity": serendipity,
         "cultural_calibration_kl": _safe_kl(rec_soft, target_dist),
@@ -246,10 +253,20 @@ def evaluate_callable_recommender(
                     centroids=centroids,
                     minority_tracks=minority_tracks,
                 )
-                row = {"user_id": user_id, "target_culture": target_culture, **{k_: float(v) for k_, v in metrics.items()}}
+                row = {
+                    "user_id": user_id,
+                    "target_culture": target_culture,
+                    **{k_: float(v) for k_, v in metrics.items()},
+                }
                 rows.append(row)
             except Exception as e:
-                skipped.append({"user_id": str(user_id), "target_culture": str(target_culture), "reason": str(e)})
+                skipped.append(
+                    {
+                        "user_id": str(user_id),
+                        "target_culture": str(target_culture),
+                        "reason": str(e),
+                    }
+                )
 
     ser = [float(r["serendipity"]) for r in rows]
     ckl = [float(r["cultural_calibration_kl"]) for r in rows]
@@ -259,7 +276,13 @@ def evaluate_callable_recommender(
 
     per_culture: dict[str, dict[str, float]] = {}
     tmp: dict[str, dict[str, list[float]]] = defaultdict(
-        lambda: {"ser": [], "ckl": [], "target_prob": [], "user_align_kl": [], "minority": []}
+        lambda: {
+            "ser": [],
+            "ckl": [],
+            "target_prob": [],
+            "user_align_kl": [],
+            "minority": [],
+        }
     )
     for r in rows:
         c = str(r["target_culture"])
@@ -269,9 +292,17 @@ def evaluate_callable_recommender(
         tmp[c]["user_align_kl"].append(float(r["user_culture_alignment_kl"]))
         tmp[c]["minority"].append(float(r["minority_exposure_at_k"]))
     for c in sorted(tmp.keys()):
-        ser_ci_l, ser_ci_h = _ci95_bootstrap(tmp[c]["ser"], samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 11)
-        ckl_ci_l, ckl_ci_h = _ci95_bootstrap(tmp[c]["ckl"], samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 13)
-        min_ci_l, min_ci_h = _ci95_bootstrap(tmp[c]["minority"], samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 17)
+        ser_ci_l, ser_ci_h = _ci95_bootstrap(
+            tmp[c]["ser"], samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 11
+        )
+        ckl_ci_l, ckl_ci_h = _ci95_bootstrap(
+            tmp[c]["ckl"], samples=int(bootstrap_samples), seed=int(bootstrap_seed) + 13
+        )
+        min_ci_l, min_ci_h = _ci95_bootstrap(
+            tmp[c]["minority"],
+            samples=int(bootstrap_samples),
+            seed=int(bootstrap_seed) + 17,
+        )
         per_culture[c] = {
             "n": int(len(tmp[c]["ser"])),
             "serendipity_mean": _safe_mean(tmp[c]["ser"]),
@@ -405,29 +436,38 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
 
         if family == "raw":
             if kind == "popularity":
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions: recommend_popularity(
-                    _tracks, _ints, user_id, target_culture, k=top_k
-                )
+
+                def recommend_fn(user_id, target_culture, top_k, _tracks=tracks, _ints=interactions):
+                    return recommend_popularity(_tracks, _ints, user_id, target_culture, k=top_k)
             elif kind == "cosine":
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions: recommend_embedding_cosine(
-                    _tracks, _ints, user_id, target_culture, k=top_k
-                )
+
+                def recommend_fn(user_id, target_culture, top_k, _tracks=tracks, _ints=interactions):
+                    return recommend_embedding_cosine(_tracks, _ints, user_id, target_culture, k=top_k)
             elif kind == "knn":
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions: recommend_embedding_knn(
-                    _tracks, _ints, user_id, target_culture, k=top_k
-                )
+
+                def recommend_fn(user_id, target_culture, top_k, _tracks=tracks, _ints=interactions):
+                    return recommend_embedding_knn(_tracks, _ints, user_id, target_culture, k=top_k)
             elif kind == "hybrid":
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _w=hybrid_weights: recommend_embedding_hybrid(
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    cosine_weight=float(_w.get("cosine", 0.4)),
-                    knn_weight=float(_w.get("knn", 0.25)),
-                    popularity_weight=float(_w.get("popularity", 0.2)),
-                    novelty_weight=float(_w.get("novelty", 0.15)),
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _w=hybrid_weights,
+                ):
+                    return recommend_embedding_hybrid(
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        cosine_weight=float(_w.get("cosine", 0.4)),
+                        knn_weight=float(_w.get("knn", 0.25)),
+                        popularity_weight=float(_w.get("popularity", 0.2)),
+                        novelty_weight=float(_w.get("novelty", 0.15)),
+                    )
             elif kind == "mlp":
                 ckpt = str(mlp_cfg.get("checkpoint", out_dir / "shallow_ranker.pt"))
                 if not Path(ckpt).exists():
@@ -447,9 +487,25 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     )
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker = load_shallow_ranker(ckpt, map_location=str(device))
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _device=device: recommend_embedding_mlp(
-                    _ranker, _tracks, _ints, user_id, target_culture, k=top_k, device=_device
-                )
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _device=device,
+                ):
+                    return recommend_embedding_mlp(
+                        _ranker,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        device=_device,
+                    )
             elif kind == "two_stage_hybrid":
                 ckpt = str(strong_hybrid_cfg.get("checkpoint", out_dir / "two_stage_hybrid_ranker.pt"))
                 if not Path(ckpt).exists():
@@ -473,17 +529,28 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                     )
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker = load_two_stage_hybrid_ranker(ckpt, map_location=str(device))
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _device=device, _cfg=strong_hybrid_cfg: recommend_embedding_two_stage_hybrid(
-                    _ranker,
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    recall_k=int(_cfg.get("recall_k", max(80, 4 * int(top_k)))),
-                    blend_weight=float(_cfg.get("blend_weight", 0.25)),
-                    device=_device,
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _device=device,
+                    _cfg=strong_hybrid_cfg,
+                ):
+                    return recommend_embedding_two_stage_hybrid(
+                        _ranker,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", max(80, 4 * int(top_k)))),
+                        blend_weight=float(_cfg.get("blend_weight", 0.25)),
+                        device=_device,
+                    )
             elif kind == "bpr":
                 ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(ckpt).exists():
@@ -504,16 +571,27 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker, user_to_id = load_bpr_mf(ckpt, map_location=str(device))
                 ranker.to(device)
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _users=user_to_id, _device=device: recommend_bpr_mf(
-                    _ranker,
-                    _users,
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    device=_device,
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _users=user_to_id,
+                    _device=device,
+                ):
+                    return recommend_bpr_mf(
+                        _ranker,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        device=_device,
+                    )
             elif kind == "lightfm_like":
                 ckpt = str(lightfm_like_cfg.get("checkpoint", out_dir / "lightfm_like.pt"))
                 if not Path(ckpt).exists():
@@ -538,23 +616,36 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker, user_to_id, culture_to_id, source_to_id = load_content_bpr_mf(ckpt, map_location=str(device))
                 ranker.to(device)
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _users=user_to_id, _cultures=culture_to_id, _sources=source_to_id, _device=device: recommend_content_bpr_mf(
-                    _ranker,
-                    _users,
-                    _cultures,
-                    _sources,
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    mf_weight=float(lightfm_like_cfg.get("mf_weight", 0.6)),
-                    content_weight=float(lightfm_like_cfg.get("content_weight_rerank", 0.2)),
-                    novelty_weight=float(lightfm_like_cfg.get("novelty_weight", 0.1)),
-                    minority_weight=float(lightfm_like_cfg.get("minority_weight", 0.05)),
-                    source_weight=float(lightfm_like_cfg.get("source_weight_rerank", 0.05)),
-                    device=_device,
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _users=user_to_id,
+                    _cultures=culture_to_id,
+                    _sources=source_to_id,
+                    _device=device,
+                ):
+                    return recommend_content_bpr_mf(
+                        _ranker,
+                        _users,
+                        _cultures,
+                        _sources,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        mf_weight=float(lightfm_like_cfg.get("mf_weight", 0.6)),
+                        content_weight=float(lightfm_like_cfg.get("content_weight_rerank", 0.2)),
+                        novelty_weight=float(lightfm_like_cfg.get("novelty_weight", 0.1)),
+                        minority_weight=float(lightfm_like_cfg.get("minority_weight", 0.05)),
+                        source_weight=float(lightfm_like_cfg.get("source_weight_rerank", 0.05)),
+                        device=_device,
+                    )
             elif kind == "bpr_two_stage_hybrid":
                 bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(bpr_ckpt).exists():
@@ -597,25 +688,38 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
                 bpr_model.to(device)
                 ranker = load_bpr_two_stage_hybrid_ranker(ckpt, map_location=str(device))
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_hybrid_cfg: recommend_embedding_bpr_two_stage_hybrid(
-                    _ranker,
-                    _bpr,
-                    _users,
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
-                    rerank_weight=float(_cfg.get("rerank_weight", 0.62)),
-                    recall_weight=float(_cfg.get("recall_weight", 0.16)),
-                    bpr_weight=float(_cfg.get("bpr_weight", 0.10)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.0)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.08)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.02)),
-                    source_weight=float(_cfg.get("source_weight", 0.02)),
-                    device=_device,
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _bpr=bpr_model,
+                    _users=user_to_id,
+                    _device=device,
+                    _cfg=bpr_hybrid_cfg,
+                ):
+                    return recommend_embedding_bpr_two_stage_hybrid(
+                        _ranker,
+                        _bpr,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
+                        rerank_weight=float(_cfg.get("rerank_weight", 0.62)),
+                        recall_weight=float(_cfg.get("recall_weight", 0.16)),
+                        bpr_weight=float(_cfg.get("bpr_weight", 0.10)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.0)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.08)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.02)),
+                        source_weight=float(_cfg.get("source_weight", 0.02)),
+                        device=_device,
+                    )
             elif kind == "bpr_listwise_hybrid":
                 bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(bpr_ckpt).exists():
@@ -656,25 +760,38 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
                 bpr_model.to(device)
                 ranker = load_bpr_listwise_hybrid_ranker(ckpt, map_location=str(device))
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_listwise_hybrid_cfg: recommend_embedding_bpr_listwise_hybrid(
-                    _ranker,
-                    _bpr,
-                    _users,
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
-                    rerank_weight=float(_cfg.get("rerank_weight", 0.62)),
-                    recall_weight=float(_cfg.get("recall_weight", 0.14)),
-                    bpr_weight=float(_cfg.get("bpr_weight", 0.10)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.06)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.04)),
-                    source_weight=float(_cfg.get("source_weight", 0.02)),
-                    device=_device,
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _bpr=bpr_model,
+                    _users=user_to_id,
+                    _device=device,
+                    _cfg=bpr_listwise_hybrid_cfg,
+                ):
+                    return recommend_embedding_bpr_listwise_hybrid(
+                        _ranker,
+                        _bpr,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
+                        rerank_weight=float(_cfg.get("rerank_weight", 0.62)),
+                        recall_weight=float(_cfg.get("recall_weight", 0.14)),
+                        bpr_weight=float(_cfg.get("bpr_weight", 0.10)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.06)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.04)),
+                        source_weight=float(_cfg.get("source_weight", 0.02)),
+                        device=_device,
+                    )
             elif kind == "bpr_tree_hybrid":
                 bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(bpr_ckpt).exists():
@@ -718,25 +835,38 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
                 bpr_model.to(device)
                 ranker = load_bpr_tree_hybrid_ranker(ckpt)
-                recommend_fn = lambda user_id, target_culture, top_k, _tracks=tracks, _ints=interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_tree_hybrid_cfg: recommend_embedding_bpr_tree_hybrid(
-                    _ranker,
-                    _bpr,
-                    _users,
-                    _tracks,
-                    _ints,
+
+                def recommend_fn(
                     user_id,
                     target_culture,
-                    k=top_k,
-                    recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
-                    rerank_weight=float(_cfg.get("rerank_weight", 0.58)),
-                    recall_weight=float(_cfg.get("recall_weight", 0.12)),
-                    bpr_weight=float(_cfg.get("bpr_weight", 0.08)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.12)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.06)),
-                    source_weight=float(_cfg.get("source_weight", 0.02)),
-                    device=_device,
-                )
+                    top_k,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _ranker=ranker,
+                    _bpr=bpr_model,
+                    _users=user_to_id,
+                    _device=device,
+                    _cfg=bpr_tree_hybrid_cfg,
+                ):
+                    return recommend_embedding_bpr_tree_hybrid(
+                        _ranker,
+                        _bpr,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        target_culture,
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", max(100, 5 * int(top_k)))),
+                        rerank_weight=float(_cfg.get("rerank_weight", 0.58)),
+                        recall_weight=float(_cfg.get("recall_weight", 0.12)),
+                        bpr_weight=float(_cfg.get("bpr_weight", 0.08)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.12)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.06)),
+                        source_weight=float(_cfg.get("source_weight", 0.02)),
+                        device=_device,
+                    )
             else:
                 raise ValueError(f"unsupported raw method kind: {kind}")
         elif family == "dcas":
@@ -744,95 +874,161 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
             device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
             model, _ = load_checkpoint(checkpoint, map_location=str(device))
             if kind == "ot":
-                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _eps=method_cfg.get("epsilon", 0.1), _iters=method_cfg.get("iters", 200): recommend_ot(
-                    model=_model,
-                    tracks=_tracks,
-                    interactions=_ints,
-                    user_id=user_id,
-                    target_culture=target_culture,
-                    k=top_k,
-                    device=_device,
-                    epsilon=float(_eps),
-                    iters=int(_iters),
-                )[0]
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _model=model,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _device=device,
+                    _eps=method_cfg.get("epsilon", 0.1),
+                    _iters=method_cfg.get("iters", 200),
+                ):
+                    return recommend_ot(
+                        model=_model,
+                        tracks=_tracks,
+                        interactions=_ints,
+                        user_id=user_id,
+                        target_culture=target_culture,
+                        k=top_k,
+                        device=_device,
+                        epsilon=float(_eps),
+                        iters=int(_iters),
+                    )[0]
             elif kind == "knn":
-                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device: recommend_knn(
-                    model=_model,
-                    tracks=_tracks,
-                    interactions=_ints,
-                    user_id=user_id,
-                    target_culture=target_culture,
-                    k=top_k,
-                    device=_device,
-                )[0]
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _model=model,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _device=device,
+                ):
+                    return recommend_knn(
+                        model=_model,
+                        tracks=_tracks,
+                        interactions=_ints,
+                        user_id=user_id,
+                        target_culture=target_culture,
+                        k=top_k,
+                        device=_device,
+                    )[0]
             elif kind == "ot_calibrated":
-                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_ot_calibrated(
-                    model=_model,
-                    tracks=_tracks,
-                    interactions=_ints,
-                    user_id=user_id,
-                    target_culture=target_culture,
-                    k=top_k,
-                    device=_device,
-                    epsilon=float(_cfg.get("epsilon", 0.1)),
-                    iters=int(_cfg.get("iters", 200)),
-                    relevance_weight=float(_cfg.get("relevance_weight", 0.62)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.12)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.14)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.08)),
-                    source_weight=float(_cfg.get("source_weight", 0.04)),
-                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.03)),
-                )[0]
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _model=model,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _device=device,
+                    _cfg=method_cfg,
+                ):
+                    return recommend_ot_calibrated(
+                        model=_model,
+                        tracks=_tracks,
+                        interactions=_ints,
+                        user_id=user_id,
+                        target_culture=target_culture,
+                        k=top_k,
+                        device=_device,
+                        epsilon=float(_cfg.get("epsilon", 0.1)),
+                        iters=int(_cfg.get("iters", 200)),
+                        relevance_weight=float(_cfg.get("relevance_weight", 0.62)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.12)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.14)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.08)),
+                        source_weight=float(_cfg.get("source_weight", 0.04)),
+                        diversity_lambda=float(_cfg.get("diversity_lambda", 0.03)),
+                    )[0]
             elif kind == "knn_calibrated":
-                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_knn_calibrated(
-                    model=_model,
-                    tracks=_tracks,
-                    interactions=_ints,
-                    user_id=user_id,
-                    target_culture=target_culture,
-                    k=top_k,
-                    device=_device,
-                    relevance_weight=float(_cfg.get("relevance_weight", 0.62)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.12)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.14)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.08)),
-                    source_weight=float(_cfg.get("source_weight", 0.04)),
-                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.03)),
-                )[0]
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _model=model,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _device=device,
+                    _cfg=method_cfg,
+                ):
+                    return recommend_knn_calibrated(
+                        model=_model,
+                        tracks=_tracks,
+                        interactions=_ints,
+                        user_id=user_id,
+                        target_culture=target_culture,
+                        k=top_k,
+                        device=_device,
+                        relevance_weight=float(_cfg.get("relevance_weight", 0.62)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.12)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.14)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.08)),
+                        source_weight=float(_cfg.get("source_weight", 0.04)),
+                        diversity_lambda=float(_cfg.get("diversity_lambda", 0.03)),
+                    )[0]
             elif kind == "ot_open":
-                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_open_ot(
-                    model=_model,
-                    tracks=_tracks,
-                    interactions=_ints,
-                    user_id=user_id,
-                    target_culture=target_culture,
-                    k=top_k,
-                    recall_k=int(_cfg.get("recall_k", max(50, 10 * int(top_k)))),
-                    device=_device,
-                    epsilon=float(_cfg.get("epsilon", 0.1)),
-                    iters=int(_cfg.get("iters", 200)),
-                    relevance_weight=float(_cfg.get("relevance_weight", 0.4)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.2)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.3)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.1)),
-                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.15)),
-                )[0]
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _model=model,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _device=device,
+                    _cfg=method_cfg,
+                ):
+                    return recommend_open_ot(
+                        model=_model,
+                        tracks=_tracks,
+                        interactions=_ints,
+                        user_id=user_id,
+                        target_culture=target_culture,
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", max(50, 10 * int(top_k)))),
+                        device=_device,
+                        epsilon=float(_cfg.get("epsilon", 0.1)),
+                        iters=int(_cfg.get("iters", 200)),
+                        relevance_weight=float(_cfg.get("relevance_weight", 0.4)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.2)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.3)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.1)),
+                        diversity_lambda=float(_cfg.get("diversity_lambda", 0.15)),
+                    )[0]
             elif kind == "knn_open":
-                recommend_fn = lambda user_id, target_culture, top_k, _model=model, _tracks=tracks, _ints=interactions, _device=device, _cfg=method_cfg: recommend_open_knn(
-                    model=_model,
-                    tracks=_tracks,
-                    interactions=_ints,
-                    user_id=user_id,
-                    target_culture=target_culture,
-                    k=top_k,
-                    recall_k=int(_cfg.get("recall_k", max(50, 10 * int(top_k)))),
-                    device=_device,
-                    relevance_weight=float(_cfg.get("relevance_weight", 0.4)),
-                    novelty_weight=float(_cfg.get("novelty_weight", 0.2)),
-                    target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.3)),
-                    minority_weight=float(_cfg.get("minority_weight", 0.1)),
-                    diversity_lambda=float(_cfg.get("diversity_lambda", 0.15)),
-                )[0]
+
+                def recommend_fn(
+                    user_id,
+                    target_culture,
+                    top_k,
+                    _model=model,
+                    _tracks=tracks,
+                    _ints=interactions,
+                    _device=device,
+                    _cfg=method_cfg,
+                ):
+                    return recommend_open_knn(
+                        model=_model,
+                        tracks=_tracks,
+                        interactions=_ints,
+                        user_id=user_id,
+                        target_culture=target_culture,
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", max(50, 10 * int(top_k)))),
+                        device=_device,
+                        relevance_weight=float(_cfg.get("relevance_weight", 0.4)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.2)),
+                        target_affinity_weight=float(_cfg.get("target_affinity_weight", 0.3)),
+                        minority_weight=float(_cfg.get("minority_weight", 0.1)),
+                        diversity_lambda=float(_cfg.get("diversity_lambda", 0.15)),
+                    )[0]
             else:
                 raise ValueError(f"unsupported dcas method kind: {kind}")
         else:
@@ -864,7 +1060,11 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
             comparisons[name] = compare_recommender_runs(
                 base_eval_path=path,
                 candidate_eval_path=eval_paths[reference_method],
-                metrics=["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"],
+                metrics=[
+                    "serendipity",
+                    "cultural_calibration_kl",
+                    "minority_exposure_at_k",
+                ],
                 bootstrap_samples=int(bootstrap_samples),
                 permutation_samples=int(cfg.get("permutation_samples", 2000)),
                 seed=int(bootstrap_seed) + 101,
@@ -930,7 +1130,11 @@ def run_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
             ]
         )
         for name, obj in comparisons.items():
-            for metric in ["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"]:
+            for metric in [
+                "serendipity",
+                "cultural_calibration_kl",
+                "minority_exposure_at_k",
+            ]:
                 if metric not in obj["metrics"]:
                     continue
                 lines.append(

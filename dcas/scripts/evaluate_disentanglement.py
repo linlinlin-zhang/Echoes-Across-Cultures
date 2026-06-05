@@ -233,7 +233,10 @@ def _encode_factors(
         if c == "culture":
             raw = tracks_culture.astype(str)
         else:
-            raw = np.array([str(metadata_map.get(str(tid), {}).get(c, "")).strip() for tid in track_ids.tolist()], dtype=object)
+            raw = np.array(
+                [str(metadata_map.get(str(tid), {}).get(c, "")).strip() for tid in track_ids.tolist()],
+                dtype=object,
+            )
         valid = np.array([bool(x) and x.lower() not in {"nan", "none"} for x in raw], dtype=bool)
         mask = mask & valid
         vals_by_factor[c] = raw

@@ -104,7 +104,11 @@ def _split_train_eval(
             eval_cases.append(EvalCase(user_id=str(user_id), target_track_id=str(row["track_id"])))
 
     interactions = [
-        Interaction(user_id=str(row["user_id"]), track_id=str(row["track_id"]), weight=float(row["weight"]))
+        Interaction(
+            user_id=str(row["user_id"]),
+            track_id=str(row["track_id"]),
+            weight=float(row["weight"]),
+        )
         for row in train_rows
     ]
     split_report = {
@@ -152,7 +156,13 @@ def _write_train_interactions_csv(path: Path, interactions: list[Interaction]) -
         writer = csv.DictWriter(f, fieldnames=["user_id", "track_id", "weight"])
         writer.writeheader()
         for row in interactions:
-            writer.writerow({"user_id": str(row.user_id), "track_id": str(row.track_id), "weight": float(row.weight)})
+            writer.writerow(
+                {
+                    "user_id": str(row.user_id),
+                    "track_id": str(row.track_id),
+                    "weight": float(row.weight),
+                }
+            )
 
 
 def _evaluate_method(
@@ -182,7 +192,11 @@ def _evaluate_method(
             row[f"topk_items_at_{k}"] = [str(rec.track_id) for rec in recs[: int(k)]]
         rows.append(row)
 
-    obj = {"method_name": str(name), "summary": _method_summary(rows=rows, ks=ks), "rows": rows}
+    obj = {
+        "method_name": str(name),
+        "summary": _method_summary(rows=rows, ks=ks),
+        "rows": rows,
+    }
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
     return obj
@@ -236,11 +250,17 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
 
         if family == "raw":
             if kind == "popularity":
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions: recommend_popularity(_tracks, _ints, user_id, "global", k=top_k)
+
+                def recommend(user_id, top_k, _tracks=tracks, _ints=train_interactions):
+                    return recommend_popularity(_tracks, _ints, user_id, "global", k=top_k)
             elif kind == "cosine":
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions: recommend_embedding_cosine(_tracks, _ints, user_id, "global", k=top_k)
+
+                def recommend(user_id, top_k, _tracks=tracks, _ints=train_interactions):
+                    return recommend_embedding_cosine(_tracks, _ints, user_id, "global", k=top_k)
             elif kind == "knn":
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions: recommend_embedding_knn(_tracks, _ints, user_id, "global", k=top_k)
+
+                def recommend(user_id, top_k, _tracks=tracks, _ints=train_interactions):
+                    return recommend_embedding_knn(_tracks, _ints, user_id, "global", k=top_k)
             elif kind == "bpr":
                 ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(ckpt).exists():
@@ -259,7 +279,26 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
                 ranker, user_to_id = load_bpr_mf(ckpt, map_location=str(device))
                 ranker.to(device)
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions, _ranker=ranker, _users=user_to_id, _device=device: recommend_bpr_mf(_ranker, _users, _tracks, _ints, user_id, "global", k=top_k, device=_device)
+
+                def recommend(
+                    user_id,
+                    top_k,
+                    _tracks=tracks,
+                    _ints=train_interactions,
+                    _ranker=ranker,
+                    _users=user_to_id,
+                    _device=device,
+                ):
+                    return recommend_bpr_mf(
+                        _ranker,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        "global",
+                        k=top_k,
+                        device=_device,
+                    )
             elif kind == "bpr_two_stage_hybrid":
                 bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(bpr_ckpt).exists():
@@ -298,9 +337,37 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
                 bpr_model.to(device)
                 ranker = load_bpr_two_stage_hybrid_ranker(ckpt, map_location=str(device))
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_hybrid_cfg: recommend_embedding_bpr_two_stage_hybrid(
-                    _ranker, _bpr, _users, _tracks, _ints, user_id, "global", k=top_k, recall_k=int(_cfg.get("recall_k", 120)), rerank_weight=float(_cfg.get("rerank_weight", 0.58)), recall_weight=float(_cfg.get("recall_weight", 0.12)), bpr_weight=float(_cfg.get("bpr_weight", 0.08)), novelty_weight=float(_cfg.get("novelty_weight", 0.02)), target_affinity_weight=0.0, minority_weight=0.0, source_weight=0.0, device=_device
-                )
+
+                def recommend(
+                    user_id,
+                    top_k,
+                    _tracks=tracks,
+                    _ints=train_interactions,
+                    _ranker=ranker,
+                    _bpr=bpr_model,
+                    _users=user_to_id,
+                    _device=device,
+                    _cfg=bpr_hybrid_cfg,
+                ):
+                    return recommend_embedding_bpr_two_stage_hybrid(
+                        _ranker,
+                        _bpr,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        "global",
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", 120)),
+                        rerank_weight=float(_cfg.get("rerank_weight", 0.58)),
+                        recall_weight=float(_cfg.get("recall_weight", 0.12)),
+                        bpr_weight=float(_cfg.get("bpr_weight", 0.08)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
+                        target_affinity_weight=0.0,
+                        minority_weight=0.0,
+                        source_weight=0.0,
+                        device=_device,
+                    )
             elif kind == "bpr_listwise_hybrid":
                 bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(bpr_ckpt).exists():
@@ -337,9 +404,37 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
                 bpr_model.to(device)
                 ranker = load_bpr_listwise_hybrid_ranker(ckpt, map_location=str(device))
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_listwise_hybrid_cfg: recommend_embedding_bpr_listwise_hybrid(
-                    _ranker, _bpr, _users, _tracks, _ints, user_id, "global", k=top_k, recall_k=int(_cfg.get("recall_k", 120)), rerank_weight=float(_cfg.get("rerank_weight", 0.52)), recall_weight=float(_cfg.get("recall_weight", 0.12)), bpr_weight=float(_cfg.get("bpr_weight", 0.08)), novelty_weight=float(_cfg.get("novelty_weight", 0.02)), target_affinity_weight=0.0, minority_weight=0.0, source_weight=0.0, device=_device
-                )
+
+                def recommend(
+                    user_id,
+                    top_k,
+                    _tracks=tracks,
+                    _ints=train_interactions,
+                    _ranker=ranker,
+                    _bpr=bpr_model,
+                    _users=user_to_id,
+                    _device=device,
+                    _cfg=bpr_listwise_hybrid_cfg,
+                ):
+                    return recommend_embedding_bpr_listwise_hybrid(
+                        _ranker,
+                        _bpr,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        "global",
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", 120)),
+                        rerank_weight=float(_cfg.get("rerank_weight", 0.52)),
+                        recall_weight=float(_cfg.get("recall_weight", 0.12)),
+                        bpr_weight=float(_cfg.get("bpr_weight", 0.08)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
+                        target_affinity_weight=0.0,
+                        minority_weight=0.0,
+                        source_weight=0.0,
+                        device=_device,
+                    )
             elif kind == "bpr_tree_hybrid":
                 bpr_ckpt = str(bpr_cfg.get("checkpoint", out_dir / "bpr_mf.pt"))
                 if not Path(bpr_ckpt).exists():
@@ -379,18 +474,53 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
                 bpr_model, user_to_id = load_bpr_mf(bpr_ckpt, map_location=str(device))
                 bpr_model.to(device)
                 ranker = load_bpr_tree_hybrid_ranker(ckpt)
-                recommend = lambda user_id, top_k, _tracks=tracks, _ints=train_interactions, _ranker=ranker, _bpr=bpr_model, _users=user_to_id, _device=device, _cfg=bpr_tree_hybrid_cfg: recommend_embedding_bpr_tree_hybrid(
-                    _ranker, _bpr, _users, _tracks, _ints, user_id, "global", k=top_k, recall_k=int(_cfg.get("recall_k", 120)), rerank_weight=float(_cfg.get("rerank_weight", 0.54)), recall_weight=float(_cfg.get("recall_weight", 0.12)), bpr_weight=float(_cfg.get("bpr_weight", 0.08)), novelty_weight=float(_cfg.get("novelty_weight", 0.02)), target_affinity_weight=0.0, minority_weight=0.0, source_weight=0.0, device=_device
-                )
+
+                def recommend(
+                    user_id,
+                    top_k,
+                    _tracks=tracks,
+                    _ints=train_interactions,
+                    _ranker=ranker,
+                    _bpr=bpr_model,
+                    _users=user_to_id,
+                    _device=device,
+                    _cfg=bpr_tree_hybrid_cfg,
+                ):
+                    return recommend_embedding_bpr_tree_hybrid(
+                        _ranker,
+                        _bpr,
+                        _users,
+                        _tracks,
+                        _ints,
+                        user_id,
+                        "global",
+                        k=top_k,
+                        recall_k=int(_cfg.get("recall_k", 120)),
+                        rerank_weight=float(_cfg.get("rerank_weight", 0.54)),
+                        recall_weight=float(_cfg.get("recall_weight", 0.12)),
+                        bpr_weight=float(_cfg.get("bpr_weight", 0.08)),
+                        novelty_weight=float(_cfg.get("novelty_weight", 0.02)),
+                        target_affinity_weight=0.0,
+                        minority_weight=0.0,
+                        source_weight=0.0,
+                        device=_device,
+                    )
             else:
                 raise ValueError(f"unsupported raw method kind: {kind}")
         elif family == "dcas":
-            ckpt = str(method_cfg.get("checkpoint", dcas_train_cfg.get("checkpoint", out_dir / "dcas_log_model.pt")))
+            ckpt = str(
+                method_cfg.get(
+                    "checkpoint",
+                    dcas_train_cfg.get("checkpoint", out_dir / "dcas_log_model.pt"),
+                )
+            )
             if not Path(ckpt).exists():
                 train_model(
                     tracks_path=str(tracks_path),
                     out_path=ckpt,
-                    interactions_path=str(train_interactions_csv) if float(dcas_train_cfg.get("lambda_rank", 0.0)) > 0 else None,
+                    interactions_path=str(train_interactions_csv)
+                    if float(dcas_train_cfg.get("lambda_rank", 0.0)) > 0
+                    else None,
                     epochs=int(dcas_train_cfg.get("epochs", 8)),
                     batch_size=int(dcas_train_cfg.get("batch_size", 128)),
                     lr=float(dcas_train_cfg.get("lr", 2e-3)),
@@ -420,7 +550,27 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
             model, _ = load_checkpoint(ckpt, map_location=str(device))
             if kind != "ot":
                 raise ValueError(f"unsupported dcas method kind: {kind}")
-            recommend = lambda user_id, top_k, _model=model, _tracks=tracks, _ints=train_interactions, _device=device, _cfg=method_cfg: recommend_ot(_model, _tracks, _ints, user_id, "global", k=top_k, device=_device, epsilon=float(_cfg.get("epsilon", 0.1)), iters=int(_cfg.get("iters", 200)))[0]
+
+            def recommend(
+                user_id,
+                top_k,
+                _model=model,
+                _tracks=tracks,
+                _ints=train_interactions,
+                _device=device,
+                _cfg=method_cfg,
+            ):
+                return recommend_ot(
+                    _model,
+                    _tracks,
+                    _ints,
+                    user_id,
+                    "global",
+                    k=top_k,
+                    device=_device,
+                    epsilon=float(_cfg.get("epsilon", 0.1)),
+                    iters=int(_cfg.get("iters", 200)),
+                )[0]
         else:
             raise ValueError(f"unsupported family: {family}")
 
@@ -478,7 +628,13 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
         f"- eval_users: `{split_report['n_users_eval']}`",
         f"- eval_cases: `{split_report['n_eval_cases']}`",
         "",
-        "| method | " + " | ".join(f"Recall@{k}" for k in ks) + " | " + " | ".join(f"NDCG@{k}" for k in ks) + " | " + " | ".join(f"MRR@{k}" for k in ks) + " |",
+        "| method | "
+        + " | ".join(f"Recall@{k}" for k in ks)
+        + " | "
+        + " | ".join(f"NDCG@{k}" for k in ks)
+        + " | "
+        + " | ".join(f"MRR@{k}" for k in ks)
+        + " |",
         "|---|" + "|".join("---:" for _ in range(len(ks) * 3)) + "|",
     ]
     for method_name, result in summary["methods"].items():
@@ -488,10 +644,20 @@ def run_log_benchmark_suite(config_path: str | Path) -> dict[str, Any]:
         cells.extend(f"{float(result.get(f'mrr_at_{k}_mean', float('nan'))):.4f}" for k in ks)
         lines.append("| " + " | ".join(cells) + " |")
     if comparisons:
-        lines.extend(["", "## Comparisons vs Reference", "", "| method | metric | delta_mean(reference - base) | p_value |", "|---|---|---:|---:|"])
+        lines.extend(
+            [
+                "",
+                "## Comparisons vs Reference",
+                "",
+                "| method | metric | delta_mean(reference - base) | p_value |",
+                "|---|---|---:|---:|",
+            ]
+        )
         for method_name, comparison in summary["comparisons_vs_reference"].items():
             for metric, values in comparison.items():
-                lines.append(f"| {method_name} | {metric} | {float(values.get('delta_mean', float('nan'))):+.6f} | {float(values.get('p_value_two_sided', float('nan'))):.6f} |")
+                lines.append(
+                    f"| {method_name} | {metric} | {float(values.get('delta_mean', float('nan'))):+.6f} | {float(values.get('p_value_two_sided', float('nan'))):.6f} |"
+                )
     (out_dir / "benchmark_table.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return summary
 

@@ -188,8 +188,16 @@ def enrich_metadata_media_links(
             url = _first(row.get("spotify_url"), row.get("external_url"))
             updates = {
                 "platform": source,
-                "cover_art_url": _first(row.get("cover_art_url"), row.get("image_url"), row.get("artwork_url")),
-                "cover_art_url_large": _first(row.get("cover_art_url_large"), row.get("image_url"), row.get("artwork_url")),
+                "cover_art_url": _first(
+                    row.get("cover_art_url"),
+                    row.get("image_url"),
+                    row.get("artwork_url"),
+                ),
+                "cover_art_url_large": _first(
+                    row.get("cover_art_url_large"),
+                    row.get("image_url"),
+                    row.get("artwork_url"),
+                ),
                 "platform_track_url": _first(row.get("platform_track_url"), url),
                 "external_url": _first(row.get("external_url"), url),
                 "full_track_url": _first(row.get("full_track_url"), url),

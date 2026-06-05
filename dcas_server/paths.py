@@ -23,4 +23,3 @@ class Storage:
         p = self.resolve_rel(rel)
         p.mkdir(parents=True, exist_ok=True)
         return p
-

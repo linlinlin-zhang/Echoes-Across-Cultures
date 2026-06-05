@@ -8,7 +8,15 @@ from dcas.utils import Batch
 
 
 def collate_batch(
-    items: Sequence[tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor | None]]
+    items: Sequence[
+        tuple[
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor | None,
+            torch.Tensor | None,
+        ]
+    ],
 ) -> Batch:
     xs, cultures, track_indices, affects, sources = zip(*items)
     x = torch.stack(xs, dim=0)
@@ -31,4 +39,3 @@ def collate_batch(
         affect_label=affect_label,
         source_label=source_label,
     )
-

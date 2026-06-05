@@ -123,9 +123,9 @@ def build_yambda_subset(
         )
         kept_events += 1
 
-    eligible_users = [
-        uid for uid in user_order if len(by_user.get(uid, [])) >= int(min_interactions_per_user)
-    ][: int(max_users)]
+    eligible_users = [uid for uid in user_order if len(by_user.get(uid, [])) >= int(min_interactions_per_user)][
+        : int(max_users)
+    ]
     if not eligible_users:
         raise RuntimeError("no users satisfy the subset filters; try relaxing min_interactions_per_user or max_events")
 
@@ -196,7 +196,10 @@ def build_yambda_subset(
             )
 
     interactions_path = out_root / "interactions.csv"
-    selected_events = sorted(selected_events, key=lambda r: (str(r["user_id"]), int(r["timestamp"]), str(r["track_id"])))
+    selected_events = sorted(
+        selected_events,
+        key=lambda r: (str(r["user_id"]), int(r["timestamp"]), str(r["track_id"])),
+    )
     with open(interactions_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(
             f,
@@ -243,11 +246,21 @@ def build_yambda_subset(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Build a small Yambda subset in repository-native tracks/interactions format.")
+    ap = argparse.ArgumentParser(
+        description="Build a small Yambda subset in repository-native tracks/interactions format."
+    )
     ap.add_argument("--out_dir", required=True)
     ap.add_argument("--interaction_config", default="flat-multievent-5b")
-    ap.add_argument("--row_groups", default="0", help="Comma-separated row-group ids from embeddings.parquet")
-    ap.add_argument("--embedding_column", default="normalized_embed", choices=["embed", "normalized_embed"])
+    ap.add_argument(
+        "--row_groups",
+        default="0",
+        help="Comma-separated row-group ids from embeddings.parquet",
+    )
+    ap.add_argument(
+        "--embedding_column",
+        default="normalized_embed",
+        choices=["embed", "normalized_embed"],
+    )
     ap.add_argument("--max_events", type=int, default=500000)
     ap.add_argument("--max_users", type=int, default=80)
     ap.add_argument("--min_interactions_per_user", type=int, default=30)

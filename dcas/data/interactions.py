@@ -21,4 +21,3 @@ def load_interactions(path: str) -> list[Interaction]:
             weight = float(row.get("weight", 1.0))
             out.append(Interaction(user_id=user_id, track_id=track_id, weight=weight))
     return out
-

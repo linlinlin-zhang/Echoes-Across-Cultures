@@ -53,9 +53,16 @@ CUSTOM_CULTURE_COUNTRIES = {
 
 EXTRA_TERMS_BY_CULTURE = {
     "china": [
-        "cantonese songs", "hakka songs", "hokkien songs", "taiwanese hokkien",
-        "minnan songs", "teochew songs", "shanghainese songs",
-        "sichuan dialect songs", "wu chinese songs", "yue chinese songs",
+        "cantonese songs",
+        "hakka songs",
+        "hokkien songs",
+        "taiwanese hokkien",
+        "minnan songs",
+        "teochew songs",
+        "shanghainese songs",
+        "sichuan dialect songs",
+        "wu chinese songs",
+        "yue chinese songs",
     ],
 }
 
@@ -211,7 +218,12 @@ def main() -> int:
     ap.add_argument("--restart_delay", type=int, default=120)
     ap.add_argument("--max_attempts", type=int, default=0, help="0 means unlimited")
     ap.add_argument("--idle_round_limit", type=int, default=8, help="0 means unlimited")
-    ap.add_argument("--count_metadata", nargs="*", default=[], help="Extra metadata.csv files to count toward culture targets")
+    ap.add_argument(
+        "--count_metadata",
+        nargs="*",
+        default=[],
+        help="Extra metadata.csv files to count toward culture targets",
+    )
     ap.add_argument("--merge_out", default="./storage/public/merged/metadata_merged.csv")
     ap.add_argument("--skip_merge", action="store_true")
     ap.add_argument("--dry_run", action="store_true")
@@ -282,10 +294,7 @@ def main() -> int:
         countries = grouped[selected]
         country_arg = ",".join(countries)
         extra_terms = EXTRA_TERMS_BY_CULTURE.get(selected, [])
-        log_path = log_dir / (
-            f"itunes_nonwestern_{selected}_{time.strftime('%Y%m%d_%H%M%S')}"
-            f"_attempt{attempts}.log"
-        )
+        log_path = log_dir / (f"itunes_nonwestern_{selected}_{time.strftime('%Y%m%d_%H%M%S')}_attempt{attempts}.log")
 
         cmd = [
             args.python_executable,
@@ -324,10 +333,7 @@ def main() -> int:
         after_selected = counts_after.get(selected, 0)
         gained = after_selected - before_selected
         total_gained = total_after - before_total
-        print(
-            f"[ATTEMPT END] exit={last_exit_code} culture_gain={gained} "
-            f"total_gain={total_gained}"
-        )
+        print(f"[ATTEMPT END] exit={last_exit_code} culture_gain={gained} total_gain={total_gained}")
 
         if gained <= 0 and total_gained <= 0:
             idle_rounds += 1

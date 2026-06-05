@@ -16,4 +16,3 @@ def write_json(path: str | Path, obj: dict[str, Any]) -> None:
     p.parent.mkdir(parents=True, exist_ok=True)
     with open(p, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
-

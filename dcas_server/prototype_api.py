@@ -120,7 +120,9 @@ class PrototypeService:
                 "origin": sample_track["origin"],
                 "descriptor": sample_track["descriptor"],
                 "audio_url": f"/api/prototype/catalog/{sample_track['id']}/audio",
-            } if sample_track else None,
+            }
+            if sample_track
+            else None,
         }
 
     def register_profile(self, name: str, email: str, role: str) -> dict[str, Any]:
@@ -384,7 +386,10 @@ class PrototypeService:
                 item = {
                     "id": track_id,
                     "title": build_catalog_title(row),
-                    "origin": format_origin_label(culture, row.get("region") or row.get("source_dataset") or culture),
+                    "origin": format_origin_label(
+                        culture,
+                        row.get("region") or row.get("source_dataset") or culture,
+                    ),
                     "culture": culture,
                     "artist": humanize_title(
                         first_metadata_term(row, "artist")
@@ -428,9 +433,7 @@ class PrototypeService:
             confidence = clamp((similarity * 0.55) + (bridge * 0.35) + 0.08)
             variation = seeded_value(source_seed + index * 37)
             score = (
-                similarity * weights["similarity"]
-                + novelty * weights["novelty"]
-                + bridge * weights["bridge"]
+                similarity * weights["similarity"] + novelty * weights["novelty"] + bridge * weights["bridge"]
             ) * 25 + variation * 2.8
 
             scored.append(
@@ -873,7 +876,7 @@ def build_waveform_points(audio_bytes: bytes, bins: int) -> list[float]:
     waveform: list[float] = []
     for index in range(bins):
         start = index * stride
-        chunk = audio_bytes[start:start + stride]
+        chunk = audio_bytes[start : start + stride]
         if not chunk:
             waveform.append(0.0)
             continue
@@ -972,7 +975,15 @@ def build_catalog_descriptor(row: dict[str, Any]) -> str:
 
 def build_catalog_tags(row: dict[str, Any]) -> list[str]:
     tags: list[str] = []
-    for key in ("title", "cname", "instrument", "label", "mood_theme", "language", "culture"):
+    for key in (
+        "title",
+        "cname",
+        "instrument",
+        "label",
+        "mood_theme",
+        "language",
+        "culture",
+    ):
         for term in parse_metadata_terms(row.get(key) or ""):
             tags.append(translate_token(term))
     output: list[str] = []
@@ -985,7 +996,9 @@ def build_catalog_tags(row: dict[str, Any]) -> list[str]:
 def lens_bonus(item: dict[str, Any], lens: str) -> float:
     text = f"{item['title']}|{item['descriptor']}|{' '.join(item['tags'])}".lower()
     if lens == "rhythm":
-        return 0.78 if any(token in text for token in ["dance", "drum", "percussion", "rhythm", "pulse", "舞"]) else 0.56
+        return (
+            0.78 if any(token in text for token in ["dance", "drum", "percussion", "rhythm", "pulse", "舞"]) else 0.56
+        )
     if lens == "timbre":
         return 0.8 if any(token in text for token in ["voice", "string", "oud", "弦", "声", "instrument"]) else 0.58
     return 0.82 if any(token in text for token in ["ritual", "opera", "emotion", "ceremonial", "戏", "祭"]) else 0.6
@@ -1009,7 +1022,7 @@ def build_summary(item: dict[str, Any], similarity: float, bridge: float, novelt
         return f"这条候选在桥接性上最稳定，能用 {item['descriptor']} 和你的源轨建立自然联系。"
     if novelty > 0.72:
         return "这条候选的新颖度更高，适合想从熟悉音乐跳到更远文化空间的听众。"
-    return f"它在相似度和解释性之间比较平衡，既不会太陌生，也不会只是重复原有偏好。"
+    return "它在相似度和解释性之间比较平衡，既不会太陌生，也不会只是重复原有偏好。"
 
 
 def build_reason(item: dict[str, Any], lens: str, similarity: float, bridge: float) -> str:
@@ -1068,9 +1081,30 @@ def translate_token(value: str) -> str:
 
 def build_fallback_catalog(dim: int) -> list[dict[str, Any]]:
     seeds = [
-        ("fallback_china", "京剧片段", "中国", "声腔纹理 / 戏曲装饰音", ["人声", "传统声乐", "戏曲"], 92),
-        ("fallback_turkey", "安纳托利亚鲁特琴", "土耳其", "拨弦音色 / 马卡姆旋律", ["拨弦", "马卡姆", "旋律"], 104),
-        ("fallback_india", "夜雨塔布拉", "印度", "鼓点脉冲 / 情绪推进", ["塔布拉", "节奏", "情绪"], 118),
+        (
+            "fallback_china",
+            "京剧片段",
+            "中国",
+            "声腔纹理 / 戏曲装饰音",
+            ["人声", "传统声乐", "戏曲"],
+            92,
+        ),
+        (
+            "fallback_turkey",
+            "安纳托利亚鲁特琴",
+            "土耳其",
+            "拨弦音色 / 马卡姆旋律",
+            ["拨弦", "马卡姆", "旋律"],
+            104,
+        ),
+        (
+            "fallback_india",
+            "夜雨塔布拉",
+            "印度",
+            "鼓点脉冲 / 情绪推进",
+            ["塔布拉", "节奏", "情绪"],
+            118,
+        ),
     ]
     items: list[dict[str, Any]] = []
     for track_id, title, origin, descriptor, tags, bpm in seeds:

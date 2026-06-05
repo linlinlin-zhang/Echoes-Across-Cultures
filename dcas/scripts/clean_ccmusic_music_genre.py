@@ -152,9 +152,37 @@ def _normalize_language(value: Any) -> tuple[str, str]:
         return lowered, "non_zh_explicit"
     if "chinese" in lowered or "mandarin" in lowered or "cantonese" in lowered:
         return "zh", "zh_explicit"
-    if any(token in lowered for token in ("中文", "汉语", "漢語", "华语", "華語", "国语", "國語", "普通话", "普通話", "粤语", "粵語")):
+    if any(
+        token in lowered
+        for token in (
+            "中文",
+            "汉语",
+            "漢語",
+            "华语",
+            "華語",
+            "国语",
+            "國語",
+            "普通话",
+            "普通話",
+            "粤语",
+            "粵語",
+        )
+    ):
         return "zh", "zh_explicit"
-    if any(token in lowered for token in ("english", "japanese", "korean", "french", "german", "spanish", "russian", "hindi", "turkish")):
+    if any(
+        token in lowered
+        for token in (
+            "english",
+            "japanese",
+            "korean",
+            "french",
+            "german",
+            "spanish",
+            "russian",
+            "hindi",
+            "turkish",
+        )
+    ):
         return lowered, "non_zh_explicit"
     return lowered, "unknown"
 
@@ -219,14 +247,27 @@ def _decide_candidate(language_signal: str, singer_signal: str, title_signal: st
             return "review", "language_zh_but_text_contains_non_zh_cjk"
         return "drop", "non_zh_cjk_text"
     if language_signal == "zh_explicit":
-        if singer_signal in {"han_only", "mixed_han_latin"} or title_signal in {"han_only", "mixed_han_latin"}:
+        if singer_signal in {"han_only", "mixed_han_latin"} or title_signal in {
+            "han_only",
+            "mixed_han_latin",
+        }:
             return "keep", "explicit_zh_language_with_han_text"
         return "review", "explicit_zh_language_but_text_ambiguous"
     if singer_signal == "han_only" and title_signal == "han_only":
         return "keep", "han_singer_and_han_title"
-    if singer_signal in {"han_only", "mixed_han_latin"} and title_signal in {"han_only", "mixed_han_latin", "empty", "other"}:
+    if singer_signal in {"han_only", "mixed_han_latin"} and title_signal in {
+        "han_only",
+        "mixed_han_latin",
+        "empty",
+        "other",
+    }:
         return "review", "partial_han_evidence_without_language"
-    if title_signal in {"han_only", "mixed_han_latin"} and singer_signal in {"han_only", "mixed_han_latin", "empty", "other"}:
+    if title_signal in {"han_only", "mixed_han_latin"} and singer_signal in {
+        "han_only",
+        "mixed_han_latin",
+        "empty",
+        "other",
+    }:
         return "review", "partial_han_evidence_without_language"
     if singer_signal == "latin_only" and title_signal == "latin_only":
         return "drop", "latin_only_without_zh_evidence"
@@ -418,7 +459,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Strict secondary cleaner for the CCMusic Music Genre metadata using singer/language/title."
     )
-    ap.add_argument("--inputs", nargs="+", required=True, help="CSV files or directories containing CCMusic music-genre metadata")
+    ap.add_argument(
+        "--inputs",
+        nargs="+",
+        required=True,
+        help="CSV files or directories containing CCMusic music-genre metadata",
+    )
     ap.add_argument("--out_dir", required=True)
     ap.add_argument("--singer_col", default="singer")
     ap.add_argument("--language_col", default="language")

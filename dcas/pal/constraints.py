@@ -46,4 +46,3 @@ def save_constraints(path: str, constraints: list[PairwiseConstraint]) -> None:
                 )
                 + "\n"
             )
-

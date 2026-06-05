@@ -95,9 +95,11 @@ def _quantiles(values: list[float]) -> dict[str, float]:
     if not values:
         return {}
     arr = sorted(values)
+
     def _at(q: float) -> float:
         idx = int(round((len(arr) - 1) * q))
         return round(float(arr[idx]), 6)
+
     return {
         "min": _at(0.0),
         "p25": _at(0.25),
@@ -155,12 +157,23 @@ def _metadata_report(
     rows: list[dict[str, str]],
     fieldnames: list[str],
     thresholds: MetadataAuditThresholds,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], list[dict[str, str]]]:
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    list[dict[str, str]],
+]:
     issues: list[dict[str, str]] = []
     n_rows = len(rows)
 
-    track_counter = Counter(str(row.get("track_id", "")).strip() for row in rows if str(row.get("track_id", "")).strip())
-    audio_counter = Counter(str(row.get("audio_path", "")).strip() for row in rows if str(row.get("audio_path", "")).strip())
+    track_counter = Counter(
+        str(row.get("track_id", "")).strip() for row in rows if str(row.get("track_id", "")).strip()
+    )
+    audio_counter = Counter(
+        str(row.get("audio_path", "")).strip() for row in rows if str(row.get("audio_path", "")).strip()
+    )
     duplicate_track_ids = int(sum(1 for _, count in track_counter.items() if count > 1))
     duplicate_audio_paths = int(sum(1 for _, count in audio_counter.items() if count > 1))
 
@@ -212,16 +225,27 @@ def _metadata_report(
             missing_audio += 1
 
     culture_distribution = [
-        {"culture": culture, "count": int(count), "ratio": round(float(count / max(1, n_rows)), 6)}
+        {
+            "culture": culture,
+            "count": int(count),
+            "ratio": round(float(count / max(1, n_rows)), 6),
+        }
         for culture, count in sorted(culture_counter.items(), key=lambda item: (-item[1], item[0]))
     ]
     source_distribution = [
-        {"source_dataset": source, "count": int(count), "ratio": round(float(count / max(1, n_rows)), 6)}
+        {
+            "source_dataset": source,
+            "count": int(count),
+            "ratio": round(float(count / max(1, n_rows)), 6),
+        }
         for source, count in sorted(source_counter.items(), key=lambda item: (-item[1], item[0]))
     ]
 
     if culture_counter:
-        culture_imbalance_ratio = round(float(max(culture_counter.values()) / max(1, min(culture_counter.values()))), 6)
+        culture_imbalance_ratio = round(
+            float(max(culture_counter.values()) / max(1, min(culture_counter.values()))),
+            6,
+        )
     else:
         culture_imbalance_ratio = 0.0
 
@@ -286,8 +310,7 @@ def _metadata_report(
 
     source_confound_report = {
         "culture_source_matrix": {
-            culture: dict(sorted(counter.items()))
-            for culture, counter in sorted(culture_source_counter.items())
+            culture: dict(sorted(counter.items())) for culture, counter in sorted(culture_source_counter.items())
         },
         "single_source_culture_count": int(sum(1 for counter in culture_source_counter.values() if len(counter) <= 1)),
         "top_source_share_by_culture": top_source_share_by_culture,
@@ -298,14 +321,21 @@ def _metadata_report(
                 / max(1, sum(culture_counter.values()))
             ),
             6,
-        ) if top_source_share_by_culture else 0.0,
+        )
+        if top_source_share_by_culture
+        else 0.0,
         "weighted_culture_predictability_from_source": round(
             float(
-                sum(item["top_culture_share"] * source_counter[item["source_dataset"]] for item in top_culture_share_by_source)
+                sum(
+                    item["top_culture_share"] * source_counter[item["source_dataset"]]
+                    for item in top_culture_share_by_source
+                )
                 / max(1, sum(source_counter.values()))
             ),
             6,
-        ) if top_culture_share_by_source else 0.0,
+        )
+        if top_culture_share_by_source
+        else 0.0,
     }
     if int(source_confound_report["single_source_culture_count"]) > 0:
         issues.append(
@@ -462,12 +492,19 @@ def _interactions_report(
         "n_rows": int(len(rows)),
         "n_users": int(len(user_counter)),
         "n_tracks_observed": int(len(seen_tracks)),
-        "track_coverage_ratio": round(float(len(seen_tracks.intersection(known_tracks)) / max(1, len(known_tracks))), 6),
+        "track_coverage_ratio": round(
+            float(len(seen_tracks.intersection(known_tracks)) / max(1, len(known_tracks))),
+            6,
+        ),
         "unknown_track_ratio": unknown_track_ratio,
         "duplicate_user_track_ratio": duplicate_ratio,
         "per_user_interaction_stats": per_user_stats,
         "culture_exposure_distribution": [
-            {"culture": culture, "count": int(count), "ratio": round(float(count / max(1, len(rows))), 6)}
+            {
+                "culture": culture,
+                "count": int(count),
+                "ratio": round(float(count / max(1, len(rows))), 6),
+            }
             for culture, count in sorted(culture_counter.items(), key=lambda item: (-item[1], item[0]))
         ],
     }
@@ -483,19 +520,38 @@ def _to_markdown(report: dict[str, Any]) -> str:
     lines.append(f"- sources: `{int(report['profile'].get('n_sources', 0))}`")
     lines.append("")
 
-    lines.extend(["## Culture Distribution", "", "| culture | count | ratio |", "|---|---:|---:|"])
+    lines.extend(
+        [
+            "## Culture Distribution",
+            "",
+            "| culture | count | ratio |",
+            "|---|---:|---:|",
+        ]
+    )
     for row in report["profile"].get("culture_distribution", []):
         lines.append(f"| {row['culture']} | {row['count']} | {row['ratio']} |")
 
-    lines.extend(["", "## Source Distribution", "", "| source_dataset | count | ratio |", "|---|---:|---:|"])
+    lines.extend(
+        [
+            "",
+            "## Source Distribution",
+            "",
+            "| source_dataset | count | ratio |",
+            "|---|---:|---:|",
+        ]
+    )
     for row in report["profile"].get("source_distribution", []):
         lines.append(f"| {row['source_dataset']} | {row['count']} | {row['ratio']} |")
 
     confound = report.get("source_confound", {})
     lines.extend(["", "## Source Confound", ""])
     lines.append(f"- single_source_culture_count: `{int(confound.get('single_source_culture_count', 0))}`")
-    lines.append(f"- weighted_source_predictability_from_culture: `{confound.get('weighted_source_predictability_from_culture', 0.0)}`")
-    lines.append(f"- weighted_culture_predictability_from_source: `{confound.get('weighted_culture_predictability_from_source', 0.0)}`")
+    lines.append(
+        f"- weighted_source_predictability_from_culture: `{confound.get('weighted_source_predictability_from_culture', 0.0)}`"
+    )
+    lines.append(
+        f"- weighted_culture_predictability_from_source: `{confound.get('weighted_culture_predictability_from_source', 0.0)}`"
+    )
     lines.append("")
     lines.append("| culture | top_source_dataset | top_source_share | n_sources | source_entropy_norm |")
     lines.append("|---|---|---:|---:|---:|")
@@ -587,9 +643,15 @@ def audit_dataset_v4(
     (out_path / "dataset_profile.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_path / "dataset_profile.md").write_text(_to_markdown(report), encoding="utf-8")
     (out_path / "schema_report.json").write_text(json.dumps(schema, ensure_ascii=False, indent=2), encoding="utf-8")
-    (out_path / "missingness_report.json").write_text(json.dumps(missingness, ensure_ascii=False, indent=2), encoding="utf-8")
-    (out_path / "duplicate_report.json").write_text(json.dumps(duplicates, ensure_ascii=False, indent=2), encoding="utf-8")
-    (out_path / "source_confound_report.json").write_text(json.dumps(source_confound, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_path / "missingness_report.json").write_text(
+        json.dumps(missingness, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (out_path / "duplicate_report.json").write_text(
+        json.dumps(duplicates, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (out_path / "source_confound_report.json").write_text(
+        json.dumps(source_confound, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return report
 
 
@@ -620,7 +682,15 @@ def main() -> None:
         dataset_name=args.dataset_name,
         thresholds=thresholds,
     )
-    print(json.dumps({"out_dir": str(Path(args.out_dir).resolve()), "issues": len(report["issues"])}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "out_dir": str(Path(args.out_dir).resolve()),
+                "issues": len(report["issues"]),
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

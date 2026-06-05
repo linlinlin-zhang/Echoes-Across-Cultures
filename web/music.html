@@ -277,7 +277,7 @@
 
     .console-top {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
       gap: 1rem;
       padding: 1.35rem 1.45rem;
       border-bottom: 1px solid var(--line);
@@ -2045,6 +2045,10 @@
           <div class="meta-label" data-i18n="music.readout.source">来源</div>
           <strong id="readout-source" data-i18n="music.default.source">后端曲库</strong>
         </div>
+        <div class="readout">
+          <div class="meta-label" data-i18n="music.readout.catalog">曲库</div>
+          <strong id="readout-catalog" data-i18n="music.default.catalogRefresh">曲库状态待刷新</strong>
+        </div>
       </div>
 
       <div class="map-stage" id="station-map" aria-label="可拖动的世界音乐地图">
@@ -2118,15 +2122,15 @@
       </section>
     </section>
 
-    <aside class=”side-panel” aria-label=”跨文化推荐列表”>
-      <div class=”side-head”>
-        <div class=”meta-label” data-i18n=”music.side.description”>推荐说明</div>
-        <h1 data-i18n-html=”music.side.routeTitle”>跨文化<br>路线</h1>
+    <aside class="side-panel" aria-label="跨文化推荐列表">
+      <div class="side-head">
+        <div class="meta-label" data-i18n="music.side.description">推荐说明</div>
+        <h1 data-i18n-html="music.side.routeTitle">跨文化<br>路线</h1>
       </div>
-      <div class=”recommend-list” id=”recommend-list”>
-        <article class=”rec-card is-placeholder”>
-          <div class=”meta-label” data-i18n=”music.side.waiting”>等待推荐</div>
-          <p data-i18n=”music.side.waitingCopy”>点击左下方的”跨文化音乐推荐”后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
+      <div class="recommend-list" id="recommend-list">
+        <article class="rec-card is-placeholder">
+          <div class="meta-label" data-i18n="music.side.waiting">等待推荐</div>
+          <p data-i18n="music.side.waitingCopy">点击左下方的"跨文化音乐推荐"后，推荐歌曲会在地图上出现，并与当前播放音乐位置建立连接。</p>
         </article>
       </div>
     </aside>
@@ -3956,9 +3960,9 @@ Guidelines:
       els.sidePanel?.classList.toggle("has-recommendations", hasRecommendations);
       if (!hasRecommendations) {
         els.recommendList.innerHTML = `
-          <article class=”rec-card is-placeholder”>
-            <div class=”meta-label”>${t(“music.rec.waitingLabel”)}</div>
-            <p>${t(“music.side.waitingCopy”)}</p>
+          <article class="rec-card is-placeholder">
+            <div class="meta-label">${t("music.rec.waitingLabel")}</div>
+            <p>${t("music.side.waitingCopy")}</p>
           </article>
         `;
         return;

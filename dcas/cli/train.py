@@ -9,7 +9,12 @@ from torch.utils.data import DataLoader
 
 from dcas.data.batch import collate_batch
 from dcas.data.npz_tracks import load_tracks
-from dcas.data.torch_dataset import CultureVocab, SourceVocab, TrackDataset, make_source_balanced_sampler
+from dcas.data.torch_dataset import (
+    CultureVocab,
+    SourceVocab,
+    TrackDataset,
+    make_source_balanced_sampler,
+)
 from dcas.models.dcas_vae import DCASConfig, DCASModel
 from dcas.pal.constraints import load_constraints
 from dcas.serialization import save_checkpoint
@@ -140,14 +145,32 @@ def main() -> None:
 
             if constraints and float(args.lambda_constraints) > 0:
                 sample = random.sample(constraints, k=min(64, len(constraints)))
-                idx_a = [track_id_to_idx[c.track_id_a] for c in sample if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx]
-                idx_b = [track_id_to_idx[c.track_id_b] for c in sample if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx]
-                sim = [1.0 if c.similar else 0.0 for c in sample if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx]
+                idx_a = [
+                    track_id_to_idx[c.track_id_a]
+                    for c in sample
+                    if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx
+                ]
+                idx_b = [
+                    track_id_to_idx[c.track_id_b]
+                    for c in sample
+                    if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx
+                ]
+                sim = [
+                    1.0 if c.similar else 0.0
+                    for c in sample
+                    if c.track_id_a in track_id_to_idx and c.track_id_b in track_id_to_idx
+                ]
                 if idx_a:
                     emb_a = x_all[torch.tensor(idx_a, device=device)]
                     emb_b = x_all[torch.tensor(idx_b, device=device)]
                     similar = torch.tensor(sim, device=device, dtype=torch.float32)
-                    c_loss = _constraint_loss(model, emb_a, emb_b, similar, margin=float(args.constraint_margin))
+                    c_loss = _constraint_loss(
+                        model,
+                        emb_a,
+                        emb_b,
+                        similar,
+                        margin=float(args.constraint_margin),
+                    )
                     loss = loss + float(args.lambda_constraints) * c_loss
 
             opt.zero_grad(set_to_none=True)
@@ -167,4 +190,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

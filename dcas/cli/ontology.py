@@ -11,7 +11,7 @@ def main() -> None:
     ap.add_argument("--state", required=True, help="ontology state json path")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    ap_state = sub.add_parser("state")
+    sub.add_parser("state")
 
     ap_concept = sub.add_parser("add-concept")
     ap_concept.add_argument("--name", required=True)

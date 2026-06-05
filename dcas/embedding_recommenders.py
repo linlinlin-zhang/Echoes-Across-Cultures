@@ -116,7 +116,10 @@ def recommend_popularity(
 ) -> list[Recommendation]:
     hist_idx, _, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
     popularity = _popularity_by_track(interactions)
-    scores = np.array([float(popularity.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+    scores = np.array(
+        [float(popularity.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()],
+        dtype=np.float32,
+    )
     scores = _minmax(scores)
     return _finalize_embedding_recommendations(tracks, hist_idx, cand_idx, scores, k=k)
 
@@ -172,7 +175,10 @@ def recommend_embedding_hybrid(
     knn = _minmax(-(hist_w[:, None] * dist).sum(axis=0))
     novelty = _minmax(dist.mean(axis=0))
     pop = _minmax(
-        np.array([float(popularity.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+        np.array(
+            [float(popularity.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()],
+            dtype=np.float32,
+        )
     )
     scores = (
         float(cosine_weight) * cosine
@@ -184,7 +190,9 @@ def recommend_embedding_hybrid(
 
 
 def _pair_features(user_vec: np.ndarray, item_vec: np.ndarray) -> np.ndarray:
-    return np.concatenate([user_vec, item_vec, np.abs(user_vec - item_vec), user_vec * item_vec], axis=0).astype(np.float32)
+    return np.concatenate([user_vec, item_vec, np.abs(user_vec - item_vec), user_vec * item_vec], axis=0).astype(
+        np.float32
+    )
 
 
 def _hybrid_model_feature_matrix(
@@ -195,7 +203,16 @@ def _hybrid_model_feature_matrix(
     user_block = np.repeat(user_vec.reshape(1, -1), cand_emb.shape[0], axis=0).astype(np.float32)
     diff = np.abs(user_block - cand_emb).astype(np.float32)
     prod = (user_block * cand_emb).astype(np.float32)
-    return np.concatenate([scalar_features.astype(np.float32), user_block, cand_emb.astype(np.float32), diff, prod], axis=1).astype(np.float32)
+    return np.concatenate(
+        [
+            scalar_features.astype(np.float32),
+            user_block,
+            cand_emb.astype(np.float32),
+            diff,
+            prod,
+        ],
+        axis=1,
+    ).astype(np.float32)
 
 
 def _culture_centroid_embeddings(tracks: Tracks) -> dict[str, np.ndarray]:
@@ -238,7 +255,10 @@ def _candidate_feature_table(
     max_hist_raw = -dist.min(axis=0)
     mean_hist_raw = -dist.mean(axis=0)
     novelty_raw = dist.mean(axis=0)
-    popularity_raw = np.array([float(pop_by_track.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+    popularity_raw = np.array(
+        [float(pop_by_track.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()],
+        dtype=np.float32,
+    )
     minority_raw = -popularity_raw
 
     centroid = culture_centroids.get(str(target_culture))
@@ -254,8 +274,14 @@ def _candidate_feature_table(
         for src in hist_sources:
             hist_source_share[src] = float(hist_source_share.get(src, 0.0) + 1.0 / float(total_hist))
         cand_sources = [str(tracks.source_dataset[int(i)]) for i in cand_idx.tolist()]
-        source_pref_raw = np.array([float(hist_source_share.get(src, 0.0)) for src in cand_sources], dtype=np.float32)
-        source_inv_raw = np.array([float(source_inv_freq.get(src, 0.0)) for src in cand_sources], dtype=np.float32)
+        source_pref_raw = np.array(
+            [float(hist_source_share.get(src, 0.0)) for src in cand_sources],
+            dtype=np.float32,
+        )
+        source_inv_raw = np.array(
+            [float(source_inv_freq.get(src, 0.0)) for src in cand_sources],
+            dtype=np.float32,
+        )
     else:
         source_pref_raw = np.zeros((cand_idx.shape[0],), dtype=np.float32)
         source_inv_raw = np.zeros((cand_idx.shape[0],), dtype=np.float32)
@@ -353,7 +379,9 @@ class BPRMF(nn.Module):
         b = self.item_bias(item_idx).squeeze(-1)
         return (u * i).sum(dim=-1) + b
 
-    def forward(self, user_idx: torch.Tensor, pos_idx: torch.Tensor, neg_idx: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, user_idx: torch.Tensor, pos_idx: torch.Tensor, neg_idx: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         pos_score = self.score(user_idx, pos_idx)
         neg_score = self.score(user_idx, neg_idx)
         return pos_score, neg_score
@@ -568,11 +596,19 @@ def train_shallow_ranker(
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(np.mean(losses)) if losses else float("nan"),
+            }
+        )
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"cfg": asdict(cfg), "state_dict": model.state_dict(), "history": history}, str(out))
+    torch.save(
+        {"cfg": asdict(cfg), "state_dict": model.state_dict(), "history": history},
+        str(out),
+    )
     return {"checkpoint": str(out), "history": history, "n_examples": int(x.shape[0])}
 
 
@@ -597,7 +633,10 @@ def recommend_embedding_mlp(
         device = torch.device("cpu")
     hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
     user_vec = _user_profile(tracks.embedding, hist_idx, hist_w)
-    feat = np.stack([_pair_features(user_vec, tracks.embedding[int(i)]) for i in cand_idx.tolist()], axis=0)
+    feat = np.stack(
+        [_pair_features(user_vec, tracks.embedding[int(i)]) for i in cand_idx.tolist()],
+        axis=0,
+    )
     model.eval()
     model.to(device)
     with torch.no_grad():
@@ -680,7 +719,10 @@ def _make_two_stage_training_examples(
             if ordered.size <= 0:
                 continue
 
-            hard_count = min(int(round(float(negative_samples) * float(hard_negative_ratio))), int(ordered.size))
+            hard_count = min(
+                int(round(float(negative_samples) * float(hard_negative_ratio))),
+                int(ordered.size),
+            )
             easy_count = max(0, int(negative_samples) - int(hard_count))
             chosen: list[int] = []
             if hard_count > 0:
@@ -689,7 +731,10 @@ def _make_two_stage_training_examples(
                     take = min(int(hard_count), int(hard_pool.size))
                     chosen.extend(rng.choice(hard_pool, size=take, replace=False).tolist())
             if easy_count > 0:
-                easy_pool = np.array([int(x) for x in ordered.tolist() if int(x) not in set(chosen)], dtype=np.int64)
+                easy_pool = np.array(
+                    [int(x) for x in ordered.tolist() if int(x) not in set(chosen)],
+                    dtype=np.int64,
+                )
                 if easy_pool.size > 0:
                     take = min(int(easy_count), int(easy_pool.size))
                     chosen.extend(rng.choice(easy_pool, size=take, replace=False).tolist())
@@ -757,11 +802,19 @@ def train_two_stage_hybrid_ranker(
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(np.mean(losses)) if losses else float("nan"),
+            }
+        )
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"cfg": asdict(cfg), "state_dict": model.state_dict(), "history": history}, str(out))
+    torch.save(
+        {"cfg": asdict(cfg), "state_dict": model.state_dict(), "history": history},
+        str(out),
+    )
     return {"checkpoint": str(out), "history": history, "n_examples": int(x.shape[0])}
 
 
@@ -905,7 +958,9 @@ def train_bpr_mf(
     prefer_cuda: bool = False,
 ) -> dict[str, object]:
     rng = np.random.default_rng(int(seed))
-    user_to_id, user_idx, pos_idx, weights, neg_pools = _build_bpr_training_state(tracks=tracks, interactions=interactions)
+    user_to_id, user_idx, pos_idx, weights, neg_pools = _build_bpr_training_state(
+        tracks=tracks, interactions=interactions
+    )
     if user_idx.size <= 0:
         raise RuntimeError("could not build BPR training state")
     device = torch.device("cuda" if prefer_cuda and torch.cuda.is_available() else "cpu")
@@ -952,7 +1007,12 @@ def train_bpr_mf(
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(np.mean(losses)) if losses else float("nan"),
+            }
+        )
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -965,7 +1025,12 @@ def train_bpr_mf(
         },
         str(out),
     )
-    return {"checkpoint": str(out), "history": history, "n_examples": int(user_idx.shape[0]), "n_users": int(len(user_to_id))}
+    return {
+        "checkpoint": str(out),
+        "history": history,
+        "n_examples": int(user_idx.shape[0]),
+        "n_users": int(len(user_to_id)),
+    }
 
 
 def load_bpr_mf(path: str | Path, map_location: str | None = None) -> tuple[BPRMF, dict[str, int]]:
@@ -992,7 +1057,12 @@ def recommend_bpr_mf(
     if str(user_id) not in user_to_id:
         raise ValueError(f"user_id not found in BPR model: {user_id}")
     hist_idx, _, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
-    user_idx = torch.full((int(cand_idx.shape[0]),), int(user_to_id[str(user_id)]), dtype=torch.long, device=device)
+    user_idx = torch.full(
+        (int(cand_idx.shape[0]),),
+        int(user_to_id[str(user_id)]),
+        dtype=torch.long,
+        device=device,
+    )
     item_idx = torch.from_numpy(cand_idx.astype(np.int64)).to(device)
     model.eval()
     model.to(device)
@@ -1020,7 +1090,9 @@ def train_content_bpr_mf(
 ) -> dict[str, object]:
     rng = np.random.default_rng(int(seed))
     track_id_to_idx = _track_id_to_idx(tracks)
-    user_to_id, user_idx, pos_idx, weights, neg_pools = _build_bpr_training_state(tracks=tracks, interactions=interactions)
+    user_to_id, user_idx, pos_idx, weights, neg_pools = _build_bpr_training_state(
+        tracks=tracks, interactions=interactions
+    )
     if user_idx.size <= 0:
         raise RuntimeError("could not build content-BPR training state")
     user_profiles = _user_content_profiles(
@@ -1086,11 +1158,14 @@ def train_content_bpr_mf(
             )
             pair_loss = -torch.nn.functional.logsigmoid(pos_score - neg_score)
             bpr_loss = (pair_loss * t_weight).mean()
-            reg_loss = float(cfg.reg) * (
-                model.user_factors(t_user).pow(2).sum(dim=1)
-                + model.item_factors(t_pos).pow(2).sum(dim=1)
-                + model.item_factors(t_neg).pow(2).sum(dim=1)
-            ).mean()
+            reg_loss = (
+                float(cfg.reg)
+                * (
+                    model.user_factors(t_user).pow(2).sum(dim=1)
+                    + model.item_factors(t_pos).pow(2).sum(dim=1)
+                    + model.item_factors(t_neg).pow(2).sum(dim=1)
+                ).mean()
+            )
             proj_reg = float(cfg.reg) * (
                 model.user_proj.weight.pow(2).mean()
                 + model.item_proj.weight.pow(2).mean()
@@ -1102,7 +1177,12 @@ def train_content_bpr_mf(
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(np.mean(losses)) if losses else float("nan"),
+            }
+        )
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -1177,26 +1257,40 @@ def recommend_content_bpr_mf(
         )
     item_culture_t = torch.from_numpy(item_culture_ids).to(device)
     item_source_t = torch.from_numpy(item_source_ids).to(device)
-    user_idx = torch.full((int(cand_idx.shape[0]),), int(user_to_id[str(user_id)]), dtype=torch.long, device=device)
+    user_idx = torch.full(
+        (int(cand_idx.shape[0]),),
+        int(user_to_id[str(user_id)]),
+        dtype=torch.long,
+        device=device,
+    )
     item_idx = torch.from_numpy(cand_idx.astype(np.int64)).to(device)
     model.eval()
     model.to(device)
     with torch.no_grad():
-        scores = model.score_with_features(
-            user_idx=user_idx,
-            item_idx=item_idx,
-            user_profile=user_profile_t,
-            item_features=item_features_t,
-            item_culture_ids=item_culture_t,
-            item_source_ids=item_source_t,
-        ).detach().cpu().numpy().astype(np.float32)
+        scores = (
+            model.score_with_features(
+                user_idx=user_idx,
+                item_idx=item_idx,
+                user_profile=user_profile_t,
+                item_features=item_features_t,
+                item_culture_ids=item_culture_t,
+                item_source_ids=item_source_t,
+            )
+            .detach()
+            .cpu()
+            .numpy()
+            .astype(np.float32)
+        )
     mf_scores = _minmax(scores)
     cand_emb = tracks.embedding[cand_idx]
     hist_emb = tracks.embedding[hist_idx]
     content_scores = _minmax(_cosine_similarity(user_profile, cand_emb))
     novelty_scores = _minmax(np.linalg.norm(hist_emb[:, None, :] - cand_emb[None, :, :], axis=2).mean(axis=0))
     pop_by_track = _popularity_by_track(interactions)
-    minority_raw = np.array([float(-pop_by_track.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+    minority_raw = np.array(
+        [float(-pop_by_track.get(str(tracks.track_id[i]), 0.0)) for i in cand_idx.tolist()],
+        dtype=np.float32,
+    )
     minority_scores = _minmax(minority_raw)
     if tracks.source_dataset is None:
         source_scores = np.zeros_like(mf_scores, dtype=np.float32)
@@ -1205,7 +1299,10 @@ def recommend_content_bpr_mf(
         unique, counts = np.unique(np.array(src_values, dtype=object), return_counts=True)
         source_inv = {str(k): 1.0 / float(v) for k, v in zip(unique.tolist(), counts.tolist())}
         source_scores = _minmax(
-            np.array([float(source_inv.get(str(tracks.source_dataset[int(i)]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32)
+            np.array(
+                [float(source_inv.get(str(tracks.source_dataset[int(i)]), 0.0)) for i in cand_idx.tolist()],
+                dtype=np.float32,
+            )
         )
     final_scores = (
         float(mf_weight) * mf_scores
@@ -1227,7 +1324,12 @@ def _bpr_scores_for_candidates(
 ) -> np.ndarray:
     if str(user_id) not in user_to_id:
         raise ValueError(f"user_id not found in BPR model: {user_id}")
-    user_idx = torch.full((int(cand_idx.shape[0]),), int(user_to_id[str(user_id)]), dtype=torch.long, device=device)
+    user_idx = torch.full(
+        (int(cand_idx.shape[0]),),
+        int(user_to_id[str(user_id)]),
+        dtype=torch.long,
+        device=device,
+    )
     item_idx = torch.from_numpy(cand_idx.astype(np.int64)).to(device)
     with torch.no_grad():
         scores = model.score(user_idx, item_idx).detach().cpu().numpy().astype(np.float32)
@@ -1273,7 +1375,11 @@ def _bpr_hybrid_feature_table(
         + 0.02 * feature_mat[:, 8]
     ).astype(np.float32)
     scalar_features = np.concatenate(
-        [feature_mat.astype(np.float32), bpr_scores.reshape(-1, 1), recall_score.reshape(-1, 1)],
+        [
+            feature_mat.astype(np.float32),
+            bpr_scores.reshape(-1, 1),
+            recall_score.reshape(-1, 1),
+        ],
         axis=1,
     ).astype(np.float32)
     return scalar_features, recall_score
@@ -1360,13 +1466,19 @@ def _make_bpr_hybrid_pairwise_examples(
                 continue
             hard_limit = min(int(recall_k), int(ordered.size))
             hard_pool = ordered[:hard_limit]
-            hard_count = min(int(round(float(negative_samples) * float(hard_negative_ratio))), int(hard_pool.size))
+            hard_count = min(
+                int(round(float(negative_samples) * float(hard_negative_ratio))),
+                int(hard_pool.size),
+            )
             easy_count = max(0, int(negative_samples) - int(hard_count))
             chosen: list[int] = []
             if hard_count > 0 and int(hard_pool.size) > 0:
                 chosen.extend(rng.choice(hard_pool, size=hard_count, replace=False).tolist())
             if easy_count > 0:
-                easy_pool = np.array([int(x) for x in ordered.tolist() if int(x) not in set(chosen)], dtype=np.int64)
+                easy_pool = np.array(
+                    [int(x) for x in ordered.tolist() if int(x) not in set(chosen)],
+                    dtype=np.int64,
+                )
                 if int(easy_pool.size) > 0:
                     take = min(int(easy_count), int(easy_pool.size))
                     chosen.extend(rng.choice(easy_pool, size=take, replace=False).tolist())
@@ -1537,7 +1649,12 @@ def train_bpr_two_stage_hybrid_ranker(
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(np.mean(losses)) if losses else float("nan"),
+            }
+        )
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -1620,7 +1737,12 @@ def train_bpr_listwise_hybrid_ranker(
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": float(epoch), "loss": float(np.mean(losses)) if losses else float("nan")})
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(np.mean(losses)) if losses else float("nan"),
+            }
+        )
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -1841,7 +1963,7 @@ def recommend_embedding_bpr_tree_hybrid(
     if device is None:
         device = torch.device("cpu")
     hist_idx, hist_w, cand_idx = _prepare_user_and_candidates(tracks, interactions, user_id, target_culture)
-    user_vec = _user_profile(tracks.embedding, hist_idx, hist_w)
+    _user_profile(tracks.embedding, hist_idx, hist_w)
     pop_by_track = _popularity_by_track(interactions)
     source_inv_freq = _source_inverse_frequency(tracks)
     culture_centroids = _culture_centroid_embeddings(tracks)

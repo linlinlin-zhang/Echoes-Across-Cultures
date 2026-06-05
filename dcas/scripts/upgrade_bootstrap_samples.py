@@ -5,10 +5,10 @@ Upgrade bootstrap/permutation samples from 200 to 1000 for all V4 comparisons.
 Reads existing eval JSONs and re-runs compare_recommender_runs with 1000 samples.
 Outputs updated comparison JSONs.
 """
+
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 from dcas.scripts.compare_recommender_runs import compare_recommender_runs
@@ -31,7 +31,10 @@ def upgrade_dir(benchmark_dir: Path) -> None:
 
         base_path = old.get("base_eval_path", "")
         cand_path = old.get("candidate_eval_path", "")
-        metrics = old.get("config", {}).get("metrics", ["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"])
+        metrics = old.get("config", {}).get(
+            "metrics",
+            ["serendipity", "cultural_calibration_kl", "minority_exposure_at_k"],
+        )
 
         if not base_path or not cand_path:
             print(f"  SKIP {comp_file.name}: missing paths")

@@ -39,13 +39,11 @@ import argparse
 import base64
 import csv
 import json
-import os
 import random
 import re
 import shutil
 import sys
 import time
-import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -67,64 +65,206 @@ AUDIO_FEATURES_BATCH = 100
 
 DEFAULT_MARKETS = [
     # Americas
-    "US", "BR", "MX", "CA", "AR", "CO", "CL",
+    "US",
+    "BR",
+    "MX",
+    "CA",
+    "AR",
+    "CO",
+    "CL",
     # Europe
-    "GB", "DE", "FR", "ES", "NL", "SE", "IT", "PL", "TR", "RU",
+    "GB",
+    "DE",
+    "FR",
+    "ES",
+    "NL",
+    "SE",
+    "IT",
+    "PL",
+    "TR",
+    "RU",
     # Asia-Pacific
-    "JP", "KR", "IN", "ID", "TH", "PH", "MY", "AU", "NZ", "TW", "HK", "SG",
+    "JP",
+    "KR",
+    "IN",
+    "ID",
+    "TH",
+    "PH",
+    "MY",
+    "AU",
+    "NZ",
+    "TW",
+    "HK",
+    "SG",
     # Africa / Middle East
-    "ZA", "NG", "EG", "IL", "SA",
+    "ZA",
+    "NG",
+    "EG",
+    "IL",
+    "SA",
 ]
 
 GENRE_QUERIES_BY_CULTURE: dict[str, list[str]] = {
     "west": [
-        "pop", "rock", "hip-hop", "electronic", "country", "folk",
-        "jazz", "classical", "blues", "r&b", "indie pop", "indie rock",
-        "alternative rock", "punk", "metal", "soul", "funk", "disco",
-        "reggae", "ska", "gospel", "new wave", "synth-pop", "edm",
-        "techno", "house", "trance", "dubstep", "ambient", "lo-fi",
-        "progressive rock", "hard rock", "soft rock", "pop rock",
+        "pop",
+        "rock",
+        "hip-hop",
+        "electronic",
+        "country",
+        "folk",
+        "jazz",
+        "classical",
+        "blues",
+        "r&b",
+        "indie pop",
+        "indie rock",
+        "alternative rock",
+        "punk",
+        "metal",
+        "soul",
+        "funk",
+        "disco",
+        "reggae",
+        "ska",
+        "gospel",
+        "new wave",
+        "synth-pop",
+        "edm",
+        "techno",
+        "house",
+        "trance",
+        "dubstep",
+        "ambient",
+        "lo-fi",
+        "progressive rock",
+        "hard rock",
+        "soft rock",
+        "pop rock",
     ],
     "korea": [
-        "k-pop", "k-indie", "k-rap", "k-r&b", "korean ballad", "trot",
+        "k-pop",
+        "k-indie",
+        "k-rap",
+        "k-r&b",
+        "korean ballad",
+        "trot",
     ],
     "japan": [
-        "j-pop", "j-rock", "j-metal", "city pop", "anime", "enka",
-        "visual kei", "shibuya-kei", "j-hip-hop", "jazz japan",
+        "j-pop",
+        "j-rock",
+        "j-metal",
+        "city pop",
+        "anime",
+        "enka",
+        "visual kei",
+        "shibuya-kei",
+        "j-hip-hop",
+        "jazz japan",
     ],
     "india": [
-        "bollywood", "indian pop", "indian classical", "carnatic",
-        "hindustani", "bhangra", "punjabi", "telugu", "tamil pop",
-        "malayalam", "ghazal", "sufi", "devotional", "indie india",
+        "bollywood",
+        "indian pop",
+        "indian classical",
+        "carnatic",
+        "hindustani",
+        "bhangra",
+        "punjabi",
+        "telugu",
+        "tamil pop",
+        "malayalam",
+        "ghazal",
+        "sufi",
+        "devotional",
+        "indie india",
     ],
     "china": [
-        "mandopop", "cantopop", "c-pop", "chinese indie", "chinese rock",
-        "chinese folk", "chinese classical", "taiwan indie", "taiwan pop",
+        "mandopop",
+        "cantopop",
+        "c-pop",
+        "chinese indie",
+        "chinese rock",
+        "chinese folk",
+        "chinese classical",
+        "taiwan indie",
+        "taiwan pop",
     ],
     "latin": [
-        "reggaeton", "latin pop", "salsa", "bachata", "cumbia", "tango",
-        "merengue", "dembow", "latin rock", "latin hip-hop", "mariachi",
-        "ranchera", "tejano", "vallenato", "bolero", "flamenco",
+        "reggaeton",
+        "latin pop",
+        "salsa",
+        "bachata",
+        "cumbia",
+        "tango",
+        "merengue",
+        "dembow",
+        "latin rock",
+        "latin hip-hop",
+        "mariachi",
+        "ranchera",
+        "tejano",
+        "vallenato",
+        "bolero",
+        "flamenco",
     ],
     "brazil": [
-        "samba", "bossa nova", "mpb", "sertanejo", "funk carioca",
-        "forro", "axé", "pagode", "brazilian rock", "brazilian hip-hop",
-        "tropicália", "choro",
+        "samba",
+        "bossa nova",
+        "mpb",
+        "sertanejo",
+        "funk carioca",
+        "forro",
+        "axé",
+        "pagode",
+        "brazilian rock",
+        "brazilian hip-hop",
+        "tropicália",
+        "choro",
     ],
     "africa": [
-        "afrobeats", "amapiano", "highlife", "soukous", "mbalax",
-        "gnawa", "rai", "afrobeat", "afro-fusion", "afro-pop",
-        "benga", "bongo flava", "coupé-décalé", "kizomba", "zouk",
+        "afrobeats",
+        "amapiano",
+        "highlife",
+        "soukous",
+        "mbalax",
+        "gnawa",
+        "rai",
+        "afrobeat",
+        "afro-fusion",
+        "afro-pop",
+        "benga",
+        "bongo flava",
+        "coupé-décalé",
+        "kizomba",
+        "zouk",
     ],
     "middle_east": [
-        "arabic pop", "turkish pop", "turkish rock", "persian classical",
-        "iranian pop", "levantine", "dabke", "tarab", "mugham",
-        "ottoman classical", "kurdish", "assyrian pop",
+        "arabic pop",
+        "turkish pop",
+        "turkish rock",
+        "persian classical",
+        "iranian pop",
+        "levantine",
+        "dabke",
+        "tarab",
+        "mugham",
+        "ottoman classical",
+        "kurdish",
+        "assyrian pop",
     ],
     "southeast_asia": [
-        "thai pop", "thai rock", "phleng phuea chiwit", "luk thung",
-        "vietnamese pop", "v-pop", "pinoy pop", "p-pop", "opm",
-        "malay pop", "dangdut", "indonesian indie", "khmer pop",
+        "thai pop",
+        "thai rock",
+        "phleng phuea chiwit",
+        "luk thung",
+        "vietnamese pop",
+        "v-pop",
+        "pinoy pop",
+        "p-pop",
+        "opm",
+        "malay pop",
+        "dangdut",
+        "indonesian indie",
+        "khmer pop",
     ],
 }
 
@@ -135,38 +275,99 @@ for _culture, _genres in GENRE_QUERIES_BY_CULTURE.items():
 
 # Years to rotate through for extra coverage
 YEAR_RANGES = [
-    "1950-1970", "1970-1980", "1980-1990", "1990-2000",
-    "2000-2005", "2005-2010", "2010-2015", "2015-2018",
-    "2018-2020", "2020-2022", "2022-2024", "2024-2026",
+    "1950-1970",
+    "1970-1980",
+    "1980-1990",
+    "1990-2000",
+    "2000-2005",
+    "2005-2010",
+    "2010-2015",
+    "2015-2018",
+    "2018-2020",
+    "2020-2022",
+    "2022-2024",
+    "2024-2026",
 ]
 
 # Market -> inferred culture for market_year search mode
 MARKET_TO_CULTURE: dict[str, str] = {
-    "US": "west", "GB": "west", "CA": "west", "AU": "west", "NZ": "west",
-    "DE": "west", "FR": "west", "ES": "west", "NL": "west", "SE": "west",
-    "IT": "west", "PL": "west", "IE": "west", "NO": "west", "FI": "west",
-    "DK": "west", "AT": "west", "CH": "west", "BE": "west", "PT": "west",
-    "JP": "japan", "KR": "korea",
+    "US": "west",
+    "GB": "west",
+    "CA": "west",
+    "AU": "west",
+    "NZ": "west",
+    "DE": "west",
+    "FR": "west",
+    "ES": "west",
+    "NL": "west",
+    "SE": "west",
+    "IT": "west",
+    "PL": "west",
+    "IE": "west",
+    "NO": "west",
+    "FI": "west",
+    "DK": "west",
+    "AT": "west",
+    "CH": "west",
+    "BE": "west",
+    "PT": "west",
+    "JP": "japan",
+    "KR": "korea",
     "IN": "india",
-    "TW": "china", "HK": "china", "SG": "china", "MO": "china",
+    "TW": "china",
+    "HK": "china",
+    "SG": "china",
+    "MO": "china",
     "BR": "brazil",
-    "MX": "latin", "CO": "latin", "CL": "latin", "AR": "latin", "PE": "latin",
-    "VE": "latin", "EC": "latin", "UY": "latin", "PY": "latin", "BO": "latin",
-    "ZA": "africa", "NG": "africa", "EG": "africa", "GH": "africa", "KE": "africa",
-    "TZ": "africa", "UG": "africa", "MZ": "africa", "ZM": "africa", "ZW": "africa",
-    "TR": "middle_east", "IL": "middle_east", "SA": "middle_east", "AE": "middle_east",
-    "QA": "middle_east", "KW": "middle_east", "BH": "middle_east", "OM": "middle_east",
-    "JO": "middle_east", "LB": "middle_east", "IQ": "middle_east", "IR": "middle_east",
+    "MX": "latin",
+    "CO": "latin",
+    "CL": "latin",
+    "AR": "latin",
+    "PE": "latin",
+    "VE": "latin",
+    "EC": "latin",
+    "UY": "latin",
+    "PY": "latin",
+    "BO": "latin",
+    "ZA": "africa",
+    "NG": "africa",
+    "EG": "africa",
+    "GH": "africa",
+    "KE": "africa",
+    "TZ": "africa",
+    "UG": "africa",
+    "MZ": "africa",
+    "ZM": "africa",
+    "ZW": "africa",
+    "TR": "middle_east",
+    "IL": "middle_east",
+    "SA": "middle_east",
+    "AE": "middle_east",
+    "QA": "middle_east",
+    "KW": "middle_east",
+    "BH": "middle_east",
+    "OM": "middle_east",
+    "JO": "middle_east",
+    "LB": "middle_east",
+    "IQ": "middle_east",
+    "IR": "middle_east",
     "RU": "middle_east",  # Approximate for music cultural sphere
-    "ID": "southeast_asia", "TH": "southeast_asia", "PH": "southeast_asia",
-    "MY": "southeast_asia", "VN": "southeast_asia", "KH": "southeast_asia",
-    "LA": "southeast_asia", "MM": "southeast_asia", "BN": "southeast_asia",
+    "ID": "southeast_asia",
+    "TH": "southeast_asia",
+    "PH": "southeast_asia",
+    "MY": "southeast_asia",
+    "VN": "southeast_asia",
+    "KH": "southeast_asia",
+    "LA": "southeast_asia",
+    "MM": "southeast_asia",
+    "BN": "southeast_asia",
 }
 
 
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TrackRecord:
@@ -211,9 +412,18 @@ class TrackRecord:
             "explicit": str(self.explicit),
         }
         for af in (
-            "danceability", "energy", "key", "loudness", "mode",
-            "speechiness", "acousticness", "instrumentalness",
-            "liveness", "valence", "tempo", "time_signature",
+            "danceability",
+            "energy",
+            "key",
+            "loudness",
+            "mode",
+            "speechiness",
+            "acousticness",
+            "instrumentalness",
+            "liveness",
+            "valence",
+            "tempo",
+            "time_signature",
         ):
             v = getattr(self, af)
             row[af] = f"{v:.6f}" if isinstance(v, float) else (str(v) if v is not None else "")
@@ -254,6 +464,7 @@ class CrawlState:
 # Auth & Rate-Limited HTTP
 # ---------------------------------------------------------------------------
 
+
 class SpotifyAuth:
     def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
@@ -262,9 +473,7 @@ class SpotifyAuth:
         self._expires_at: float = 0.0
 
     def _fetch_token(self) -> str:
-        creds = base64.b64encode(
-            f"{self.client_id}:{self.client_secret}".encode()
-        ).decode()
+        creds = base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()
         resp = requests.post(
             SPOTIFY_ACCOUNTS_URL,
             headers={"Authorization": f"Basic {creds}"},
@@ -292,7 +501,13 @@ class RateLimitedSession:
         self.default_backoff = default_backoff
         self._consecutive_429 = 0
 
-    def request(self, method: str, url: str, headers: dict[str, str] | None = None, **kwargs: Any) -> requests.Response:
+    def request(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
         headers = dict(headers) if headers else {}
         for attempt in range(self.max_retries):
             resp = requests.request(method, url, headers=headers, timeout=30, **kwargs)
@@ -303,13 +518,15 @@ class RateLimitedSession:
                 if retry_after is not None:
                     sleep_secs = float(retry_after) + 1.0
                 else:
-                    sleep_secs = self.default_backoff * (2 ** self._consecutive_429)
+                    sleep_secs = self.default_backoff * (2**self._consecutive_429)
                 sleep_secs = min(sleep_secs, 300.0)
-                print(f"[RATE LIMIT] 429 on {url}; sleeping {sleep_secs:.1f}s (attempt {attempt + 1}/{self.max_retries})")
+                print(
+                    f"[RATE LIMIT] 429 on {url}; sleeping {sleep_secs:.1f}s (attempt {attempt + 1}/{self.max_retries})"
+                )
                 time.sleep(sleep_secs)
                 continue
             if resp.status_code in (502, 503, 504):
-                sleep_secs = self.default_backoff * (2 ** attempt)
+                sleep_secs = self.default_backoff * (2**attempt)
                 print(f"[SERVER ERROR] {resp.status_code} on {url}; sleeping {sleep_secs:.1f}s")
                 time.sleep(sleep_secs)
                 continue
@@ -325,6 +542,7 @@ class RateLimitedSession:
 # ---------------------------------------------------------------------------
 # Checkpoint Manager
 # ---------------------------------------------------------------------------
+
 
 class CheckpointManager:
     def __init__(self, out_dir: Path):
@@ -372,6 +590,7 @@ class CheckpointManager:
 # Crawler
 # ---------------------------------------------------------------------------
 
+
 class SpotifyCrawler:
     def __init__(
         self,
@@ -403,12 +622,29 @@ class SpotifyCrawler:
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
         self._fieldnames = [
-            "track_id", "culture", "audio_path", "label",
-            "title", "artist", "album", "popularity", "market",
-            "duration_ms", "explicit",
-            "danceability", "energy", "key", "loudness", "mode",
-            "speechiness", "acousticness", "instrumentalness",
-            "liveness", "valence", "tempo", "time_signature",
+            "track_id",
+            "culture",
+            "audio_path",
+            "label",
+            "title",
+            "artist",
+            "album",
+            "popularity",
+            "market",
+            "duration_ms",
+            "explicit",
+            "danceability",
+            "energy",
+            "key",
+            "loudness",
+            "mode",
+            "speechiness",
+            "acousticness",
+            "instrumentalness",
+            "liveness",
+            "valence",
+            "tempo",
+            "time_signature",
             "preview_url",
         ]
 
@@ -553,7 +789,9 @@ class SpotifyCrawler:
         state = CrawlState()
         if resume and self.checkpoint.exists():
             state = self.checkpoint.load()
-            print(f"[RESUME] Loaded state: collected={state.total_collected}, with_preview={state.total_with_preview}, downloaded={state.total_downloaded}")
+            print(
+                f"[RESUME] Loaded state: collected={state.total_collected}, with_preview={state.total_with_preview}, downloaded={state.total_downloaded}"
+            )
         else:
             if self.metadata_path.exists() and not resume:
                 print("[WARN] metadata.csv already exists but --resume not set. Starting fresh will overwrite state.")
@@ -572,7 +810,6 @@ class SpotifyCrawler:
         print(f"[INIT] Query pool size: {total_queries} (markets={len(self.markets)})")
 
         last_checkpoint_time = time.time()
-        pending_records: list[TrackRecord] = []
         pending_metadata_rows: list[dict[str, str]] = []
 
         def do_checkpoint(force: bool = False) -> None:
@@ -585,12 +822,18 @@ class SpotifyCrawler:
                 pending_metadata_rows.clear()
             self.checkpoint.save(state)
             last_checkpoint_time = now
-            print(f"[CHECKPOINT] saved state: collected={state.total_collected}, with_preview={state.total_with_preview}, downloaded={state.total_downloaded}")
+            print(
+                f"[CHECKPOINT] saved state: collected={state.total_collected}, with_preview={state.total_with_preview}, downloaded={state.total_downloaded}"
+            )
 
         def process_download_batch(records: list[TrackRecord]) -> None:
             """Download previews in parallel and emit metadata rows."""
             nonlocal pending_metadata_rows
-            to_download = [r for r in records if r.preview_url and r.track_id not in downloaded_set and r.track_id not in failed_set]
+            to_download = [
+                r
+                for r in records
+                if r.preview_url and r.track_id not in downloaded_set and r.track_id not in failed_set
+            ]
             if not to_download:
                 return
             with ThreadPoolExecutor(max_workers=self.workers) as ex:
@@ -673,9 +916,18 @@ class SpotifyCrawler:
                             af = af_map.get(r.track_id)
                             if af:
                                 for k in (
-                                    "danceability", "energy", "key", "loudness", "mode",
-                                    "speechiness", "acousticness", "instrumentalness",
-                                    "liveness", "valence", "tempo", "time_signature",
+                                    "danceability",
+                                    "energy",
+                                    "key",
+                                    "loudness",
+                                    "mode",
+                                    "speechiness",
+                                    "acousticness",
+                                    "instrumentalness",
+                                    "liveness",
+                                    "valence",
+                                    "tempo",
+                                    "time_signature",
                                 ):
                                     setattr(r, k, af.get(k))
                         state.total_audio_features_fetched += len(af_map)
@@ -726,18 +978,45 @@ class SpotifyCrawler:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Bulk collect Spotify track previews for DCAS.")
     ap.add_argument("--client_id", required=True, help="Spotify App Client ID")
     ap.add_argument("--client_secret", required=True, help="Spotify App Client Secret")
     ap.add_argument("--out_dir", required=True, help="Output directory for audio + metadata")
-    ap.add_argument("--markets", default="", help="Comma-separated market codes (default: global set of ~30)")
-    ap.add_argument("--target_total", type=int, default=100_000, help="Target number of unique tracks to collect")
+    ap.add_argument(
+        "--markets",
+        default="",
+        help="Comma-separated market codes (default: global set of ~30)",
+    )
+    ap.add_argument(
+        "--target_total",
+        type=int,
+        default=100_000,
+        help="Target number of unique tracks to collect",
+    )
     ap.add_argument("--workers", type=int, default=4, help="Parallel download workers")
-    ap.add_argument("--checkpoint_interval", type=int, default=300, help="Seconds between checkpoint writes")
-    ap.add_argument("--skip_audio_features", action="store_true", help="Skip fetching Spotify audio-features (faster)")
-    ap.add_argument("--resume", action="store_true", help="Resume from existing checkpoint/state.json")
-    ap.add_argument("--no_shuffle", action="store_true", help="Do not shuffle query order (default: shuffle)")
+    ap.add_argument(
+        "--checkpoint_interval",
+        type=int,
+        default=300,
+        help="Seconds between checkpoint writes",
+    )
+    ap.add_argument(
+        "--skip_audio_features",
+        action="store_true",
+        help="Skip fetching Spotify audio-features (faster)",
+    )
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from existing checkpoint/state.json",
+    )
+    ap.add_argument(
+        "--no_shuffle",
+        action="store_true",
+        help="Do not shuffle query order (default: shuffle)",
+    )
     ap.add_argument(
         "--search_mode",
         choices=["genre", "market_year"],

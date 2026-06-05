@@ -30,12 +30,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import random
 import re
 import sys
 import time
-import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -56,45 +54,115 @@ def _upscale_itunes_artwork(url: str, size: int = 600) -> str:
         return ""
     return re.sub(r"/\d+x\d+bb\.(jpg|png|webp)$", f"/{size}x{size}bb.\\1", url)
 
+
 # ---------------------------------------------------------------------------
 # Country to culture mapping
 # ---------------------------------------------------------------------------
 
 COUNTRY_TO_CULTURE: dict[str, str] = {
-    "US": "west", "GB": "west", "CA": "west", "AU": "west", "NZ": "west",
-    "DE": "west", "FR": "west", "ES": "west", "NL": "west", "SE": "west",
-    "IT": "west", "PL": "west", "IE": "west", "NO": "west", "FI": "west",
-    "DK": "west", "AT": "west", "CH": "west", "BE": "west", "PT": "west",
+    "US": "west",
+    "GB": "west",
+    "CA": "west",
+    "AU": "west",
+    "NZ": "west",
+    "DE": "west",
+    "FR": "west",
+    "ES": "west",
+    "NL": "west",
+    "SE": "west",
+    "IT": "west",
+    "PL": "west",
+    "IE": "west",
+    "NO": "west",
+    "FI": "west",
+    "DK": "west",
+    "AT": "west",
+    "CH": "west",
+    "BE": "west",
+    "PT": "west",
     "JP": "japan",
     "KR": "korea",
     "IN": "india",
-    "TW": "china", "HK": "china", "SG": "china",
+    "TW": "china",
+    "HK": "china",
+    "SG": "china",
     "CN": "china",
     "BR": "brazil",
-    "MX": "latin", "CO": "latin", "CL": "latin", "AR": "latin", "PE": "latin",
-    "VE": "latin", "EC": "latin", "UY": "latin",
-    "ZA": "africa", "NG": "africa", "EG": "africa", "GH": "africa", "KE": "africa",
-    "TZ": "africa", "UG": "africa",
-    "TR": "middle_east", "IL": "middle_east", "SA": "middle_east", "AE": "middle_east",
-    "QA": "middle_east", "KW": "middle_east", "BH": "middle_east", "OM": "middle_east",
-    "JO": "middle_east", "LB": "middle_east", "IQ": "middle_east", "IR": "middle_east",
-    "ID": "southeast_asia", "TH": "southeast_asia", "PH": "southeast_asia",
-    "MY": "southeast_asia", "VN": "southeast_asia", "KH": "southeast_asia",
-    "LA": "southeast_asia", "MM": "southeast_asia", "BN": "southeast_asia",
+    "MX": "latin",
+    "CO": "latin",
+    "CL": "latin",
+    "AR": "latin",
+    "PE": "latin",
+    "VE": "latin",
+    "EC": "latin",
+    "UY": "latin",
+    "ZA": "africa",
+    "NG": "africa",
+    "EG": "africa",
+    "GH": "africa",
+    "KE": "africa",
+    "TZ": "africa",
+    "UG": "africa",
+    "TR": "middle_east",
+    "IL": "middle_east",
+    "SA": "middle_east",
+    "AE": "middle_east",
+    "QA": "middle_east",
+    "KW": "middle_east",
+    "BH": "middle_east",
+    "OM": "middle_east",
+    "JO": "middle_east",
+    "LB": "middle_east",
+    "IQ": "middle_east",
+    "IR": "middle_east",
+    "ID": "southeast_asia",
+    "TH": "southeast_asia",
+    "PH": "southeast_asia",
+    "MY": "southeast_asia",
+    "VN": "southeast_asia",
+    "KH": "southeast_asia",
+    "LA": "southeast_asia",
+    "MM": "southeast_asia",
+    "BN": "southeast_asia",
 }
 
 # Search terms to rotate through per country
 SEARCH_TERMS = [
-    "pop", "rock", "hip hop", "electronic", "dance", "indie",
-    "soul", "rnb", "jazz", "classical", "folk", "country",
-    "alternative", "metal", "punk", "reggae", "blues",
-    "top", "hit", "chart", "single", "album",
+    "pop",
+    "rock",
+    "hip hop",
+    "electronic",
+    "dance",
+    "indie",
+    "soul",
+    "rnb",
+    "jazz",
+    "classical",
+    "folk",
+    "country",
+    "alternative",
+    "metal",
+    "punk",
+    "reggae",
+    "blues",
+    "top",
+    "hit",
+    "chart",
+    "single",
+    "album",
 ]
 
 ERA_SEARCH_TERMS = [
-    "1950s music", "1960s music", "1970s music", "1980s music",
-    "1990s music", "2000s music", "2010s music", "2020s music",
-    "oldies", "classic hits",
+    "1950s music",
+    "1960s music",
+    "1970s music",
+    "1980s music",
+    "1990s music",
+    "2000s music",
+    "2010s music",
+    "2020s music",
+    "oldies",
+    "classic hits",
 ]
 
 CULTURE_SEARCH_TERMS: dict[str, list[str]] = {
@@ -103,10 +171,20 @@ CULTURE_SEARCH_TERMS: dict[str, list[str]] = {
     "korea": ["k-pop", "korean", "trot", "k-indie"],
     "india": ["bollywood", "indian pop", "hindustani", "carnatic"],
     "china": [
-        "mandopop", "cantopop", "chinese pop", "taiwan pop",
-        "cantonese songs", "hong kong pop", "hakka songs", "hokkien songs",
-        "taiwanese hokkien", "minnan songs", "teochew songs",
-        "shanghainese songs", "sichuan dialect songs", "wu chinese songs",
+        "mandopop",
+        "cantopop",
+        "chinese pop",
+        "taiwan pop",
+        "cantonese songs",
+        "hong kong pop",
+        "hakka songs",
+        "hokkien songs",
+        "taiwanese hokkien",
+        "minnan songs",
+        "teochew songs",
+        "shanghainese songs",
+        "sichuan dialect songs",
+        "wu chinese songs",
         "yue chinese songs",
     ],
     "brazil": ["samba", "bossa nova", "mpb", "sertanejo"],
@@ -115,11 +193,49 @@ CULTURE_SEARCH_TERMS: dict[str, list[str]] = {
     "middle_east": ["arabic pop", "turkish pop", "persian pop", "rai"],
     "southeast_asia": ["thai pop", "dangdut", "v-pop", "opm"],
     "celtic": ["celtic", "irish folk", "scottish folk", "gaelic", "breton", "fiddle"],
-    "nordic": ["nordic", "scandinavian", "swedish pop", "norwegian", "finnish", "danish", "icelandic"],
-    "eastern_europe": ["polish folk", "ukrainian", "czech", "hungarian", "romanian", "slavic"],
-    "balkans": ["balkan", "greek", "serbian", "croatian", "bulgarian", "sevdah", "turbofolk"],
-    "caribbean": ["caribbean", "reggae", "dancehall", "soca", "calypso", "zouk", "kompa"],
-    "andean": ["andean", "huayno", "quechua music", "charango", "peruvian folk", "bolivian folk"],
+    "nordic": [
+        "nordic",
+        "scandinavian",
+        "swedish pop",
+        "norwegian",
+        "finnish",
+        "danish",
+        "icelandic",
+    ],
+    "eastern_europe": [
+        "polish folk",
+        "ukrainian",
+        "czech",
+        "hungarian",
+        "romanian",
+        "slavic",
+    ],
+    "balkans": [
+        "balkan",
+        "greek",
+        "serbian",
+        "croatian",
+        "bulgarian",
+        "sevdah",
+        "turbofolk",
+    ],
+    "caribbean": [
+        "caribbean",
+        "reggae",
+        "dancehall",
+        "soca",
+        "calypso",
+        "zouk",
+        "kompa",
+    ],
+    "andean": [
+        "andean",
+        "huayno",
+        "quechua music",
+        "charango",
+        "peruvian folk",
+        "bolivian folk",
+    ],
     "central_asia": ["central asian", "kazakh", "uzbek", "kyrgyz", "tajik", "turkmen"],
 }
 
@@ -129,6 +245,7 @@ DEFAULT_COUNTRIES = list(COUNTRY_TO_CULTURE.keys())
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TrackRecord:
@@ -208,6 +325,7 @@ class CrawlState:
 # Checkpoint Manager
 # ---------------------------------------------------------------------------
 
+
 class CheckpointManager:
     def __init__(self, out_dir: Path):
         self.out_dir = out_dir
@@ -272,8 +390,14 @@ class CheckpointManager:
 # HTTP helpers
 # ---------------------------------------------------------------------------
 
+
 class RateLimitedSession:
-    def __init__(self, interval: float = REQUEST_INTERVAL, max_retries: int = 4, backoff: float = 5.0):
+    def __init__(
+        self,
+        interval: float = REQUEST_INTERVAL,
+        max_retries: int = 4,
+        backoff: float = 5.0,
+    ):
         self.interval = interval
         self.max_retries = max(1, int(max_retries))
         self.backoff = max(0.1, float(backoff))
@@ -299,7 +423,9 @@ class RateLimitedSession:
                     return {}
                 if resp.status_code in (429, 500, 502, 503, 504):
                     sleep_secs = self.backoff * attempt
-                    print(f"[REQUEST RETRY] status={resp.status_code}; sleeping {sleep_secs:.1f}s ({attempt}/{self.max_retries})")
+                    print(
+                        f"[REQUEST RETRY] status={resp.status_code}; sleeping {sleep_secs:.1f}s ({attempt}/{self.max_retries})"
+                    )
                     time.sleep(sleep_secs)
                     continue
                 resp.raise_for_status()
@@ -309,7 +435,9 @@ class RateLimitedSession:
                 if attempt >= self.max_retries:
                     break
                 sleep_secs = self.backoff * attempt
-                print(f"[REQUEST RETRY] {type(exc).__name__}: {exc}; sleeping {sleep_secs:.1f}s ({attempt}/{self.max_retries})")
+                print(
+                    f"[REQUEST RETRY] {type(exc).__name__}: {exc}; sleeping {sleep_secs:.1f}s ({attempt}/{self.max_retries})"
+                )
                 time.sleep(sleep_secs)
         if last_error is not None:
             raise last_error
@@ -319,6 +447,7 @@ class RateLimitedSession:
 # ---------------------------------------------------------------------------
 # Crawler
 # ---------------------------------------------------------------------------
+
 
 class iTunesCrawler:
     def __init__(
@@ -349,12 +478,29 @@ class iTunesCrawler:
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
         self._fieldnames = [
-            "track_id", "culture", "audio_path", "source_dataset", "label",
-            "title", "artist", "album", "country",
-            "duration_ms", "explicit", "release_date",
-            "preview_url", "artwork_url", "artwork_url_60", "artwork_url_large",
-            "collection_id", "artist_id", "track_url", "itunes_url", "apple_music_url",
-            "collection_url", "artist_url",
+            "track_id",
+            "culture",
+            "audio_path",
+            "source_dataset",
+            "label",
+            "title",
+            "artist",
+            "album",
+            "country",
+            "duration_ms",
+            "explicit",
+            "release_date",
+            "preview_url",
+            "artwork_url",
+            "artwork_url_60",
+            "artwork_url_large",
+            "collection_id",
+            "artist_id",
+            "track_url",
+            "itunes_url",
+            "apple_music_url",
+            "collection_url",
+            "artist_url",
         ]
 
     def search_tracks(
@@ -502,7 +648,9 @@ class iTunesCrawler:
             if synced_collected > state.total_collected:
                 state.total_collected = synced_collected
         if resume and state.completed_queries and not downloaded_set and not failed_set:
-            print("[RECOVERY] Existing checkpoint has completed queries but no downloaded/failed tracks; retrying queries.")
+            print(
+                "[RECOVERY] Existing checkpoint has completed queries but no downloaded/failed tracks; retrying queries."
+            )
             state.completed_queries.clear()
             state.total_collected = 0
             completed_set.clear()
@@ -644,16 +792,39 @@ class iTunesCrawler:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Bulk collect Apple iTunes track previews for DCAS.")
     ap.add_argument("--out_dir", required=True, help="Output directory for audio + metadata")
-    ap.add_argument("--countries", default="", help="Comma-separated ISO country codes (default: all)")
+    ap.add_argument(
+        "--countries",
+        default="",
+        help="Comma-separated ISO country codes (default: all)",
+    )
     ap.add_argument("--target_total", type=int, default=5_000, help="Target unique tracks")
     ap.add_argument("--workers", type=int, default=4, help="Parallel download workers")
-    ap.add_argument("--checkpoint_interval", type=int, default=300, help="Seconds between checkpoints")
-    ap.add_argument("--max_per_query", type=int, default=50, help="Max new tracks downloaded from a single country/term query")
-    ap.add_argument("--culture_override", default="", help="Force all downloaded rows to this culture label")
-    ap.add_argument("--extra_terms", default="", help="Comma-separated extra search terms to append to the query pool")
+    ap.add_argument(
+        "--checkpoint_interval",
+        type=int,
+        default=300,
+        help="Seconds between checkpoints",
+    )
+    ap.add_argument(
+        "--max_per_query",
+        type=int,
+        default=50,
+        help="Max new tracks downloaded from a single country/term query",
+    )
+    ap.add_argument(
+        "--culture_override",
+        default="",
+        help="Force all downloaded rows to this culture label",
+    )
+    ap.add_argument(
+        "--extra_terms",
+        default="",
+        help="Comma-separated extra search terms to append to the query pool",
+    )
     ap.add_argument("--resume", action="store_true", help="Resume from existing checkpoint")
     args = ap.parse_args()
 
@@ -674,11 +845,14 @@ def main() -> None:
     checkpoint = CheckpointManager(out_dir)
 
     # Quick API test
-    test_data = session.get(ITUNES_SEARCH_URL, params={"term": "test", "media": "music", "entity": "song", "limit": 1})
+    test_data = session.get(
+        ITUNES_SEARCH_URL,
+        params={"term": "test", "media": "music", "entity": "song", "limit": 1},
+    )
     if not test_data or "results" not in test_data:
         print("[API TEST FAILED] iTunes Search API unreachable.")
         sys.exit(1)
-    print(f"[AUTH OK] iTunes Search API reachable.")
+    print("[AUTH OK] iTunes Search API reachable.")
 
     crawler = iTunesCrawler(
         session=session,

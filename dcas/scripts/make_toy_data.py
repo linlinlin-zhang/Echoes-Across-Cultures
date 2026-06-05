@@ -91,7 +91,13 @@ def generate_toy_data(out_dir: str | Path, n_tracks: int = 3000, dim: int = 128,
                 desired_n=desired_per_user,
             )
             for j in pick.tolist():
-                w.writerow({"user_id": u, "track_id": str(track_id[j]), "weight": float(rng.uniform(0.5, 2.0))})
+                w.writerow(
+                    {
+                        "user_id": u,
+                        "track_id": str(track_id[j]),
+                        "weight": float(rng.uniform(0.5, 2.0)),
+                    }
+                )
 
     with open(out_dir / "meta.txt", "w", encoding="utf-8") as f:
         f.write(f"cultures={cultures}\n")
@@ -110,10 +116,14 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
 
-    out_dir = generate_toy_data(out_dir=args.out, n_tracks=int(args.n_tracks), dim=int(args.dim), seed=int(args.seed))
+    out_dir = generate_toy_data(
+        out_dir=args.out,
+        n_tracks=int(args.n_tracks),
+        dim=int(args.dim),
+        seed=int(args.seed),
+    )
     print(str(out_dir))
 
 
 if __name__ == "__main__":
     main()
-

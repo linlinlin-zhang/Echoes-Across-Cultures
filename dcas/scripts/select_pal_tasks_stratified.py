@@ -145,7 +145,11 @@ def main() -> None:
     ap.add_argument("--tasks", required=True, help="Candidate PAL tasks jsonl")
     ap.add_argument("--out", required=True, help="Selected PAL tasks jsonl")
     ap.add_argument("--n_total", type=int, default=200, help="Total number of selected tasks")
-    ap.add_argument("--group_field", default="culture", help="Task field used for balancing, default: culture")
+    ap.add_argument(
+        "--group_field",
+        default="culture",
+        help="Task field used for balancing, default: culture",
+    )
     ap.add_argument(
         "--pool_multiplier",
         type=int,

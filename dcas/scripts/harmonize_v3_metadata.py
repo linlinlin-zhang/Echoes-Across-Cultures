@@ -100,7 +100,11 @@ def _coarse_label(row: dict[str, str], fma_genre_map: dict[int, str]) -> str:
         return "traditional_instrumental"
     if substyle == "mandarin_pop_singing":
         return "modern_pop_song"
-    if substyle in {"modern_pop_benchmark", "modern_turkish_song", "modern_indonesian_supplement"}:
+    if substyle in {
+        "modern_pop_benchmark",
+        "modern_turkish_song",
+        "modern_indonesian_supplement",
+    }:
         return "modern_song"
 
     if source_dataset == "opencpop":
@@ -116,7 +120,16 @@ def _coarse_label(row: dict[str, str], fma_genre_map: dict[int, str]) -> str:
         return "soundtrack_classical"
     if any(x in text_blob for x in ["jazz", "blues"]):
         return "jazz_blues"
-    if any(x in text_blob for x in ["folk", "acoustic", "singer-songwriter", "singer songwriter", "chanson"]):
+    if any(
+        x in text_blob
+        for x in [
+            "folk",
+            "acoustic",
+            "singer-songwriter",
+            "singer songwriter",
+            "chanson",
+        ]
+    ):
         return "folk_acoustic"
     if any(x in text_blob for x in ["ambient", "drone", "instrumental"]):
         return "instrumental_ambient"
@@ -154,7 +167,9 @@ def harmonize_metadata(
             language = ""
         item["language"] = language
         item["coarse_label"] = _coarse_label(item, fma_genre_map=fma_genre_map)
-        item["is_instrumental"] = "1" if str(item.get("instrument_family") or "").strip().lower() == "traditional_instrument" else "0"
+        item["is_instrumental"] = (
+            "1" if str(item.get("instrument_family") or "").strip().lower() == "traditional_instrument" else "0"
+        )
         enriched.append(item)
 
     final_fields = list(fieldnames)

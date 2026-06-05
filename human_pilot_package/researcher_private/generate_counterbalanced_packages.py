@@ -19,7 +19,7 @@ def read_tasks() -> list[dict]:
 
 def read_key() -> dict[str, dict[str, str]]:
     with KEY_PATH.open("r", newline="", encoding="utf-8-sig") as f:
-      return {row["task_id"]: row for row in csv.DictReader(f)}
+        return {row["task_id"]: row for row in csv.DictReader(f)}
 
 
 def write_tasks_js(site: Path, tasks: list[dict], participant_id: str) -> None:
@@ -61,8 +61,14 @@ def write_participant_key(participant_id: str, base_key: dict[str, dict[str, str
         out = dict(row)
         out["participant_id"] = participant_id
         if swaps.get(task_id):
-            out["candidate_a_track_id"], out["candidate_b_track_id"] = out["candidate_b_track_id"], out["candidate_a_track_id"]
-            out["candidate_a_method"], out["candidate_b_method"] = out["candidate_b_method"], out["candidate_a_method"]
+            out["candidate_a_track_id"], out["candidate_b_track_id"] = (
+                out["candidate_b_track_id"],
+                out["candidate_a_track_id"],
+            )
+            out["candidate_a_method"], out["candidate_b_method"] = (
+                out["candidate_b_method"],
+                out["candidate_a_method"],
+            )
         rows.append(out)
     fieldnames = ["participant_id"] + [k for k in rows[0].keys() if k != "participant_id"]
     out_path = ROOT / "researcher_private" / f"method_key_private_{participant_id}.csv"
@@ -91,8 +97,14 @@ def main() -> None:
             out = dict(row)
             out["participant_id"] = participant_id
             if swaps.get(task_id):
-                out["candidate_a_track_id"], out["candidate_b_track_id"] = out["candidate_b_track_id"], out["candidate_a_track_id"]
-                out["candidate_a_method"], out["candidate_b_method"] = out["candidate_b_method"], out["candidate_a_method"]
+                out["candidate_a_track_id"], out["candidate_b_track_id"] = (
+                    out["candidate_b_track_id"],
+                    out["candidate_a_track_id"],
+                )
+                out["candidate_a_method"], out["candidate_b_method"] = (
+                    out["candidate_b_method"],
+                    out["candidate_a_method"],
+                )
             combined_rows.append(out)
 
         zip_base = OUT_DIR / f"{participant_id}_volunteer_site"

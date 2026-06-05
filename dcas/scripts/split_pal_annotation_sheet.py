@@ -16,7 +16,10 @@ def _load_tasks(tasks_path: str | Path) -> dict[tuple[str, str], dict[str, Any]]
             if not line:
                 continue
             obj = json.loads(line)
-            key = (str(obj.get("track_id", "")).strip(), str(obj.get("compare_to", "")).strip())
+            key = (
+                str(obj.get("track_id", "")).strip(),
+                str(obj.get("compare_to", "")).strip(),
+            )
             if key[0] and key[1]:
                 out[key] = obj
     return out
@@ -57,9 +60,7 @@ def _assignment_readme(
     ]
     for annotator in annotators:
         info = summary["annotators"][annotator]
-        lines.append(
-            f"- `{annotator}` -> `{Path(info['csv_path']).name}` ({int(info['n_tasks'])} tasks)"
-        )
+        lines.append(f"- `{annotator}` -> `{Path(info['csv_path']).name}` ({int(info['n_tasks'])} tasks)")
     lines.extend(
         [
             "",
@@ -153,7 +154,10 @@ def split_pal_annotation_sheet(
     missing_task_meta = 0
 
     for row in sheet_rows:
-        key = (str(row.get("track_id_a", "")).strip(), str(row.get("track_id_b", "")).strip())
+        key = (
+            str(row.get("track_id_a", "")).strip(),
+            str(row.get("track_id_b", "")).strip(),
+        )
         task = task_map.get(key, {})
         if not task:
             missing_task_meta += 1
@@ -243,10 +247,19 @@ def split_pal_annotation_sheet(
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Split a PAL annotation sheet into balanced per-annotator packets.")
-    ap.add_argument("--tasks", required=True, help="Selected PAL tasks jsonl, ideally tasks_round1_200.jsonl")
+    ap.add_argument(
+        "--tasks",
+        required=True,
+        help="Selected PAL tasks jsonl, ideally tasks_round1_200.jsonl",
+    )
     ap.add_argument("--sheet", required=True, help="Annotation CSV derived from the tasks file")
     ap.add_argument("--out_dir", required=True, help="Directory for annotator packets")
-    ap.add_argument("--annotators", nargs="+", required=True, help="Annotator ids, e.g. annotator_A annotator_B")
+    ap.add_argument(
+        "--annotators",
+        nargs="+",
+        required=True,
+        help="Annotator ids, e.g. annotator_A annotator_B",
+    )
     args = ap.parse_args()
 
     out = split_pal_annotation_sheet(

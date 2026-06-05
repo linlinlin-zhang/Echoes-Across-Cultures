@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -132,7 +132,12 @@ def _source_inverse_scores(tracks: Tracks, cand_idx: np.ndarray) -> np.ndarray:
     src_values = np.array([str(x) for x in tracks.source_dataset.tolist()], dtype=object)
     unique, counts = np.unique(src_values, return_counts=True)
     inv = {str(k): 1.0 / float(v) for k, v in zip(unique.tolist(), counts.tolist())}
-    return _normalize_np(np.array([float(inv.get(str(src_values[int(i)]), 0.0)) for i in cand_idx.tolist()], dtype=np.float32))
+    return _normalize_np(
+        np.array(
+            [float(inv.get(str(src_values[int(i)]), 0.0)) for i in cand_idx.tolist()],
+            dtype=np.float32,
+        )
+    )
 
 
 def _culture_affinity_scores(
@@ -143,11 +148,19 @@ def _culture_affinity_scores(
     temperature: float = 1.0,
 ) -> np.ndarray:
     all_cultures = sorted({str(x) for x in culture_all.tolist()})
-    centroids = _culture_centroids(zs_all=zs_all.detach().cpu(), culture_all=culture_all.astype(str), culture_names=all_cultures)
+    centroids = _culture_centroids(
+        zs_all=zs_all.detach().cpu(),
+        culture_all=culture_all.astype(str),
+        culture_names=all_cultures,
+    )
     d = torch.cdist(zs_points.detach().cpu(), centroids)
     probs = torch.softmax(-d / max(1e-6, float(temperature)), dim=1)
     if str(target_culture) not in all_cultures:
-        return np.full((int(zs_points.shape[0]),), 1.0 / max(1, len(all_cultures)), dtype=np.float32)
+        return np.full(
+            (int(zs_points.shape[0]),),
+            1.0 / max(1, len(all_cultures)),
+            dtype=np.float32,
+        )
     target_idx = int(all_cultures.index(str(target_culture)))
     return probs[:, target_idx].detach().cpu().numpy().astype(np.float32)
 
@@ -233,7 +246,11 @@ def _finalize_open_recommendations(
         target_dist[target_idx] = 1.0 - smoothing
     else:
         target_dist[:] = 1.0 / max(1, len(all_cultures))
-    target_prob = float(rec_soft_dist[all_cultures.index(str(target_culture))]) if str(target_culture) in all_cultures else float("nan")
+    target_prob = (
+        float(rec_soft_dist[all_cultures.index(str(target_culture))])
+        if str(target_culture) in all_cultures
+        else float("nan")
+    )
 
     cultures = [r.culture for r in recs]
     rec_dist_hard = np.array([cultures.count(c) for c in all_cultures], dtype=np.float64)
@@ -241,7 +258,11 @@ def _finalize_open_recommendations(
     calibration_kl_legacy = _safe_kl(rec_dist_hard, pool_dist)
     calibration_kl = _safe_kl(rec_soft_dist, target_dist)
     user_alignment_kl = _safe_kl(rec_soft_dist, hist_soft_dist)
-    serendipity = float(np.mean(np.asarray([r.relevance * r.unexpectedness for r in recs], dtype=np.float64))) if recs else float("nan")
+    serendipity = (
+        float(np.mean(np.asarray([r.relevance * r.unexpectedness for r in recs], dtype=np.float64)))
+        if recs
+        else float("nan")
+    )
 
     metrics = {
         "serendipity": serendipity,
@@ -285,7 +306,15 @@ def _finalize_recommendations(
         d_zs = torch.cdist(zs_cand_cpu[j : j + 1], zs_hist_cpu).squeeze(0)
         unexpectedness = float(d_zs.mean().item())
 
-        recs.append(Recommendation(track_id=tid, culture=cul, score=score, relevance=relevance, unexpectedness=unexpectedness))
+        recs.append(
+            Recommendation(
+                track_id=tid,
+                culture=cul,
+                score=score,
+                relevance=relevance,
+                unexpectedness=unexpectedness,
+            )
+        )
 
     unexpected = np.array([r.unexpectedness for r in recs], dtype=np.float64)
     relevant = np.array([r.relevance for r in recs], dtype=np.float64)
@@ -317,7 +346,11 @@ def _finalize_recommendations(
         target_dist[target_idx] = 1.0 - smoothing
     else:
         target_dist[:] = 1.0 / max(1, len(all_cultures))
-    target_prob = float(rec_soft_dist[all_cultures.index(str(target_culture))]) if str(target_culture) in all_cultures else float("nan")
+    target_prob = (
+        float(rec_soft_dist[all_cultures.index(str(target_culture))])
+        if str(target_culture) in all_cultures
+        else float("nan")
+    )
 
     # Legacy calibration kept for backward compatibility of older reports.
     cultures = [r.culture for r in recs]

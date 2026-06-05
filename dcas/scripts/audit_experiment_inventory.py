@@ -213,16 +213,16 @@ def _coverage_summary(
         "recommender_benchmark_public_routeA_phase2_cn_gemini.run.json",
     ]
 
-    culture_stage3 = [
-        row for row in benchmark_configs if "culturemert_stage3" in Path(row["path"]).name
-    ]
-    gemini_related = [
-        row for row in benchmark_configs if "gemini" in Path(row["path"]).name
-    ]
+    culture_stage3 = [row for row in benchmark_configs if "culturemert_stage3" in Path(row["path"]).name]
+    gemini_related = [row for row in benchmark_configs if "gemini" in Path(row["path"]).name]
 
     return {
-        "missing_expected_gemini_files": [name for name in expected_gemini if name not in train_names and name not in bench_names],
-        "has_any_routeA_gemini_benchmark": any("routeA" in Path(row["path"]).name and "gemini" in Path(row["path"]).name for row in benchmark_configs),
+        "missing_expected_gemini_files": [
+            name for name in expected_gemini if name not in train_names and name not in bench_names
+        ],
+        "has_any_routeA_gemini_benchmark": any(
+            "routeA" in Path(row["path"]).name and "gemini" in Path(row["path"]).name for row in benchmark_configs
+        ),
         "culturemert_stage3_benchmark_configs": sorted(Path(row["path"]).name for row in culture_stage3),
         "gemini_benchmark_configs": sorted(Path(row["path"]).name for row in gemini_related),
         "culturemert_stage3_report_dirs": sorted(name for name in report_names if "culturemert_stage3" in name),
@@ -237,18 +237,14 @@ def _topline_findings(report: dict[str, Any]) -> list[str]:
     profile = report.get("culturemert_mw3_drop_profile")
 
     if coverage["missing_expected_gemini_files"]:
-        findings.append(
-            "Gemini 线缺少 stage3 与 public RouteA 对应配置，当前无法与 CultureMERT stage3 做对称对照。"
-        )
+        findings.append("Gemini 线缺少 stage3 与 public RouteA 对应配置，当前无法与 CultureMERT stage3 做对称对照。")
     for row in manifests:
         if "culturemert_v3_main_mw3" in row["path"] and int(row.get("n_errors") or 0) > 0:
             findings.append(
                 f"CultureMERT mw3 embedding 构建存在 {int(row['n_errors'])} 条失败记录，需要在 V4 前修复或单独解释。"
             )
     if isinstance(profile, dict) and int(profile.get("n_dropped", 0)) > 0:
-        findings.append(
-            f"CultureMERT mw3 对齐后丢失 {int(profile['n_dropped'])} 条 track，存在选择性掉样本风险。"
-        )
+        findings.append(f"CultureMERT mw3 对齐后丢失 {int(profile['n_dropped'])} 条 track，存在选择性掉样本风险。")
     return findings
 
 

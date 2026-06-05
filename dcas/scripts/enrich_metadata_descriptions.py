@@ -157,7 +157,10 @@ def _load_jamendo_client_id() -> str:
 
 def _load_kimi_config() -> dict[str, str]:
     config: dict[str, str] = {}
-    for path in (Path("configs/secrets/kimi.local.json"), Path("storage/secrets/kimi.local.json")):
+    for path in (
+        Path("configs/secrets/kimi.local.json"),
+        Path("storage/secrets/kimi.local.json"),
+    ):
         if not path.exists():
             continue
         try:
@@ -201,10 +204,7 @@ def _select_candidates(
         if (
             (_clean(row.get("description_source")) == "kimi_generated")
             if only_generated
-            else (
-                not _has_description(row)
-                or (overwrite_generated and _is_legacy_kimi_description(row))
-            )
+            else (not _has_description(row) or (overwrite_generated and _is_legacy_kimi_description(row)))
         )
         and (not source_filter or _clean(row.get("source_dataset")).lower() in source_filter)
     ]
@@ -255,7 +255,11 @@ def _apply_itunes_info(row: dict[str, str], item: dict[str, Any], *, overwrite_g
         row["release_date"] = release_date
         changed = True
 
-    track_desc = _first(item.get("longDescription"), item.get("shortDescription"), item.get("description"))
+    track_desc = _first(
+        item.get("longDescription"),
+        item.get("shortDescription"),
+        item.get("description"),
+    )
     album_desc = _first(item.get("collectionDescription"))
     if track_desc and _can_replace_description(row, overwrite_generated=overwrite_generated):
         row["description"] = _clip(track_desc)
@@ -387,7 +391,11 @@ def _apply_wikipedia_description(
     for field, query in queries:
         if field == "description" and not _can_replace_description(row, overwrite_generated=overwrite_generated):
             continue
-        if field == "album_description" and _clean(row.get(field)) and not _can_replace_description(row, overwrite_generated=overwrite_generated):
+        if (
+            field == "album_description"
+            and _clean(row.get(field))
+            and not _can_replace_description(row, overwrite_generated=overwrite_generated)
+        ):
             continue
         for lang in languages:
             try:
@@ -456,7 +464,10 @@ def _call_kimi(
     if not api_key:
         return ""
     endpoint = _clean(config.get("endpoint")) or "https://api.moonshot.cn/v1/chat/completions"
-    budgets = [max(1024, int(completion_tokens)), max(1024, int(retry_completion_tokens))]
+    budgets = [
+        max(1024, int(completion_tokens)),
+        max(1024, int(retry_completion_tokens)),
+    ]
     for token_budget in dict.fromkeys(budgets):
         payload = {
             "model": _clean(config.get("model")) or "kimi-k2.6",
@@ -472,7 +483,10 @@ def _call_kimi(
         }
         response = requests.post(
             endpoint,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
             data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
             timeout=60,
         )
@@ -601,26 +615,33 @@ def enrich_metadata_descriptions(
                 wiki_count += 1
                 stats["wikipedia_descriptions"] = wiki_count
                 if wiki_count % 10 == 0:
-                    print(f"[INFO] wikipedia descriptions {wiki_count}/{max_wikipedia}", flush=True)
+                    print(
+                        f"[INFO] wikipedia descriptions {wiki_count}/{max_wikipedia}",
+                        flush=True,
+                    )
                 if sleep_seconds > 0:
                     time.sleep(sleep_seconds)
 
     kimi_targets = [
         idx
         for idx in candidates
-        if not _has_description(rows[idx])
-        or (overwrite_generated and _is_legacy_kimi_description(rows[idx]))
+        if not _has_description(rows[idx]) or (overwrite_generated and _is_legacy_kimi_description(rows[idx]))
     ][: max(0, max_kimi)]
     if use_kimi and kimi_targets and kimi_config.get("api_key"):
+
         def run_one(row_idx: int) -> tuple[int, str, str]:
             for attempt in range(1, 7):
                 try:
-                    return row_idx, _call_kimi(
-                        rows[row_idx],
-                        kimi_config,
-                        completion_tokens=kimi_completion_tokens,
-                        retry_completion_tokens=kimi_retry_completion_tokens,
-                    ), ""
+                    return (
+                        row_idx,
+                        _call_kimi(
+                            rows[row_idx],
+                            kimi_config,
+                            completion_tokens=kimi_completion_tokens,
+                            retry_completion_tokens=kimi_retry_completion_tokens,
+                        ),
+                        "",
+                    )
                 except requests.RequestException as exc:
                     if attempt >= 6:
                         return row_idx, "", str(exc)
@@ -644,7 +665,10 @@ def enrich_metadata_descriptions(
                     completed += 1
                     if error:
                         errors += 1
-                        print(f"[WARN] kimi failed for row {idx}: {error[:180]}", flush=True)
+                        print(
+                            f"[WARN] kimi failed for row {idx}: {error[:180]}",
+                            flush=True,
+                        )
                     if text and (
                         not _clean(rows[idx].get("description"))
                         or (overwrite_generated and _is_legacy_kimi_description(rows[idx]))
@@ -660,7 +684,10 @@ def enrich_metadata_descriptions(
                     stats["kimi_errors"] = errors
                     stats["kimi_empty_responses"] = empty
                     if completed % 10 == 0:
-                        print(f"[INFO] kimi descriptions {completed}/{len(kimi_targets)}", flush=True)
+                        print(
+                            f"[INFO] kimi descriptions {completed}/{len(kimi_targets)}",
+                            flush=True,
+                        )
             _write_progress(out_path, rows, fields, stats, dry_run=dry_run)
             print(
                 f"[CHECKPOINT] {stats['rows_with_description']}/{len(rows)} rows now have descriptions; "
@@ -683,8 +710,18 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Enrich merged music metadata with descriptions and source evidence.")
     ap.add_argument("--metadata", default="storage/public/merged/metadata_merged.csv")
     ap.add_argument("--out", default="")
-    ap.add_argument("--limit", type=int, default=0, help="Max missing-description rows to process; 0 means all.")
-    ap.add_argument("--per_culture", type=int, default=0, help="Round-robin at most N rows per culture before applying --limit.")
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Max missing-description rows to process; 0 means all.",
+    )
+    ap.add_argument(
+        "--per_culture",
+        type=int,
+        default=0,
+        help="Round-robin at most N rows per culture before applying --limit.",
+    )
     ap.add_argument("--no_itunes", action="store_true")
     ap.add_argument("--no_jamendo", action="store_true")
     ap.add_argument("--no_wikipedia", action="store_true")
@@ -694,11 +731,28 @@ def main() -> None:
     ap.add_argument("--kimi_workers", type=int, default=3)
     ap.add_argument("--kimi_completion_tokens", type=int, default=4096)
     ap.add_argument("--kimi_retry_completion_tokens", type=int, default=8192)
-    ap.add_argument("--write_every", type=int, default=100, help="Write metadata/report after each N Kimi rows.")
+    ap.add_argument(
+        "--write_every",
+        type=int,
+        default=100,
+        help="Write metadata/report after each N Kimi rows.",
+    )
     ap.add_argument("--sleep_seconds", type=float, default=0.15)
-    ap.add_argument("--source", default="", help="Optional comma-separated source_dataset filter, e.g. itunes,jamendo.")
-    ap.add_argument("--overwrite_generated", action="store_true", help="Regenerate rows whose description_source is kimi_generated.")
-    ap.add_argument("--only_generated", action="store_true", help="Only process rows whose description_source is kimi_generated.")
+    ap.add_argument(
+        "--source",
+        default="",
+        help="Optional comma-separated source_dataset filter, e.g. itunes,jamendo.",
+    )
+    ap.add_argument(
+        "--overwrite_generated",
+        action="store_true",
+        help="Regenerate rows whose description_source is kimi_generated.",
+    )
+    ap.add_argument(
+        "--only_generated",
+        action="store_true",
+        help="Only process rows whose description_source is kimi_generated.",
+    )
     ap.add_argument("--dry_run", action="store_true")
     args = ap.parse_args()
     source_filter = {s.strip().lower() for s in args.source.split(",") if s.strip()}

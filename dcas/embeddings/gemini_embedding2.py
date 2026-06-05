@@ -117,7 +117,9 @@ class GeminiEmbedding2Embedder:
                 unique_starts.append(s)
         return [(int(s), min(segment_frames, total_frames - int(s))) for s in unique_starts]
 
-    def _load_audio(self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None) -> tuple[torch.Tensor, int]:
+    def _load_audio(
+        self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None
+    ) -> tuple[torch.Tensor, int]:
         audio_path = Path(path)
         load_kwargs: dict[str, int] = {}
         if int(frame_offset) > 0:
@@ -146,7 +148,9 @@ class GeminiEmbedding2Embedder:
             sr = target_sr
         return wav, int(sr)
 
-    def _prepare_window(self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None) -> tuple[bytes, dict[str, Any]]:
+    def _prepare_window(
+        self, path: str | Path, frame_offset: int = 0, num_frames: int | None = None
+    ) -> tuple[bytes, dict[str, Any]]:
         wav, sr = self._load_audio(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
         audio_bytes = _wav_bytes_from_tensor(wav=wav, sample_rate=sr)
         meta = {
@@ -275,7 +279,9 @@ class GeminiEmbedding2Embedder:
         last_error: Exception | None = None
         for i, (frame_offset, num_frames) in enumerate(plans):
             try:
-                audio_bytes, prep = self._prepare_window(path=path, frame_offset=int(frame_offset), num_frames=num_frames)
+                audio_bytes, prep = self._prepare_window(
+                    path=path, frame_offset=int(frame_offset), num_frames=num_frames
+                )
                 prep = dict(prep)
                 prep["window_index"] = int(i)
                 prep["frame_offset"] = int(frame_offset)
@@ -309,7 +315,9 @@ class GeminiEmbedding2Embedder:
             "windows": prep_windows,
             "embedding_dim": int(emb.shape[0]),
             "payload_bytes": int(sum(int(x["payload_bytes"]) for x in prep_windows)),
-            "duration_seconds": float(sum(float(x["duration_seconds"]) for x in prep_windows) / max(1, len(prep_windows))),
+            "duration_seconds": float(
+                sum(float(x["duration_seconds"]) for x in prep_windows) / max(1, len(prep_windows))
+            ),
             "sample_rate": int(prep_windows[0]["sample_rate"]) if prep_windows else int(self.cfg.target_sample_rate),
             "n_samples": int(sum(int(x["n_samples"]) for x in prep_windows)),
             "mime_type": str(prep_windows[0]["mime_type"]) if prep_windows else self.cfg.audio_mime_type,

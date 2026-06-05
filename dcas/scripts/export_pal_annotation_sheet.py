@@ -82,7 +82,11 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
-    rep = export_pal_annotation_sheet(tasks_path=str(args.tasks), metadata_csv=str(args.metadata), out_csv=str(args.out))
+    rep = export_pal_annotation_sheet(
+        tasks_path=str(args.tasks),
+        metadata_csv=str(args.metadata),
+        out_csv=str(args.out),
+    )
     print(json.dumps(rep, ensure_ascii=False))
 
 

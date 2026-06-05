@@ -12,7 +12,6 @@ from typing import Any
 import numpy as np
 import torch
 
-from dcas.data.interactions import Interaction
 from dcas.data.npz_tracks import Tracks, load_tracks
 from dcas.embeddings.culturemert import CultureMERTConfig, CultureMERTEmbedder
 from dcas.ot.sinkhorn import sinkhorn_plan, squared_euclidean_cost
@@ -162,7 +161,9 @@ class MainlineRecommendationPlatform:
         self.metadata_mtime_ns = self.metadata_path.stat().st_mtime_ns
         self.metadata_by_id, self.metadata_fields = self._load_metadata(self.metadata_path)
         self.culture_counts = Counter(str(c) for c in self.tracks.culture.tolist())
-        self.source_counts = Counter(str(s) for s in (self.tracks.source_dataset.tolist() if self.tracks.source_dataset is not None else []))
+        self.source_counts = Counter(
+            str(s) for s in (self.tracks.source_dataset.tolist() if self.tracks.source_dataset is not None else [])
+        )
         self.model, _ = load_checkpoint(str(self.model_path), map_location=str(self.device))
         self.model.eval()
         self.model.to(self.device)
@@ -184,7 +185,9 @@ class MainlineRecommendationPlatform:
         description_count = sum(1 for row in rows if _clean(row.get("description")))
         album_description_count = sum(1 for row in rows if _clean(row.get("album_description")))
         tag_count = sum(1 for row in rows if _clean(row.get("tags")))
-        description_sources = Counter(_clean(row.get("description_source")) or "unknown" for row in rows if _clean(row.get("description")))
+        description_sources = Counter(
+            _clean(row.get("description_source")) or "unknown" for row in rows if _clean(row.get("description"))
+        )
         return {
             "ok": True,
             "loaded_at": self.loaded_at,
@@ -223,13 +226,9 @@ class MainlineRecommendationPlatform:
     def cultures(self) -> dict[str, Any]:
         return {
             "ok": True,
-            "cultures": [
-                {"culture": name, "count": int(count)}
-                for name, count in sorted(self.culture_counts.items())
-            ],
+            "cultures": [{"culture": name, "count": int(count)} for name, count in sorted(self.culture_counts.items())],
             "sources": [
-                {"source_dataset": name, "count": int(count)}
-                for name, count in sorted(self.source_counts.items())
+                {"source_dataset": name, "count": int(count)} for name, count in sorted(self.source_counts.items())
             ],
         }
 
@@ -301,7 +300,12 @@ class MainlineRecommendationPlatform:
         items = result.get("items", [])
         if not items:
             raise ValueError("no matching track available")
-        return {"ok": True, "track": items[0], "request": result["request"], "total_available": result["total_available"]}
+        return {
+            "ok": True,
+            "track": items[0],
+            "request": result["request"],
+            "total_available": result["total_available"],
+        }
 
     def embed_audio_file(
         self,
@@ -535,7 +539,8 @@ class MainlineRecommendationPlatform:
             "audio_is_preview": "false",
             "preview_available": "false",
             "cover_art_url": _clean(upload_info.get("cover_art_url")),
-            "cover_art_url_large": _clean(upload_info.get("cover_art_url_large")) or _clean(upload_info.get("cover_art_url")),
+            "cover_art_url_large": _clean(upload_info.get("cover_art_url_large"))
+            or _clean(upload_info.get("cover_art_url")),
             "platform": "upload",
             "platform_track_url": "",
             "platform_album_url": "",
@@ -581,7 +586,9 @@ class MainlineRecommendationPlatform:
             "recommendations": recommendations,
             "metrics": self._result_metrics(recommendations=recommendations),
             "warnings": self._warnings(mode=mode)
-            + ["uploaded audio culture is inferred from the nearest DCAS culture centroid unless seed_culture is provided."],
+            + [
+                "uploaded audio culture is inferred from the nearest DCAS culture centroid unless seed_culture is provided."
+            ],
         }
 
     def audio_file(self, track_id: str) -> tuple[Path, str]:
@@ -826,7 +833,10 @@ class MainlineRecommendationPlatform:
             culture = _clean(seed_culture)
             all_idx = all_idx[self.tracks.culture.astype(str)[all_idx] == culture]
         if exclude_low_signal:
-            all_idx = np.array([int(i) for i in all_idx.tolist() if not self._is_low_signal(int(i))], dtype=np.int64)
+            all_idx = np.array(
+                [int(i) for i in all_idx.tolist() if not self._is_low_signal(int(i))],
+                dtype=np.int64,
+            )
         if all_idx.size == 0:
             raise ValueError("no seed candidates available")
         rng = np.random.default_rng(42 if random_seed is None else int(random_seed))
@@ -861,7 +871,11 @@ class MainlineRecommendationPlatform:
         if int(seed_idx.shape[0]) == 1:
             return (-cost.squeeze(0)).detach().cpu().numpy().astype(np.float32)
         a = torch.full((int(seed_idx.shape[0]),), 1.0 / int(seed_idx.shape[0]), device=self.device)
-        b = torch.full((int(candidate_idx.shape[0]),), 1.0 / int(candidate_idx.shape[0]), device=self.device)
+        b = torch.full(
+            (int(candidate_idx.shape[0]),),
+            1.0 / int(candidate_idx.shape[0]),
+            device=self.device,
+        )
         plan = sinkhorn_plan(a=a, b=b, cost=cost, epsilon=0.1, iters=200)
         col_mass = plan.sum(dim=0).clamp_min(1e-12)
         col_avg_cost = (plan * cost).sum(dim=0) / col_mass
@@ -877,14 +891,24 @@ class MainlineRecommendationPlatform:
 
     def _minority_scores(self, candidate_idx: np.ndarray) -> np.ndarray:
         counts = self.culture_counts
-        raw = np.array([1.0 / max(1, counts.get(str(self.tracks.culture[int(i)]), 1)) for i in candidate_idx.tolist()], dtype=np.float32)
+        raw = np.array(
+            [1.0 / max(1, counts.get(str(self.tracks.culture[int(i)]), 1)) for i in candidate_idx.tolist()],
+            dtype=np.float32,
+        )
         return _minmax(raw)
 
     def _source_scores(self, candidate_idx: np.ndarray) -> np.ndarray:
         if self.tracks.source_dataset is None:
             return np.zeros((int(candidate_idx.shape[0]),), dtype=np.float32)
         raw = np.array(
-            [1.0 / max(1, self.source_counts.get(str(self.tracks.source_dataset[int(i)]), 1)) for i in candidate_idx.tolist()],
+            [
+                1.0
+                / max(
+                    1,
+                    self.source_counts.get(str(self.tracks.source_dataset[int(i)]), 1),
+                )
+                for i in candidate_idx.tolist()
+            ],
             dtype=np.float32,
         )
         return _minmax(raw)
@@ -1004,7 +1028,9 @@ class MainlineRecommendationPlatform:
             "album_description_source": _clean(row.get("album_description_source")),
             "description_evidence_url": _clean(row.get("description_evidence_url")),
             "culture": str(self.tracks.culture[int(idx)]),
-            "source_dataset": str(self.tracks.source_dataset[int(idx)]) if self.tracks.source_dataset is not None else _clean(row.get("source_dataset")),
+            "source_dataset": str(self.tracks.source_dataset[int(idx)])
+            if self.tracks.source_dataset is not None
+            else _clean(row.get("source_dataset")),
             "label": _clean(row.get("label")),
             "label_en": _clean(row.get("label_en")),
             "tags": _clean(row.get("tags")),
@@ -1021,10 +1047,16 @@ class MainlineRecommendationPlatform:
             "duration_ms": _safe_float(row.get("duration_ms"), default=0.0),
             "audio_is_preview": _clean(row.get("audio_is_preview")),
             "preview_available": _clean(row.get("preview_available")),
-            "cover_art_url": _clean(row.get("cover_art_url")) or _clean(row.get("artwork_url_large")) or _clean(row.get("image_url")),
-            "cover_art_url_large": _clean(row.get("cover_art_url_large")) or _clean(row.get("cover_art_url")) or _clean(row.get("artwork_url_large")),
+            "cover_art_url": _clean(row.get("cover_art_url"))
+            or _clean(row.get("artwork_url_large"))
+            or _clean(row.get("image_url")),
+            "cover_art_url_large": _clean(row.get("cover_art_url_large"))
+            or _clean(row.get("cover_art_url"))
+            or _clean(row.get("artwork_url_large")),
             "platform": _clean(row.get("platform")) or _clean(row.get("source_dataset")),
-            "platform_track_url": _clean(row.get("platform_track_url")) or _clean(row.get("track_url")) or _clean(row.get("jamendo_url")),
+            "platform_track_url": _clean(row.get("platform_track_url"))
+            or _clean(row.get("track_url"))
+            or _clean(row.get("jamendo_url")),
             "platform_album_url": _clean(row.get("platform_album_url")) or _clean(row.get("collection_url")),
             "full_track_url": _clean(row.get("full_track_url")) or _clean(row.get("jamendo_url")),
             "preview_url": _clean(row.get("preview_url")) or _clean(row.get("audio_url")),
@@ -1040,7 +1072,11 @@ class MainlineRecommendationPlatform:
     def _result_metrics(self, *, recommendations: list[dict[str, Any]]) -> dict[str, Any]:
         cultures = Counter(_clean(item.get("culture")) for item in recommendations)
         sources = Counter(_clean(item.get("source_dataset")) for item in recommendations)
-        scores = [_safe_float(item.get("score"), default=float("nan")) for item in recommendations if item.get("score") is not None]
+        scores = [
+            _safe_float(item.get("score"), default=float("nan"))
+            for item in recommendations
+            if item.get("score") is not None
+        ]
         return {
             "n": int(len(recommendations)),
             "culture_counts": dict(sorted(cultures.items())),
@@ -1052,9 +1088,13 @@ class MainlineRecommendationPlatform:
 
     def _warnings(self, *, mode: str) -> list[str]:
         warnings: list[str] = []
-        warnings.append("30k catalog does not yet have real user interaction logs; minority uses a catalog-balance proxy.")
+        warnings.append(
+            "30k catalog does not yet have real user interaction logs; minority uses a catalog-balance proxy."
+        )
         if mode == "open":
-            warnings.append("open mode is the product seed-track adaptation of the mainline; strict benchmark mode is target.")
+            warnings.append(
+                "open mode is the product seed-track adaptation of the mainline; strict benchmark mode is target."
+            )
         return warnings
 
     def _is_low_signal(self, idx: int) -> bool:

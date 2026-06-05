@@ -23,10 +23,30 @@ OPTIONAL_AUDIT_FIELDS = [
     "instrument_family",
 ]
 REQUIRED_EMBEDDING_FIELDS = {
-    "culturemert": {"model_id", "pooling", "max_seconds", "window_count", "window_strategy", "window_aggregate"},
-    "gemini": {"model_id", "output_dimensionality", "max_seconds", "window_count", "window_strategy", "window_aggregate"},
+    "culturemert": {
+        "model_id",
+        "pooling",
+        "max_seconds",
+        "window_count",
+        "window_strategy",
+        "window_aggregate",
+    },
+    "gemini": {
+        "model_id",
+        "output_dimensionality",
+        "max_seconds",
+        "window_count",
+        "window_strategy",
+        "window_aggregate",
+    },
 }
-RECOMMENDED_TOP_LEVEL = {"merge", "harmonize", "interaction_protocol", "embeddings", "validation"}
+RECOMMENDED_TOP_LEVEL = {
+    "merge",
+    "harmonize",
+    "interaction_protocol",
+    "embeddings",
+    "validation",
+}
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -58,7 +78,9 @@ def _read_rows(path: Path) -> tuple[list[dict[str, str]], list[str]]:
         return rows, list(reader.fieldnames or [])
 
 
-def _audit_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, str]]]:
+def _audit_source(
+    source: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
     issues: list[dict[str, str]] = []
     local_metadata = Path(str(source.get("local_metadata", "")))
     culture = str(source.get("culture", "")).strip()
@@ -135,7 +157,9 @@ def _audit_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str
         )
 
     coverages = {field: round(_coverage(rows, field), 6) for field in OPTIONAL_AUDIT_FIELDS if field in fields}
-    source_dataset_values = Counter(str(r.get("source_dataset", "")).strip() for r in rows if str(r.get("source_dataset", "")).strip())
+    source_dataset_values = Counter(
+        str(r.get("source_dataset", "")).strip() for r in rows if str(r.get("source_dataset", "")).strip()
+    )
 
     return {
         "dataset_id": dataset_id,
@@ -207,7 +231,11 @@ def _audit_embedding_config(name: str, cfg: Any) -> tuple[dict[str, Any], list[d
                     "message": "culturemert.layer_weights requires culturemert.layer_indices",
                 }
             )
-        if isinstance(layer_indices, list) and isinstance(layer_weights, list) and len(layer_indices) != len(layer_weights):
+        if (
+            isinstance(layer_indices, list)
+            and isinstance(layer_weights, list)
+            and len(layer_indices) != len(layer_weights)
+        ):
             issues.append(
                 {
                     "severity": "error",
@@ -225,7 +253,13 @@ def audit_manifest(manifest_path: Path) -> dict[str, Any]:
     source_rows: list[dict[str, Any]] = []
     embedding_rows: list[dict[str, Any]] = []
 
-    required_top = {"dataset_name", "dataset_version", "schema_version", "root_out_dir", "sources"}
+    required_top = {
+        "dataset_name",
+        "dataset_version",
+        "schema_version",
+        "root_out_dir",
+        "sources",
+    }
     missing_top = sorted(required_top - set(manifest.keys()))
     if missing_top:
         issues.append(
@@ -369,7 +403,9 @@ def audit_manifest(manifest_path: Path) -> dict[str, Any]:
         "sources": source_rows,
         "embeddings": embedding_rows,
         "issues": issues,
-        "embedding_keys": sorted(list((manifest.get("embeddings") or {}).keys())) if isinstance(manifest.get("embeddings"), dict) else [],
+        "embedding_keys": sorted(list((manifest.get("embeddings") or {}).keys()))
+        if isinstance(manifest.get("embeddings"), dict)
+        else [],
     }
 
 
@@ -387,18 +423,34 @@ def _to_markdown(report: dict[str, Any]) -> str:
     for culture, cnt in dict(report.get("cultures", {})).items():
         lines.append(f"| {culture} | {cnt} |")
 
-    lines.extend(["", "## Source Audit", "", "| dataset_id | culture | exists | rows | duplicate_track_ids | missing_audio_rows |", "|---|---|---|---:|---:|---:|"])
+    lines.extend(
+        [
+            "",
+            "## Source Audit",
+            "",
+            "| dataset_id | culture | exists | rows | duplicate_track_ids | missing_audio_rows |",
+            "|---|---|---|---:|---:|---:|",
+        ]
+    )
     for row in report.get("sources", []):
         lines.append(
-            f"| {row.get('dataset_id','')} | {row.get('culture','')} | {str(bool(row.get('exists'))).lower()} | "
+            f"| {row.get('dataset_id', '')} | {row.get('culture', '')} | {str(bool(row.get('exists'))).lower()} | "
             f"{int(row.get('n_rows', 0) or 0)} | {int(row.get('duplicate_track_ids', 0) or 0)} | {int(row.get('missing_audio_rows', 0) or 0)} |"
         )
 
-    lines.extend(["", "## Embeddings", "", "| name | enabled | model_id | window_count | window_strategy | window_aggregate |", "|---|---|---|---:|---|---|"])
+    lines.extend(
+        [
+            "",
+            "## Embeddings",
+            "",
+            "| name | enabled | model_id | window_count | window_strategy | window_aggregate |",
+            "|---|---|---|---:|---|---|",
+        ]
+    )
     for row in report.get("embeddings", []):
         lines.append(
-            f"| {row.get('name','')} | {str(bool(row.get('enabled'))).lower()} | {row.get('model_id','')} | "
-            f"{int(row.get('window_count', 0) or 0)} | {row.get('window_strategy','')} | {row.get('window_aggregate','')} |"
+            f"| {row.get('name', '')} | {str(bool(row.get('enabled'))).lower()} | {row.get('model_id', '')} | "
+            f"{int(row.get('window_count', 0) or 0)} | {row.get('window_strategy', '')} | {row.get('window_aggregate', '')} |"
         )
 
     lines.extend(["", "## Issues", ""])
@@ -436,7 +488,12 @@ def main() -> None:
     report = audit_manifest(manifest_path)
     (out_dir / "summary.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "summary.md").write_text(_to_markdown(report), encoding="utf-8")
-    print(json.dumps({"out_dir": str(out_dir), "issues": len(report.get("issues", []))}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"out_dir": str(out_dir), "issues": len(report.get("issues", []))},
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

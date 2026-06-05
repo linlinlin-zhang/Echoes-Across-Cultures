@@ -79,10 +79,7 @@ def _looks_like_audio(content_type: str, first_bytes: bytes) -> bool:
     lower_ct = str(content_type).lower()
     if lower_ct.startswith("audio/"):
         return True
-    return any(
-        first_bytes.startswith(prefix)
-        for prefix in (b"ID3", b"RIFF", b"OggS", b"fLaC")
-    )
+    return any(first_bytes.startswith(prefix) for prefix in (b"ID3", b"RIFF", b"OggS", b"fLaC"))
 
 
 def _download_audio_with_redundancy(

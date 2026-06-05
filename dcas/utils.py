@@ -38,4 +38,3 @@ def env_int(name: str, default: int) -> int:
         return int(raw)
     except ValueError:
         return default
-

@@ -129,4 +129,3 @@ def rank_by_uncertainty(
         scores.append((str(tid), float(s)))
     scores.sort(key=lambda t: -t[1])
     return scores
-

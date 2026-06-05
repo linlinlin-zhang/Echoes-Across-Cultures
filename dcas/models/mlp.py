@@ -36,4 +36,3 @@ class GaussianHead(nn.Module):
 
     def forward(self, h: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return self.mu(h), self.logvar(h)
-

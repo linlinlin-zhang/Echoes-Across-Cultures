@@ -401,12 +401,28 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Build tracks.npz from audio files using Gemini Embedding 2.",
     )
-    ap.add_argument("--metadata", required=True, help="CSV with columns: track_id,culture,audio_path[,affect_label]")
+    ap.add_argument(
+        "--metadata",
+        required=True,
+        help="CSV with columns: track_id,culture,audio_path[,affect_label]",
+    )
     ap.add_argument("--out", required=True, help="Output tracks.npz path")
     ap.add_argument("--model_id", default="gemini-embedding-2-preview")
-    ap.add_argument("--api_key", default=None, help="Optional Gemini API key; falls back to GEMINI_API_KEY")
-    ap.add_argument("--api_key_file", default=None, help="Path to a local text file containing the Gemini API key")
-    ap.add_argument("--vertexai", action="store_true", help="Use Vertex AI route instead of Gemini API REST route")
+    ap.add_argument(
+        "--api_key",
+        default=None,
+        help="Optional Gemini API key; falls back to GEMINI_API_KEY",
+    )
+    ap.add_argument(
+        "--api_key_file",
+        default=None,
+        help="Path to a local text file containing the Gemini API key",
+    )
+    ap.add_argument(
+        "--vertexai",
+        action="store_true",
+        help="Use Vertex AI route instead of Gemini API REST route",
+    )
     ap.add_argument("--vertex_project", default=None)
     ap.add_argument("--vertex_location", default=None)
     ap.add_argument("--output_dimensionality", type=int, default=768)

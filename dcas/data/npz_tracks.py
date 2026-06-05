@@ -52,4 +52,3 @@ def load_tracks(path: str) -> Tracks:
         affect_label=affect_label,
         source_dataset=source_dataset,
     )
-

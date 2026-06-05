@@ -4,7 +4,7 @@ import argparse
 import csv
 import json
 import math
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -109,7 +109,13 @@ def _validate_tracks(path: Path, th: ValidationThresholds) -> tuple[dict[str, An
     tracks = load_tracks(str(path))
     n = len(tracks)
     if n == 0:
-        issues.append({"severity": "error", "code": "tracks.empty", "message": "tracks.npz has zero tracks"})
+        issues.append(
+            {
+                "severity": "error",
+                "code": "tracks.empty",
+                "message": "tracks.npz has zero tracks",
+            }
+        )
     emb = tracks.embedding
 
     finite_mask = np.isfinite(emb)
@@ -458,7 +464,12 @@ def main() -> None:
         out_md.parent.mkdir(parents=True, exist_ok=True)
         out_md.write_text(_to_markdown(report), encoding="utf-8")
 
-    print(json.dumps({"status": report["status"], "summary": report["summary"]}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"status": report["status"], "summary": report["summary"]},
+            ensure_ascii=False,
+        )
+    )
     if args.strict and report["status"] == "fail":
         raise SystemExit(2)
 

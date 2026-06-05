@@ -65,9 +65,24 @@ def merge_metadata_dedup(
                 continue
             rr["audio_path"] = str(ap)
             merged.append(rr)
-        sources.append({"path": str(p.resolve()), "rows_before_dedup": len(rows), "rows_after_dedup": int(len(merged) - n_before)})
+        sources.append(
+            {
+                "path": str(p.resolve()),
+                "rows_before_dedup": len(rows),
+                "rows_after_dedup": int(len(merged) - n_before),
+            }
+        )
 
-    preferred = ["track_id", "culture", "audio_path", "source_dataset", "source_split", "source_index", "label", "affect_label"]
+    preferred = [
+        "track_id",
+        "culture",
+        "audio_path",
+        "source_dataset",
+        "source_split",
+        "source_index",
+        "label",
+        "affect_label",
+    ]
     extra = [c for c in all_fields if c not in preferred]
     cols = [c for c in preferred if c in seen_fields] + extra
 
