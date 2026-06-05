@@ -20,7 +20,7 @@ jobs:
   deploy:
     name: Deploy to Cloud Server
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
       - name: Determine branch
@@ -34,13 +34,12 @@ jobs:
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.5
-        timeout-minutes: 12
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          command_timeout: 12m
+          command_timeout: 5m
           script: |
             set -euo pipefail
             cd /root/workspace/Echoes-Across-Cultures
@@ -56,9 +55,9 @@ jobs:
             echo "=== Pulling latest changes ==="
             git pull --ff-only origin ${{ steps.branch.outputs.ref }}
 
-            echo "=== Installing Python dependencies ==="
+            echo "=== Installing Python dependencies (cloud only) ==="
             .venv/bin/pip install \
-              -r requirements.txt \
+              -r requirements-cloud.txt \
               --quiet \
               --prefer-binary \
               --no-compile
