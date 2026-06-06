@@ -1102,6 +1102,52 @@
       white-space: nowrap;
     }
 
+    .ai-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .ai-mode-toggle {
+      display: inline-flex;
+      align-items: stretch;
+      min-height: 2.75rem;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .ai-mode-option {
+      min-width: 4.7rem;
+      border: 0;
+      border-right: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .ai-mode-option:last-child {
+      border-right: 0;
+    }
+
+    .ai-mode-option:hover,
+    .ai-mode-option.is-active {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .ai-mode-option:disabled {
+      cursor: wait;
+      opacity: 0.66;
+    }
+
     .ai-panel-head {
       display: grid;
       grid-template-columns: minmax(220px, 0.86fr) minmax(320px, 1.14fr);
@@ -1311,6 +1357,65 @@
       font-size: 0.94rem;
       line-height: 1.72;
       color: var(--ink);
+    }
+
+    .ai-thinking {
+      width: min(42rem, 100%);
+      margin: 0 0 0.7rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--soft);
+      overflow: hidden;
+    }
+
+    .ai-thinking-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      width: 100%;
+      min-height: 2.45rem;
+      padding: 0.65rem 0.85rem;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .ai-thinking-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .ai-thinking-state {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      white-space: nowrap;
+    }
+
+    .ai-thinking-content {
+      max-height: 15rem;
+      overflow: auto;
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .ai-thinking-text {
+      margin: 0;
+      padding: 0.85rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .ai-thinking:not(.is-open) .ai-thinking-content {
+      display: none;
     }
 
     .ai-message.is-assistant .md-body h1,
@@ -1938,6 +2043,20 @@
         white-space: normal;
       }
 
+      .ai-controls {
+        justify-content: flex-start;
+      }
+
+      .ai-mode-toggle,
+      .ai-run {
+        width: 100%;
+      }
+
+      .ai-mode-option {
+        flex: 1;
+        min-width: 0;
+      }
+
       .ai-context,
       .ai-chat {
         min-height: auto;
@@ -2106,7 +2225,13 @@
             <h2 data-i18n="music.ai.title">推荐讲解</h2>
           </div>
           <p data-i18n="music.ai.copy">把当前上传曲目、跨文化推荐结果等内容发送给AI，由 AI 对这次推荐路线做分析。</p>
-          <button class="pill ai-run" id="ai-run-button" type="button" data-i18n="music.ai.generate">生成分析</button>
+          <div class="ai-controls">
+            <div class="ai-mode-toggle" role="radiogroup" aria-label="AI 模式" data-i18n-aria-label="music.ai.modeAria">
+              <button class="ai-mode-option is-active" type="button" role="radio" aria-checked="true" data-ai-mode="fast" data-i18n="music.ai.modeFast">快速</button>
+              <button class="ai-mode-option" type="button" role="radio" aria-checked="false" data-ai-mode="thinking" data-i18n="music.ai.modeThinking">思考</button>
+            </div>
+            <button class="pill ai-run" id="ai-run-button" type="button" data-i18n="music.ai.generate">生成分析</button>
+          </div>
         </div>
 
         <section class="ai-chat" aria-label="AI 分析对话">
@@ -2627,6 +2752,7 @@
       parameterMetrics: document.getElementById("parameter-metrics"),
       recommendationInsights: document.getElementById("recommendation-insights"),
       aiRunButton: document.getElementById("ai-run-button"),
+      aiModeButtons: document.querySelectorAll("[data-ai-mode]"),
       aiMessages: document.getElementById("ai-messages"),
       aiComposer: document.getElementById("ai-composer"),
       aiQuestion: document.getElementById("ai-question"),
@@ -2674,6 +2800,8 @@
     }
     let aiConversationMessages = [];
     let aiBusy = false;
+    let aiMode = "fast";
+    let aiRenderQueued = false;
     let currentQueueIndex = 0;
     let isPlaying = false;
     let isScrubbing = false;
@@ -2692,6 +2820,7 @@
     let lastX = 0;
     let lastY = 0;
     let panInterval = null;
+    let mapAnimationStarted = false;
     const defaultDuration = 222;
     const dpr = window.devicePixelRatio || 1;
 
@@ -2855,7 +2984,10 @@
         aiConversationMessages: aiConversationMessages.slice(-12).map((message) => ({
           role: message.role,
           content: message.content,
-          displayContent: message.displayContent || ""
+          displayContent: message.displayContent || "",
+          reasoningContent: message.reasoningContent || "",
+          thinkingMode: normalizeAiMode(message.thinkingMode),
+          reasoningOpen: Boolean(message.reasoningOpen)
         }))
       };
       try {
@@ -3385,28 +3517,95 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       return escapeHtml(text);
     }
 
+    function normalizeAiMode(value) {
+      return String(value || "").toLowerCase() === "thinking" ? "thinking" : "fast";
+    }
+
+    function syncAiModeControls() {
+      els.aiModeButtons.forEach((button) => {
+        const isActive = normalizeAiMode(button.dataset.aiMode) === aiMode;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-checked", isActive ? "true" : "false");
+      });
+    }
+
+    function setAiMode(nextMode) {
+      aiMode = normalizeAiMode(nextMode);
+      syncAiModeControls();
+    }
+
+    function scheduleAiMessagesRender() {
+      if (aiRenderQueued) return;
+      aiRenderQueued = true;
+      requestAnimationFrame(() => {
+        aiRenderQueued = false;
+        renderAiMessages();
+      });
+    }
+
+    function renderAiThinking(message, index) {
+      if (message.role !== "assistant") return "";
+      const reasoningContent = String(message.reasoningContent || "").trim();
+      const shouldShow = normalizeAiMode(message.thinkingMode) === "thinking" || reasoningContent;
+      if (!shouldShow) return "";
+      const isOpen = Boolean(message.reasoningOpen || message.isStreaming);
+      const state = message.isStreaming
+        ? (reasoningContent ? t("music.ai.thinkingStreaming") : t("music.ai.thinkingWaiting"))
+        : t("music.ai.thinkingDone");
+      const text = reasoningContent || t("music.ai.thinkingEmpty");
+      return `
+        <div class="ai-thinking ${isOpen ? "is-open" : ""}">
+          <button class="ai-thinking-toggle" type="button" data-ai-thinking-toggle="${index}" aria-expanded="${isOpen ? "true" : "false"}">
+            <span class="ai-thinking-title">${escapeHtml(t("music.ai.thinkingTitle"))}</span>
+            <span class="ai-thinking-state">${escapeHtml(state)}</span>
+          </button>
+          <div class="ai-thinking-content" aria-live="polite">
+            <pre class="ai-thinking-text">${escapeHtml(text)}</pre>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindAiThinkingToggles() {
+      els.aiMessages.querySelectorAll("[data-ai-thinking-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const index = Number(button.dataset.aiThinkingToggle);
+          const message = aiConversationMessages[index];
+          if (!message) return;
+          message.reasoningOpen = !Boolean(message.reasoningOpen || message.isStreaming);
+          renderAiMessages();
+          persistMusicStationState();
+        });
+      });
+    }
+
     function renderAiMessages() {
       if (!aiConversationMessages.length) {
         els.aiMessages.innerHTML = "";
         return;
       }
       els.aiMessages.innerHTML = aiConversationMessages
-        .filter((message) => message.role !== "system")
-        .map((message) => {
+        .map((message, index) => {
+          if (message.role === "system") return "";
           const roleLabel = message.role === "assistant" ? t("music.ai.assistantLabel") : t("music.ai.userLabel");
           const roleClass = message.role === "assistant" ? "is-assistant" : "is-user";
           const visibleContent = String(message.displayContent || message.content || "").trim();
+          const thinkingHtml = renderAiThinking(message, index);
           const bodyHtml = message.role === "assistant"
-            ? `<div class="md-body">${renderMarkdown(visibleContent)}</div>`
+            ? (visibleContent
+              ? `<div class="md-body">${renderMarkdown(visibleContent)}</div>`
+              : (message.isStreaming ? `<div class="md-body">${escapeHtml(t("music.ai.answerWaiting"))}</div>` : ""))
             : `<div class="message-text">${escapeHtml(visibleContent)}</div>`;
           return `
             <div class="ai-message ${roleClass}">
               <div class="meta-label">${escapeHtml(roleLabel)}</div>
+              ${thinkingHtml}
               ${bodyHtml}
             </div>
           `;
         })
         .join("");
+      bindAiThinkingToggles();
       els.aiMessages.scrollTop = els.aiMessages.scrollHeight;
     }
 
@@ -3419,10 +3618,14 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       aiBusy = nextBusy;
       els.aiRunButton.disabled = nextBusy;
       els.aiSendButton.disabled = nextBusy;
+      els.aiModeButtons.forEach((button) => {
+        button.disabled = nextBusy;
+      });
       els.aiRunButton.classList.toggle("is-running", nextBusy);
       els.aiSendButton.classList.toggle("is-running", nextBusy);
       els.aiRunButton.textContent = nextBusy ? t("music.ai.generating") : t("music.ai.generate");
       els.aiSendButton.textContent = nextBusy ? t("music.ai.sending") : t("music.ai.send");
+      syncAiModeControls();
     }
 
     function readStoredKimiConfig() {
@@ -3460,18 +3663,24 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }));
     }
 
-    async function requestKimi(messages, options = {}) {
+    function buildKimiRequestPayload(messages, options = {}) {
       const { apiKey, model, endpoint } = getKimiConfig();
       const payload = {
         model,
         endpoint,
         messages: toKimiMessages(messages),
+        thinking_mode: normalizeAiMode(options.thinkingMode),
         max_completion_tokens: options.maxCompletionTokens || 8192,
         timeout_seconds: options.timeoutSeconds || 180
       };
       if (apiKey) {
         payload.api_key = apiKey;
       }
+      return payload;
+    }
+
+    async function requestKimi(messages, options = {}) {
+      const payload = buildKimiRequestPayload(messages, options);
 
       const response = await fetch("/api/ai/kimi/chat", {
         method: "POST",
@@ -3492,6 +3701,105 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         throw new Error(t("music.ai.noText"));
       }
       return content;
+    }
+
+    function parseSseBlock(block) {
+      const lines = String(block || "").split(/\r?\n/);
+      let eventName = "message";
+      const dataLines = [];
+      lines.forEach((line) => {
+        if (!line || line.startsWith(":")) return;
+        if (line.startsWith("event:")) {
+          eventName = line.slice(6).trim() || "message";
+          return;
+        }
+        if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).replace(/^\s/, ""));
+        }
+      });
+      if (!dataLines.length) return null;
+      const dataText = dataLines.join("\n");
+      if (dataText === "[DONE]") {
+        return { eventName: "done", data: { ok: true } };
+      }
+      try {
+        return { eventName, data: JSON.parse(dataText) };
+      } catch (error) {
+        return { eventName, data: { text: dataText } };
+      }
+    }
+
+    async function requestKimiStream(messages, options = {}, handlers = {}) {
+      const payload = buildKimiRequestPayload(messages, options);
+      const response = await fetch("/api/ai/kimi/chat/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${t("music.status.kimiFailed")}${response.status} ${errorText}`);
+      }
+      if (!response.body) {
+        throw new Error(t("music.ai.fetchFailed"));
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let content = "";
+      let reasoningContent = "";
+
+      function handleBlock(block) {
+        const parsed = parseSseBlock(block);
+        if (!parsed) return;
+        const { eventName, data } = parsed;
+        if (eventName === "error") {
+          throw new Error(`${t("music.status.kimiFailed")}${data.status || ""} ${data.detail || data.text || ""}`.trim());
+        }
+        if (eventName === "reasoning") {
+          const delta = String(data.delta || "");
+          if (!delta) return;
+          reasoningContent += delta;
+          handlers.onReasoning?.(reasoningContent, delta);
+          return;
+        }
+        if (eventName === "content" || eventName === "message") {
+          const delta = String(data.delta || data.text || "");
+          if (!delta) return;
+          content += delta;
+          handlers.onContent?.(content, delta);
+          return;
+        }
+        if (eventName === "done") {
+          handlers.onDone?.(data);
+        }
+      }
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const blocks = buffer.split(/\r?\n\r?\n/);
+          buffer = blocks.pop() || "";
+          blocks.forEach(handleBlock);
+        }
+        buffer += decoder.decode();
+        if (buffer.trim()) {
+          handleBlock(buffer);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      if (!content.trim()) {
+        throw new Error(t("music.ai.noText"));
+      }
+      return { content, reasoningContent };
     }
 
     function kimiErrorMessage(error) {
@@ -3674,8 +3982,53 @@ ${t("music.readout.source")}：${item.sourceDataset || item.platform || ""}`;
       }
     }
 
+    async function streamAiAssistantReply(requestMessages, thinkingMode) {
+      const mode = normalizeAiMode(thinkingMode);
+      const assistantMessage = {
+        role: "assistant",
+        content: "",
+        reasoningContent: "",
+        thinkingMode: mode,
+        reasoningOpen: mode === "thinking",
+        isStreaming: true
+      };
+      aiConversationMessages.push(assistantMessage);
+      renderAiMessages();
+
+      try {
+        const result = await requestKimiStream(
+          requestMessages,
+          { thinkingMode: mode },
+          {
+            onReasoning(reasoningContent) {
+              assistantMessage.reasoningContent = reasoningContent;
+              scheduleAiMessagesRender();
+            },
+            onContent(content) {
+              assistantMessage.content = content;
+              scheduleAiMessagesRender();
+            }
+          }
+        );
+        assistantMessage.content = result.content;
+        assistantMessage.reasoningContent = result.reasoningContent || assistantMessage.reasoningContent;
+        assistantMessage.isStreaming = false;
+        renderAiMessages();
+        persistMusicStationState();
+        return assistantMessage;
+      } catch (error) {
+        assistantMessage.isStreaming = false;
+        if (!assistantMessage.content && !assistantMessage.reasoningContent) {
+          aiConversationMessages = aiConversationMessages.filter((message) => message !== assistantMessage);
+        }
+        renderAiMessages();
+        throw error;
+      }
+    }
+
     async function runAiAnalysis(extraQuestion = "") {
       if (aiBusy) return;
+      const selectedMode = normalizeAiMode(aiMode);
       setAiBusy(true);
       aiConversationMessages = [
         {
@@ -3697,10 +4050,7 @@ Guidelines:
       renderAiMessages();
 
       try {
-        const result = await requestKimi(aiConversationMessages);
-        aiConversationMessages.push({ role: "assistant", content: result });
-        renderAiMessages();
-        persistMusicStationState();
+        await streamAiAssistantReply(aiConversationMessages.slice(), selectedMode);
       } catch (error) {
         addAiNotice(kimiErrorMessage(error));
       } finally {
@@ -3723,10 +4073,7 @@ Guidelines:
       renderAiMessages();
 
       try {
-        const result = await requestKimi(aiConversationMessages);
-        aiConversationMessages.push({ role: "assistant", content: result });
-        renderAiMessages();
-        persistMusicStationState();
+        await streamAiAssistantReply(aiConversationMessages.slice(), aiMode);
       } catch (error) {
         addAiNotice(kimiErrorMessage(error));
       } finally {
@@ -3739,8 +4086,8 @@ Guidelines:
       renderAiMessages();
     }
 
-      function syncTrackReadouts() {
-        els.topTitle.textContent = currentTrack.title;
+    function syncTrackReadouts() {
+      els.topTitle.textContent = currentTrack.title;
       els.topMeta.textContent = currentTrack.artist || t("music.default.unknown");
       els.playState.textContent = playbackTrackLabel(currentTrack);
       els.readoutTrack.textContent = currentTrack.title;
@@ -3750,6 +4097,32 @@ Guidelines:
         els.readoutSource.textContent = displaySource(currentTrack);
       }
       syncTopCover();
+    }
+
+    function createFallbackWorldFeatures() {
+      const polygon = (name, coordinates) => ({
+        type: "Feature",
+        properties: { name },
+        geometry: {
+          type: "Polygon",
+          coordinates: [coordinates]
+        }
+      });
+
+      return {
+        type: "FeatureCollection",
+        features: [
+          polygon("North America", [[-168, 72], [-52, 72], [-52, 16], [-82, 7], [-124, 24], [-168, 50], [-168, 72]]),
+          polygon("South America", [[-82, 12], [-34, 8], [-44, -55], [-74, -55], [-82, 12]]),
+          polygon("Greenland", [[-74, 82], [-12, 80], [-20, 60], [-58, 58], [-74, 82]]),
+          polygon("Europe", [[-12, 72], [45, 72], [62, 36], [24, 34], [-12, 36], [-12, 72]]),
+          polygon("Africa", [[-18, 36], [52, 34], [48, -35], [18, -36], [-18, 4], [-18, 36]]),
+          polygon("Asia", [[42, 76], [180, 70], [180, 8], [106, -10], [72, 7], [42, 30], [42, 76]]),
+          polygon("Australia", [[112, -10], [154, -10], [154, -44], [112, -44], [112, -10]]),
+          polygon("Oceania", [[156, -2], [178, -8], [174, -24], [150, -18], [156, -2]]),
+          polygon("Antarctica", [[-180, -64], [180, -64], [180, -84], [-180, -84], [-180, -64]])
+        ]
+      };
     }
 
     function updateProjection() {
@@ -3832,12 +4205,14 @@ Guidelines:
         .attr("stroke", "rgba(17, 17, 17, 0.10)")
         .attr("stroke-width", 0.55);
 
-      svg.append("path")
-        .datum(borders)
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr("stroke", "rgba(17, 17, 17, 0.16)")
-        .attr("stroke-width", 0.55);
+      if (borders) {
+        svg.append("path")
+          .datum(borders)
+          .attr("d", path)
+          .attr("fill", "none")
+          .attr("stroke", "rgba(17, 17, 17, 0.16)")
+          .attr("stroke-width", 0.55);
+      }
 
       svg.append("g")
         .attr("aria-label", "南海九段线数据示意")
@@ -3885,11 +4260,16 @@ Guidelines:
       }
 
       const current = projectedPoint(currentTrack);
+      if (!Number.isFinite(current.x) || !Number.isFinite(current.y)) {
+        requestAnimationFrame(drawCanvas);
+        return;
+      }
       const elapsed = time * 0.001;
 
       if (activeRecommendations.length) {
         activeRecommendations.forEach((item, index) => {
           const target = projectedPoint(item);
+          if (!Number.isFinite(target.x) || !Number.isFinite(target.y)) return;
           const offset = Math.sin(elapsed * 1.2 + index) * 10;
           ctx.save();
           ctx.setLineDash([5, 10]);
@@ -3909,6 +4289,7 @@ Guidelines:
       const allNodes = [currentTrack, ...activeRecommendations];
       allNodes.forEach((item, index) => {
         const p = projectedPoint(item);
+        if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
         const isCurrent = index === 0;
         const color = isCurrent ? "#111111" : "#b72727";
         const breath = 0.5 + 0.5 * Math.sin(elapsed * (0.7 + index * 0.08) + index);
@@ -3943,16 +4324,50 @@ Guidelines:
       drawMap();
     }
 
-    async function loadMap() {
-      mapData = await d3.json("./vendor/countries-110m.json");
-      if (!mapData || !mapData.objects) {
-        console.error("Failed to load map data");
-        return;
-      }
-      worldFeatures = topojson.feature(mapData, mapData.objects.countries);
-      borders = topojson.mesh(mapData, mapData.objects.countries, (a, b) => a !== b);
-      resize();
+    function startMapAnimation() {
+      if (mapAnimationStarted) return;
+      mapAnimationStarted = true;
       requestAnimationFrame(drawCanvas);
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    async function loadMapDataWithRetry() {
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          const data = await d3.json("./vendor/countries-110m.json");
+          if (data?.objects?.countries) return data;
+          throw new Error("Map data is missing countries topology");
+        } catch (error) {
+          lastError = error;
+          if (attempt < 3) {
+            await wait(180 * attempt);
+          }
+        }
+      }
+      throw lastError || new Error("Map data failed to load");
+    }
+
+    async function loadMap() {
+      resize();
+      try {
+        mapData = await loadMapDataWithRetry();
+        worldFeatures = topojson.feature(mapData, mapData.objects.countries);
+        borders = topojson.mesh(mapData, mapData.objects.countries, (a, b) => a !== b);
+      } catch (error) {
+        console.warn("Using fallback map data", error);
+        mapData = null;
+        worldFeatures = createFallbackWorldFeatures();
+        borders = null;
+        if (els.mapStatus) {
+          els.mapStatus.textContent = t("music.status.mapDataFailed");
+        }
+      }
+      resize();
+      startMapAnimation();
     }
 
     function renderRecommendations() {
@@ -4127,8 +4542,11 @@ Guidelines:
           }
           const inferredCulture = data.culture_inference?.culture;
           if (inferredCulture) {
+            const embeddingProvider = String(data.embedding?.provider || "").toLowerCase() === "gemini"
+              ? "Gemini Embedding 2"
+              : "CultureMERT";
             currentTrack.culture = inferredCulture;
-            currentTrack.style = `${t("music.local.uploadArtist")} / CultureMERT / ${cultureLabel(inferredCulture) || inferredCulture}`;
+            currentTrack.style = `${t("music.local.uploadArtist")} / ${embeddingProvider} / ${cultureLabel(inferredCulture) || inferredCulture}`;
           }
           primaryTrack = { ...currentTrack };
         }
@@ -4263,7 +4681,10 @@ Guidelines:
           .map((message) => ({
             role: message.role,
             content: String(message.content || ""),
-            displayContent: String(message.displayContent || "")
+            displayContent: String(message.displayContent || ""),
+            reasoningContent: String(message.reasoningContent || ""),
+            thinkingMode: normalizeAiMode(message.thinkingMode),
+            reasoningOpen: Boolean(message.reasoningOpen)
           }));
       }
 
@@ -4545,6 +4966,12 @@ Guidelines:
 
     els.recommendButton.addEventListener("click", startRecommendations);
 
+    els.aiModeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (aiBusy) return;
+        setAiMode(button.dataset.aiMode);
+      });
+    });
     els.aiRunButton.addEventListener("click", () => runAiAnalysis());
     els.aiSendButton.addEventListener("click", sendAiFollowup);
     els.aiQuestion.addEventListener("keydown", (event) => {
@@ -4607,6 +5034,9 @@ Guidelines:
       updateProgressUI();
     }, 1000);
 
+    if ("ResizeObserver" in window) {
+      new ResizeObserver(resize).observe(els.mapStage);
+    }
     window.addEventListener("resize", resize);
     window.addEventListener("echo-language-change", () => {
       renderAiMessages();
@@ -4623,6 +5053,7 @@ Guidelines:
     }).catch(() => {});
     renderRecommendations();
     renderParameterPanel();
+    syncAiModeControls();
     renderAiMessages();
     initializeStartupTrack().catch((error) => {
       console.error(error);

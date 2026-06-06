@@ -56,6 +56,23 @@ ECHO_MAINLINE_METADATA_PATH=/srv/echo/cloud_audio_10gb/metadata_merged.csv
 
 The frontend should keep using `/api/mainline/catalog`, `/api/mainline/random`, and `/api/mainline/audio/{track_id}`. Do not put `/srv/echo/cloud_audio_10gb` into the HTML; that path is only for the backend to resolve files on disk. The `.npz` and `.pt` files can stay on the local worker machine.
 
+## Cloud Gemini Upload Embedding
+
+If you want uploaded-audio recommendation to run fully on the cloud server without exposing a local worker, use Gemini Embedding 2 for the upload embedding step. Put the Gemini-built mainline artifacts on the server, then set:
+
+```bash
+ECHO_UPLOAD_EMBEDDING_PROVIDER=gemini
+GEMINI_API_KEY=your-google-ai-studio-key
+ECHO_GEMINI_EMBEDDING_MODEL=gemini-embedding-2
+ECHO_GEMINI_EMBEDDING_DIM=768
+ECHO_MAINLINE_TRACKS_PATH=/srv/echo/storage/public/research_dataset_v4/main/tracks_gemini_embedding2_mw3.npz
+ECHO_MAINLINE_MODEL_PATH=/srv/echo/storage/models/dcas_full_v4_main_gemini_stage3.pt
+ECHO_MAINLINE_WORKER_URL=
+ECHO_MAINLINE_WORKER_TOKEN=
+```
+
+Keep `ECHO_MAINLINE_METADATA_PATH` pointed at the deployed metadata CSV. The important rule is that uploaded Gemini embeddings, `ECHO_MAINLINE_TRACKS_PATH`, and `ECHO_MAINLINE_MODEL_PATH` must all be from the same Gemini embedding space. Using Gemini upload embeddings with a CultureMERT-trained mainline model can run if dimensions match, but the recommendation geometry is not meaningful.
+
 ## Local Mainline Worker
 
 On your own computer, keep the full `storage/` directory and run the worker with CultureMERT/DCAS available:

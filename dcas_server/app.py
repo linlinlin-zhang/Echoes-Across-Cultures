@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from dcas.ontology import OntologyStore
@@ -93,6 +93,9 @@ DEFAULT_MAINLINE_TRACKS_REL = "public/merged/tracks_culturemert.npz"
 DEFAULT_MAINLINE_METADATA_REL = "public/merged/metadata_merged.csv"
 DEFAULT_MAINLINE_MODEL_REL = "models/dcas_full_v4_main_culturemert_stage3.pt"
 DEFAULT_CULTUREMERT_MODEL_ID = "ntua-slp/CultureMERT-95M"
+DEFAULT_UPLOAD_EMBEDDING_PROVIDER = "culturemert"
+DEFAULT_GEMINI_EMBEDDING_MODEL_ID = "gemini-embedding-2"
+DEFAULT_GEMINI_EMBEDDING_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 
 def _mainline_metadata_setting() -> str:
@@ -138,6 +141,76 @@ def _culturemert_runtime_settings() -> dict[str, Any]:
     }
 
 
+def _upload_embedding_provider() -> str:
+    raw = str(os.environ.get("ECHO_UPLOAD_EMBEDDING_PROVIDER") or DEFAULT_UPLOAD_EMBEDDING_PROVIDER).strip().lower()
+    aliases = {
+        "local": "culturemert",
+        "culturemert": "culturemert",
+        "gemini": "gemini",
+        "gemini_embedding2": "gemini",
+        "gemini-embedding-2": "gemini",
+    }
+    return aliases.get(raw, raw)
+
+
+def _env_int(name: str, default: int, *, min_value: int | None = None, max_value: int | None = None) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except Exception:
+        value = int(default)
+    if min_value is not None:
+        value = max(int(min_value), value)
+    if max_value is not None:
+        value = min(int(max_value), value)
+    return int(value)
+
+
+def _env_float(name: str, default: float, *, min_value: float | None = None, max_value: float | None = None) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except Exception:
+        value = float(default)
+    if min_value is not None:
+        value = max(float(min_value), value)
+    if max_value is not None:
+        value = min(float(max_value), value)
+    return float(value)
+
+
+def _gemini_embedding_runtime_settings() -> dict[str, Any]:
+    return {
+        "api_key": str(os.environ.get("GEMINI_API_KEY") or os.environ.get("ECHO_GEMINI_API_KEY") or "").strip(),
+        "model_id": str(
+            os.environ.get("ECHO_GEMINI_EMBEDDING_MODEL")
+            or os.environ.get("GEMINI_EMBEDDING_MODEL")
+            or DEFAULT_GEMINI_EMBEDDING_MODEL_ID
+        ).strip(),
+        "api_base": str(os.environ.get("ECHO_GEMINI_EMBEDDING_API_BASE") or DEFAULT_GEMINI_EMBEDDING_API_BASE).strip().rstrip("/"),
+        "output_dimensionality": _env_int("ECHO_GEMINI_EMBEDDING_DIM", 768, min_value=1, max_value=3072),
+        "target_sample_rate": _env_int("ECHO_GEMINI_EMBEDDING_SAMPLE_RATE_HZ", 16000, min_value=8000, max_value=48000),
+        "max_seconds": _env_float("ECHO_GEMINI_EMBEDDING_MAX_SECONDS", 30.0, min_value=1.0, max_value=180.0),
+        "window_count": _env_int("ECHO_GEMINI_EMBEDDING_WINDOW_COUNT", 1, min_value=1, max_value=12),
+        "window_strategy": str(os.environ.get("ECHO_GEMINI_EMBEDDING_WINDOW_STRATEGY") or "single").strip() or "single",
+        "window_aggregate": str(os.environ.get("ECHO_GEMINI_EMBEDDING_WINDOW_AGGREGATE") or "mean").strip() or "mean",
+        "request_timeout_s": _env_int("ECHO_GEMINI_EMBEDDING_TIMEOUT_SECONDS", 180, min_value=5, max_value=600),
+        "max_retries": _env_int("ECHO_GEMINI_EMBEDDING_MAX_RETRIES", 5, min_value=1, max_value=20),
+        "retry_backoff_s": _env_float("ECHO_GEMINI_EMBEDDING_RETRY_BACKOFF_SECONDS", 2.0, min_value=0.1, max_value=60.0),
+        "audio_mime_type": str(os.environ.get("ECHO_GEMINI_EMBEDDING_AUDIO_MIME_TYPE") or "audio/wav").strip() or "audio/wav",
+        "task_type": str(os.environ.get("ECHO_GEMINI_EMBEDDING_TASK_TYPE") or "").strip() or None,
+        "title": str(os.environ.get("ECHO_GEMINI_EMBEDDING_TITLE") or "").strip() or None,
+        "vertexai": _env_bool("ECHO_GEMINI_EMBEDDING_VERTEXAI", False),
+        "vertex_project": str(os.environ.get("ECHO_GEMINI_VERTEX_PROJECT") or "").strip() or None,
+        "vertex_location": str(os.environ.get("ECHO_GEMINI_VERTEX_LOCATION") or "").strip() or None,
+    }
+
+
+def _public_gemini_embedding_settings() -> dict[str, Any]:
+    settings = _gemini_embedding_runtime_settings()
+    public = {key: value for key, value in settings.items() if key != "api_key"}
+    public["has_api_key"] = bool(settings.get("api_key"))
+    return public
+
+
 def _looks_like_culturemert_load_error(exc: Exception) -> bool:
     text = f"{type(exc).__name__}: {exc}".lower()
     terms = (
@@ -154,6 +227,127 @@ def _looks_like_culturemert_load_error(exc: Exception) -> bool:
         "transformers",
     )
     return any(term in text for term in terms)
+
+
+def _looks_like_gemini_embedding_error(exc: Exception) -> bool:
+    text = f"{type(exc).__name__}: {exc}".lower()
+    terms = (
+        "gemini",
+        "google",
+        "api key",
+        "embedding",
+        "generativelanguage",
+        "vertex",
+        "quota",
+        "rate",
+    )
+    return any(term in text for term in terms)
+
+
+def _embed_uploaded_audio_with_gemini(
+    *,
+    audio_path: Path,
+    title: str,
+    max_seconds: float | None,
+    window_count: int,
+    window_strategy: str,
+    window_aggregate: str,
+) -> tuple[Any, dict[str, Any]]:
+    settings = _gemini_embedding_runtime_settings()
+    if not settings["api_key"]:
+        raise RuntimeError("GEMINI_API_KEY is required when ECHO_UPLOAD_EMBEDDING_PROVIDER=gemini")
+
+    from dcas.embeddings.gemini_embedding2 import GeminiEmbedding2Config, GeminiEmbedding2Embedder
+
+    started = time.time()
+    cfg = GeminiEmbedding2Config(
+        model_id=str(settings["model_id"]),
+        api_key=str(settings["api_key"]),
+        api_base=str(settings["api_base"]),
+        vertexai=bool(settings["vertexai"]),
+        vertex_project=settings["vertex_project"],
+        vertex_location=settings["vertex_location"],
+        output_dimensionality=int(settings["output_dimensionality"]),
+        task_type=settings["task_type"],
+        title=settings["title"],
+        max_seconds=max_seconds if max_seconds is not None else float(settings["max_seconds"]),
+        target_sample_rate=int(settings["target_sample_rate"]),
+        window_count=int(window_count or settings["window_count"]),
+        window_strategy=str(window_strategy or settings["window_strategy"]),
+        window_aggregate=str(window_aggregate or settings["window_aggregate"]),
+        request_timeout_s=int(settings["request_timeout_s"]),
+        max_retries=int(settings["max_retries"]),
+        retry_backoff_s=float(settings["retry_backoff_s"]),
+        audio_mime_type=str(settings["audio_mime_type"]),
+    )
+    embedder = GeminiEmbedding2Embedder(cfg)
+    emb, prep_report = embedder.embed_file(audio_path, title=title)
+    meta = {
+        "provider": "gemini",
+        "model_id": str(cfg.model_id),
+        "dim": int(emb.shape[0]),
+        "output_dimensionality": int(cfg.output_dimensionality),
+        "api_base": str(cfg.api_base),
+        "vertexai": bool(cfg.vertexai),
+        "max_seconds": cfg.max_seconds,
+        "target_sample_rate": int(cfg.target_sample_rate),
+        "window_count": int(cfg.window_count),
+        "window_strategy": str(cfg.window_strategy),
+        "window_aggregate": str(cfg.window_aggregate),
+        "elapsed_seconds": float(time.time() - started),
+        "preprocess": prep_report,
+    }
+    return emb, meta
+
+
+def _warn_if_mainline_not_gemini(platform: Any) -> list[str]:
+    text = " ".join(
+        [
+            str(getattr(platform, "tracks_path", "")),
+            str(getattr(platform, "model_path", "")),
+        ]
+    ).lower()
+    if "gemini" in text:
+        return []
+    return [
+        "Gemini upload embeddings are enabled, but the configured mainline tracks/model names do not look Gemini-based. "
+        "Use ECHO_MAINLINE_TRACKS_PATH and ECHO_MAINLINE_MODEL_PATH for Gemini-built artifacts to keep embedding spaces aligned."
+    ]
+
+
+def _normalize_kimi_thinking_mode(value: str | None) -> str:
+    raw = str(value or "").strip().lower()
+    return "thinking" if raw in {"thinking", "think", "reasoning", "slow"} else "fast"
+
+
+def _kimi_thinking_config(mode: str) -> dict[str, str]:
+    if _normalize_kimi_thinking_mode(mode) == "thinking":
+        return {"type": "enabled"}
+    return {"type": "disabled"}
+
+
+def _kimi_request_payload(req: KimiChatRequest, model: str, *, stream: bool = False) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": req.messages,
+        "max_completion_tokens": int(req.max_completion_tokens),
+        "thinking": _kimi_thinking_config(req.thinking_mode),
+    }
+    if stream:
+        payload["stream"] = True
+    return payload
+
+
+def _sse_event(event: str, data: dict[str, Any]) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _string_delta(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False)
 
 
 def _mainline_catalog(storage: Storage):
@@ -1216,13 +1410,29 @@ def create_app() -> FastAPI:
 
     @app.get("/api/mainline/upload_formats")
     def api_mainline_upload_formats():
+        upload_provider = _upload_embedding_provider()
         worker_configured = bool(_mainline_worker_url())
         local_recommender_enabled = _mainline_local_recommender_enabled()
         return {
             "ok": True,
-            "mode": "worker" if worker_configured else ("local" if local_recommender_enabled else "unavailable"),
+            "mode": (
+                "gemini"
+                if upload_provider == "gemini"
+                else "worker"
+                if worker_configured
+                else "local"
+                if local_recommender_enabled
+                else "unavailable"
+            ),
             "worker_configured": worker_configured,
             "local_recommender_enabled": local_recommender_enabled,
+            "upload_embedding": {
+                "provider": upload_provider,
+                "worker_bypass": upload_provider == "gemini",
+                "mainline_tracks": _mainline_tracks_setting(),
+                "mainline_model": _mainline_model_setting(),
+                "gemini": _public_gemini_embedding_settings(),
+            },
             "extensions": sorted(SUPPORTED_UPLOAD_AUDIO_EXTENSIONS),
             "accept": UPLOAD_ACCEPT_ATTRIBUTE,
             "max_upload_mb": 200,
@@ -1281,7 +1491,13 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=400, detail="empty upload")
         if len(content) > max_bytes:
             raise HTTPException(status_code=413, detail="uploaded audio is larger than 200MB")
-        if _mainline_worker_url():
+        upload_embedding_provider = _upload_embedding_provider()
+        if upload_embedding_provider not in {"culturemert", "gemini"}:
+            raise HTTPException(
+                status_code=500,
+                detail=f"unsupported ECHO_UPLOAD_EMBEDDING_PROVIDER={upload_embedding_provider}; use culturemert or gemini",
+            )
+        if _mainline_worker_url() and upload_embedding_provider != "gemini":
             return _hydrate_worker_mainline_metadata(
                 _proxy_worker_upload_recommend(
                     fields={
@@ -1387,30 +1603,76 @@ def create_app() -> FastAPI:
         }
         try:
             platform = get_mainline_platform(storage, prefer_cuda=prefer_cuda, **_mainline_platform_paths())
-            result = platform.recommend_audio_file(
-                audio_path=analysis_path,
-                upload_info=upload_info,
-                seed_culture=seed_culture,
-                target_culture=target_culture,
-                mode=mode,
-                k=k,
-                recall_k=recall_k,
-                random_seed=random_seed,
-                exclude_same_artist=exclude_same_artist,
-                exclude_low_signal=exclude_low_signal,
-                weights=weights,
-                max_seconds=max_seconds,
-                window_count=window_count,
-                window_strategy=window_strategy,
-                window_aggregate=window_aggregate,
-                **_culturemert_runtime_settings(),
-            )
+            if upload_embedding_provider == "gemini":
+                emb, embedding_meta = _embed_uploaded_audio_with_gemini(
+                    audio_path=analysis_path,
+                    title=str(upload_info.get("title") or title or filename),
+                    max_seconds=max_seconds,
+                    window_count=window_count,
+                    window_strategy=window_strategy,
+                    window_aggregate=window_aggregate,
+                )
+                result = platform.recommend_embedding(
+                    embedding=emb,
+                    upload_info=upload_info,
+                    seed_culture=seed_culture,
+                    target_culture=target_culture,
+                    mode=mode,
+                    k=k,
+                    recall_k=recall_k,
+                    random_seed=random_seed,
+                    exclude_same_artist=exclude_same_artist,
+                    exclude_low_signal=exclude_low_signal,
+                    weights=weights,
+                )
+                result["embedding"] = embedding_meta
+                result.setdefault("algorithm", {})
+                result["algorithm"]["backbone"] = "Gemini Embedding 2 audio embeddings"
+                result["algorithm"]["reranker"] = "uploaded Gemini audio seed -> DCAS latent encoding -> OT relevance + calibrated cultural reranking"
+                result["warnings"] = list(result.get("warnings") or []) + _warn_if_mainline_not_gemini(platform)
+            else:
+                result = platform.recommend_audio_file(
+                    audio_path=analysis_path,
+                    upload_info=upload_info,
+                    seed_culture=seed_culture,
+                    target_culture=target_culture,
+                    mode=mode,
+                    k=k,
+                    recall_k=recall_k,
+                    random_seed=random_seed,
+                    exclude_same_artist=exclude_same_artist,
+                    exclude_low_signal=exclude_low_signal,
+                    weights=weights,
+                    max_seconds=max_seconds,
+                    window_count=window_count,
+                    window_strategy=window_strategy,
+                    window_aggregate=window_aggregate,
+                    **_culturemert_runtime_settings(),
+                )
             return result
         except (KeyError, ValueError) as e:
             raise HTTPException(status_code=400, detail=str(e))
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
+            if upload_embedding_provider == "gemini" and _looks_like_gemini_embedding_error(e):
+                settings = _public_gemini_embedding_settings()
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "error": "gemini_embedding_unavailable",
+                        "message": str(e)[:2000],
+                        "model_id": settings["model_id"],
+                        "api_base": settings["api_base"],
+                        "has_api_key": bool(settings["has_api_key"]),
+                        "output_dimensionality": int(settings["output_dimensionality"]),
+                        "hint": (
+                            "Set GEMINI_API_KEY and ECHO_UPLOAD_EMBEDDING_PROVIDER=gemini on the web server. "
+                            "For best recommendation quality, also point ECHO_MAINLINE_TRACKS_PATH and ECHO_MAINLINE_MODEL_PATH "
+                            "to Gemini-built artifacts."
+                        ),
+                    },
+                )
             if _looks_like_culturemert_load_error(e):
                 settings = _culturemert_runtime_settings()
                 raise HTTPException(
@@ -1456,12 +1718,7 @@ def create_app() -> FastAPI:
         if not endpoint.startswith("https://"):
             raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
         model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
-        payload = {
-            "model": model,
-            "messages": req.messages,
-            "max_completion_tokens": int(req.max_completion_tokens),
-            "thinking": {"type": "disabled"},
-        }
+        payload = _kimi_request_payload(req, model)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         try:
             import urllib.error
@@ -1506,7 +1763,96 @@ def create_app() -> FastAPI:
                     detail="Kimi reasoning started but max_completion_tokens was too low to produce final content.",
                 )
             raise HTTPException(status_code=502, detail="Kimi returned no message content")
-        return {"ok": True, "content": content, "raw": data}
+        reasoning_content = message.get("reasoning_content") or message.get("reasoning") or ""
+        return {
+            "ok": True,
+            "content": content,
+            "reasoning_content": reasoning_content,
+            "thinking_mode": _normalize_kimi_thinking_mode(req.thinking_mode),
+            "raw": data,
+        }
+
+    @app.post("/api/ai/kimi/chat/stream")
+    def api_kimi_chat_stream(req: KimiChatRequest):
+        local = _load_local_kimi_config()
+        api_key = str(req.api_key or "").strip() or str(local.get("api_key") or "").strip()
+        if not api_key:
+            raise HTTPException(
+                status_code=400,
+                detail="Kimi API key is not configured. Set it in settings.html, KIMI_API_KEY, or configs/secrets/kimi.local.json.",
+            )
+        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions")
+        if not endpoint.startswith("https://"):
+            raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+        model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
+        body = json.dumps(_kimi_request_payload(req, model, stream=True), ensure_ascii=False).encode("utf-8")
+
+        def events():
+            try:
+                import urllib.error
+                import urllib.request
+
+                upstream = urllib.request.Request(
+                    endpoint,
+                    data=body,
+                    method="POST",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(upstream, timeout=float(req.timeout_seconds)) as response:
+                    for raw_line in response:
+                        line = raw_line.decode("utf-8", errors="replace").strip()
+                        if not line or line.startswith("event:"):
+                            continue
+                        if not line.startswith("data:"):
+                            continue
+                        data_text = line[5:].strip()
+                        if not data_text:
+                            continue
+                        if data_text == "[DONE]":
+                            yield _sse_event("done", {"ok": True, "finish_reason": "stop"})
+                            return
+                        try:
+                            chunk = json.loads(data_text)
+                        except json.JSONDecodeError:
+                            continue
+                        choice = (chunk.get("choices") or [{}])[0]
+                        delta = choice.get("delta") or {}
+                        reasoning_delta = _string_delta(
+                            delta.get("reasoning_content")
+                            or delta.get("reasoning")
+                            or delta.get("reasoningContent")
+                        )
+                        content_delta = _string_delta(delta.get("content"))
+                        if reasoning_delta:
+                            yield _sse_event("reasoning", {"delta": reasoning_delta})
+                        if content_delta:
+                            yield _sse_event("content", {"delta": content_delta})
+                        finish_reason = choice.get("finish_reason")
+                        if finish_reason:
+                            yield _sse_event("done", {"ok": True, "finish_reason": finish_reason})
+                            return
+                yield _sse_event("done", {"ok": True, "finish_reason": "stop"})
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode("utf-8", errors="replace")[:4000]
+                yield _sse_event("error", {"status": e.code, "detail": detail})
+            except urllib.error.URLError as e:
+                yield _sse_event("error", {"status": 502, "detail": str(e.reason)})
+            except TimeoutError:
+                yield _sse_event("error", {"status": 504, "detail": f"Kimi upstream timed out after {float(req.timeout_seconds):.0f}s"})
+            except Exception as e:
+                yield _sse_event("error", {"status": 500, "detail": str(e)})
+
+        return StreamingResponse(
+            events(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @app.post("/api/style/transfer")
     def api_style_transfer(req: StyleTransferRequest):

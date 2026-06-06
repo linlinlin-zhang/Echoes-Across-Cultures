@@ -79,6 +79,7 @@ class KimiChatRequest(BaseModel):
     model: str = Field(default="kimi-k2.6", min_length=1)
     endpoint: str = Field(default="https://api.moonshot.cn/v1/chat/completions", min_length=1)
     messages: list[dict[str, str]]
+    thinking_mode: str = Field(default="fast")
     max_completion_tokens: int = Field(default=8192, ge=1, le=8192)
     timeout_seconds: float = Field(default=180.0, gt=0, le=300)
 

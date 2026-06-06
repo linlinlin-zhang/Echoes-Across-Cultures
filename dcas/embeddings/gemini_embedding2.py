@@ -29,7 +29,7 @@ except Exception:  # pragma: no cover - optional dependency at runtime
 
 @dataclass(frozen=True)
 class GeminiEmbedding2Config:
-    model_id: str = "gemini-embedding-2-preview"
+    model_id: str = "gemini-embedding-2"
     api_key: str | None = None
     api_base: str = "https://generativelanguage.googleapis.com/v1beta"
     vertexai: bool = False
