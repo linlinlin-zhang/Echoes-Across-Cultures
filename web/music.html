@@ -2137,7 +2137,7 @@
     </div>
 
     <div class="rec-head">
-      <nav class="top-actions" aria-label="音乐台导航">
+      <nav class="top-actions" aria-label="音乐台导航" data-i18n-aria-label="music.aria.nav">
         <a class="pill is-active" href="music.html" data-i18n="common.nav.music">音乐台</a>
         <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
         <a class="pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
@@ -2146,7 +2146,7 @@
   </header>
 
   <main class="station-shell">
-    <section class="console" aria-label="音乐播放与地图">
+    <section class="console" aria-label="音乐播放与地图" data-i18n-aria-label="music.aria.console">
       <div class="console-top">
         <div class="readout">
           <div class="meta-label" data-i18n="music.readout.track">曲目</div>
@@ -2170,7 +2170,7 @@
         </div>
       </div>
 
-      <div class="map-stage" id="station-map" aria-label="可拖动的世界音乐地图">
+      <div class="map-stage" id="station-map" aria-label="可拖动的世界音乐地图" data-i18n-aria-label="music.aria.mapStage">
         <svg id="map-svg"></svg>
         <canvas id="map-canvas"></canvas>
         <div class="map-ui" id="map-ui">
@@ -2180,30 +2180,30 @@
           <div class="map-corner bottom-right" id="map-status" data-i18n="music.map.recStandby">推荐连接待机</div>
         </div>
         <div class="pan-zone left">
-          <button class="pan-button" type="button" data-pan-x="-1" data-pan-y="0" data-i18n-aria="music.pan.left" aria-label="向左移动地图">‹</button>
+          <button class="pan-button" type="button" data-pan-x="-1" data-pan-y="0" data-i18n-aria-label="music.pan.left" aria-label="向左移动地图">‹</button>
         </div>
         <div class="pan-zone right">
-          <button class="pan-button" type="button" data-pan-x="1" data-pan-y="0" data-i18n-aria="music.pan.right" aria-label="向右移动地图">›</button>
+          <button class="pan-button" type="button" data-pan-x="1" data-pan-y="0" data-i18n-aria-label="music.pan.right" aria-label="向右移动地图">›</button>
         </div>
         <div class="pan-zone up">
-          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="1" data-i18n-aria="music.pan.up" aria-label="向上移动地图">⌃</button>
+          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="1" data-i18n-aria-label="music.pan.up" aria-label="向上移动地图">⌃</button>
         </div>
         <div class="pan-zone down">
-          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="-1" data-i18n-aria="music.pan.down" aria-label="向下移动地图">⌄</button>
+          <button class="pan-button" type="button" data-pan-x="0" data-pan-y="-1" data-i18n-aria-label="music.pan.down" aria-label="向下移动地图">⌄</button>
         </div>
       </div>
 
       <div class="console-bottom">
         <div class="transport">
-          <button class="skip-button" id="prev-button" type="button" data-i18n-aria="music.transport.prev" aria-label="上一首">‹</button>
-          <button class="play-button" id="play-button" type="button" data-i18n-aria="music.transport.playPause" aria-label="播放或暂停"><span></span></button>
-          <button class="skip-button" id="next-button" type="button" data-i18n-aria="music.transport.next" aria-label="下一首">›</button>
+          <button class="skip-button" id="prev-button" type="button" data-i18n-aria-label="music.transport.prev" aria-label="上一首">‹</button>
+          <button class="play-button" id="play-button" type="button" data-i18n-aria-label="music.transport.playPause" aria-label="播放或暂停"><span></span></button>
+          <button class="skip-button" id="next-button" type="button" data-i18n-aria-label="music.transport.next" aria-label="下一首">›</button>
           <div class="progress-wrap">
             <div class="progress-meta">
               <span id="play-state">正在连接曲库 - Echo</span>
               <span id="time-code">00:00 / 03:42</span>
             </div>
-            <div class="progress-track" id="progress-track" role="slider" data-i18n-aria="music.transport.progress" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-track" id="progress-track" role="slider" data-i18n-aria-label="music.transport.progress" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
           </div>
         </div>
 
@@ -2212,13 +2212,13 @@
 
       <audio class="audio-el" id="audio-player"></audio>
 
-      <section class="parameter-lab" aria-label="推荐参数展示">
+      <section class="parameter-lab" aria-label="推荐参数展示" data-i18n-aria-label="music.aria.parameterLab">
         <div class="parameter-metrics" id="parameter-metrics"></div>
 
-        <div class="parameter-grid recommendation-insights-grid" id="recommendation-insights" aria-label="推荐歌曲年代和曲风"></div>
+        <div class="parameter-grid recommendation-insights-grid" id="recommendation-insights" aria-label="推荐歌曲年代和曲风" data-i18n-aria-label="music.aria.insights"></div>
       </section>
 
-      <section class="ai-lab" id="ai-analysis" aria-label="AI 推荐分析">
+      <section class="ai-lab" id="ai-analysis" aria-label="AI 推荐分析" data-i18n-aria-label="music.aria.aiLab">
         <div class="ai-strip">
           <div>
             <div class="meta-label" data-i18n="music.ai.meta">AI 分析</div>
@@ -2234,7 +2234,7 @@
           </div>
         </div>
 
-        <section class="ai-chat" aria-label="AI 分析对话">
+        <section class="ai-chat" aria-label="AI 分析对话" data-i18n-aria-label="music.aria.aiChat">
           <div class="ai-messages" id="ai-messages"></div>
           <div class="ai-composer" id="ai-composer">
             <div class="field">
@@ -2247,7 +2247,7 @@
       </section>
     </section>
 
-    <aside class="side-panel" aria-label="跨文化推荐列表">
+    <aside class="side-panel" aria-label="跨文化推荐列表" data-i18n-aria-label="music.aria.sidePanel">
       <div class="side-head">
         <div class="meta-label" data-i18n="music.side.description">推荐说明</div>
         <h1 data-i18n-html="music.side.routeTitle">跨文化<br>路线</h1>
@@ -2344,54 +2344,82 @@
     };
 
     const capitalLookup = {
-      中国: { city: "北京", lat: 39.9042, lng: 116.4074 },
-      中国台湾: { city: "台北", lat: 25.0330, lng: 121.5654 },
-      巴西: { city: "巴西利亚", lat: -15.7939, lng: -47.8828 },
-      马里: { city: "巴马科", lat: 12.6392, lng: -8.0029 },
-      葡萄牙: { city: "里斯本", lat: 38.7223, lng: -9.1393 },
-      印度尼西亚: { city: "雅加达", lat: -6.2088, lng: 106.8456 },
-      土耳其: { city: "安卡拉", lat: 39.9334, lng: 32.8597 },
-      日本: { city: "东京", lat: 35.6762, lng: 139.6503 },
-      印度: { city: "新德里", lat: 28.6139, lng: 77.2090 },
-      韩国: { city: "首尔", lat: 37.5665, lng: 126.9780 },
-      瑞典: { city: "斯德哥尔摩", lat: 59.3293, lng: 18.0686 },
-      波兰: { city: "华沙", lat: 52.2297, lng: 21.0122 },
-      塞尔维亚: { city: "贝尔格莱德", lat: 44.7866, lng: 20.4489 },
-      秘鲁: { city: "利马", lat: -12.0464, lng: -77.0428 },
-      哈萨克斯坦: { city: "阿斯塔纳", lat: 51.1694, lng: 71.4491 },
-      牙买加: { city: "金斯敦", lat: 17.9712, lng: -76.7936 },
-      英国: { city: "伦敦", lat: 51.5072, lng: -0.1276 },
-      新加坡: { city: "新加坡", lat: 1.3521, lng: 103.8198 },
-      马来西亚: { city: "吉隆坡", lat: 3.1390, lng: 101.6869 },
-      泰国: { city: "曼谷", lat: 13.7563, lng: 100.5018 },
-      越南: { city: "河内", lat: 21.0278, lng: 105.8342 },
-      菲律宾: { city: "马尼拉", lat: 14.5995, lng: 120.9842 },
-      西班牙: { city: "马德里", lat: 40.4168, lng: -3.7038 },
-      阿根廷: { city: "布宜诺斯艾利斯", lat: -34.6037, lng: -58.3816 },
-      智利: { city: "圣地亚哥", lat: -33.4489, lng: -70.6693 },
-      澳大利亚: { city: "堪培拉", lat: -35.2809, lng: 149.1300 },
-      加拿大: { city: "渥太华", lat: 45.4215, lng: -75.6972 }
+      CN: { cityKey: "BEIJING", lat: 39.9042, lng: 116.4074 },
+      TW: { cityKey: "TAIPEI", lat: 25.0330, lng: 121.5654 },
+      BR: { cityKey: "BRASILIA", lat: -15.7939, lng: -47.8828 },
+      ML: { cityKey: "BAMAKO", lat: 12.6392, lng: -8.0029 },
+      PT: { cityKey: "LISBON", lat: 38.7223, lng: -9.1393 },
+      ID: { cityKey: "JAKARTA", lat: -6.2088, lng: 106.8456 },
+      TR: { cityKey: "ANKARA", lat: 39.9334, lng: 32.8597 },
+      JP: { cityKey: "TOKYO", lat: 35.6762, lng: 139.6503 },
+      IN: { cityKey: "NEW_DELHI", lat: 28.6139, lng: 77.2090 },
+      KR: { cityKey: "SEOUL", lat: 37.5665, lng: 126.9780 },
+      SE: { cityKey: "STOCKHOLM", lat: 59.3293, lng: 18.0686 },
+      PL: { cityKey: "WARSAW", lat: 52.2297, lng: 21.0122 },
+      RS: { cityKey: "BELGRADE", lat: 44.7866, lng: 20.4489 },
+      PE: { cityKey: "LIMA", lat: -12.0464, lng: -77.0428 },
+      KZ: { cityKey: "ASTANA", lat: 51.1694, lng: 71.4491 },
+      JM: { cityKey: "KINGSTON", lat: 17.9712, lng: -76.7936 },
+      GB: { cityKey: "LONDON", lat: 51.5072, lng: -0.1276 },
+      SG: { cityKey: "SINGAPORE", lat: 1.3521, lng: 103.8198 },
+      MY: { cityKey: "KUALA_LUMPUR", lat: 3.1390, lng: 101.6869 },
+      TH: { cityKey: "BANGKOK", lat: 13.7563, lng: 100.5018 },
+      VN: { cityKey: "HANOI", lat: 21.0278, lng: 105.8342 },
+      PH: { cityKey: "MANILA", lat: 14.5995, lng: 120.9842 },
+      ES: { cityKey: "MADRID", lat: 40.4168, lng: -3.7038 },
+      AR: { cityKey: "BUENOS_AIRES", lat: -34.6037, lng: -58.3816 },
+      CL: { cityKey: "SANTIAGO", lat: -33.4489, lng: -70.6693 },
+      AU: { cityKey: "CANBERRA", lat: -35.2809, lng: 149.1300 },
+      CA: { cityKey: "OTTAWA", lat: 45.4215, lng: -75.6972 }
     };
 
+    function isoCodeForCountryName(name) {
+      const text = String(name || "").trim();
+      if (!text) return "";
+      const upper = text.toUpperCase();
+      if (countryIsoCodes.includes(upper)) return upper;
+      for (const code of countryIsoCodes) {
+        if (countryNameLookupFn(code) === text) return code;
+      }
+      return "";
+    }
+
+    function localizedCapital(code) {
+      const entry = capitalLookup[code];
+      if (!entry) return null;
+      return { city: t("music.city." + entry.cityKey), lat: entry.lat, lng: entry.lng };
+    }
+
     const culturePlaces = {
-      west: { country: "英国", city: "伦敦", lat: 51.5072, lng: -0.1276 },
-      china: { country: "中国", city: "北京", lat: 39.9042, lng: 116.4074 },
-      southeast_asia: { country: "印度尼西亚", city: "雅加达", lat: -6.2088, lng: 106.8456 },
-      eastern_europe: { country: "波兰", city: "华沙", lat: 52.2297, lng: 21.0122 },
-      japan: { country: "日本", city: "东京", lat: 35.6762, lng: 139.6503 },
-      africa: { country: "马里", city: "巴马科", lat: 12.6392, lng: -8.0029 },
-      middle_east: { country: "土耳其", city: "伊斯坦布尔", lat: 41.0082, lng: 28.9784 },
-      celtic: { country: "爱尔兰", city: "都柏林", lat: 53.3498, lng: -6.2603 },
-      korea: { country: "韩国", city: "首尔", lat: 37.5665, lng: 126.9780 },
-      caribbean: { country: "牙买加", city: "金斯敦", lat: 17.9712, lng: -76.7936 },
-      brazil: { country: "巴西", city: "萨尔瓦多", lat: -12.9777, lng: -38.5016 },
-      india: { country: "印度", city: "新德里", lat: 28.6139, lng: 77.2090 },
-      nordic: { country: "瑞典", city: "斯德哥尔摩", lat: 59.3293, lng: 18.0686 },
-      latin: { country: "墨西哥", city: "墨西哥城", lat: 19.4326, lng: -99.1332 },
-      balkans: { country: "塞尔维亚", city: "贝尔格莱德", lat: 44.7866, lng: 20.4489 },
-      central_asia: { country: "哈萨克斯坦", city: "阿拉木图", lat: 43.2389, lng: 76.8897 },
-      andean: { country: "秘鲁", city: "库斯科", lat: -13.5319, lng: -71.9675 }
+      west: { countryKey: "GB", cityKey: "LONDON", lat: 51.5072, lng: -0.1276 },
+      china: { countryKey: "CN", cityKey: "BEIJING", lat: 39.9042, lng: 116.4074 },
+      southeast_asia: { countryKey: "ID", cityKey: "JAKARTA", lat: -6.2088, lng: 106.8456 },
+      eastern_europe: { countryKey: "PL", cityKey: "WARSAW", lat: 52.2297, lng: 21.0122 },
+      japan: { countryKey: "JP", cityKey: "TOKYO", lat: 35.6762, lng: 139.6503 },
+      africa: { countryKey: "ML", cityKey: "BAMAKO", lat: 12.6392, lng: -8.0029 },
+      middle_east: { countryKey: "TR", cityKey: "ISTANBUL", lat: 41.0082, lng: 28.9784 },
+      celtic: { countryKey: "IE", cityKey: "DUBLIN", lat: 53.3498, lng: -6.2603 },
+      korea: { countryKey: "KR", cityKey: "SEOUL", lat: 37.5665, lng: 126.9780 },
+      caribbean: { countryKey: "JM", cityKey: "KINGSTON", lat: 17.9712, lng: -76.7936 },
+      brazil: { countryKey: "BR", cityKey: "SALVADOR", lat: -12.9777, lng: -38.5016 },
+      india: { countryKey: "IN", cityKey: "NEW_DELHI", lat: 28.6139, lng: 77.2090 },
+      nordic: { countryKey: "SE", cityKey: "STOCKHOLM", lat: 59.3293, lng: 18.0686 },
+      latin: { countryKey: "MX", cityKey: "MEXICO_CITY", lat: 19.4326, lng: -99.1332 },
+      balkans: { countryKey: "RS", cityKey: "BELGRADE", lat: 44.7866, lng: 20.4489 },
+      central_asia: { countryKey: "KZ", cityKey: "ALMA_ATA", lat: 43.2389, lng: 76.8897 },
+      andean: { countryKey: "PE", cityKey: "CUSCO", lat: -13.5319, lng: -71.9675 }
     };
+
+    function localizedCulturePlace(key) {
+      const entry = culturePlaces[key];
+      if (!entry) return null;
+      return {
+        country: t("music.country." + entry.countryKey),
+        city: t("music.city." + entry.cityKey),
+        lat: entry.lat,
+        lng: entry.lng
+      };
+    }
 
     function cultureLabel(key) { return t("culture." + key); }
 
@@ -2399,7 +2427,7 @@
     function countryNameLookupFn(code) {
       const upper = String(code || "").toUpperCase().trim();
       if (countryIsoCodes.includes(upper)) return t("music.country." + upper);
-      if (code === "台湾") return t("music.country.TW");
+      if (code === "台湾" || code === "Taiwan") return t("music.country.TW");
       return "";
     }
 
@@ -2565,7 +2593,8 @@
       const mapped = countryNameLookupFn(text) || countryNameLookupFn(text.toUpperCase());
       if (mapped) return mapped;
       if (text) return text;
-      return (culturePlaces[culture] && culturePlaces[culture].country) || cultureLabel(culture) || mysteryPlace.country;
+      const cp = localizedCulturePlace(culture);
+      return (cp && cp.country) || cultureLabel(culture) || mysteryPlace.country;
     }
 
     function placeForApiItem(item) {
@@ -2574,7 +2603,8 @@
       const lng = Number(item.lng ?? item.lon ?? item.longitude);
       const rawCountry = cleanMetaText(item.country || item.country_code || item.countryCode);
       const country = readableCountry(rawCountry, culture);
-      const countryCapital = capitalLookup[country];
+      const isoCode = isoCodeForCountryName(rawCountry) || isoCodeForCountryName(country);
+      const countryCapital = localizedCapital(isoCode);
       const explicitCity = cleanMetaText(item.city || item.location_city || item.location || item.artist_city);
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         return {
@@ -2591,12 +2621,12 @@
       if (!rawCountry && !culture) {
         return { ...mysteryPlace };
       }
-      const fallback = culturePlaces[culture] || culturePlaces.west;
+      const fallback = localizedCulturePlace(culture) || localizedCulturePlace("west");
       return {
         country,
-        city: explicitCity || countryCapital?.city || (rawCountry ? country : fallback.city || country),
-        lat: countryCapital?.lat ?? fallback.lat ?? mysteryPlace.lat,
-        lng: countryCapital?.lng ?? fallback.lng ?? mysteryPlace.lng,
+        city: explicitCity || countryCapital?.city || (rawCountry ? country : fallback?.city || country),
+        lat: countryCapital?.lat ?? fallback?.lat ?? mysteryPlace.lat,
+        lng: countryCapital?.lng ?? fallback?.lng ?? mysteryPlace.lng,
         precision: countryCapital ? t("music.precision.capitalCity") : t("music.precision.cultureCenter")
       };
     }
@@ -2828,7 +2858,8 @@
       if (Number.isFinite(track.lat) && Number.isFinite(track.lng)) {
         return { lat: track.lat, lng: track.lng, precision: track.locationPrecision || (track.city ? t("music.precision.cityCoord") : t("music.precision.countryCoord")) };
       }
-      const fallback = capitalLookup[track.country] || mysteryPlace;
+      const isoCode = isoCodeForCountryName(track.country);
+      const fallback = localizedCapital(isoCode) || mysteryPlace;
       return { ...fallback, precision: fallback.precision || t("music.precision.capitalFallback") };
     }
 
@@ -3265,7 +3296,7 @@
       const total = items.length;
       const groups = new Map();
       items.forEach((item, index) => {
-        const label = getKey(item, index) || "未知";
+        const label = getKey(item, index) || t("music.default.unknown");
         if (!groups.has(label)) {
           groups.set(label, { label, count: 0, items: [], firstIndex: index });
         }
@@ -4215,7 +4246,7 @@ Guidelines:
       }
 
       svg.append("g")
-        .attr("aria-label", "南海九段线数据示意")
+        .attr("aria-label", t("music.aria.scsLine"))
         .selectAll("path")
         .data(southChinaSeaNineDashSegments)
         .join("path")
@@ -4386,7 +4417,7 @@ Guidelines:
       els.recommendList.innerHTML = activeRecommendations.map((item, index) => {
         const isFavorite = window.EchoFavoriteStore?.isFavorite(item);
         const cover = item.coverArtUrl
-          ? `<img class="rec-cover" src="${escapeHtml(item.coverArtUrl)}" alt="${escapeHtml(item.title)} 专辑封面" loading="lazy">`
+          ? `<img class="rec-cover" src="${escapeHtml(item.coverArtUrl)}" alt="${escapeHtml(item.title)} ${t("music.cover.suffix")}" loading="lazy">`
           : `<div class="rec-cover is-empty" aria-hidden="true">ECHO</div>`;
         const platformLink = item.platformTrackUrl
           ? `<a class="rec-link" href="${escapeHtml(item.platformTrackUrl)}" target="_blank" rel="noopener">${t("music.rec.platformPlay")}</a>`
@@ -4506,7 +4537,7 @@ Guidelines:
         }
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`推荐接口失败：${response.status} ${errorText}`);
+          throw new Error(`${t("music.error.recommendFail")}：${response.status} ${errorText}`);
         }
         const data = await response.json();
         if (hasUploadedSeed) {
@@ -4770,7 +4801,7 @@ Guidelines:
         const response = await fetch(endpoint);
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`起点曲目加载失败：${response.status} ${errorText}`);
+          throw new Error(`${t("music.error.loadTrackFail")}：${response.status} ${errorText}`);
         }
         const data = await response.json();
         const item = data.track || data;
