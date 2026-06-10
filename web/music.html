@@ -1111,7 +1111,8 @@
       font-size: clamp(1rem, 1.05vw, 1.18rem);
       line-height: 1.55;
       max-width: none;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: break-word;
     }
 
     .ai-controls {
@@ -2138,8 +2139,8 @@
         <div>
           <div class="track-kicker" data-i18n="music.currentPlaying">当前播放</div>
           <div class="track-title-line">
-            <strong id="top-title">正在连接曲库</strong>
-            <span id="top-meta">Echo</span>
+            <strong id="top-title" data-i18n="music.default.connecting">正在连接曲库</strong>
+            <span id="top-meta" data-i18n="music.default.artist">Echo</span>
           </div>
         </div>
       </section>
@@ -2169,7 +2170,7 @@
         </div>
         <div class="readout">
           <div class="meta-label" data-i18n="music.readout.origin">地理位置</div>
-          <strong id="readout-origin">等待位置</strong>
+          <strong id="readout-origin" data-i18n="music.default.waitingLocation">等待位置</strong>
         </div>
         <div class="readout">
           <div class="meta-label" data-i18n="music.readout.style">风格</div>
@@ -2215,7 +2216,7 @@
           <button class="skip-button" id="next-button" type="button" data-i18n-aria-label="music.transport.next" aria-label="下一首">›</button>
           <div class="progress-wrap">
             <div class="progress-meta">
-              <span id="play-state">正在连接曲库 - Echo</span>
+              <span id="play-state" data-i18n="music.default.playStateConnecting">正在连接曲库 - Echo</span>
               <span id="time-code">00:00 / 03:42</span>
             </div>
             <div class="progress-track" id="progress-track" role="slider" data-i18n-aria-label="music.transport.progress" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
@@ -3371,7 +3372,7 @@
       const body = rows.length
         ? `<div class="era-timeline">${rows.map((row, index) => `
             <div class="era-row is-rank-${index + 1}${row.accent ? " is-top" : ""}">
-              <div class="era-label">${row.accent ? "<span class=\"top-label\">TOP</span>" : ""}${row.html}</div>
+              <div class="era-label">${row.accent ? `<span class=\"top-label\">${t("music.insight.top")}</span>` : ""}${row.html}</div>
               <span class="era-dot" aria-hidden="true"></span>
               ${coverMarkup(row.item)}
               <div class="era-count">${row.count}${t("music.insight.songCount")}</div>
@@ -3405,7 +3406,7 @@
           <div class="insight-card-title">${t("music.insight.genreTitle")}</div>
           <div class="insight-card-body">
             <div class="genre-hero">
-              <div class="insight-top"><span class="insight-spark" aria-hidden="true"></span><span>TOP</span></div>
+              <div class="insight-top"><span class="insight-spark" aria-hidden="true"></span><span>${t("music.insight.top")}</span></div>
               <div class="genre-title">${escapeHtml(top.label)}</div>
               <div class="genre-sub">${escapeHtml(topTrackLabel || t("music.insight.waitingTracks"))}</div>
             </div>
