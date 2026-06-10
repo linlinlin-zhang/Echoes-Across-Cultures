@@ -239,6 +239,17 @@
       pointer-events: none;
     }
 
+    .record-btn.is-recording {
+      background: var(--alert);
+      color: #ffffff;
+      animation: record-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes record-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
     .station-shell {
       width: 100%;
       margin: 0;
@@ -2132,6 +2143,7 @@
         </div>
       </section>
 
+      <button class="pill record-btn" id="record-button" type="button" data-i18n="music.record">录制</button>
       <label class="pill" for="music-upload" data-i18n="music.upload">上传音乐</label>
       <input class="upload-input" id="music-upload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma">
     </div>
@@ -2763,6 +2775,7 @@
       readoutSource: document.getElementById("readout-source"),
       readoutCatalog: document.getElementById("readout-catalog"),
       upload: document.getElementById("music-upload"),
+      recordButton: document.getElementById("record-button"),
       audio: document.getElementById("audio-player"),
       playButton: document.getElementById("play-button"),
       prevButton: document.getElementById("prev-button"),
@@ -5057,6 +5070,45 @@ Guidelines:
       const file = event.target.files && event.target.files[0];
       if (!file) return;
       applyLocalAudioFile(file, { source: t("music.local.uploadSource") });
+    });
+
+    /* ── 现场录制 ── */
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    els.recordButton.addEventListener("click", async () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        els.recordButton.classList.remove("is-recording");
+        els.recordButton.textContent = t("music.record");
+        els.recordButton.setAttribute("data-i18n", "music.record");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordedChunks = [];
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach((trk) => trk.stop());
+          if (!recordedChunks.length) return;
+          const blob = new Blob(recordedChunks, { type: mimeType });
+          const ext = mimeType.includes("opus") ? "webm" : "webm";
+          const file = new File([blob], `recorded_audio.${ext}`, { type: mimeType });
+          applyLocalAudioFile(file, { source: t("music.local.recordSource") });
+        };
+        mediaRecorder.start();
+        els.recordButton.classList.add("is-recording");
+        els.recordButton.textContent = t("music.record.stop");
+        els.recordButton.setAttribute("data-i18n", "music.record.stop");
+      } catch (err) {
+        console.error("Microphone access denied:", err);
+      }
     });
 
     setInterval(() => {
