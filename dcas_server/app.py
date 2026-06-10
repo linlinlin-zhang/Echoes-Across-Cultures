@@ -185,7 +185,9 @@ def _gemini_embedding_runtime_settings() -> dict[str, Any]:
             or os.environ.get("GEMINI_EMBEDDING_MODEL")
             or DEFAULT_GEMINI_EMBEDDING_MODEL_ID
         ).strip(),
-        "api_base": str(os.environ.get("ECHO_GEMINI_EMBEDDING_API_BASE") or DEFAULT_GEMINI_EMBEDDING_API_BASE).strip().rstrip("/"),
+        "api_base": str(os.environ.get("ECHO_GEMINI_EMBEDDING_API_BASE") or DEFAULT_GEMINI_EMBEDDING_API_BASE)
+        .strip()
+        .rstrip("/"),
         "output_dimensionality": _env_int("ECHO_GEMINI_EMBEDDING_DIM", 768, min_value=1, max_value=3072),
         "target_sample_rate": _env_int("ECHO_GEMINI_EMBEDDING_SAMPLE_RATE_HZ", 16000, min_value=8000, max_value=48000),
         "max_seconds": _env_float("ECHO_GEMINI_EMBEDDING_MAX_SECONDS", 30.0, min_value=1.0, max_value=180.0),
@@ -194,8 +196,11 @@ def _gemini_embedding_runtime_settings() -> dict[str, Any]:
         "window_aggregate": str(os.environ.get("ECHO_GEMINI_EMBEDDING_WINDOW_AGGREGATE") or "mean").strip() or "mean",
         "request_timeout_s": _env_int("ECHO_GEMINI_EMBEDDING_TIMEOUT_SECONDS", 180, min_value=5, max_value=600),
         "max_retries": _env_int("ECHO_GEMINI_EMBEDDING_MAX_RETRIES", 5, min_value=1, max_value=20),
-        "retry_backoff_s": _env_float("ECHO_GEMINI_EMBEDDING_RETRY_BACKOFF_SECONDS", 2.0, min_value=0.1, max_value=60.0),
-        "audio_mime_type": str(os.environ.get("ECHO_GEMINI_EMBEDDING_AUDIO_MIME_TYPE") or "audio/wav").strip() or "audio/wav",
+        "retry_backoff_s": _env_float(
+            "ECHO_GEMINI_EMBEDDING_RETRY_BACKOFF_SECONDS", 2.0, min_value=0.1, max_value=60.0
+        ),
+        "audio_mime_type": str(os.environ.get("ECHO_GEMINI_EMBEDDING_AUDIO_MIME_TYPE") or "audio/wav").strip()
+        or "audio/wav",
         "task_type": str(os.environ.get("ECHO_GEMINI_EMBEDDING_TASK_TYPE") or "").strip() or None,
         "title": str(os.environ.get("ECHO_GEMINI_EMBEDDING_TITLE") or "").strip() or None,
         "vertexai": _env_bool("ECHO_GEMINI_EMBEDDING_VERTEXAI", False),
@@ -1628,7 +1633,9 @@ def create_app() -> FastAPI:
                 result["embedding"] = embedding_meta
                 result.setdefault("algorithm", {})
                 result["algorithm"]["backbone"] = "Gemini Embedding 2 audio embeddings"
-                result["algorithm"]["reranker"] = "uploaded Gemini audio seed -> DCAS latent encoding -> OT relevance + calibrated cultural reranking"
+                result["algorithm"]["reranker"] = (
+                    "uploaded Gemini audio seed -> DCAS latent encoding -> OT relevance + calibrated cultural reranking"
+                )
                 result["warnings"] = list(result.get("warnings") or []) + _warn_if_mainline_not_gemini(platform)
             else:
                 result = platform.recommend_audio_file(
@@ -1781,7 +1788,9 @@ def create_app() -> FastAPI:
                 status_code=400,
                 detail="Kimi API key is not configured. Set it in settings.html, KIMI_API_KEY, or configs/secrets/kimi.local.json.",
             )
-        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions")
+        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get(
+            "endpoint", "https://api.moonshot.cn/v1/chat/completions"
+        )
         if not endpoint.startswith("https://"):
             raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
         model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
@@ -1821,9 +1830,7 @@ def create_app() -> FastAPI:
                         choice = (chunk.get("choices") or [{}])[0]
                         delta = choice.get("delta") or {}
                         reasoning_delta = _string_delta(
-                            delta.get("reasoning_content")
-                            or delta.get("reasoning")
-                            or delta.get("reasoningContent")
+                            delta.get("reasoning_content") or delta.get("reasoning") or delta.get("reasoningContent")
                         )
                         content_delta = _string_delta(delta.get("content"))
                         if reasoning_delta:
@@ -1841,7 +1848,10 @@ def create_app() -> FastAPI:
             except urllib.error.URLError as e:
                 yield _sse_event("error", {"status": 502, "detail": str(e.reason)})
             except TimeoutError:
-                yield _sse_event("error", {"status": 504, "detail": f"Kimi upstream timed out after {float(req.timeout_seconds):.0f}s"})
+                yield _sse_event(
+                    "error",
+                    {"status": 504, "detail": f"Kimi upstream timed out after {float(req.timeout_seconds):.0f}s"},
+                )
             except Exception as e:
                 yield _sse_event("error", {"status": 500, "detail": str(e)})
 
