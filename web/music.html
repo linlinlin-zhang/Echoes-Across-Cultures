@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Echo 音乐台 — 跨文化音乐推荐系统，上传音频或从曲库探索世界各地的音乐。">
   <title>Echo | 音乐台</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23111111'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23ffffff' stroke-width='4'/%3E%3Cpath d='M18 32h28' stroke='%23ffffff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
   <style>
@@ -2275,7 +2276,8 @@
 
   <script src="./vendor/d3.v7.min.js"></script>
   <script src="./vendor/topojson-client.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="i18n.js"></script>
   <script src="favorite-store.js"></script>
   <script>
@@ -3553,7 +3555,11 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     function renderMarkdown(text) {
       if (typeof marked !== "undefined" && marked.parse) {
         try {
-          return marked.parse(String(text || ""), { breaks: true, gfm: true });
+          const raw = marked.parse(String(text || ""), { breaks: true, gfm: true });
+          if (typeof DOMPurify !== "undefined" && DOMPurify.sanitize) {
+            return DOMPurify.sanitize(raw, { ADD_ATTR: ["target"] });
+          }
+          return raw;
         } catch (error) {
           console.warn("Markdown render failed:", error);
         }
@@ -3868,7 +3874,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     function writeDescriptionCache(cache) {
-      localStorage.setItem(descriptionCacheKey, JSON.stringify(cache));
+      try {
+        localStorage.setItem(descriptionCacheKey, JSON.stringify(cache));
+      } catch (_) { /* storage full or private mode */ }
     }
 
     function descriptionKey(item) {
@@ -5126,6 +5134,12 @@ Guidelines:
       setAiBusy(aiBusy);
     });
     window.addEventListener("pagehide", () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+      if (currentTrack.fileObjectUrl && currentTrack.fileObjectUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(currentTrack.fileObjectUrl);
+      }
       persistLastStartupTrack();
       persistMusicStationState();
     });

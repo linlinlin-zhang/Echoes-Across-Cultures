@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Echo Atlas — 跨文化音乐探索平台，通过全球音乐地图发现世界各地的声音。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23111111'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23f7f6f1' stroke-width='4'/%3E%3Cpath d='M18 32h28' stroke='%23f7f6f1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
   <title>Echo | 听见世界的声音</title>
   <style>
@@ -883,56 +884,171 @@
     const waterMaskUrl = "./vendor/earth-water.png";
 
     let maskEarthMesh = null;
+    let lightsReady = false;
 
-    textureLoader.load(mapUrl, (diffuseMap) => {
-      textureLoader.load(waterMaskUrl, (waterMask) => {
-        const material = new THREE.MeshPhongMaterial({
-          map: diffuseMap,
-          specularMap: waterMask,
-          specular: new THREE.Color(0x333333),
-          shininess: 15,
+    function drawFallbackLand(ctx, fillStyle) {
+      const toPoint = ([lng, lat]) => [
+        ((lng + 180) / 360) * ctx.canvas.width,
+        ((90 - lat) / 180) * ctx.canvas.height
+      ];
+      const polygon = (points) => {
+        ctx.beginPath();
+        points.forEach((point, index) => {
+          const [x, y] = toPoint(point);
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         });
+        ctx.closePath();
+        ctx.fill();
+      };
 
-        const earthMesh = new THREE.Mesh(geometry, material);
-        earthGroup.add(earthMesh);
+      ctx.fillStyle = fillStyle;
+      [
+        [[-168, 72], [-52, 72], [-52, 16], [-82, 7], [-124, 24], [-168, 50], [-168, 72]],
+        [[-82, 12], [-34, 8], [-44, -55], [-74, -55], [-82, 12]],
+        [[-74, 82], [-12, 80], [-20, 60], [-58, 58], [-74, 82]],
+        [[-12, 72], [45, 72], [62, 36], [24, 34], [-12, 36], [-12, 72]],
+        [[-18, 36], [52, 34], [48, -35], [18, -36], [-18, 4], [-18, 36]],
+        [[42, 76], [180, 70], [180, 8], [106, -10], [72, 7], [42, 30], [42, 76]],
+        [[112, -10], [154, -10], [154, -44], [112, -44], [112, -10]],
+        [[156, -2], [178, -8], [174, -24], [150, -18], [156, -2]],
+        [[-180, -64], [180, -64], [180, -84], [-180, -84], [-180, -64]]
+      ].forEach(polygon);
+    }
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.48));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.18);
-        dirLight.position.set(5, 3, 5);
-        scene.add(dirLight);
+    function createFallbackTexture(kind) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1024;
+      canvas.height = 512;
+      const ctx = canvas.getContext("2d");
+      const isMask = kind === "mask";
+      ctx.fillStyle = isMask ? "#ffffff" : "#d9dde2";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const maskMaterial = new THREE.ShaderMaterial({
-          uniforms: {
-            waterMap: { value: waterMask },
-          },
-          vertexShader: `
-            varying vec2 vUv;
-            void main() {
-              vUv = uv;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `,
-          fragmentShader: `
-            uniform sampler2D waterMap;
-            varying vec2 vUv;
-            void main() {
-              vec4 waterColor = texture2D(waterMap, vUv);
-              if (waterColor.r < 0.5) {
-                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-              } else {
-                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+      if (!isMask) {
+        ctx.strokeStyle = "rgba(17, 17, 17, 0.12)";
+        ctx.lineWidth = 1;
+        for (let lng = -180; lng <= 180; lng += 30) {
+          const x = ((lng + 180) / 360) * canvas.width;
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let lat = -60; lat <= 60; lat += 30) {
+          const y = ((90 - lat) / 180) * canvas.height;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+      }
+
+      drawFallbackLand(ctx, isMask ? "#000000" : "#2f3532");
+      const texture = new THREE.CanvasTexture(canvas);
+      if (!isMask && "colorSpace" in texture && THREE.SRGBColorSpace) {
+        texture.colorSpace = THREE.SRGBColorSpace;
+      }
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    function loadTextureWithRetry(url, fallbackFactory) {
+      return new Promise((resolve) => {
+        const attemptLoad = (attempt) => {
+          textureLoader.load(
+            url,
+            (texture) => {
+              if (url.endsWith(".jpg") && "colorSpace" in texture && THREE.SRGBColorSpace) {
+                texture.colorSpace = THREE.SRGBColorSpace;
               }
+              resolve(texture);
+            },
+            undefined,
+            (error) => {
+              if (attempt < 3) {
+                window.setTimeout(() => attemptLoad(attempt + 1), 180 * attempt);
+                return;
+              }
+              console.warn(`Using fallback texture for ${url}`, error);
+              resolve(fallbackFactory());
             }
-          `,
-        });
-
-        maskEarthMesh = new THREE.Mesh(geometry, maskMaterial);
-        maskEarthMesh.scale.setScalar(GLOBE_SCALE);
-        maskEarthMesh.position.copy(earthGroup.position);
-        maskScene.add(maskEarthMesh);
-        scheduleFrame();
+          );
+        };
+        attemptLoad(1);
       });
-    });
+    }
+
+    function ensureGlobeLights() {
+      if (lightsReady) return;
+      lightsReady = true;
+      scene.add(new THREE.AmbientLight(0xffffff, 0.48));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.18);
+      dirLight.position.set(5, 3, 5);
+      scene.add(dirLight);
+    }
+
+    function buildGlobeMeshes(diffuseMap, waterMask) {
+      earthGroup.clear();
+      if (maskEarthMesh) {
+        maskScene.remove(maskEarthMesh);
+      }
+
+      const material = new THREE.MeshPhongMaterial({
+        map: diffuseMap,
+        specularMap: waterMask,
+        specular: new THREE.Color(0x333333),
+        shininess: 15,
+      });
+
+      const earthMesh = new THREE.Mesh(geometry, material);
+      earthGroup.add(earthMesh);
+      ensureGlobeLights();
+
+      const maskMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          waterMap: { value: waterMask },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D waterMap;
+          varying vec2 vUv;
+          void main() {
+            vec4 waterColor = texture2D(waterMap, vUv);
+            if (waterColor.r < 0.5) {
+              gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            } else {
+              gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+            }
+          }
+        `,
+      });
+
+      maskEarthMesh = new THREE.Mesh(geometry, maskMaterial);
+      maskEarthMesh.scale.setScalar(GLOBE_SCALE);
+      maskEarthMesh.position.copy(earthGroup.position);
+      maskScene.add(maskEarthMesh);
+      scheduleFrame();
+    }
+
+    async function initializeGlobe() {
+      try {
+        const [diffuseMap, waterMask] = await Promise.all([
+          loadTextureWithRetry(mapUrl, () => createFallbackTexture("diffuse")),
+          loadTextureWithRetry(waterMaskUrl, () => createFallbackTexture("mask"))
+        ]);
+        buildGlobeMeshes(diffuseMap, waterMask);
+      } catch (error) {
+        console.warn("Using full fallback globe", error);
+        buildGlobeMeshes(createFallbackTexture("diffuse"), createFallbackTexture("mask"));
+      }
+    }
 
     const regionName = document.getElementById("region-name");
     const regionStyle = document.getElementById("region-style");
@@ -966,7 +1082,11 @@
       scheduleFrame();
     };
 
-    new ResizeObserver(resize).observe(container);
+    if ("ResizeObserver" in window) {
+      new ResizeObserver(resize).observe(container);
+    } else {
+      window.addEventListener("resize", resize);
+    }
     resize();
 
     function buildWords(region) {
@@ -1189,6 +1309,17 @@
       }, { threshold: 0.05 }).observe(container);
     }
 
+    webglCanvas.addEventListener("webglcontextlost", (event) => {
+      event.preventDefault();
+      frameHandle = 0;
+    });
+
+    webglCanvas.addEventListener("webglcontextrestored", () => {
+      lastRenderTime = 0;
+      needsTextRedraw = true;
+      initializeGlobe();
+    });
+
     window.addEventListener("echo-language-change", () => {
       MUSIC_REGIONS = buildMusicRegions();
       currentRegionIndex = -1;
@@ -1199,6 +1330,8 @@
       syncActiveRegion();
       scheduleFrame();
     });
+
+    initializeGlobe();
   </script>
   <script>
     const siteHeader = document.querySelector(".site-header");
