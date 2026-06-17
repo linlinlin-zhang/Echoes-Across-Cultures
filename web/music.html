@@ -316,7 +316,7 @@
 
     .map-stage {
       position: relative;
-      min-height: 520px;
+      min-height: clamp(420px, 58vh, 620px);
       overflow: hidden;
       background:
         linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
@@ -325,6 +325,9 @@
       background-size: 48px 48px;
       cursor: grab;
       overscroll-behavior: contain;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .map-stage.is-dragging {
@@ -359,13 +362,15 @@
     .map-label {
       position: absolute;
       transform: translate(-50%, 14px);
+      max-width: min(10rem, 34vw);
       color: rgba(17, 17, 17, 0.5);
       font-family: var(--font-mono);
       font-size: 0.74rem;
       line-height: 1.25;
       text-align: center;
       text-transform: uppercase;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
       pointer-events: auto;
       cursor: pointer;
       border-radius: 999px;
@@ -389,9 +394,11 @@
 
     .map-corner {
       position: absolute;
+      max-width: min(14rem, 42vw);
       color: var(--muted);
       font-family: var(--font-mono);
       font-size: 0.78rem;
+      line-height: 1.25;
       text-transform: uppercase;
       pointer-events: none;
     }
@@ -1851,6 +1858,10 @@
         border-bottom: 1px solid var(--line);
       }
 
+      .map-stage {
+        min-height: clamp(360px, 54vh, 540px);
+      }
+
       .ai-strip {
         grid-template-columns: 1fr;
         white-space: normal;
@@ -1932,7 +1943,32 @@
       }
 
       .map-stage {
-        min-height: 300px;
+        min-height: clamp(340px, 62vh, 480px);
+      }
+
+      .map-corner {
+        max-width: 42vw;
+        font-size: 0.66rem;
+      }
+
+      .map-corner.top-left {
+        top: 0.8rem;
+        left: 0.8rem;
+      }
+
+      .map-corner.top-right {
+        top: 0.8rem;
+        right: 0.8rem;
+      }
+
+      .map-corner.bottom-left {
+        left: 0.8rem;
+        bottom: 0.8rem;
+      }
+
+      .map-corner.bottom-right {
+        right: 0.8rem;
+        bottom: 0.8rem;
       }
 
       .console-bottom {
@@ -2625,26 +2661,29 @@
       const explicitCity = cleanMetaText(item.city || item.location_city || item.location || item.artist_city);
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         return {
-          country,
-          city: explicitCity || countryCapital?.city || country,
+          country: rawCountry ? country : mysteryPlace.country,
+          city: explicitCity || countryCapital?.city || (rawCountry ? country : mysteryPlace.city),
           lat,
           lng,
-          precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag")
+          precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag"),
+          needsCountryLookup: false
         };
       }
-      if (String(item.source_dataset || item.platform || "").trim().toLowerCase() === "upload" && !rawCountry) {
-        return { ...mysteryPlace };
+      if (rawCountry) {
+        return {
+          country,
+          city: countryCapital?.city || explicitCity || country,
+          lat: countryCapital?.lat ?? mysteryPlace.lat,
+          lng: countryCapital?.lng ?? mysteryPlace.lng,
+          precision: countryCapital ? t("music.precision.capitalCity") : t("music.mysteryPlace.precision"),
+          needsCountryLookup: false
+        };
       }
-      if (!rawCountry && !culture) {
-        return { ...mysteryPlace };
-      }
-      const fallback = localizedCulturePlace(culture) || localizedCulturePlace("west");
       return {
-        country,
-        city: explicitCity || countryCapital?.city || (rawCountry ? country : fallback?.city || country),
-        lat: countryCapital?.lat ?? fallback?.lat ?? mysteryPlace.lat,
-        lng: countryCapital?.lng ?? fallback?.lng ?? mysteryPlace.lng,
-        precision: countryCapital ? t("music.precision.capitalCity") : t("music.precision.cultureCenter")
+        ...mysteryPlace,
+        needsCountryLookup: true,
+        originalCity: explicitCity,
+        originalCulture: culture
       };
     }
 
@@ -2723,6 +2762,8 @@
         lat: place.lat,
         lng: place.lng,
         locationPrecision: place.precision || item.location_precision || "",
+        needsCountryLookup: Boolean(place.needsCountryLookup),
+        geoLookupStatus: place.needsCountryLookup ? "pending" : "ready",
         culture,
         sourceDataset: String(item.source_dataset || platform || "").trim(),
         platform,
@@ -3191,6 +3232,7 @@
       updateProgressUI();
       persistLastStartupTrack();
       persistMusicStationState();
+      hydrateTrackCountries([currentTrack, primaryTrack, ...activeRecommendations]);
     }
 
     function playQueueDelta(delta) {
@@ -3949,6 +3991,187 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }
     }
 
+    const countryLookupCacheKey = "echo-track-country-cache";
+    const countryLookupInFlight = new Map();
+
+    function readCountryLookupCache() {
+      try {
+        const data = JSON.parse(localStorage.getItem(countryLookupCacheKey) || "{}");
+        return data && typeof data === "object" ? data : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function writeCountryLookupCache(cache) {
+      try {
+        localStorage.setItem(countryLookupCacheKey, JSON.stringify(cache));
+      } catch (_) { /* storage full or private mode */ }
+    }
+
+    function trackCountryKey(item) {
+      return String(item.trackId || `${item.title}::${item.artist}::${item.album}`).trim();
+    }
+
+    function shouldLookupCountry(item) {
+      if (!item || !item.needsCountryLookup) return false;
+      if (item.geoLookupStatus === "resolved" || item.geoLookupStatus === "unresolved") return false;
+      if (item.country && item.country !== mysteryPlace.country) return false;
+      return Boolean(item.title || item.artist || item.platformTrackUrl || item.fullTrackUrl);
+    }
+
+    function countryFromIsoOrName(country, iso) {
+      const code = isoCodeForCountryName(iso) || isoCodeForCountryName(country);
+      return {
+        code,
+        name: countryNameLookupFn(code) || cleanMetaText(country)
+      };
+    }
+
+    function applyCountryLookupResult(item, result) {
+      if (!item || !result?.resolved) {
+        if (item) {
+          item.geoLookupStatus = "unresolved";
+          item.needsCountryLookup = false;
+        }
+        return false;
+      }
+      const { code, name } = countryFromIsoOrName(result.country, result.country_iso);
+      const capital = localizedCapital(code);
+      const lat = Number(result.lat);
+      const lng = Number(result.lng);
+      if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+        item.geoLookupStatus = "unresolved";
+        item.needsCountryLookup = false;
+        return false;
+      }
+      item.country = name;
+      item.city = capital?.city || cleanMetaText(result.capital) || name;
+      item.lat = lat;
+      item.lng = lng;
+      item.locationPrecision = t("music.precision.capitalCity");
+      item.needsCountryLookup = false;
+      item.geoLookupStatus = "resolved";
+      item.raw = {
+        ...(item.raw || {}),
+        ai_country_location: {
+          country: result.country,
+          country_iso: code || result.country_iso || "",
+          capital: result.capital || item.city,
+          confidence: result.confidence,
+          source: result.source || "kimi_web_search"
+        }
+      };
+      return true;
+    }
+
+    function applyCountryLookupToMatchingTracks(sourceItem, result) {
+      const sourceKey = trackCountryKey(sourceItem);
+      const targets = [primaryTrack, currentTrack, ...recommendations, ...activeRecommendations]
+        .filter(Boolean)
+        .filter((item, index, all) => all.indexOf(item) === index)
+        .filter((item) => trackCountryKey(item) === sourceKey || isSameTrack(item, sourceItem));
+      let currentChanged = false;
+      targets.forEach((target) => {
+        const changed = applyCountryLookupResult(target, result);
+        currentChanged = currentChanged || (changed && isSameTrack(target, currentTrack));
+      });
+      if (currentChanged) {
+        centerLng = currentTrack.lng;
+        centerLat = currentTrack.lat;
+        syncTrackReadouts();
+      }
+      renderRecommendations();
+      drawMap();
+      persistLastStartupTrack();
+      persistMusicStationState();
+    }
+
+    function applyCachedCountryLocations(items) {
+      const cache = readCountryLookupCache();
+      items.filter(Boolean).forEach((item) => {
+        const key = trackCountryKey(item);
+        const cached = key ? cache[key] : null;
+        if (!cached) return;
+        if (cached.resolved) {
+          applyCountryLookupResult(item, cached);
+        } else {
+          item.geoLookupStatus = "unresolved";
+          item.needsCountryLookup = false;
+        }
+      });
+    }
+
+    async function requestKimiTrackCountry(item) {
+      const config = getKimiConfig();
+      const payload = {
+        model: config.model,
+        endpoint: config.endpoint,
+        track_id: item.trackId || "",
+        title: item.title || "",
+        artist: item.artist || "",
+        album: item.album || "",
+        label: item.label || item.genre || "",
+        tags: item.tags || "",
+        culture: item.culture || "",
+        source_dataset: item.sourceDataset || "",
+        platform: item.platform || "",
+        platform_track_url: item.platformTrackUrl || item.fullTrackUrl || "",
+        release_year: item.releaseYear || null,
+        timeout_seconds: 45
+      };
+      if (config.apiKey) {
+        payload.api_key = config.apiKey;
+      }
+      const response = await fetch("/api/ai/kimi/track-country", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        return { ok: false, resolved: false, reason: `http_${response.status}` };
+      }
+      return response.json();
+    }
+
+    async function hydrateTrackCountries(items) {
+      const unique = [];
+      const seen = new Set();
+      items.filter(Boolean).forEach((item) => {
+        const key = trackCountryKey(item);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        unique.push(item);
+      });
+      applyCachedCountryLocations(unique);
+      const missing = unique.filter(shouldLookupCountry);
+      if (!missing.length) return;
+      const canUseKimi = await canUseKimiDescriptions();
+      if (!canUseKimi) return;
+
+      const cache = readCountryLookupCache();
+      for (const item of missing) {
+        const key = trackCountryKey(item);
+        if (!key) continue;
+        if (!countryLookupInFlight.has(key)) {
+          item.geoLookupStatus = "querying";
+          countryLookupInFlight.set(
+            key,
+            requestKimiTrackCountry(item)
+              .catch((error) => ({ ok: false, resolved: false, reason: kimiErrorMessage(error) }))
+              .finally(() => countryLookupInFlight.delete(key))
+          );
+        }
+        const result = await countryLookupInFlight.get(key);
+        const cacheValue = result?.resolved
+          ? result
+          : { resolved: false, confidence: Number(result?.confidence || 0), reason: result?.reason || "unresolved" };
+        cache[key] = cacheValue;
+        writeCountryLookupCache(cache);
+        applyCountryLookupToMatchingTracks(item, cacheValue);
+      }
+    }
+
     function applyCachedDescriptions(items) {
       const cache = readDescriptionCache();
       items.forEach((item) => {
@@ -4627,6 +4850,7 @@ Guidelines:
         syncTrackReadouts();
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
+        hydrateTrackCountries([primaryTrack, currentTrack, ...activeRecommendations]);
         renderParameterPanel();
         drawMap();
         persistMusicStationState();
@@ -4642,6 +4866,7 @@ Guidelines:
         els.mapStatus.textContent = t("music.status.apiFallback");
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
+        hydrateTrackCountries([primaryTrack, currentTrack, ...activeRecommendations]);
         renderParameterPanel();
         drawMap();
       }
@@ -4651,11 +4876,38 @@ Guidelines:
       return Math.max(-68, Math.min(74, value));
     }
 
+    function normalizeLng(value) {
+      let next = Number(value);
+      if (!Number.isFinite(next)) return centerLng;
+      while (next > 180) next -= 360;
+      while (next < -180) next += 360;
+      return next;
+    }
+
     function panBy(deltaLng = 0, deltaLat = 0) {
-      centerLng += deltaLng;
+      centerLng = normalizeLng(centerLng + deltaLng);
       centerLat = clampLat(centerLat + deltaLat);
-      if (centerLng > 180) centerLng -= 360;
-      if (centerLng < -180) centerLng += 360;
+      drawMap();
+    }
+
+    function panByPointerDelta(dx = 0, dy = 0, event = null) {
+      const dragScale = event?.pointerType === "touch" ? 1.28 : event?.pointerType === "pen" ? 1.12 : 1;
+      if (!projection || width <= 1 || height <= 1) {
+        panBy(-dx * 0.35 * dragScale, dy * 0.24 * dragScale);
+        return;
+      }
+
+      const shiftedCenter = projection.invert([
+        width / 2 - dx * dragScale,
+        height / 2 - dy * dragScale
+      ]);
+      if (!shiftedCenter || !Number.isFinite(shiftedCenter[0]) || !Number.isFinite(shiftedCenter[1])) {
+        panBy(-dx * 0.35 * dragScale, dy * 0.24 * dragScale);
+        return;
+      }
+
+      centerLng = normalizeLng(shiftedCenter[0]);
+      centerLat = clampLat(shiftedCenter[1]);
       drawMap();
     }
 
@@ -4759,6 +5011,7 @@ Guidelines:
       applyCachedDescriptions(activeRecommendations);
       renderRecommendations();
       hydrateRecommendationDescriptions(activeRecommendations);
+      hydrateTrackCountries([primaryTrack, currentTrack, ...activeRecommendations]);
       renderParameterPanel();
       renderAiMessages();
       drawMap();
@@ -4961,7 +5214,17 @@ Guidelines:
       }
     }
 
+    function endMapDrag(event) {
+      dragging = false;
+      els.mapStage.classList.remove("is-dragging");
+      if (event && els.mapStage.hasPointerCapture(event.pointerId)) {
+        els.mapStage.releasePointerCapture(event.pointerId);
+      }
+    }
+
     els.mapStage.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      event.preventDefault();
       dragging = true;
       lastX = event.clientX;
       lastY = event.clientY;
@@ -4979,24 +5242,20 @@ Guidelines:
       els.mapStage.classList.toggle("show-down", y > rect.height - 76);
 
       if (!dragging) return;
+      event.preventDefault();
       const dx = event.clientX - lastX;
       const dy = event.clientY - lastY;
       lastX = event.clientX;
       lastY = event.clientY;
-      panBy(-dx * 0.22, dy * 0.14);
+      panByPointerDelta(dx, dy, event);
     });
 
-    els.mapStage.addEventListener("pointerup", (event) => {
-      dragging = false;
-      els.mapStage.classList.remove("is-dragging");
-      if (els.mapStage.hasPointerCapture(event.pointerId)) {
-        els.mapStage.releasePointerCapture(event.pointerId);
-      }
-    });
+    els.mapStage.addEventListener("pointerup", endMapDrag);
+    els.mapStage.addEventListener("pointercancel", endMapDrag);
 
 
     els.mapStage.addEventListener("pointerleave", () => {
-      dragging = false;
+      if (dragging) return;
       els.mapStage.classList.remove("show-left", "show-right", "show-up", "show-down", "is-dragging");
     });
 

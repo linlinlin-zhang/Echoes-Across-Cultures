@@ -24,6 +24,7 @@ from .prototype_api import create_prototype_router
 from .schemas import (
     DatasetBuildRequest,
     KimiChatRequest,
+    KimiTrackCountryRequest,
     MainlineRecommendRequest,
     OntologyAnnotationCreateRequest,
     OntologyConceptCreateRequest,
@@ -353,6 +354,330 @@ def _string_delta(value: Any) -> str:
     if isinstance(value, str):
         return value
     return json.dumps(value, ensure_ascii=False)
+
+
+COUNTRY_CAPITALS: dict[str, dict[str, Any]] = {
+    "US": {"country": "United States", "capital": "Washington, D.C.", "lat": 38.9072, "lng": -77.0369},
+    "GB": {"country": "United Kingdom", "capital": "London", "lat": 51.5072, "lng": -0.1276},
+    "CN": {"country": "China", "capital": "Beijing", "lat": 39.9042, "lng": 116.4074},
+    "SG": {"country": "Singapore", "capital": "Singapore", "lat": 1.3521, "lng": 103.8198},
+    "MY": {"country": "Malaysia", "capital": "Kuala Lumpur", "lat": 3.1390, "lng": 101.6869},
+    "TH": {"country": "Thailand", "capital": "Bangkok", "lat": 13.7563, "lng": 100.5018},
+    "VN": {"country": "Vietnam", "capital": "Hanoi", "lat": 21.0278, "lng": 105.8342},
+    "PH": {"country": "Philippines", "capital": "Manila", "lat": 14.5995, "lng": 120.9842},
+    "TW": {"country": "Taiwan", "capital": "Taipei", "lat": 25.0330, "lng": 121.5654},
+    "HK": {"country": "Hong Kong", "capital": "Hong Kong", "lat": 22.3193, "lng": 114.1694},
+    "JP": {"country": "Japan", "capital": "Tokyo", "lat": 35.6762, "lng": 139.6503},
+    "KR": {"country": "South Korea", "capital": "Seoul", "lat": 37.5665, "lng": 126.9780},
+    "IN": {"country": "India", "capital": "New Delhi", "lat": 28.6139, "lng": 77.2090},
+    "ID": {"country": "Indonesia", "capital": "Jakarta", "lat": -6.2088, "lng": 106.8456},
+    "BR": {"country": "Brazil", "capital": "Brasilia", "lat": -15.7939, "lng": -47.8828},
+    "MX": {"country": "Mexico", "capital": "Mexico City", "lat": 19.4326, "lng": -99.1332},
+    "AR": {"country": "Argentina", "capital": "Buenos Aires", "lat": -34.6037, "lng": -58.3816},
+    "CL": {"country": "Chile", "capital": "Santiago", "lat": -33.4489, "lng": -70.6693},
+    "PE": {"country": "Peru", "capital": "Lima", "lat": -12.0464, "lng": -77.0428},
+    "TR": {"country": "Turkey", "capital": "Ankara", "lat": 39.9334, "lng": 32.8597},
+    "IR": {"country": "Iran", "capital": "Tehran", "lat": 35.6892, "lng": 51.3890},
+    "SA": {"country": "Saudi Arabia", "capital": "Riyadh", "lat": 24.7136, "lng": 46.6753},
+    "AE": {"country": "United Arab Emirates", "capital": "Abu Dhabi", "lat": 24.4539, "lng": 54.3773},
+    "IE": {"country": "Ireland", "capital": "Dublin", "lat": 53.3498, "lng": -6.2603},
+    "SE": {"country": "Sweden", "capital": "Stockholm", "lat": 59.3293, "lng": 18.0686},
+    "NO": {"country": "Norway", "capital": "Oslo", "lat": 59.9139, "lng": 10.7522},
+    "FI": {"country": "Finland", "capital": "Helsinki", "lat": 60.1699, "lng": 24.9384},
+    "DK": {"country": "Denmark", "capital": "Copenhagen", "lat": 55.6761, "lng": 12.5683},
+    "PL": {"country": "Poland", "capital": "Warsaw", "lat": 52.2297, "lng": 21.0122},
+    "RS": {"country": "Serbia", "capital": "Belgrade", "lat": 44.7866, "lng": 20.4489},
+    "MK": {"country": "North Macedonia", "capital": "Skopje", "lat": 41.9981, "lng": 21.4254},
+    "KZ": {"country": "Kazakhstan", "capital": "Astana", "lat": 51.1694, "lng": 71.4491},
+    "KG": {"country": "Kyrgyzstan", "capital": "Bishkek", "lat": 42.8746, "lng": 74.5698},
+    "TJ": {"country": "Tajikistan", "capital": "Dushanbe", "lat": 38.5598, "lng": 68.7870},
+    "JM": {"country": "Jamaica", "capital": "Kingston", "lat": 17.9712, "lng": -76.7936},
+    "HT": {"country": "Haiti", "capital": "Port-au-Prince", "lat": 18.5944, "lng": -72.3074},
+    "TT": {"country": "Trinidad and Tobago", "capital": "Port of Spain", "lat": 10.6549, "lng": -61.5019},
+    "ML": {"country": "Mali", "capital": "Bamako", "lat": 12.6392, "lng": -8.0029},
+    "TZ": {"country": "Tanzania", "capital": "Dodoma", "lat": -6.1630, "lng": 35.7516},
+    "ZA": {"country": "South Africa", "capital": "Pretoria", "lat": -25.7479, "lng": 28.2293},
+    "AU": {"country": "Australia", "capital": "Canberra", "lat": -35.2809, "lng": 149.1300},
+    "NZ": {"country": "New Zealand", "capital": "Wellington", "lat": -41.2865, "lng": 174.7762},
+    "DE": {"country": "Germany", "capital": "Berlin", "lat": 52.5200, "lng": 13.4050},
+    "FR": {"country": "France", "capital": "Paris", "lat": 48.8566, "lng": 2.3522},
+    "IT": {"country": "Italy", "capital": "Rome", "lat": 41.9028, "lng": 12.4964},
+    "ES": {"country": "Spain", "capital": "Madrid", "lat": 40.4168, "lng": -3.7038},
+    "CA": {"country": "Canada", "capital": "Ottawa", "lat": 45.4215, "lng": -75.6972},
+}
+
+COUNTRY_ALIASES: dict[str, str] = {
+    "america": "US",
+    "usa": "US",
+    "u.s.": "US",
+    "u.s.a.": "US",
+    "united states of america": "US",
+    "uk": "GB",
+    "u.k.": "GB",
+    "britain": "GB",
+    "great britain": "GB",
+    "england": "GB",
+    "south korea": "KR",
+    "republic of korea": "KR",
+    "korea": "KR",
+    "turkiye": "TR",
+    "türkiye": "TR",
+    "uae": "AE",
+}
+COUNTRY_NAME_TO_ISO: dict[str, str] = {
+    str(value["country"]).casefold(): code for code, value in COUNTRY_CAPITALS.items()
+}
+COUNTRY_NAME_TO_ISO.update(COUNTRY_ALIASES)
+
+
+def _country_iso(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    upper = raw.upper()
+    if upper in COUNTRY_CAPITALS:
+        return upper
+    return COUNTRY_NAME_TO_ISO.get(raw.casefold(), "")
+
+
+def _country_cache_key(req: KimiTrackCountryRequest) -> str:
+    import hashlib
+
+    parts = [
+        req.track_id,
+        req.title,
+        req.artist,
+        req.album,
+        req.platform_track_url,
+        req.source_dataset,
+        req.platform,
+    ]
+    raw = "\n".join(str(part or "").strip().casefold() for part in parts)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _country_cache_path(storage: Storage) -> Path:
+    return storage.ensure_dir("ai") / "kimi_track_country_cache.json"
+
+
+def _read_country_cache(storage: Storage) -> dict[str, Any]:
+    path = _country_cache_path(storage)
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _write_country_cache(storage: Storage, cache: dict[str, Any]) -> None:
+    path = _country_cache_path(storage)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(path)
+
+
+def _moonshot_api_base(endpoint: str) -> str:
+    value = str(endpoint or "https://api.moonshot.cn/v1/chat/completions").strip().rstrip("/")
+    if value.endswith("/chat/completions"):
+        return value[: -len("/chat/completions")]
+    return os.environ.get("KIMI_API_BASE", "https://api.moonshot.cn/v1").rstrip("/")
+
+
+def _request_json(
+    *,
+    url: str,
+    api_key: str,
+    method: str = "GET",
+    payload: dict[str, Any] | None = None,
+    timeout: float = 45.0,
+) -> dict[str, Any] | list[Any]:
+    import urllib.error
+    import urllib.request
+
+    body = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {"Authorization": f"Bearer {api_key}"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=body, method=method, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=float(timeout)) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")[:2000]
+        raise RuntimeError(f"Kimi upstream HTTP {e.code}: {detail}") from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"Kimi upstream unavailable: {e.reason}") from e
+    data = json.loads(raw)
+    if not isinstance(data, (dict, list)):
+        raise RuntimeError("Kimi upstream returned invalid JSON")
+    return data
+
+
+def _extract_json_object(text: str) -> dict[str, Any]:
+    raw = str(text or "").strip()
+    if not raw:
+        return {}
+    try:
+        value = json.loads(raw)
+        return value if isinstance(value, dict) else {}
+    except json.JSONDecodeError:
+        pass
+    match = re.search(r"\{.*\}", raw, flags=re.S)
+    if not match:
+        return {}
+    try:
+        value = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _clean_country_result(data: dict[str, Any], *, cached: bool = False) -> dict[str, Any]:
+    try:
+        confidence = float(data.get("confidence") or 0)
+    except Exception:
+        confidence = 0.0
+    iso = _country_iso(data.get("country_iso") or data.get("country_code") or data.get("country"))
+    capital = COUNTRY_CAPITALS.get(iso)
+    min_confidence = _env_float("ECHO_KIMI_COUNTRY_MIN_CONFIDENCE", 0.68, min_value=0.0, max_value=1.0)
+    resolved = bool(data.get("resolved", True)) and bool(capital) and confidence >= min_confidence
+    if not resolved:
+        return {
+            "ok": True,
+            "resolved": False,
+            "confidence": confidence,
+            "cached": cached,
+            "reason": str(data.get("reason") or data.get("rationale") or "country_not_confident").strip()[:500],
+        }
+    return {
+        "ok": True,
+        "resolved": True,
+        "country": str(capital["country"]),
+        "country_iso": iso,
+        "capital": str(capital["capital"]),
+        "lat": float(capital["lat"]),
+        "lng": float(capital["lng"]),
+        "precision": "ai_country_capital",
+        "confidence": confidence,
+        "cached": cached,
+        "source": "kimi_web_search",
+        "rationale": str(data.get("rationale") or data.get("reason") or "").strip()[:500],
+        "evidence": [str(item).strip()[:300] for item in data.get("evidence", [])[:3] if str(item).strip()]
+        if isinstance(data.get("evidence"), list)
+        else [],
+    }
+
+
+def _kimi_track_country_prompt(req: KimiTrackCountryRequest) -> list[dict[str, str]]:
+    user_lines = [
+        f"title: {req.title}",
+        f"artist: {req.artist}",
+        f"album: {req.album}",
+        f"label/genre: {req.label}",
+        f"tags: {req.tags}",
+        f"culture bucket: {req.culture}",
+        f"source dataset: {req.source_dataset}",
+        f"platform: {req.platform}",
+        f"platform track url: {req.platform_track_url}",
+        f"release year: {req.release_year or ''}",
+    ]
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You identify only the most likely country associated with a music track. "
+                "Use web search when the metadata is insufficient. "
+                "Do not infer a country merely from broad culture buckets, language guesses, genre names, "
+                "or stereotypes. If evidence is weak or conflicting, return resolved=false. "
+                "Output strict JSON only with keys: resolved, country, country_iso, confidence, rationale, evidence. "
+                "country_iso must be an ISO 3166-1 alpha-2 code. confidence must be 0..1."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "Find the track's country if it can be confirmed from reliable web/search evidence. "
+                "Country only; do not return city-level placement.\n\n"
+                + "\n".join(user_lines)
+            ),
+        },
+    ]
+
+
+def _resolve_track_country_with_kimi(
+    *,
+    req: KimiTrackCountryRequest,
+    api_key: str,
+    endpoint: str,
+    model: str,
+) -> dict[str, Any]:
+    timeout = float(req.timeout_seconds)
+    api_base = _moonshot_api_base(endpoint)
+    formula = str(os.environ.get("KIMI_WEB_SEARCH_FORMULA") or "moonshot/web-search:latest").strip()
+    tools_url = f"{api_base}/formulas/{formula}/tools"
+    fibers_url = f"{api_base}/formulas/{formula}/fibers"
+    tools_data = _request_json(url=tools_url, api_key=api_key, timeout=timeout)
+    tools = tools_data.get("tools") if isinstance(tools_data, dict) else tools_data
+    if not isinstance(tools, list) or not tools:
+        return {"ok": True, "resolved": False, "reason": "web_search_tools_unavailable"}
+
+    messages: list[dict[str, Any]] = _kimi_track_country_prompt(req)
+    chat_payload: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "tools": tools,
+        "thinking": {"type": "disabled"},
+        "max_completion_tokens": 768,
+    }
+    chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=chat_payload, timeout=timeout)
+    if not isinstance(chat_data, dict):
+        return {"ok": True, "resolved": False, "reason": "invalid_chat_response"}
+    message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
+    tool_calls = message.get("tool_calls") or []
+    if isinstance(tool_calls, list) and tool_calls:
+        messages.append(message)
+        for call in tool_calls[:2]:
+            function_call = call.get("function") or {}
+            fiber = _request_json(
+                url=fibers_url,
+                api_key=api_key,
+                method="POST",
+                payload=function_call,
+                timeout=timeout,
+            )
+            encrypted_output = ""
+            if isinstance(fiber, dict):
+                encrypted_output = str(
+                    fiber.get("encrypted_output")
+                    or (fiber.get("context") or {}).get("encrypted_output")
+                    or ""
+                )
+            if encrypted_output:
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call.get("id") or "",
+                        "name": function_call.get("name") or "web_search",
+                        "content": encrypted_output,
+                    }
+                )
+        final_payload: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "tools": tools,
+            "thinking": {"type": "disabled"},
+            "max_completion_tokens": 768,
+        }
+        chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=final_payload, timeout=timeout)
+        if not isinstance(chat_data, dict):
+            return {"ok": True, "resolved": False, "reason": "invalid_final_response"}
+        message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
+    content = str(message.get("content") or "").strip()
+    if not content:
+        return {"ok": True, "resolved": False, "reason": "empty_country_response"}
+    return _clean_country_result(_extract_json_object(content), cached=False)
 
 
 def _mainline_catalog(storage: Storage):
@@ -1940,6 +2265,41 @@ def create_app() -> FastAPI:
             "model": local.get("model", "kimi-k2.6"),
             "endpoint": local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions"),
         }
+
+    @app.post("/api/ai/kimi/track-country")
+    def api_kimi_track_country(req: KimiTrackCountryRequest):
+        if not (str(req.title or "").strip() or str(req.artist or "").strip() or str(req.platform_track_url or "").strip()):
+            return {"ok": True, "resolved": False, "reason": "insufficient_track_metadata"}
+        local = _load_local_kimi_config()
+        api_key = str(req.api_key or "").strip() or str(local.get("api_key") or "").strip()
+        if not api_key:
+            return {"ok": True, "resolved": False, "reason": "kimi_api_key_not_configured"}
+        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get(
+            "endpoint", "https://api.moonshot.cn/v1/chat/completions"
+        )
+        if not endpoint.startswith("https://"):
+            raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+        model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
+        key = _country_cache_key(req)
+        cache = _read_country_cache(storage)
+        cached = cache.get(key)
+        if isinstance(cached, dict):
+            return _clean_country_result(cached, cached=True)
+        try:
+            result = _resolve_track_country_with_kimi(req=req, api_key=api_key, endpoint=endpoint, model=model)
+        except Exception as e:
+            return {"ok": True, "resolved": False, "reason": str(e)[:1000]}
+        cache[key] = {
+            "resolved": bool(result.get("resolved")),
+            "country": result.get("country", ""),
+            "country_iso": result.get("country_iso", ""),
+            "confidence": float(result.get("confidence") or 0),
+            "rationale": result.get("rationale") or result.get("reason") or "",
+            "evidence": result.get("evidence") or [],
+            "updated_at": time.time(),
+        }
+        _write_country_cache(storage, cache)
+        return result
 
     @app.post("/api/ai/kimi/chat")
     def api_kimi_chat(req: KimiChatRequest):

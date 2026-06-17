@@ -84,6 +84,24 @@ class KimiChatRequest(BaseModel):
     timeout_seconds: float = Field(default=180.0, gt=0, le=300)
 
 
+class KimiTrackCountryRequest(BaseModel):
+    api_key: str | None = None
+    model: str = Field(default="kimi-k2.6", min_length=1)
+    endpoint: str = Field(default="https://api.moonshot.cn/v1/chat/completions", min_length=1)
+    track_id: str = Field(default="", max_length=200)
+    title: str = Field(default="", max_length=300)
+    artist: str = Field(default="", max_length=300)
+    album: str = Field(default="", max_length=300)
+    label: str = Field(default="", max_length=300)
+    tags: str = Field(default="", max_length=1000)
+    culture: str = Field(default="", max_length=120)
+    source_dataset: str = Field(default="", max_length=120)
+    platform: str = Field(default="", max_length=120)
+    platform_track_url: str = Field(default="", max_length=1000)
+    release_year: int | None = None
+    timeout_seconds: float = Field(default=45.0, gt=0, le=120)
+
+
 class StyleTransferRequest(BaseModel):
     model_path: str
     tracks_path: str
