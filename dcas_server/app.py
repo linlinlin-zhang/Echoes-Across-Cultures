@@ -838,13 +838,123 @@ def _flatten_audio_tags(data: dict) -> dict[str, str]:
         if not isinstance(raw_tags, dict):
             continue
         for key, value in raw_tags.items():
-            text = str(value or "").strip()
-            if text and key:
-                tags.setdefault(str(key).lower(), text)
+            _set_audio_tag(tags, key, value)
     return tags
 
 
-def _probe_audio_tags(path: Path) -> dict[str, str]:
+def _tag_key_variants(key: Any) -> list[str]:
+    raw = str(key or "").strip().lower()
+    if not raw:
+        return []
+    normalized = re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
+    compact = re.sub(r"[^a-z0-9]+", "", raw)
+    return list(dict.fromkeys(item for item in (raw, normalized, compact) if item))
+
+
+def _decode_tag_bytes(value: bytes) -> str:
+    for encoding in ("utf-8", "utf-16", "utf-16-be", "utf-16-le", "latin-1"):
+        try:
+            text = value.decode(encoding).strip("\x00").strip()
+        except Exception:
+            continue
+        if text:
+            return text
+    return ""
+
+
+def _tag_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return _decode_tag_bytes(value)
+    if isinstance(value, (list, tuple, set)):
+        return "; ".join(text for item in value if (text := _tag_text(item)))
+    text_values = getattr(value, "text", None)
+    if isinstance(text_values, (list, tuple)):
+        return "; ".join(str(item).strip() for item in text_values if str(item).strip())
+    data = getattr(value, "data", None)
+    if isinstance(data, bytes):
+        return _decode_tag_bytes(data)
+    return str(value).strip()
+
+
+def _set_audio_tag(tags: dict[str, str], key: Any, value: Any) -> None:
+    text = _tag_text(value)
+    if not text:
+        return
+    for variant in _tag_key_variants(key):
+        tags.setdefault(variant, text)
+    normalized_key = str(key or "").strip().lower()
+    if normalized_key.startswith("txxx:"):
+        for variant in _tag_key_variants(normalized_key.split(":", 1)[1]):
+            tags.setdefault(variant, text)
+    if normalized_key.startswith("----:"):
+        for variant in _tag_key_variants(normalized_key.rsplit(":", 1)[-1]):
+            tags.setdefault(variant, text)
+
+
+MUTAGEN_TAG_ALIASES = {
+    "tit2": "title",
+    "tpe1": "artist",
+    "tpe2": "album_artist",
+    "tcom": "composer",
+    "talb": "album",
+    "tcon": "genre",
+    "tdrc": "date",
+    "tyer": "year",
+    "comm": "comment",
+    "\xa9nam": "title",
+    "\xa9art": "artist",
+    "aart": "album_artist",
+    "\xa9alb": "album",
+    "\xa9gen": "genre",
+    "\xa9day": "date",
+    "\xa9cmt": "comment",
+    "desc": "description",
+    "ldes": "description",
+}
+
+
+def _probe_audio_tags_mutagen(path: Path) -> dict[str, str]:
+    try:
+        from mutagen import File as MutagenFile
+    except Exception:
+        return {}
+    tags: dict[str, str] = {}
+    try:
+        audio = MutagenFile(str(path), easy=False)
+    except Exception:
+        audio = None
+    raw_tags = getattr(audio, "tags", None)
+    if raw_tags:
+        _collect_mutagen_tags(raw_tags, tags)
+    if not tags and path.suffix.lower() in {".mp3", ".aif", ".aiff"}:
+        try:
+            from mutagen.id3 import ID3
+
+            _collect_mutagen_tags(ID3(str(path)), tags)
+        except Exception:
+            pass
+    return tags
+
+
+def _collect_mutagen_tags(raw_tags: Any, tags: dict[str, str]) -> None:
+    for key, value in raw_tags.items():
+        _set_audio_tag(tags, key, value)
+        normalized_key = str(key or "").strip().lower()
+        alias = MUTAGEN_TAG_ALIASES.get(normalized_key)
+        if alias:
+            _set_audio_tag(tags, alias, value)
+        desc = str(getattr(value, "desc", "") or "").strip()
+        if desc:
+            _set_audio_tag(tags, desc, value)
+        if normalized_key.startswith("txxx:"):
+            _set_audio_tag(tags, normalized_key.split(":", 1)[1], value)
+        if normalized_key.startswith("----:"):
+            _set_audio_tag(tags, normalized_key.rsplit(":", 1)[-1], value)
+
+
+def _probe_audio_tags_ffprobe(path: Path) -> dict[str, str]:
     cmd = [
         "ffprobe",
         "-v",
@@ -868,12 +978,107 @@ def _probe_audio_tags(path: Path) -> dict[str, str]:
     return _flatten_audio_tags(data if isinstance(data, dict) else {})
 
 
+def _probe_audio_tags(path: Path) -> dict[str, str]:
+    tags = _probe_audio_tags_mutagen(path)
+    for key, value in _probe_audio_tags_ffprobe(path).items():
+        tags.setdefault(key, value)
+    return tags
+
+
 def _tag_first(tags: dict[str, str], *names: str) -> str:
     for name in names:
-        value = str(tags.get(name.lower()) or "").strip()
-        if value:
-            return value
+        for key in _tag_key_variants(name):
+            value = str(tags.get(key) or "").strip()
+            if value:
+                return value
     return ""
+
+
+def _split_location_label(value: Any) -> tuple[str, str]:
+    text = " ".join(str(value or "").replace("\n", ",").split())
+    if not text:
+        return "", ""
+    parts = [part.strip() for part in text.split(",") if part.strip()]
+    if len(parts) >= 2:
+        return parts[0], parts[-1]
+    return "", ""
+
+
+def _parse_coordinate_scalar(value: Any, *, min_value: float, max_value: float) -> float | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    sign = -1.0 if re.search(r"[sw]\s*$", text, flags=re.IGNORECASE) else 1.0
+    cleaned = re.sub(r"[nsew]", "", text, flags=re.IGNORECASE)
+    cleaned = cleaned.replace("+", "").strip()
+    try:
+        out = float(cleaned)
+    except Exception:
+        return None
+    out *= sign
+    if min_value <= out <= max_value:
+        return out
+    return None
+
+
+def _parse_coordinate_pair(value: Any) -> tuple[float | None, float | None]:
+    text = str(value or "").strip()
+    if not text:
+        return None, None
+    iso_match = re.match(r"^\s*([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)(?:[+-]\d+(?:\.\d+)?)?/?\s*$", text)
+    if iso_match:
+        lat = _parse_coordinate_scalar(iso_match.group(1), min_value=-90.0, max_value=90.0)
+        lng = _parse_coordinate_scalar(iso_match.group(2), min_value=-180.0, max_value=180.0)
+        return lat, lng
+    pair_match = re.search(
+        r"([+-]?\d{1,2}(?:\.\d+)?)\s*[,;/ ]+\s*([+-]?\d{1,3}(?:\.\d+)?)",
+        text,
+    )
+    if not pair_match:
+        return None, None
+    lat = _parse_coordinate_scalar(pair_match.group(1), min_value=-90.0, max_value=90.0)
+    lng = _parse_coordinate_scalar(pair_match.group(2), min_value=-180.0, max_value=180.0)
+    return lat, lng
+
+
+def _coordinates_from_tags(tags: dict[str, str]) -> tuple[float | None, float | None]:
+    lat = _parse_coordinate_scalar(
+        _tag_first(tags, "lat", "latitude", "geo_latitude", "geo:lat", "gps_latitude", "gpslatitude"),
+        min_value=-90.0,
+        max_value=90.0,
+    )
+    lng = _parse_coordinate_scalar(
+        _tag_first(
+            tags,
+            "lng",
+            "lon",
+            "long",
+            "longitude",
+            "geo_longitude",
+            "geo:lon",
+            "gps_longitude",
+            "gpslongitude",
+        ),
+        min_value=-180.0,
+        max_value=180.0,
+    )
+    if lat is not None and lng is not None:
+        return lat, lng
+    for key in (
+        "coordinates",
+        "coordinate",
+        "gps",
+        "geo",
+        "geolocation",
+        "geo_location",
+        "location_coordinates",
+        "com.apple.quicktime.location.iso6709",
+        "iso6709",
+    ):
+        parsed_lat, parsed_lng = _parse_coordinate_pair(_tag_first(tags, key))
+        if parsed_lat is not None and parsed_lng is not None:
+            return parsed_lat, parsed_lng
+    return None, None
 
 
 def _extract_embedded_cover(source: Path, target: Path) -> bool:
@@ -901,14 +1106,40 @@ def _extract_embedded_cover(source: Path, target: Path) -> bool:
 
 
 def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
-    country = _tag_first(tags, "country", "location", "artist_location", "com.apple.iTunes.location")
-    if country:
+    location = _tag_first(
+        tags,
+        "location",
+        "artist_location",
+        "artist location",
+        "com.apple.iTunes.location",
+        "com.apple.quicktime.location.name",
+        "venue",
+        "place",
+    )
+    city = _tag_first(tags, "city", "location_city", "artist_city", "venue")
+    country = _tag_first(
+        tags,
+        "country",
+        "country_name",
+        "location_country",
+        "artist_country",
+        "com.apple.iTunes.country",
+        "musicbrainz_albumartistcountry",
+    )
+    country_code = _tag_first(tags, "country_code", "countrycode", "iso_country", "isrc_country")
+    parsed_city, parsed_country = _split_location_label(location)
+    country = country or parsed_country
+    city = city or parsed_city
+    lat, lng = _coordinates_from_tags(tags)
+    if country or country_code or city or location or (lat is not None and lng is not None):
         return {
-            "country": country,
-            "city": _tag_first(tags, "city", "venue") or country,
-            "lat": None,
-            "lng": None,
-            "location_precision": "audio_tag",
+            "country": country or country_code or location or city or "embedded_location",
+            "country_code": country_code,
+            "city": city or country or country_code or location,
+            "location": location,
+            "lat": lat,
+            "lng": lng,
+            "location_precision": "audio_tag_coordinates" if lat is not None and lng is not None else "audio_tag",
             "location_note": "From embedded audio file metadata",
         }
     return {
@@ -917,7 +1148,7 @@ def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
         "lat": 0.0,
         "lng": -160.0,
         "location_precision": "pacific_default",
-        "location_note": "Upload audio has no region info, defaulting to mystery place",
+        "location_note": "Upload audio has no embedded region, country, city, or coordinate tags",
     }
 
 
