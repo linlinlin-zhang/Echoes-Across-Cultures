@@ -92,6 +92,8 @@ class KimiTrackCountryRequest(BaseModel):
     title: str = Field(default="", max_length=300)
     artist: str = Field(default="", max_length=300)
     album: str = Field(default="", max_length=300)
+    city: str = Field(default="", max_length=300)
+    location: str = Field(default="", max_length=500)
     label: str = Field(default="", max_length=300)
     tags: str = Field(default="", max_length=1000)
     culture: str = Field(default="", max_length=120)

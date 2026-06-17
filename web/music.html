@@ -2339,6 +2339,26 @@
       lng: -160,
       precision: t("music.mysteryPlace.precision")
     };
+    let geoData = null;
+
+    function geoLookupKey(value) {
+      const raw = String(value || "").toLowerCase().trim();
+      const deaccented = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return deaccented.replace(/[^a-z0-9]+/g, " ").trim() || raw;
+    }
+
+    async function loadGeoData() {
+      try {
+        const response = await fetch("./data/country-capitals.json", { cache: "force-cache" });
+        if (!response.ok) throw new Error(`geo data ${response.status}`);
+        const data = await response.json();
+        if (!data?.countries || !data?.country_aliases) throw new Error("invalid geo data");
+        geoData = data;
+      } catch (error) {
+        console.warn("Geo data unavailable; using built-in fallback", error);
+        geoData = null;
+      }
+    }
 
     function openLocalAudioDb() {
       return new Promise((resolve, reject) => {
@@ -2430,6 +2450,9 @@
       const text = String(name || "").trim();
       if (!text) return "";
       const upper = text.toUpperCase();
+      if (geoData?.countries?.[upper]) return upper;
+      const geoAlias = geoData?.country_aliases?.[geoLookupKey(text)];
+      if (geoAlias) return String(geoAlias).toUpperCase();
       if (countryIsoCodes.includes(upper)) return upper;
       for (const code of countryIsoCodes) {
         if (countryNameLookupFn(code) === text) return code;
@@ -2438,9 +2461,34 @@
     }
 
     function localizedCapital(code) {
+      const geoCountry = geoData?.countries?.[String(code || "").toUpperCase()];
+      if (geoCountry) {
+        return {
+          city: geoCountry.capital || geoCountry.country,
+          lat: Number(geoCountry.lat),
+          lng: Number(geoCountry.lng),
+          precision: geoCountry.precision || "capital"
+        };
+      }
       const entry = capitalLookup[code];
       if (!entry) return null;
       return { city: t("music.city." + entry.cityKey), lat: entry.lat, lng: entry.lng };
+    }
+
+    function cityLocationForName(name, countryIso = "") {
+      const key = geoLookupKey(name);
+      const isoHint = String(countryIso || "").toUpperCase().trim();
+      const city = (isoHint && geoData?.city_country_aliases?.[`${key}|${isoHint}`])
+        || geoData?.city_aliases?.[key];
+      if (!city) return null;
+      const iso = String(city.country_iso || "").toUpperCase();
+      return {
+        city: city.city || String(name || "").trim(),
+        country: countryNameLookupFn(iso) || iso,
+        countryIso: iso,
+        lat: Number(city.lat),
+        lng: Number(city.lng)
+      };
     }
 
     const culturePlaces = {
@@ -2479,6 +2527,14 @@
     const countryIsoCodes = ["US","GB","CN","SG","MY","TH","VN","PH","TW","HK","JP","KR","IN","ID","BR","MX","AR","CL","PE","TR","IR","SA","AE","IE","SE","NO","FI","DK","PL","RS","MK","KZ","KG","TJ","JM","HT","TT","ML","TZ","ZA","AU","NZ","DE","FR","IT","ES","CA"];
     function countryNameLookupFn(code) {
       const upper = String(code || "").toUpperCase().trim();
+      const geoCountry = geoData?.countries?.[upper];
+      if (geoCountry) {
+        const lang = window.EchoI18n?.getLanguage?.() || window.EchoI18n?.currentLanguage || "zh-CN";
+        return geoCountry.translations?.[lang]
+          || geoCountry.translations?.[lang.split("-")[0]]
+          || geoCountry.country
+          || upper;
+      }
       if (countryIsoCodes.includes(upper)) return t("music.country." + upper);
       if (code === "台湾" || code === "Taiwan") return t("music.country.TW");
       return "";
@@ -2643,6 +2699,8 @@
 
     function readableCountry(value, culture) {
       const text = cleanMetaText(value);
+      const iso = isoCodeForCountryName(text);
+      if (iso) return countryNameLookupFn(iso);
       const mapped = countryNameLookupFn(text) || countryNameLookupFn(text.toUpperCase());
       if (mapped) return mapped;
       if (text) return text;
@@ -2659,6 +2717,7 @@
       const isoCode = isoCodeForCountryName(rawCountry) || isoCodeForCountryName(country);
       const countryCapital = localizedCapital(isoCode);
       const explicitCity = cleanMetaText(item.city || item.location_city || item.location || item.artist_city);
+      const explicitCityLocation = cityLocationForName(explicitCity, isoCode);
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         return {
           country: rawCountry ? country : mysteryPlace.country,
@@ -2670,6 +2729,16 @@
         };
       }
       if (rawCountry) {
+        if (explicitCityLocation && (!isoCode || explicitCityLocation.countryIso === isoCode)) {
+          return {
+            country: explicitCityLocation.country,
+            city: explicitCityLocation.city,
+            lat: explicitCityLocation.lat,
+            lng: explicitCityLocation.lng,
+            precision: t("music.precision.audioTag"),
+            needsCountryLookup: false
+          };
+        }
         return {
           country,
           city: countryCapital?.city || explicitCity || country,
@@ -2679,10 +2748,21 @@
           needsCountryLookup: false
         };
       }
+      if (explicitCityLocation) {
+        return {
+          country: explicitCityLocation.country,
+          city: explicitCityLocation.city,
+          lat: explicitCityLocation.lat,
+          lng: explicitCityLocation.lng,
+          precision: t("music.precision.audioTag"),
+          needsCountryLookup: false
+        };
+      }
       return {
         ...mysteryPlace,
         needsCountryLookup: true,
         originalCity: explicitCity,
+        originalLocation: cleanMetaText(item.location || item.artist_location || item.venue),
         originalCulture: culture
       };
     }
@@ -2759,6 +2839,8 @@
         tags: (!isChineseLang() && item.tags_en) ? String(item.tags_en).trim() : String(item.tags || "").trim(),
         country: place.country,
         city: place.city,
+        originalCity: place.originalCity || "",
+        originalLocation: place.originalLocation || "",
         lat: place.lat,
         lng: place.lng,
         locationPrecision: place.precision || item.location_precision || "",
@@ -4111,6 +4193,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         title: item.title || "",
         artist: item.artist || "",
         album: item.album || "",
+        city: item.originalCity || (item.country === mysteryPlace.country ? "" : item.city || ""),
+        location: item.originalLocation || "",
         label: item.label || item.genre || "",
         tags: item.tags || "",
         culture: item.culture || "",
@@ -5414,10 +5498,12 @@ Guidelines:
     renderParameterPanel();
     syncAiModeControls();
     renderAiMessages();
-    initializeStartupTrack().catch((error) => {
-      console.error(error);
-      setNoStartupTrack(t("music.status.initFailed"));
-    });
+    loadGeoData()
+      .then(() => initializeStartupTrack())
+      .catch((error) => {
+        console.error(error);
+        setNoStartupTrack(t("music.status.initFailed"));
+      });
     loadMap().catch((error) => {
       els.mapStatus.textContent = t("music.status.mapDataFailed");
       console.error(error);

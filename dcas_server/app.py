@@ -6,6 +6,7 @@ import re
 import sqlite3
 import subprocess
 import time
+import unicodedata
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode, urljoin
@@ -428,6 +429,99 @@ COUNTRY_NAME_TO_ISO: dict[str, str] = {
     str(value["country"]).casefold(): code for code, value in COUNTRY_CAPITALS.items()
 }
 COUNTRY_NAME_TO_ISO.update(COUNTRY_ALIASES)
+CITY_NAME_TO_LOCATION: dict[str, dict[str, Any]] = {}
+CITY_COUNTRY_TO_LOCATION: dict[str, dict[str, Any]] = {}
+
+
+def _geo_lookup_key(value: Any) -> str:
+    raw = str(value or "").casefold().strip()
+    deaccented = "".join(
+        char for char in unicodedata.normalize("NFKD", raw) if not unicodedata.combining(char)
+    )
+    ascii_key = re.sub(r"[^a-z0-9]+", " ", deaccented).strip()
+    return ascii_key or raw
+
+
+def _geo_data_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "web" / "data" / "country-capitals.json"
+
+
+def _load_geo_country_data() -> None:
+    path = _geo_data_path()
+    if not path.exists():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    countries = data.get("countries") if isinstance(data, dict) else {}
+    if isinstance(countries, dict):
+        for code, country in countries.items():
+            iso = str(code or "").upper().strip()
+            if not iso or not isinstance(country, dict):
+                continue
+            try:
+                lat = float(country.get("lat"))
+                lng = float(country.get("lng"))
+            except Exception:
+                continue
+            country_name = str(country.get("country") or iso).strip()
+            capital = str(country.get("capital") or country_name).strip()
+            COUNTRY_CAPITALS[iso] = {
+                "country": country_name,
+                "capital": capital,
+                "lat": lat,
+                "lng": lng,
+                "precision": str(country.get("precision") or "capital"),
+            }
+            for alias in [country_name, capital, iso, *(country.get("aliases") or [])]:
+                key = _geo_lookup_key(alias)
+                if key:
+                    COUNTRY_NAME_TO_ISO.setdefault(key, iso)
+                    if str(alias).strip() == capital:
+                        CITY_NAME_TO_LOCATION.setdefault(
+                            key,
+                            {"city": capital, "country_iso": iso, "lat": lat, "lng": lng},
+                        )
+            translations = country.get("translations") or {}
+            if isinstance(translations, dict):
+                for name in translations.values():
+                    key = _geo_lookup_key(name)
+                    if key:
+                        COUNTRY_NAME_TO_ISO.setdefault(key, iso)
+    aliases = data.get("country_aliases") if isinstance(data, dict) else {}
+    if isinstance(aliases, dict):
+        for alias, code in aliases.items():
+            iso = str(code or "").upper().strip()
+            if iso in COUNTRY_CAPITALS:
+                COUNTRY_NAME_TO_ISO.setdefault(str(alias), iso)
+    city_aliases = data.get("city_aliases") if isinstance(data, dict) else {}
+    city_country_aliases = data.get("city_country_aliases") if isinstance(data, dict) else {}
+    for aliases, target in [(city_aliases, CITY_NAME_TO_LOCATION), (city_country_aliases, CITY_COUNTRY_TO_LOCATION)]:
+        if not isinstance(aliases, dict):
+            continue
+        for alias, city in aliases.items():
+            if not isinstance(city, dict):
+                continue
+            iso = str(city.get("country_iso") or "").upper().strip()
+            if iso not in COUNTRY_CAPITALS:
+                continue
+            try:
+                lat = float(city.get("lat"))
+                lng = float(city.get("lng"))
+            except Exception:
+                continue
+            key = str(alias or "").strip() or _geo_lookup_key(city.get("city"))
+            if key:
+                target[key] = {
+                    "city": str(city.get("city") or COUNTRY_CAPITALS[iso]["capital"]),
+                    "country_iso": iso,
+                    "lat": lat,
+                    "lng": lng,
+                }
+
+
+_load_geo_country_data()
 
 
 def _country_iso(value: Any) -> str:
@@ -437,7 +531,19 @@ def _country_iso(value: Any) -> str:
     upper = raw.upper()
     if upper in COUNTRY_CAPITALS:
         return upper
-    return COUNTRY_NAME_TO_ISO.get(raw.casefold(), "")
+    return COUNTRY_NAME_TO_ISO.get(raw.casefold()) or COUNTRY_NAME_TO_ISO.get(_geo_lookup_key(raw), "")
+
+
+def _city_location(value: Any, country_iso: str = "") -> dict[str, Any] | None:
+    key = _geo_lookup_key(value)
+    if not key:
+        return None
+    iso = str(country_iso or "").upper().strip()
+    if iso:
+        city = CITY_COUNTRY_TO_LOCATION.get(f"{key}|{iso}")
+        if city:
+            return city
+    return CITY_NAME_TO_LOCATION.get(key)
 
 
 def _country_cache_key(req: KimiTrackCountryRequest) -> str:
@@ -575,6 +681,7 @@ def _kimi_track_country_prompt(req: KimiTrackCountryRequest) -> list[dict[str, s
         f"title: {req.title}",
         f"artist: {req.artist}",
         f"album: {req.album}",
+        f"city/location label: {' / '.join(part for part in [req.city, req.location] if part)}",
         f"label/genre: {req.label}",
         f"tags: {req.tags}",
         f"culture bucket: {req.culture}",
@@ -589,9 +696,12 @@ def _kimi_track_country_prompt(req: KimiTrackCountryRequest) -> list[dict[str, s
             "content": (
                 "You identify only the most likely country associated with a music track. "
                 "Use web search when the metadata is insufficient. "
+                "Reliable evidence can include the artist's widely documented country, the label or scene country, "
+                "or an official soundtrack/work origin when it clearly applies to this specific track. "
                 "Do not infer a country merely from broad culture buckets, language guesses, genre names, "
                 "or stereotypes. If evidence is weak or conflicting, return resolved=false. "
-                "Output strict JSON only with keys: resolved, country, country_iso, confidence, rationale, evidence. "
+                "Your final answer must be one strict JSON object only, with keys: "
+                "resolved, country, country_iso, confidence, rationale, evidence. "
                 "country_iso must be an ISO 3166-1 alpha-2 code. confidence must be 0..1."
             ),
         },
@@ -599,7 +709,9 @@ def _kimi_track_country_prompt(req: KimiTrackCountryRequest) -> list[dict[str, s
             "role": "user",
             "content": (
                 "Find the track's country if it can be confirmed from reliable web/search evidence. "
-                "Country only; do not return city-level placement.\n\n"
+                "Country only; do not return city-level placement. "
+                "If you cannot confirm the country, return "
+                '{"resolved":false,"country":"","country_iso":"","confidence":0,"rationale":"uncertain","evidence":[]}.\n\n'
                 + "\n".join(user_lines)
             ),
         },
@@ -631,48 +743,80 @@ def _resolve_track_country_with_kimi(
         "thinking": {"type": "disabled"},
         "max_completion_tokens": 768,
     }
-    chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=chat_payload, timeout=timeout)
-    if not isinstance(chat_data, dict):
-        return {"ok": True, "resolved": False, "reason": "invalid_chat_response"}
-    message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
-    tool_calls = message.get("tool_calls") or []
-    if isinstance(tool_calls, list) and tool_calls:
+    message: dict[str, Any] = {}
+    for turn in range(6):
+        chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=chat_payload, timeout=timeout)
+        if not isinstance(chat_data, dict):
+            return {"ok": True, "resolved": False, "reason": "invalid_chat_response"}
+        message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
+        tool_calls = message.get("tool_calls") or []
+        if not isinstance(tool_calls, list) or not tool_calls:
+            break
         messages.append(message)
-        for call in tool_calls[:2]:
+        for call in tool_calls[:4]:
             function_call = call.get("function") or {}
-            fiber = _request_json(
-                url=fibers_url,
-                api_key=api_key,
-                method="POST",
-                payload=function_call,
-                timeout=timeout,
-            )
             encrypted_output = ""
-            if isinstance(fiber, dict):
-                encrypted_output = str(
-                    fiber.get("encrypted_output")
-                    or (fiber.get("context") or {}).get("encrypted_output")
-                    or ""
+            try:
+                fiber = _request_json(
+                    url=fibers_url,
+                    api_key=api_key,
+                    method="POST",
+                    payload=function_call,
+                    timeout=timeout,
                 )
-            if encrypted_output:
-                messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": call.get("id") or "",
-                        "name": function_call.get("name") or "web_search",
-                        "content": encrypted_output,
-                    }
-                )
-        final_payload: dict[str, Any] = {
+                if isinstance(fiber, dict):
+                    encrypted_output = str(
+                        fiber.get("encrypted_output")
+                        or (fiber.get("context") or {}).get("encrypted_output")
+                        or ""
+                    )
+            except Exception as exc:
+                encrypted_output = json.dumps({"error": f"web_search_failed: {exc}"}, ensure_ascii=False)
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call.get("id") or "",
+                    "name": function_call.get("name") or "web_search",
+                    "content": encrypted_output or '{"error":"empty_web_search_result"}',
+                }
+            )
+        for call in tool_calls[4:]:
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call.get("id") or "",
+                    "name": ((call.get("function") or {}).get("name") or "web_search"),
+                    "content": '{"error":"tool_call_limit"}',
+                }
+            )
+        chat_payload = {
             "model": model,
             "messages": messages,
             "tools": tools,
             "thinking": {"type": "disabled"},
             "max_completion_tokens": 768,
         }
+    else:
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "Stop searching now. Based only on the evidence already gathered in this conversation, "
+                    "return the final strict JSON object. If the gathered evidence is still insufficient, "
+                    'return {"resolved":false,"country":"","country_iso":"","confidence":0,'
+                    '"rationale":"uncertain","evidence":[]}.'
+                ),
+            }
+        )
+        final_payload: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "thinking": {"type": "disabled"},
+            "max_completion_tokens": 768,
+        }
         chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=final_payload, timeout=timeout)
         if not isinstance(chat_data, dict):
-            return {"ok": True, "resolved": False, "reason": "invalid_final_response"}
+            return {"ok": True, "resolved": False, "reason": "web_search_round_limit"}
         message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
     content = str(message.get("content") or "").strip()
     if not content:
@@ -1456,16 +1600,54 @@ def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
     country = country or parsed_country
     city = city or parsed_city
     lat, lng = _coordinates_from_tags(tags)
-    if country or country_code or city or location or (lat is not None and lng is not None):
+    iso = _country_iso(country_code or country)
+    capital = COUNTRY_CAPITALS.get(iso)
+    city_location = _city_location(city or location, iso)
+    if lat is not None and lng is not None:
         return {
-            "country": country or country_code or location or city or "embedded_location",
-            "country_code": country_code,
-            "city": city or country or country_code or location,
+            "country": capital["country"] if capital else (country or country_code or "embedded_location"),
+            "country_code": iso or country_code,
+            "city": city or (capital["capital"] if capital else country or location or "embedded_location"),
             "location": location,
             "lat": lat,
             "lng": lng,
-            "location_precision": "audio_tag_coordinates" if lat is not None and lng is not None else "audio_tag",
+            "location_precision": "audio_tag_coordinates",
             "location_note": "From embedded audio file metadata",
+        }
+    if city_location:
+        city_iso = str(city_location["country_iso"])
+        city_country = COUNTRY_CAPITALS.get(city_iso, {})
+        return {
+            "country": city_country.get("country", city_iso),
+            "country_code": city_iso,
+            "city": city_location.get("city") or city or location,
+            "location": location,
+            "lat": float(city_location["lat"]),
+            "lng": float(city_location["lng"]),
+            "location_precision": "audio_tag_city",
+            "location_note": "From embedded audio city metadata",
+        }
+    if capital:
+        return {
+            "country": capital["country"],
+            "country_code": iso,
+            "city": city or capital["capital"],
+            "location": location,
+            "lat": float(capital["lat"]),
+            "lng": float(capital["lng"]),
+            "location_precision": "audio_tag_country_capital",
+            "location_note": "From embedded audio country metadata",
+        }
+    if country or country_code or city or location or (lat is not None and lng is not None):
+        return {
+            "country": country or country_code or "mystery_place",
+            "country_code": country_code,
+            "city": city or location or "central_pacific",
+            "location": location,
+            "lat": 0.0,
+            "lng": -160.0,
+            "location_precision": "audio_tag_unresolved",
+            "location_note": "Embedded audio metadata has a place label but no confidently resolved country",
         }
     return {
         "country": "mystery_place",
