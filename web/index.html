@@ -166,7 +166,8 @@
       position: relative;
       width: 100%;
       height: 100%;
-      cursor: default;
+      cursor: grab;
+      touch-action: none;
       background:
         radial-gradient(circle at 50% 50%, rgba(17, 17, 17, 0.12), rgba(17, 17, 17, 0.035) 26%, transparent 57%),
         linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
@@ -184,10 +185,18 @@
       display: block;
     }
 
+    #webgl-canvas {
+      filter: brightness(1.18) saturate(1.08) contrast(1.03);
+    }
+
     #pretext-canvas {
       pointer-events: none;
       mix-blend-mode: normal;
       opacity: 0.96;
+    }
+
+    .globe-stage.is-dragging {
+      cursor: grabbing;
     }
 
     .globe-overlay {
@@ -509,8 +518,8 @@
     }
 
     .pulse-node:nth-child(3) {
-      right: 14%;
-      top: 32%;
+      right: 10%;
+      top: 11%;
     }
 
     .pulse-node:nth-child(4) {
@@ -621,8 +630,8 @@
       }
 
       .globe-column {
-        height: 56vh;
-        min-height: 420px;
+        height: 60vh;
+        min-height: 460px;
       }
 
       .globe-overlay {
@@ -664,6 +673,16 @@
 
       .pulse-node {
         font-size: 0.62rem;
+      }
+
+      .pulse-node:nth-child(3) {
+        right: 9%;
+        top: 17%;
+      }
+
+      .pulse-node:nth-child(4) {
+        left: 39%;
+        bottom: 11%;
       }
 
       .footer-bottom {
@@ -815,8 +834,10 @@
     const LINE_HEIGHT = 12;
     const MASK_RESOLUTION = 128;
     const GLOBE_SCALE = 1.18;
+    const GLOBE_COMPACT_SCALE = 1.36;
     const GLOBE_OFFSET_X = -0.05;
     const GLOBE_OFFSET_Y = 0.01;
+    const GLOBE_COMPACT_OFFSET_Y = -0.12;
     const GLOBE_TILT = 0.08;
     const AUTO_ROTATION_SPEED = 0.00012;
     const FRAME_INTERVAL = 1000 / 30;
@@ -855,13 +876,14 @@
 
     let width = Math.max(1, Math.round(container.getBoundingClientRect().width));
     let height = Math.max(1, Math.round(container.getBoundingClientRect().height));
+    let canvasDpr = 0;
 
     const renderer = new THREE.WebGLRenderer({
       canvas: webglCanvas,
-      antialias: false,
-      powerPreference: "low-power"
+      antialias: true,
+      powerPreference: "high-performance"
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0xffffff, 1);
     renderer.setSize(width, height, false);
 
@@ -876,8 +898,8 @@
     const textureLoader = new THREE.TextureLoader();
     const geometry = new THREE.SphereGeometry(1, 48, 48);
     const earthGroup = new THREE.Group();
-    earthGroup.scale.setScalar(GLOBE_SCALE);
-    earthGroup.position.set(GLOBE_OFFSET_X, GLOBE_OFFSET_Y, 0);
+    earthGroup.scale.setScalar(currentGlobeScale());
+    earthGroup.position.set(GLOBE_OFFSET_X, currentGlobeOffsetY(), 0);
     scene.add(earthGroup);
 
     const mapUrl = "./vendor/earth-blue-marble.jpg";
@@ -885,6 +907,29 @@
 
     let maskEarthMesh = null;
     let lightsReady = false;
+
+    function isCompactGlobe() {
+      return window.matchMedia("(max-width: 720px)").matches;
+    }
+
+    function currentGlobeScale() {
+      return isCompactGlobe() ? GLOBE_COMPACT_SCALE : GLOBE_SCALE;
+    }
+
+    function currentGlobeOffsetY() {
+      return isCompactGlobe() ? GLOBE_COMPACT_OFFSET_Y : GLOBE_OFFSET_Y;
+    }
+
+    function applyGlobeLayout() {
+      const scale = currentGlobeScale();
+      const offsetY = currentGlobeOffsetY();
+      earthGroup.scale.setScalar(scale);
+      earthGroup.position.set(GLOBE_OFFSET_X, offsetY, 0);
+      if (maskEarthMesh) {
+        maskEarthMesh.scale.setScalar(scale);
+        maskEarthMesh.position.copy(earthGroup.position);
+      }
+    }
 
     function drawFallbackLand(ctx, fillStyle) {
       const toPoint = ([lng, lat]) => [
@@ -982,8 +1027,8 @@
     function ensureGlobeLights() {
       if (lightsReady) return;
       lightsReady = true;
-      scene.add(new THREE.AmbientLight(0xffffff, 0.48));
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.18);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
       dirLight.position.set(5, 3, 5);
       scene.add(dirLight);
     }
@@ -998,6 +1043,8 @@
         map: diffuseMap,
         specularMap: waterMask,
         specular: new THREE.Color(0x333333),
+        emissive: new THREE.Color(0x1d2d44),
+        emissiveIntensity: 0.14,
         shininess: 15,
       });
 
@@ -1031,8 +1078,7 @@
       });
 
       maskEarthMesh = new THREE.Mesh(geometry, maskMaterial);
-      maskEarthMesh.scale.setScalar(GLOBE_SCALE);
-      maskEarthMesh.position.copy(earthGroup.position);
+      applyGlobeLayout();
       maskScene.add(maskEarthMesh);
       scheduleFrame();
     }
@@ -1064,19 +1110,41 @@
     let globeVisible = true;
     let documentVisible = !document.hidden;
     let needsTextRedraw = true;
+    let globeDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+    let manualTilt = GLOBE_TILT;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
 
     const resize = () => {
       const rect = container.getBoundingClientRect();
       const nextWidth = Math.max(1, Math.round(rect.width));
       const nextHeight = Math.max(1, Math.round(rect.height));
-      if (nextWidth === width && nextHeight === height && pretextCanvas.width === width && pretextCanvas.height === height) return;
+      const nextDpr = Math.min(window.devicePixelRatio || 1, 2);
+      const nextCanvasWidth = Math.max(1, Math.round(nextWidth * nextDpr));
+      const nextCanvasHeight = Math.max(1, Math.round(nextHeight * nextDpr));
+      const unchanged = nextWidth === width
+        && nextHeight === height
+        && canvasDpr === nextDpr
+        && pretextCanvas.width === nextCanvasWidth
+        && pretextCanvas.height === nextCanvasHeight;
+      if (unchanged) return;
       width = nextWidth;
       height = nextHeight;
+      canvasDpr = nextDpr;
+      renderer.setPixelRatio(canvasDpr);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      pretextCanvas.width = width;
-      pretextCanvas.height = height;
+      pretextCanvas.width = nextCanvasWidth;
+      pretextCanvas.height = nextCanvasHeight;
+      pretextCanvas.style.width = `${width}px`;
+      pretextCanvas.style.height = `${height}px`;
+      ctx2d.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
+      applyGlobeLayout();
       cachedRingRadius = 0;
       needsTextRedraw = true;
       scheduleFrame();
@@ -1164,7 +1232,7 @@
 
       const fov = camera.fov * Math.PI / 180;
       const vHeight = 2 * Math.tan(fov / 2) * camera.position.z;
-      const screenRadius = (GLOBE_SCALE / (vHeight / 2)) * (height / 2);
+      const screenRadius = (currentGlobeScale() / (vHeight / 2)) * (height / 2);
       const ringRadius = Math.min(screenRadius * 1.22, Math.min(width, height) * 0.46);
 
       if (Math.abs(cachedRingRadius - ringRadius) > 0.5) {
@@ -1180,7 +1248,7 @@
         cachedAnglePerChar = (Math.PI * 2) / cachedRingText.length;
       }
 
-      const visualCenter = new THREE.Vector3(GLOBE_OFFSET_X, GLOBE_OFFSET_Y, 0).project(camera);
+      const visualCenter = new THREE.Vector3(GLOBE_OFFSET_X, currentGlobeOffsetY(), 0).project(camera);
       const centerX = (visualCenter.x * 0.5 + 0.5) * width;
       const centerY = (-visualCenter.y * 0.5 + 0.5) * height;
       const time = timestamp * 0.00005;
@@ -1273,8 +1341,10 @@
       const delta = lastRenderTime ? Math.min(80, timestamp - lastRenderTime) : FRAME_INTERVAL;
       lastRenderTime = timestamp;
 
-      earthGroup.rotation.x = GLOBE_TILT;
-      earthGroup.rotation.y += AUTO_ROTATION_SPEED * delta;
+      earthGroup.rotation.x = manualTilt;
+      if (!globeDragging) {
+        earthGroup.rotation.y += AUTO_ROTATION_SPEED * delta;
+      }
       syncActiveRegion();
       maskEarthMesh.rotation.copy(earthGroup.rotation);
 
@@ -1308,6 +1378,46 @@
         }
       }, { threshold: 0.05 }).observe(container);
     }
+
+    container.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      globeDragging = true;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      container.classList.add("is-dragging");
+      container.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    });
+
+    container.addEventListener("pointermove", (event) => {
+      if (!globeDragging) return;
+      const dx = event.clientX - lastPointerX;
+      const dy = event.clientY - lastPointerY;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      earthGroup.rotation.y += dx * 0.006;
+      manualTilt = clamp(manualTilt + dy * 0.0032, -0.52, 0.52);
+      lastRenderTime = 0;
+      needsTextRedraw = true;
+      syncActiveRegion();
+      scheduleFrame();
+      event.preventDefault();
+    });
+
+    function endGlobeDrag(event) {
+      if (!globeDragging) return;
+      globeDragging = false;
+      container.classList.remove("is-dragging");
+      if (event && container.hasPointerCapture?.(event.pointerId)) {
+        container.releasePointerCapture(event.pointerId);
+      }
+      lastRenderTime = 0;
+      needsTextRedraw = true;
+      scheduleFrame();
+    }
+
+    container.addEventListener("pointerup", endGlobeDrag);
+    container.addEventListener("pointercancel", endGlobeDrag);
 
     webglCanvas.addEventListener("webglcontextlost", (event) => {
       event.preventDefault();

@@ -17,6 +17,7 @@ from dcas.embeddings.culturemert import CultureMERTConfig, CultureMERTEmbedder
 from dcas.ot.sinkhorn import sinkhorn_plan, squared_euclidean_cost
 from dcas.serialization import load_checkpoint
 
+from .catalog_geo import catalog_origin_search_text_for_query, infer_catalog_origin
 from .paths import Storage
 
 
@@ -981,6 +982,19 @@ class MainlineRecommendationPlatform:
     ) -> dict[str, Any]:
         track_id = str(self.tracks.track_id[int(idx)])
         row = self.metadata_by_id.get(track_id, {})
+        culture = str(self.tracks.culture[int(idx)])
+        source_dataset = (
+            str(self.tracks.source_dataset[int(idx)])
+            if self.tracks.source_dataset is not None
+            else _clean(row.get("source_dataset"))
+        )
+        origin_row = {
+            **row,
+            "culture": culture,
+            "source_dataset": source_dataset,
+            "platform": _clean(row.get("platform")) or source_dataset,
+        }
+        origin = infer_catalog_origin(origin_row)
         release_date = _first_clean(
             row,
             (
@@ -1027,10 +1041,8 @@ class MainlineRecommendationPlatform:
             "description_source": _clean(row.get("description_source")),
             "album_description_source": _clean(row.get("album_description_source")),
             "description_evidence_url": _clean(row.get("description_evidence_url")),
-            "culture": str(self.tracks.culture[int(idx)]),
-            "source_dataset": str(self.tracks.source_dataset[int(idx)])
-            if self.tracks.source_dataset is not None
-            else _clean(row.get("source_dataset")),
+            "culture": culture,
+            "source_dataset": source_dataset,
             "label": _clean(row.get("label")),
             "label_en": _clean(row.get("label_en")),
             "tags": _clean(row.get("tags")),
@@ -1039,7 +1051,12 @@ class MainlineRecommendationPlatform:
             "musicinfo_language": _clean(row.get("musicinfo_language")),
             "musicinfo_vocalinstrumental": _clean(row.get("musicinfo_vocalinstrumental")),
             "musicinfo_speed": _clean(row.get("musicinfo_speed")),
-            "country": _clean(row.get("country")),
+            "country": _clean(origin.get("country")),
+            "country_iso": _clean(origin.get("country_iso")),
+            "country_source": _clean(origin.get("country_source")),
+            "country_original": _clean(origin.get("country_original")),
+            "storefront_country": _clean(origin.get("storefront_country")),
+            "catalog_country_is_storefront": bool(origin.get("catalog_country_is_storefront")),
             "release_date": release_date,
             "release_year": release_year,
             "year": release_year,
@@ -1111,6 +1128,13 @@ class MainlineRecommendationPlatform:
 
     def _matches_query(self, idx: int, query_terms: list[str]) -> bool:
         row = self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {})
+        origin_row = {
+            **row,
+            "culture": self.tracks.culture[int(idx)],
+            "source_dataset": self.tracks.source_dataset[int(idx)] if self.tracks.source_dataset is not None else "",
+            "platform": _clean(row.get("platform"))
+            or (self.tracks.source_dataset[int(idx)] if self.tracks.source_dataset is not None else ""),
+        }
         text = " ".join(
             [
                 _norm_key(self.tracks.track_id[int(idx)]),
@@ -1124,7 +1148,10 @@ class MainlineRecommendationPlatform:
                 _norm_key(row.get("tags")),
             ]
         )
-        return all(term in text for term in query_terms)
+        if all(term in text for term in query_terms):
+            return True
+        origin_query_terms = [*query_terms, " ".join(query_terms)]
+        return all(term in f"{text} {catalog_origin_search_text_for_query(origin_row, origin_query_terms)}" for term in query_terms)
 
     def _title_artist_key(self, idx: int) -> str:
         row = self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {})

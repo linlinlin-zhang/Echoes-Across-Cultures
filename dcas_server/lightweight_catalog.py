@@ -9,6 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .catalog_geo import catalog_origin_search_text_for_query, infer_catalog_origin
 from .paths import Storage
 
 
@@ -264,6 +265,7 @@ class LightweightMainlineCatalog:
 
     def _track_payload(self, row: dict[str, Any]) -> dict[str, Any]:
         track_id = _clean(row.get("track_id"))
+        origin = infer_catalog_origin(row)
         release_date = _first_clean(
             row,
             (
@@ -320,7 +322,12 @@ class LightweightMainlineCatalog:
             "musicinfo_language": _clean(row.get("musicinfo_language")),
             "musicinfo_vocalinstrumental": _clean(row.get("musicinfo_vocalinstrumental")),
             "musicinfo_speed": _clean(row.get("musicinfo_speed")),
-            "country": _clean(row.get("country")),
+            "country": _clean(origin.get("country")),
+            "country_iso": _clean(origin.get("country_iso")),
+            "country_source": _clean(origin.get("country_source")),
+            "country_original": _clean(origin.get("country_original")),
+            "storefront_country": _clean(origin.get("storefront_country")),
+            "catalog_country_is_storefront": bool(origin.get("catalog_country_is_storefront")),
             "release_date": release_date,
             "release_year": release_year,
             "year": release_year,
@@ -364,10 +371,15 @@ class LightweightMainlineCatalog:
                     "culture",
                     "source_dataset",
                     "country",
+                    "country_original",
+                    "storefront_country",
                 )
             )
         )
-        return all(term in hay for term in query_terms)
+        if all(term in hay for term in query_terms):
+            return True
+        origin_query_terms = [*query_terms, " ".join(query_terms)]
+        return all(term in f"{hay} {catalog_origin_search_text_for_query(row, origin_query_terms)}" for term in query_terms)
 
 
 _CATALOGS: dict[tuple[str, str], LightweightMainlineCatalog] = {}

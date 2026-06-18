@@ -246,6 +246,142 @@
       animation: record-pulse 1.2s ease-in-out infinite;
     }
 
+    .library-picker {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 1.25rem;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(12px);
+    }
+
+    .library-picker[hidden] {
+      display: none;
+    }
+
+    .library-dialog {
+      width: min(860px, 100%);
+      max-height: min(760px, calc(100vh - 2.5rem));
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      border: 1px solid var(--ink);
+      background: #ffffff;
+      box-shadow: 0 1.4rem 4rem rgba(17, 17, 17, 0.12);
+    }
+
+    .library-head,
+    .library-search,
+    .library-status {
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .library-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .library-head h2 {
+      font-size: 1.45rem;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .library-search {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.7rem;
+    }
+
+    .library-search input {
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.68rem 0.85rem;
+      border: 1px solid var(--line-strong);
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+
+    .library-search input:focus {
+      border-color: var(--ink);
+    }
+
+    .library-results {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .library-result {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) auto;
+      gap: 0.9rem;
+      align-items: center;
+      padding: 0.92rem 1.15rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      transition: background 160ms ease;
+    }
+
+    .library-result:hover,
+    .library-result:focus-visible {
+      background: var(--soft);
+      outline: none;
+    }
+
+    .library-result-cover {
+      width: 64px;
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      object-fit: cover;
+      background:
+        linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(183, 39, 39, 0.09)),
+        #ffffff;
+    }
+
+    .library-result-cover.is-empty {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      text-transform: uppercase;
+    }
+
+    .library-result-main {
+      display: grid;
+      gap: 0.36rem;
+      min-width: 0;
+    }
+
+    .library-result-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1.02rem;
+    }
+
+    .library-result-meta,
+    .library-status {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .library-result-action {
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     @keyframes record-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -460,11 +596,12 @@
     }
 
     .pan-zone.down {
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 16%;
-      background: linear-gradient(0deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+      bottom: 0.85rem;
+      left: 14%;
+      right: 14%;
+      height: 4.75rem;
+      background: linear-gradient(0deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0));
+      border-radius: 999px;
     }
 
     .map-stage.show-left .pan-zone.left,
@@ -515,6 +652,7 @@
       border-radius: 50%;
       display: grid;
       place-items: center;
+      justify-self: center;
       transition: background 180ms ease, transform 180ms ease;
     }
 
@@ -523,6 +661,7 @@
       color: var(--ink);
       font-size: 1.28rem;
       line-height: 1;
+      padding-bottom: 0.08em;
     }
 
     .play-button:hover,
@@ -2015,7 +2154,12 @@
       }
 
       .insight-card-title {
-        font-size: 2.8rem;
+        top: 1.25rem;
+        left: 1rem;
+        right: 1rem;
+        font-size: clamp(2rem, 10.5vw, 2.55rem);
+        line-height: 1.05;
+        white-space: normal;
       }
 
       .era-row {
@@ -2128,12 +2272,16 @@
       }
 
       .transport {
-        grid-template-columns: auto auto auto;
+        grid-template-columns: repeat(3, minmax(4.25rem, 4.9rem));
         justify-content: center;
+        justify-items: center;
+        column-gap: clamp(0.55rem, 5vw, 1.15rem);
+        row-gap: 0.9rem;
       }
 
       .progress-wrap {
         grid-column: 1 / -1;
+        width: min(100%, 48rem);
       }
 
       .recommend-button {
@@ -2147,6 +2295,28 @@
 
       .track-title-line strong {
         max-width: 100%;
+      }
+
+      .library-picker {
+        padding: 0.75rem;
+        align-items: end;
+      }
+
+      .library-dialog {
+        max-height: min(82vh, 720px);
+      }
+
+      .library-search,
+      .library-result {
+        grid-template-columns: 1fr;
+      }
+
+      .library-result {
+        align-items: start;
+      }
+
+      .library-result-cover {
+        width: 56px;
       }
 
       .rec-card-main {
@@ -2184,6 +2354,7 @@
       <div class="top-actions">
         <button class="pill record-btn" id="record-button" type="button" data-i18n="music.record">录制</button>
         <label class="pill" for="music-upload" data-i18n="music.upload">上传音乐</label>
+        <button class="pill" id="library-picker-button" type="button" data-i18n="music.library.open">曲库选择</button>
         <input class="upload-input" id="music-upload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma">
       </div>
     </div>
@@ -2196,6 +2367,24 @@
       </nav>
     </div>
   </header>
+
+  <div class="library-picker" id="library-picker" hidden>
+    <section class="library-dialog" role="dialog" aria-modal="true" aria-labelledby="library-picker-title">
+      <div class="library-head">
+        <div>
+          <div class="meta-label" data-i18n="music.library.meta">曲库导入</div>
+          <h2 id="library-picker-title" data-i18n="music.library.title">选择曲库歌曲</h2>
+        </div>
+        <button class="pill" id="library-picker-close" type="button" data-i18n="music.library.close">关闭</button>
+      </div>
+      <form class="library-search" id="library-search-form">
+        <input id="library-search-input" type="search" autocomplete="off" data-i18n-placeholder="music.library.placeholder" placeholder="搜索歌名、歌手、流派、国家或地域">
+        <button class="pill" id="library-search-submit" type="submit" data-i18n="music.library.search">搜索</button>
+      </form>
+      <div class="library-status" id="library-status" data-i18n="music.library.ready">输入关键词或直接浏览曲库。</div>
+      <div class="library-results" id="library-results" role="listbox" aria-label="曲库搜索结果" data-i18n-aria-label="music.library.resultsAria"></div>
+    </section>
+  </div>
 
   <main class="station-shell">
     <section class="console" aria-label="音乐播放与地图" data-i18n-aria-label="music.aria.console">
@@ -2327,8 +2516,8 @@
     const initialLocalAudioId = urlParams.get("local") || "";
     const apiPreferCuda = ["1", "true", "yes"].includes(String(urlParams.get("cuda") || "").toLowerCase());
     const appConfigKey = "echo-app-config";
-    const lastStartupTrackKey = "echo-last-startup-track";
-    const stationStateKey = "echo-music-station-state";
+    const lastStartupTrackKey = "echo-last-startup-track-v2";
+    const stationStateKey = "echo-music-station-state-v2";
     const pendingLocalPlayKey = "echo-pending-local-play";
     const localAudioDbName = "echo-local-audio";
     const localAudioStore = "tracks";
@@ -2340,11 +2529,51 @@
       precision: t("music.mysteryPlace.precision")
     };
     let geoData = null;
+    let geoCityLabels = {};
+    const mysterySentinelValues = new Set([
+      "mystery_place",
+      "mystery place",
+      "central_pacific",
+      "central pacific",
+      "pacific_default",
+      "embedded_location",
+      "unknown_location",
+      "unknown country",
+      "unknown city"
+    ]);
 
     function geoLookupKey(value) {
       const raw = String(value || "").toLowerCase().trim();
       const deaccented = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return deaccented.replace(/[^a-z0-9]+/g, " ").trim() || raw;
+    }
+
+    function hasCjkText(value) {
+      return /[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]/.test(String(value || ""));
+    }
+
+    function geoCityLabelKey(iso, city) {
+      const code = String(iso || "").toUpperCase().trim();
+      const cityKey = geoLookupKey(city);
+      return code && cityKey ? `${code}|${cityKey}` : "";
+    }
+
+    function rememberGeoCityLabel(alias, city) {
+      const label = String(alias || "").trim();
+      if (!label || !hasCjkText(label) || !city?.city || !city?.country_iso) return;
+      const key = geoCityLabelKey(city.country_iso, city.city);
+      if (!key) return;
+      const current = geoCityLabels[key] || "";
+      if (!current || label.length < current.length || (current.endsWith("市") && !label.endsWith("市"))) {
+        geoCityLabels[key] = label;
+      }
+    }
+
+    function rebuildGeoCityLabels(data) {
+      geoCityLabels = {};
+      ["city_aliases", "city_country_aliases"].forEach((bucket) => {
+        Object.entries(data?.[bucket] || {}).forEach(([alias, city]) => rememberGeoCityLabel(alias, city));
+      });
     }
 
     async function loadGeoData() {
@@ -2354,9 +2583,11 @@
         const data = await response.json();
         if (!data?.countries || !data?.country_aliases) throw new Error("invalid geo data");
         geoData = data;
+        rebuildGeoCityLabels(data);
       } catch (error) {
         console.warn("Geo data unavailable; using built-in fallback", error);
         geoData = null;
+        geoCityLabels = {};
       }
     }
 
@@ -2461,10 +2692,12 @@
     }
 
     function localizedCapital(code) {
-      const geoCountry = geoData?.countries?.[String(code || "").toUpperCase()];
+      const upper = String(code || "").toUpperCase();
+      const geoCountry = geoData?.countries?.[upper];
       if (geoCountry) {
+        const rawCity = geoCountry.capital || geoCountry.country;
         return {
-          city: geoCountry.capital || geoCountry.country,
+          city: localizedCityName(upper, rawCity),
           lat: Number(geoCountry.lat),
           lng: Number(geoCountry.lng),
           precision: geoCountry.precision || "capital"
@@ -2482,8 +2715,9 @@
         || geoData?.city_aliases?.[key];
       if (!city) return null;
       const iso = String(city.country_iso || "").toUpperCase();
+      const rawCity = city.city || String(name || "").trim();
       return {
-        city: city.city || String(name || "").trim(),
+        city: localizedCityName(iso, rawCity, name),
         country: countryNameLookupFn(iso) || iso,
         countryIso: iso,
         lat: Number(city.lat),
@@ -2524,9 +2758,35 @@
 
     function cultureLabel(key) { return t("culture." + key); }
 
-    const countryIsoCodes = ["US","GB","CN","SG","MY","TH","VN","PH","TW","HK","JP","KR","IN","ID","BR","MX","AR","CL","PE","TR","IR","SA","AE","IE","SE","NO","FI","DK","PL","RS","MK","KZ","KG","TJ","JM","HT","TT","ML","TZ","ZA","AU","NZ","DE","FR","IT","ES","CA"];
+    const countryIsoCodes = ["US","GB","CN","SG","MY","TH","VN","PH","TW","HK","MO","JP","KR","IN","ID","BR","MX","AR","CL","PE","TR","IR","SA","AE","IE","SE","NO","FI","DK","PL","RS","MK","KZ","KG","TJ","JM","HT","TT","ML","SN","GH","NG","TZ","ZA","CU","AU","NZ","DE","FR","IT","ES","CA"];
+    function localizedCityName(iso, city, original = "") {
+      const rawCity = cleanMetaText(city);
+      if (!rawCity) return "";
+      const originalText = cleanMetaText(original);
+      if (isChineseLang()) {
+        if (hasCjkText(originalText)) return originalText;
+        const code = String(iso || "").toUpperCase().trim();
+        const label = geoCityLabels[geoCityLabelKey(code, rawCity)];
+        if (label) return label;
+        const capitalEntry = capitalLookup[code];
+        if (capitalEntry) return t("music.city." + capitalEntry.cityKey);
+      }
+      return rawCity;
+    }
+
+    function specialRegionCountryName(code) {
+      const upper = String(code || "").toUpperCase().trim();
+      const chinese = isChineseLang();
+      if (upper === "HK") return chinese ? "中国香港" : "Hong Kong, China";
+      if (upper === "MO") return chinese ? "中国澳门" : "Macau, China";
+      if (upper === "TW") return chinese ? "中国台北" : "Chinese Taipei";
+      return "";
+    }
+
     function countryNameLookupFn(code) {
       const upper = String(code || "").toUpperCase().trim();
+      const specialName = specialRegionCountryName(upper);
+      if (specialName) return specialName;
       const geoCountry = geoData?.countries?.[upper];
       if (geoCountry) {
         const lang = window.EchoI18n?.getLanguage?.() || window.EchoI18n?.currentLanguage || "zh-CN";
@@ -2536,7 +2796,7 @@
           || upper;
       }
       if (countryIsoCodes.includes(upper)) return t("music.country." + upper);
-      if (code === "台湾" || code === "Taiwan") return t("music.country.TW");
+      if (code === "台湾" || code === "台灣" || code === "Taiwan") return specialRegionCountryName("TW") || t("music.country.TW");
       return "";
     }
 
@@ -2683,11 +2943,67 @@
       return `${apiBase}${value.startsWith("/") ? "" : "/"}${value}`;
     }
 
+    function normalizeMediaUrl(path) {
+      const value = String(path || "").trim();
+      if (!value) return "";
+      try {
+        const url = new URL(value, window.location.origin);
+        if (url.pathname.endsWith("/api/files/download") && url.searchParams.has("path")) {
+          const filePath = url.searchParams.get("path") || "";
+          url.search = "";
+          url.searchParams.set("path", filePath);
+        }
+        if (url.origin === window.location.origin) {
+          return `${url.pathname}${url.search}${url.hash}`;
+        }
+        return url.href;
+      } catch (_) {
+        return resolveApiUrl(value);
+      }
+    }
+
     function cleanMetaText(value) {
       const text = String(value ?? "").trim();
       if (!text) return "";
-      if (["nan", "none", "null", "undefined", "unknown", "n/a", "uploaded_audio", "未标注风格", "未知", "unknown style"].includes(text.toLowerCase())) return "";
+      const normalized = text.toLowerCase();
+      if (
+        mysterySentinelValues.has(normalized)
+        || ["nan", "none", "null", "undefined", "unknown", "n/a", "uploaded_audio", "未标注风格", "未知", "unknown style"].includes(normalized)
+      ) return "";
       return text;
+    }
+
+    function isMysteryPlaceValue(value) {
+      const key = String(value || "").trim().toLowerCase();
+      return !key || mysterySentinelValues.has(key) || value === mysteryPlace.country || value === mysteryPlace.city;
+    }
+
+    function isUploadLikeApiItem(item) {
+      const values = [
+        item?.platform,
+        item?.source_dataset,
+        item?.source,
+        item?.track_id,
+        item?.trackId,
+        item?.audio_api_url,
+        item?.path
+      ].map((value) => String(value || "").toLowerCase());
+      return values.some((value) => /upload|uploads\/mainline|uploaded/.test(value));
+    }
+
+    function isUploadLikeTrack(item) {
+      return Boolean(
+        item?.fileObjectUrl
+        || item?.localAudioId
+        || isUploadLikeApiItem({
+          platform: item?.platform,
+          source_dataset: item?.sourceDataset,
+          source: item?.source,
+          track_id: item?.trackId,
+          audio_api_url: item?.audioUrl,
+          path: item?.path
+        })
+      );
     }
 
     function firstTagValue(value) {
@@ -2695,6 +3011,14 @@
         .split(/[;,|/]/)
         .map((item) => item.trim())
         .filter(Boolean)[0] || "";
+    }
+
+    function firstCleanMetaValue(...values) {
+      for (const value of values) {
+        const text = cleanMetaText(value);
+        if (text) return text;
+      }
+      return "";
     }
 
     function readableCountry(value, culture) {
@@ -2708,24 +3032,65 @@
       return (cp && cp.country) || cultureLabel(culture) || mysteryPlace.country;
     }
 
+    function isIgnoredStorefrontCountry(item) {
+      const source = cleanMetaText(item?.country_source || item?.countrySource);
+      const hasOriginCountry = Boolean(firstCleanMetaValue(item?.country, item?.country_iso, item?.countryIso, item?.country_code, item?.countryCode));
+      return Boolean(item?.catalog_country_is_storefront || item?.catalogCountryIsStorefront)
+        && /storefront_ignored|itunes_storefront/i.test(source)
+        && !hasOriginCountry;
+    }
+
     function placeForApiItem(item) {
       const culture = String(item.culture || "").trim();
       const lat = Number(item.lat ?? item.latitude);
       const lng = Number(item.lng ?? item.lon ?? item.longitude);
-      const rawCountry = cleanMetaText(item.country || item.country_code || item.countryCode);
+      const rawCountry = firstCleanMetaValue(item.country, item.country_iso, item.countryIso, item.country_code, item.countryCode);
       const country = readableCountry(rawCountry, culture);
       const isoCode = isoCodeForCountryName(rawCountry) || isoCodeForCountryName(country);
       const countryCapital = localizedCapital(isoCode);
-      const explicitCity = cleanMetaText(item.city || item.location_city || item.location || item.artist_city);
+      const explicitCity = firstCleanMetaValue(item.city, item.location_city, item.location, item.artist_city);
       const explicitCityLocation = cityLocationForName(explicitCity, isoCode);
+      const uploadLike = isUploadLikeApiItem(item);
+      const culturePlace = localizedCulturePlace(culture);
+      const storefrontCountryIgnored = isIgnoredStorefrontCountry(item);
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        if (explicitCityLocation && (!isoCode || explicitCityLocation.countryIso === isoCode)) {
+          return {
+            country: explicitCityLocation.country,
+            city: explicitCityLocation.city,
+            lat,
+            lng,
+            precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag"),
+            needsCountryLookup: false
+          };
+        }
+        if (rawCountry) {
+          return {
+            country,
+            city: explicitCity ? localizedCityName(isoCode, explicitCity, explicitCity) : (countryCapital?.city || country),
+            lat,
+            lng,
+            precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag"),
+            needsCountryLookup: false
+          };
+        }
+        if (!uploadLike && culturePlace && !storefrontCountryIgnored) {
+          return {
+            country: culturePlace.country,
+            city: explicitCity || culturePlace.city,
+            lat,
+            lng,
+            precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag"),
+            needsCountryLookup: false
+          };
+        }
         return {
-          country: rawCountry ? country : mysteryPlace.country,
-          city: explicitCity || countryCapital?.city || (rawCountry ? country : mysteryPlace.city),
+          country: mysteryPlace.country,
+          city: explicitCity || mysteryPlace.city,
           lat,
           lng,
           precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag"),
-          needsCountryLookup: false
+          needsCountryLookup: uploadLike
         };
       }
       if (rawCountry) {
@@ -2741,7 +3106,7 @@
         }
         return {
           country,
-          city: countryCapital?.city || explicitCity || country,
+          city: countryCapital?.city || localizedCityName(isoCode, explicitCity, explicitCity) || country,
           lat: countryCapital?.lat ?? mysteryPlace.lat,
           lng: countryCapital?.lng ?? mysteryPlace.lng,
           precision: countryCapital ? t("music.precision.capitalCity") : t("music.mysteryPlace.precision"),
@@ -2758,11 +3123,21 @@
           needsCountryLookup: false
         };
       }
+      if (!uploadLike && culturePlace && !storefrontCountryIgnored) {
+        return {
+          country: culturePlace.country,
+          city: culturePlace.city,
+          lat: culturePlace.lat,
+          lng: culturePlace.lng,
+          precision: t("music.precision.capitalFallback"),
+          needsCountryLookup: false
+        };
+      }
       return {
         ...mysteryPlace,
-        needsCountryLookup: true,
+        needsCountryLookup: uploadLike,
         originalCity: explicitCity,
-        originalLocation: cleanMetaText(item.location || item.artist_location || item.venue),
+        originalLocation: firstCleanMetaValue(item.location, item.artist_location, item.venue),
         originalCulture: culture
       };
     }
@@ -2838,6 +3213,11 @@
         albumDescription: String(item.album_description || "").trim(),
         tags: (!isChineseLang() && item.tags_en) ? String(item.tags_en).trim() : String(item.tags || "").trim(),
         country: place.country,
+        countryIso: cleanMetaText(item.country_iso || item.countryIso || item.country_code || item.countryCode),
+        countrySource: cleanMetaText(item.country_source || item.countrySource),
+        countryOriginal: cleanMetaText(item.country_original || item.countryOriginal),
+        storefrontCountry: cleanMetaText(item.storefront_country || item.storefrontCountry),
+        catalogCountryIsStorefront: Boolean(item.catalog_country_is_storefront || item.catalogCountryIsStorefront),
         city: place.city,
         originalCity: place.originalCity || "",
         originalLocation: place.originalLocation || "",
@@ -2854,7 +3234,7 @@
         why: "",
         metrics: metricsFromApiItem(item, index),
         durationSeconds: durationMs > 0 ? durationMs / 1000 : undefined,
-        coverArtUrl,
+        coverArtUrl: normalizeMediaUrl(coverArtUrl),
         platformTrackUrl: item.platform_track_url || item.full_track_url || item.spotify_url || "",
         fullTrackUrl: item.full_track_url || item.platform_track_url || "",
         previewUrl: item.preview_url || "",
@@ -2904,6 +3284,14 @@
       readoutCatalog: document.getElementById("readout-catalog"),
       upload: document.getElementById("music-upload"),
       recordButton: document.getElementById("record-button"),
+      libraryButton: document.getElementById("library-picker-button"),
+      libraryPicker: document.getElementById("library-picker"),
+      libraryClose: document.getElementById("library-picker-close"),
+      librarySearchForm: document.getElementById("library-search-form"),
+      librarySearchInput: document.getElementById("library-search-input"),
+      librarySearchSubmit: document.getElementById("library-search-submit"),
+      libraryStatus: document.getElementById("library-status"),
+      libraryResults: document.getElementById("library-results"),
       audio: document.getElementById("audio-player"),
       playButton: document.getElementById("play-button"),
       prevButton: document.getElementById("prev-button"),
@@ -2936,6 +3324,9 @@
     let uploadedAudioFile = null;
     let mainlineStatus = null;
     let recommendationsPersistable = false;
+    let librarySearchResults = [];
+    let librarySearchBusy = false;
+    let librarySearchAbort = null;
 
     function formatCount(value) {
       return Number(value || 0).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN");
@@ -2999,20 +3390,33 @@
       if (Number.isFinite(track.lat) && Number.isFinite(track.lng)) {
         return { lat: track.lat, lng: track.lng, precision: track.locationPrecision || (track.city ? t("music.precision.cityCoord") : t("music.precision.countryCoord")) };
       }
-      const isoCode = isoCodeForCountryName(track.country);
+      const isoCode = isoCodeForCountryName(track.countryIso || track.country_iso || track.country);
       const fallback = localizedCapital(isoCode) || mysteryPlace;
       return { ...fallback, precision: fallback.precision || t("music.precision.capitalFallback") };
     }
 
     function formatOrigin(track) {
-      if (track.country === mysteryPlace.country) {
+      if (isMysteryPlaceValue(track.country) && isMysteryPlaceValue(track.city)) {
         return t("music.desc.songFrom") + t("music.mysteryPlace.country");
       }
-      const parts = [track.country, track.province, track.city]
+      const iso = isoCodeForCountryName(track.countryIso || track.country_iso || track.country || track.country_code);
+      const country = iso ? countryNameLookupFn(iso) : cleanMetaText(track.country);
+      const countrySource = String(track.countrySource || track.country_source || track.locationPrecision || "");
+      const aiCountryOnly = Boolean(track.raw?.ai_country_location)
+        || /kimi|ai_country/i.test(String(track.countrySource || track.country_source || track.locationPrecision || ""));
+      const inferredCountryOnly = aiCountryOnly || /origin_hint|metadata_hint|country_hint|storefront_ignored/i.test(countrySource);
+      if (inferredCountryOnly && country) {
+        return country;
+      }
+      const city = localizedCityName(iso, track.city, track.city);
+      const parts = [country, track.province, city]
         .map(cleanMetaText)
         .filter(Boolean)
         .filter((part, index, all) => all.indexOf(part) === index);
-      if (parts.some((part) => /[A-Za-z_]/.test(String(part)))) {
+      if (!parts.length) {
+        return t("music.desc.songFrom") + t("music.mysteryPlace.country");
+      }
+      if (!isChineseLang() && parts.some((part) => /[A-Za-z_]/.test(String(part)))) {
         return parts.join(" / ");
       }
       return parts.join("");
@@ -3050,9 +3454,9 @@
 
     function syncTopCover() {
       if (!els.topCover) return;
-      const url = currentTrack.coverArtUrl || currentTrack.cover_art_url || "";
+      const url = normalizeMediaUrl(currentTrack.coverArtUrl || currentTrack.cover_art_url || "");
       if (url) {
-        els.topCover.style.backgroundImage = `url("${String(url).replace(/"/g, "%22")}")`;
+        els.topCover.style.backgroundImage = `url(${JSON.stringify(url)})`;
         els.topCover.textContent = "";
       } else {
         els.topCover.style.backgroundImage = "";
@@ -3095,7 +3499,8 @@
         return null;
       }
       const allowed = [
-        "trackId", "track_id", "localAudioId", "title", "artist", "album", "country", "city", "province",
+        "trackId", "track_id", "localAudioId", "title", "artist", "album", "country", "countryIso",
+        "countrySource", "countryOriginal", "storefrontCountry", "catalogCountryIsStorefront", "city", "province",
         "capital", "lat", "lng", "locationPrecision", "culture", "sourceDataset", "platform", "genre",
         "label", "style", "note", "metrics", "durationSeconds", "releaseDate", "releaseYear", "era", "language", "coverArtUrl", "platformTrackUrl",
         "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "descriptionEn", "albumDescription", "tags", "tagsEn", "aiDescription", "fromFavorites"
@@ -3235,7 +3640,7 @@
           unexpectedness: 0.5
         },
         durationSeconds: 0,
-        coverArtUrl: metadata.coverArtUrl || metadata.cover_art_url || "",
+        coverArtUrl: normalizeMediaUrl(metadata.coverArtUrl || metadata.cover_art_url || ""),
         fileObjectUrl: URL.createObjectURL(file)
       };
     }
@@ -3427,7 +3832,7 @@
 
     function coverMarkup(item, className = "insight-cover") {
       const title = escapeHtml(item?.title || t("music.cover.recommended"));
-      const url = item?.coverArtUrl || item?.cover_art_url || item?.raw?.cover_art_url_large || item?.raw?.cover_art_url || "";
+      const url = normalizeMediaUrl(item?.coverArtUrl || item?.cover_art_url || item?.raw?.cover_art_url_large || item?.raw?.cover_art_url || "");
       if (url) {
         return `<img class="${className}" src="${escapeHtml(url)}" alt="${title}${t("music.cover.suffix")}" loading="lazy">`;
       }
@@ -4073,7 +4478,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }
     }
 
-    const countryLookupCacheKey = "echo-track-country-cache";
+    const countryLookupCacheKey = "echo-track-country-cache-v2";
     const countryLookupInFlight = new Map();
 
     function readCountryLookupCache() {
@@ -4098,7 +4503,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     function shouldLookupCountry(item) {
       if (!item || !item.needsCountryLookup) return false;
       if (item.geoLookupStatus === "resolved" || item.geoLookupStatus === "unresolved") return false;
-      if (item.country && item.country !== mysteryPlace.country) return false;
+      if (!isUploadLikeTrack(item)) return false;
+      if (!isMysteryPlaceValue(item.country)) return false;
       return Boolean(item.title || item.artist || item.platformTrackUrl || item.fullTrackUrl);
     }
 
@@ -4128,6 +4534,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         return false;
       }
       item.country = name;
+      item.countryIso = code || result.country_iso || "";
+      item.countrySource = result.source || "kimi_web_search";
       item.city = capital?.city || cleanMetaText(result.capital) || name;
       item.lat = lat;
       item.lng = lng;
@@ -4523,8 +4931,9 @@ Guidelines:
         label.tabIndex = 0;
         label.setAttribute("aria-label", `${t("music.recommend.start")} ${item.title}`);
       }
-      const placeLabel = item.country === mysteryPlace.country ? t("music.mysteryPlace.country") : (item.city || item.country);
-      const styleLabel = item.country === mysteryPlace.country ? item.city : displayGenre(item);
+      const isMystery = isMysteryPlaceValue(item.country) && isMysteryPlaceValue(item.city);
+      const placeLabel = isMystery ? t("music.mysteryPlace.country") : (localizedCityName(isoCodeForCountryName(item.countryIso || item.country_iso || item.country), item.city, item.city) || item.country);
+      const styleLabel = isMystery ? t("music.mysteryPlace.city") : displayGenre(item);
       label.innerHTML = `${escapeHtml(placeLabel)}<br>${escapeHtml(styleLabel)}`;
       label.addEventListener("pointerdown", (event) => {
         event.stopPropagation();
@@ -4747,8 +5156,9 @@ Guidelines:
 
       els.recommendList.innerHTML = activeRecommendations.map((item, index) => {
         const isFavorite = window.EchoFavoriteStore?.isFavorite(item);
-        const cover = item.coverArtUrl
-          ? `<img class="rec-cover" src="${escapeHtml(item.coverArtUrl)}" alt="${escapeHtml(item.title)} ${t("music.cover.suffix")}" loading="lazy">`
+        const coverUrl = normalizeMediaUrl(item.coverArtUrl);
+        const cover = coverUrl
+          ? `<img class="rec-cover" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(item.title)} ${t("music.cover.suffix")}" loading="lazy">`
           : `<div class="rec-cover is-empty" aria-hidden="true">ECHO</div>`;
         const platformLink = item.platformTrackUrl
           ? `<a class="rec-link" href="${escapeHtml(item.platformTrackUrl)}" target="_blank" rel="noopener">${t("music.rec.platformPlay")}</a>`
@@ -4802,6 +5212,115 @@ Guidelines:
           renderRecommendations();
         });
       });
+    }
+
+    function openLibraryPicker() {
+      els.libraryPicker.hidden = false;
+      document.body.classList.add("is-library-open");
+      window.setTimeout(() => els.librarySearchInput?.focus(), 40);
+      if (!librarySearchResults.length) {
+        searchLibrary("");
+      }
+    }
+
+    function closeLibraryPicker() {
+      els.libraryPicker.hidden = true;
+      document.body.classList.remove("is-library-open");
+    }
+
+    function libraryResultMeta(track) {
+      return [
+        track.artist,
+        displayGenre(track),
+        formatOrigin(track),
+        displaySource(track)
+      ].map(cleanMetaText).filter(Boolean).join(" / ");
+    }
+
+    function renderLibraryResults() {
+      if (!librarySearchResults.length) {
+        els.libraryResults.innerHTML = `
+          <div class="library-status">${escapeHtml(t("music.library.empty"))}</div>
+        `;
+        return;
+      }
+      els.libraryResults.innerHTML = librarySearchResults.map((track, index) => {
+        const coverUrl = normalizeMediaUrl(track.coverArtUrl);
+        const cover = coverUrl
+          ? `<img class="library-result-cover" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(track.title)} ${t("music.cover.suffix")}" loading="lazy">`
+          : `<div class="library-result-cover is-empty" aria-hidden="true">ECHO</div>`;
+        return `
+          <button class="library-result" type="button" role="option" data-library-index="${index}">
+            ${cover}
+            <span class="library-result-main">
+              <span class="library-result-title">${escapeHtml(track.title)}</span>
+              <span class="library-result-meta">${escapeHtml(libraryResultMeta(track))}</span>
+            </span>
+            <span class="library-result-action">${t("music.library.choose")}</span>
+          </button>
+        `;
+      }).join("");
+      els.libraryResults.querySelectorAll("[data-library-index]").forEach((button) => {
+        button.addEventListener("click", () => importLibraryTrack(Number(button.dataset.libraryIndex)));
+      });
+    }
+
+    async function searchLibrary(query = "") {
+      if (librarySearchBusy && librarySearchAbort) {
+        librarySearchAbort.abort();
+      }
+      const text = String(query || "").trim();
+      librarySearchBusy = true;
+      const controller = new AbortController();
+      librarySearchAbort = controller;
+      els.librarySearchSubmit.classList.add("is-disabled");
+      els.libraryStatus.textContent = text ? t("music.library.searching") : t("music.library.browsing");
+      try {
+        const endpoint = text
+          ? `/api/mainline/search?q=${encodeURIComponent(text)}&limit=32&prefer_cuda=${apiPreferCuda}`
+          : `/api/mainline/catalog?limit=24&random_seed=${encodeURIComponent(Date.now() % 100000)}&prefer_cuda=${apiPreferCuda}`;
+        const response = await fetch(endpoint, { signal: controller.signal });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`${response.status} ${errorText}`);
+        }
+        const data = await response.json();
+        librarySearchResults = (data.items || []).map((item, index) => trackFromApiItem(item, index));
+        els.libraryStatus.textContent = `${librarySearchResults.length}/${Number(data.total_available || librarySearchResults.length).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN")} ${t("music.library.loaded")}`;
+        renderLibraryResults();
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(error);
+        librarySearchResults = [];
+        els.libraryStatus.textContent = t("music.library.failed");
+        renderLibraryResults();
+      } finally {
+        if (librarySearchAbort === controller) {
+          librarySearchBusy = false;
+          librarySearchAbort = null;
+          els.librarySearchSubmit.classList.remove("is-disabled");
+        }
+      }
+    }
+
+    function importLibraryTrack(index) {
+      const track = librarySearchResults[index];
+      if (!track) return;
+      if (currentTrack.fileObjectUrl && currentTrack.fileObjectUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(currentTrack.fileObjectUrl);
+      }
+      uploadedAudioFile = null;
+      uploadedAudioMeta = null;
+      recommendationsPersistable = false;
+      activeRecommendations = [];
+      recommendations = [];
+      clearMusicStationState();
+      primaryTrack = { ...track };
+      currentQueueIndex = 0;
+      selectTrack(primaryTrack, { autoplay: false });
+      els.mapStatus.textContent = t("music.library.selected");
+      els.mapMode.textContent = t("music.status.realLoaded");
+      closeLibraryPicker();
     }
 
     let recommendBusy = false;
@@ -4897,6 +5416,10 @@ Guidelines:
               style: uploadSeed.style || currentTrack.style,
               coverArtUrl: uploadSeed.coverArtUrl || currentTrack.coverArtUrl || "",
               audioUrl: uploadSeed.audioUrl || currentTrack.audioUrl || "",
+              needsCountryLookup: Boolean(uploadSeed.needsCountryLookup),
+              geoLookupStatus: uploadSeed.geoLookupStatus || (uploadSeed.needsCountryLookup ? "pending" : currentTrack.geoLookupStatus),
+              originalCity: uploadSeed.originalCity || currentTrack.originalCity || "",
+              originalLocation: uploadSeed.originalLocation || currentTrack.originalLocation || "",
               raw: uploadSeed.raw || currentTrack.raw
             });
             centerLng = currentTrack.lng;
@@ -4975,7 +5498,8 @@ Guidelines:
     }
 
     function panByPointerDelta(dx = 0, dy = 0, event = null) {
-      const dragScale = event?.pointerType === "touch" ? 1.28 : event?.pointerType === "pen" ? 1.12 : 1;
+      const compactTouch = window.matchMedia("(max-width: 720px)").matches;
+      const dragScale = event?.pointerType === "touch" ? (compactTouch ? 2.15 : 1.55) : event?.pointerType === "pen" ? 1.12 : 1;
       if (!projection || width <= 1 || height <= 1) {
         panBy(-dx * 0.35 * dragScale, dy * 0.24 * dragScale);
         return;
@@ -5361,6 +5885,21 @@ Guidelines:
     els.mapStage.addEventListener("wheel", handleMapWheel, { passive: false });
 
     document.addEventListener("wheel", routeGutterWheelToWholeStation, { passive: false });
+
+    els.libraryButton.addEventListener("click", openLibraryPicker);
+    els.libraryClose.addEventListener("click", closeLibraryPicker);
+    els.libraryPicker.addEventListener("click", (event) => {
+      if (event.target === els.libraryPicker) closeLibraryPicker();
+    });
+    els.librarySearchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      searchLibrary(els.librarySearchInput.value);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.libraryPicker.hidden) {
+        closeLibraryPicker();
+      }
+    });
 
     els.recommendButton.addEventListener("click", startRecommendations);
 

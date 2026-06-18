@@ -85,6 +85,7 @@
       display: flex;
       gap: 0.65rem;
       align-items: center;
+      justify-content: flex-end;
     }
 
     .pill {
@@ -325,15 +326,33 @@
     }
 
     @media (max-width: 900px) {
-      .settings-header,
       .settings-shell,
       .config-row {
         grid-template-columns: 1fr;
       }
 
+      .settings-header {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1.05rem 1rem;
+      }
+
+      .settings-header > div {
+        display: none;
+      }
+
       .top-actions {
-        justify-content: flex-start;
-        flex-wrap: wrap;
+        display: grid;
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.55rem;
+        justify-content: stretch;
+      }
+
+      .top-actions .pill {
+        min-width: 0;
+        padding: 0 0.7rem;
+        font-size: 0.95rem;
       }
 
       .settings-hero,

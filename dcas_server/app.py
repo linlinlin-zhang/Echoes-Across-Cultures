@@ -550,10 +550,15 @@ def _country_cache_key(req: KimiTrackCountryRequest) -> str:
     import hashlib
 
     parts = [
+        "track-country-v2",
         req.track_id,
         req.title,
         req.artist,
         req.album,
+        req.city,
+        req.location,
+        req.label,
+        req.tags,
         req.platform_track_url,
         req.source_dataset,
         req.platform,
@@ -1550,7 +1555,100 @@ def _coordinates_from_tags(tags: dict[str, str]) -> tuple[float | None, float | 
     return None, None
 
 
-def _extract_embedded_cover(source: Path, target: Path) -> bool:
+def _cover_target_for_bytes(target: Path, data: bytes, mime: str = "") -> Path:
+    lower_mime = str(mime or "").lower()
+    if lower_mime == "image/png" or data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return target.with_suffix(".png")
+    if lower_mime == "image/webp" or (data.startswith(b"RIFF") and data[8:12] == b"WEBP"):
+        return target.with_suffix(".webp")
+    return target.with_suffix(".jpg")
+
+
+def _write_cover_bytes(target: Path, data: bytes, mime: str = "") -> Path | None:
+    if not data or len(data) < 64:
+        return None
+    output = _cover_target_for_bytes(target, data, mime)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        output.write_bytes(data)
+    except Exception:
+        return None
+    return output if output.exists() and output.stat().st_size > 0 else None
+
+
+def _extract_embedded_cover_mutagen(source: Path, target: Path) -> Path | None:
+    try:
+        from mutagen import File as MutagenFile
+        from mutagen.flac import Picture
+    except Exception:
+        return None
+    try:
+        audio = MutagenFile(str(source), easy=False)
+    except Exception:
+        return None
+    if not audio:
+        return None
+
+    for picture in getattr(audio, "pictures", []) or []:
+        data = getattr(picture, "data", None)
+        if isinstance(data, bytes):
+            written = _write_cover_bytes(target, data, getattr(picture, "mime", ""))
+            if written:
+                return written
+
+    raw_tags = getattr(audio, "tags", None)
+    if not raw_tags:
+        return None
+
+    def iter_values(value: Any) -> list[Any]:
+        return list(value) if isinstance(value, (list, tuple)) else [value]
+
+    for key, value in raw_tags.items():
+        normalized_key = str(key or "").strip().lower()
+        for item in iter_values(value):
+            data = getattr(item, "data", None)
+            mime = str(getattr(item, "mime", "") or "")
+            if isinstance(data, bytes):
+                written = _write_cover_bytes(target, data, mime)
+                if written:
+                    return written
+            if isinstance(item, bytes):
+                image_format = getattr(item, "imageformat", None)
+                if image_format == 14:
+                    mime = "image/png"
+                elif image_format == 13:
+                    mime = "image/jpeg"
+                written = _write_cover_bytes(target, bytes(item), mime)
+                if written:
+                    return written
+            if normalized_key == "metadata_block_picture":
+                try:
+                    import base64
+
+                    picture = Picture(base64.b64decode(str(item)))
+                except Exception:
+                    continue
+                written = _write_cover_bytes(target, picture.data, picture.mime)
+                if written:
+                    return written
+            if normalized_key in {"coverart", "cover_art"}:
+                try:
+                    import base64
+
+                    data = base64.b64decode(str(item))
+                except Exception:
+                    continue
+                mime = _tag_text(raw_tags.get("coverartmime") or raw_tags.get("cover_art_mime"))
+                written = _write_cover_bytes(target, data, mime)
+                if written:
+                    return written
+    return None
+
+
+def _extract_embedded_cover(source: Path, target: Path) -> Path | None:
+    mutagen_cover = _extract_embedded_cover_mutagen(source, target)
+    if mutagen_cover:
+        return mutagen_cover
     target.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         "ffmpeg",
@@ -1570,8 +1668,10 @@ def _extract_embedded_cover(source: Path, target: Path) -> bool:
     try:
         proc = subprocess.run(cmd, capture_output=True, timeout=45)
     except Exception:
-        return False
-    return proc.returncode == 0 and target.exists() and target.stat().st_size > 0
+        return None
+    if proc.returncode == 0 and target.exists() and target.stat().st_size > 0:
+        return target
+    return None
 
 
 def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
@@ -2053,6 +2153,32 @@ def create_app() -> FastAPI:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get("/api/mainline/search")
+    def api_mainline_search(
+        q: str | None = None,
+        culture: str | None = None,
+        source_dataset: str | None = None,
+        limit: int = 24,
+        exclude_low_signal: bool = True,
+        prefer_cuda: bool = False,
+    ):
+        try:
+            catalog = _mainline_catalog(storage)
+            return catalog.catalog(
+                culture=culture,
+                source_dataset=source_dataset,
+                q=q,
+                limit=limit,
+                random_seed=None,
+                exclude_low_signal=exclude_low_signal,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.get("/api/mainline/random")
     def api_mainline_random(
         culture: str | None = None,
@@ -2284,8 +2410,9 @@ def create_app() -> FastAPI:
         tag_info = _probe_audio_tags(dest)
         cover_rel_path = ""
         cover_path = storage.ensure_dir("uploads/mainline/covers") / f"{saved_stem}.jpg"
-        if _extract_embedded_cover(dest, cover_path):
-            cover_rel_path = storage.relpath(cover_path)
+        extracted_cover_path = _extract_embedded_cover(dest, cover_path)
+        if extracted_cover_path:
+            cover_rel_path = storage.relpath(extracted_cover_path)
         place_info = _upload_place_from_tags(tag_info)
         compression_info: dict[str, object] = {
             "status": "disabled",
