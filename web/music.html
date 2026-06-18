@@ -246,7 +246,8 @@
       animation: record-pulse 1.2s ease-in-out infinite;
     }
 
-    .library-picker {
+    .library-picker,
+    .recommend-picker {
       position: fixed;
       inset: 0;
       z-index: 80;
@@ -257,7 +258,8 @@
       backdrop-filter: blur(12px);
     }
 
-    .library-picker[hidden] {
+    .library-picker[hidden],
+    .recommend-picker[hidden] {
       display: none;
     }
 
@@ -265,7 +267,17 @@
       width: min(860px, 100%);
       max-height: min(760px, calc(100vh - 2.5rem));
       display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      border: 1px solid var(--ink);
+      background: #ffffff;
+      box-shadow: 0 1.4rem 4rem rgba(17, 17, 17, 0.12);
+    }
+
+    .recommend-dialog {
+      width: min(560px, 100%);
+      max-height: min(640px, calc(100vh - 2.5rem));
+      display: grid;
+      grid-template-rows: auto auto;
       border: 1px solid var(--ink);
       background: #ffffff;
       box-shadow: 0 1.4rem 4rem rgba(17, 17, 17, 0.12);
@@ -273,7 +285,8 @@
 
     .library-head,
     .library-search,
-    .library-status {
+    .library-status,
+    .recommend-options {
       padding: 1rem 1.15rem;
       border-bottom: 1px solid var(--line);
     }
@@ -312,9 +325,68 @@
       border-color: var(--ink);
     }
 
+    .library-status {
+      position: relative;
+      z-index: 1;
+      min-height: 3.2rem;
+      background: #ffffff;
+    }
+
     .library-results {
       min-height: 0;
       overflow: auto;
+    }
+
+    .recommend-options {
+      display: grid;
+      gap: 0.95rem;
+      border-bottom: 0;
+    }
+
+    .recommend-field {
+      display: grid;
+      gap: 0.38rem;
+    }
+
+    .recommend-field label {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .recommend-select {
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--line-strong);
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+
+    .recommend-select:focus {
+      border-color: var(--ink);
+    }
+
+    .recommend-status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .recommend-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .recommend-actions .is-primary {
+      background: var(--ink);
+      color: #ffffff;
     }
 
     .library-result {
@@ -2297,18 +2369,25 @@
         max-width: 100%;
       }
 
-      .library-picker {
+      .library-picker,
+      .recommend-picker {
         padding: 0.75rem;
         align-items: end;
       }
 
-      .library-dialog {
+      .library-dialog,
+      .recommend-dialog {
         max-height: min(82vh, 720px);
       }
 
       .library-search,
       .library-result {
         grid-template-columns: 1fr;
+      }
+
+      .recommend-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
       }
 
       .library-result {
@@ -2383,6 +2462,33 @@
       </form>
       <div class="library-status" id="library-status" data-i18n="music.library.ready">输入关键词或直接浏览曲库。</div>
       <div class="library-results" id="library-results" role="listbox" aria-label="曲库搜索结果" data-i18n-aria-label="music.library.resultsAria"></div>
+    </section>
+  </div>
+
+  <div class="recommend-picker" id="recommend-picker" hidden>
+    <section class="recommend-dialog" role="dialog" aria-modal="true" aria-labelledby="recommend-picker-title">
+      <div class="library-head">
+        <div>
+          <div class="meta-label" data-i18n="music.recommend.optionsMeta">推荐方向</div>
+          <h2 id="recommend-picker-title" data-i18n="music.recommend.optionsTitle">选择这次去哪里听</h2>
+        </div>
+        <button class="pill" id="recommend-picker-close" type="button" data-i18n="music.recommend.optionsClose">关闭</button>
+      </div>
+      <form class="recommend-options" id="recommend-options-form">
+        <div class="recommend-field">
+          <label for="recommend-culture-select" data-i18n="music.recommend.cultureLabel">文化域</label>
+          <select class="recommend-select" id="recommend-culture-select"></select>
+        </div>
+        <div class="recommend-field">
+          <label for="recommend-region-select" data-i18n="music.recommend.regionLabel">地域</label>
+          <select class="recommend-select" id="recommend-region-select"></select>
+        </div>
+        <div class="recommend-status" id="recommend-status" data-i18n="music.recommend.optionsReady">当前方向：随机探索</div>
+        <div class="recommend-actions">
+          <button class="pill" id="recommend-random-button" type="button" data-i18n="music.recommend.randomStart">随机生成</button>
+          <button class="pill is-primary" id="recommend-confirm-button" type="submit" data-i18n="music.recommend.confirm">开始生成</button>
+        </div>
+      </form>
     </section>
   </div>
 
@@ -2744,6 +2850,20 @@
       central_asia: { countryKey: "KZ", cityKey: "ALMA_ATA", lat: 43.2389, lng: 76.8897 },
       andean: { countryKey: "PE", cityKey: "CUSCO", lat: -13.5319, lng: -71.9675 }
     };
+
+    const recommendRegionGroups = {
+      east_asia: ["china", "japan", "korea"],
+      southeast_asia: ["southeast_asia"],
+      south_asia: ["india"],
+      west_asia_mena: ["middle_east"],
+      europe: ["west", "eastern_europe", "celtic", "nordic", "balkans"],
+      africa: ["africa"],
+      latin_america: ["latin", "brazil", "andean"],
+      caribbean: ["caribbean"],
+      central_asia: ["central_asia"]
+    };
+
+    const recommendRegionKeys = ["random", ...Object.keys(recommendRegionGroups)];
 
     function localizedCulturePlace(key) {
       const entry = culturePlaces[key];
@@ -3301,6 +3421,14 @@
       progressTrack: document.getElementById("progress-track"),
       progressFill: document.getElementById("progress-fill"),
       recommendButton: document.getElementById("recommend-button"),
+      recommendPicker: document.getElementById("recommend-picker"),
+      recommendClose: document.getElementById("recommend-picker-close"),
+      recommendOptionsForm: document.getElementById("recommend-options-form"),
+      recommendCultureSelect: document.getElementById("recommend-culture-select"),
+      recommendRegionSelect: document.getElementById("recommend-region-select"),
+      recommendRandomButton: document.getElementById("recommend-random-button"),
+      recommendConfirmButton: document.getElementById("recommend-confirm-button"),
+      recommendStatus: document.getElementById("recommend-status"),
       recommendList: document.getElementById("recommend-list"),
       mapStatus: document.getElementById("map-status"),
       mapMode: document.getElementById("map-mode"),
@@ -3327,6 +3455,7 @@
     let librarySearchResults = [];
     let librarySearchBusy = false;
     let librarySearchAbort = null;
+    let recommendPreferences = { culture: "random", region: "random" };
 
     function formatCount(value) {
       return Number(value || 0).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN");
@@ -3354,11 +3483,147 @@
         if (els.readoutCatalog) {
           els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
         }
+        renderRecommendOptions();
       } catch (error) {
         if (els.readoutCatalog) {
           els.readoutCatalog.textContent = t("music.default.catalogRefresh");
         }
+        renderRecommendOptions();
       }
+    }
+
+    function availableRecommendationCultures() {
+      const keys = new Set(Object.keys(culturePlaces));
+      Object.keys(mainlineStatus?.cultures || {}).forEach((key) => {
+        const clean = cleanMetaText(key);
+        if (clean) keys.add(clean);
+      });
+      return [...keys]
+        .filter((key) => key && key.toLowerCase() !== "nan")
+        .sort((a, b) => (cultureLabel(a) || a).localeCompare(cultureLabel(b) || b, window.EchoI18n?.currentLanguage || "zh-CN"));
+    }
+
+    function recommendationRegionLabel(key) {
+      if (key === "random") return t("music.recommend.randomRegion");
+      return t("music.region." + key);
+    }
+
+    function setSelectOptions(select, options, selectedValue) {
+      if (!select) return;
+      select.innerHTML = "";
+      options.forEach((option) => {
+        select.appendChild(new Option(option.label, option.value));
+      });
+      const values = new Set(options.map((option) => option.value));
+      select.value = values.has(selectedValue) ? selectedValue : "random";
+    }
+
+    function describeRecommendationPreference(options = recommendPreferences) {
+      const culture = cleanMetaText(options.culture || "random");
+      const region = cleanMetaText(options.region || "random");
+      if (culture && culture !== "random") {
+        return cultureLabel(culture) || culture;
+      }
+      if (region && region !== "random") {
+        return t("music.recommend.randomInRegion", { region: recommendationRegionLabel(region) });
+      }
+      return t("music.recommend.randomTarget");
+    }
+
+    function syncRecommendStatus() {
+      if (!els.recommendStatus) return;
+      recommendPreferences = {
+        culture: els.recommendCultureSelect?.value || "random",
+        region: els.recommendRegionSelect?.value || "random"
+      };
+      els.recommendStatus.textContent = t("music.recommend.currentTarget", {
+        target: describeRecommendationPreference(recommendPreferences)
+      });
+    }
+
+    function renderRecommendOptions() {
+      const selectedCulture = els.recommendCultureSelect?.value || recommendPreferences.culture || "random";
+      const selectedRegion = els.recommendRegionSelect?.value || recommendPreferences.region || "random";
+      const availableCultures = new Set(availableRecommendationCultures());
+      const cultureKeys = selectedRegion && selectedRegion !== "random"
+        ? (recommendRegionGroups[selectedRegion] || []).filter((culture) => availableCultures.has(culture))
+        : [...availableCultures];
+      const cultureOptions = [
+        { value: "random", label: t("music.recommend.randomCulture") },
+        ...cultureKeys.map((culture) => ({
+          value: culture,
+          label: cultureLabel(culture) || culture
+        }))
+      ];
+      const regionOptions = recommendRegionKeys.map((region) => ({
+        value: region,
+        label: recommendationRegionLabel(region)
+      }));
+      setSelectOptions(els.recommendCultureSelect, cultureOptions, selectedCulture);
+      setSelectOptions(els.recommendRegionSelect, regionOptions, selectedRegion);
+      syncRecommendStatus();
+    }
+
+    function readRecommendationOptions() {
+      return {
+        culture: els.recommendCultureSelect?.value || "random",
+        region: els.recommendRegionSelect?.value || "random"
+      };
+    }
+
+    function currentSeedCulture() {
+      return cleanMetaText(primaryTrack?.culture || currentTrack?.culture || initialSeedCulture || "");
+    }
+
+    function randomCultureFromPool(pool = []) {
+      const available = new Set(availableRecommendationCultures());
+      let candidates = pool.filter((culture) => available.has(culture));
+      if (!candidates.length) {
+        candidates = [...available];
+      }
+      const seedCulture = currentSeedCulture();
+      const crossCultureCandidates = candidates.filter((culture) => culture !== seedCulture);
+      if (crossCultureCandidates.length) {
+        candidates = crossCultureCandidates;
+      }
+      if (!candidates.length) return "";
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function resolveRecommendationTarget(options = recommendPreferences) {
+      const culture = cleanMetaText(options.culture || "random");
+      const region = cleanMetaText(options.region || "random");
+      if (culture && culture !== "random") {
+        return { culture, label: cultureLabel(culture) || culture, region };
+      }
+      const pool = region && region !== "random"
+        ? (recommendRegionGroups[region] || [])
+        : availableRecommendationCultures();
+      const targetCulture = randomCultureFromPool(pool);
+      return {
+        culture: targetCulture,
+        label: targetCulture ? (cultureLabel(targetCulture) || targetCulture) : t("music.recommend.randomTarget"),
+        region
+      };
+    }
+
+    function openRecommendPicker() {
+      if (recommendBusy) return;
+      renderRecommendOptions();
+      els.recommendPicker.hidden = false;
+      document.body.classList.add("is-recommend-picker-open");
+      window.setTimeout(() => els.recommendConfirmButton?.focus(), 40);
+    }
+
+    function closeRecommendPicker() {
+      els.recommendPicker.hidden = true;
+      document.body.classList.remove("is-recommend-picker-open");
+    }
+
+    function submitRecommendationOptions(options) {
+      recommendPreferences = options || readRecommendationOptions();
+      closeRecommendPicker();
+      startRecommendations(recommendPreferences);
     }
     let aiConversationMessages = [];
     let aiBusy = false;
@@ -5324,13 +5589,17 @@ Guidelines:
     }
 
     let recommendBusy = false;
-    async function startRecommendations() {
+    async function startRecommendations(options = recommendPreferences) {
       if (recommendBusy) return;
+      const targetChoice = resolveRecommendationTarget(options);
+      const targetCulture = targetChoice.culture || "";
       recommendBusy = true;
       els.recommendButton.classList.add("is-running");
       els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
-      els.mapStatus.textContent = t("music.status.generatingPath");
+      els.mapStatus.textContent = targetCulture
+        ? t("music.recommend.targetStatus", { target: targetChoice.label })
+        : t("music.status.generatingPath");
       recommendationsPersistable = false;
       activeRecommendations = [];
       clearMusicStationState();
@@ -5348,6 +5617,9 @@ Guidelines:
           form.append("artist", currentTrack.artist || "Uploaded audio");
           if (currentTrack.culture) {
             form.append("seed_culture", currentTrack.culture);
+          }
+          if (targetCulture) {
+            form.append("target_culture", targetCulture);
           }
           form.append("mode", "open");
           form.append("k", String(getRecommendCount()));
@@ -5371,6 +5643,7 @@ Guidelines:
           const body = {
             seed_track_id: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId || null,
             seed_culture: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId ? null : (initialSeedCulture || null),
+            target_culture: targetCulture || null,
             mode: "open",
             k: getRecommendCount(),
             recall_k: 900,
@@ -5453,7 +5726,9 @@ Guidelines:
         els.recommendButton.textContent = t("music.recommend.regenerate");
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
         els.mapStatus.textContent = `${activeRecommendations.length}${t("music.status.connectionsActive")}${embeddingTime}`;
-        els.mapMode.textContent = t("music.status.networkExpanded");
+        els.mapMode.textContent = targetCulture
+          ? t("music.recommend.targetMode", { target: targetChoice.label })
+          : t("music.status.networkExpanded");
         syncTrackReadouts();
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
@@ -5899,9 +6174,25 @@ Guidelines:
       if (event.key === "Escape" && !els.libraryPicker.hidden) {
         closeLibraryPicker();
       }
+      if (event.key === "Escape" && !els.recommendPicker.hidden) {
+        closeRecommendPicker();
+      }
     });
 
-    els.recommendButton.addEventListener("click", startRecommendations);
+    els.recommendButton.addEventListener("click", openRecommendPicker);
+    els.recommendClose.addEventListener("click", closeRecommendPicker);
+    els.recommendPicker.addEventListener("click", (event) => {
+      if (event.target === els.recommendPicker) closeRecommendPicker();
+    });
+    els.recommendCultureSelect.addEventListener("change", syncRecommendStatus);
+    els.recommendRegionSelect.addEventListener("change", renderRecommendOptions);
+    els.recommendOptionsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitRecommendationOptions(readRecommendationOptions());
+    });
+    els.recommendRandomButton.addEventListener("click", () => {
+      submitRecommendationOptions({ culture: "random", region: "random" });
+    });
 
     els.aiModeButtons.forEach((button) => {
       button.addEventListener("click", () => {
