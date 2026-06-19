@@ -30,7 +30,15 @@ echo "[3/4] Public proxy health"
 curl --fail --show-error --max-time 30 "${scheme}://${ECHO_DOMAIN}/api/health"
 echo
 
-echo "[4/4] Public music page headers"
-curl --fail --show-error --head --max-time 30 "${scheme}://${ECHO_DOMAIN}/music.html"
+echo "[4/4] Public music page headers with gzip/cache"
+curl \
+  --fail \
+  --show-error \
+  --silent \
+  --dump-header - \
+  --output /dev/null \
+  --header "Accept-Encoding: gzip" \
+  --max-time 30 \
+  "${scheme}://${ECHO_DOMAIN}/music.html"
 
 echo "Proxy verification passed."

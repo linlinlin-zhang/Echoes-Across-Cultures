@@ -34,10 +34,36 @@ Start Echo so it listens on the Tailscale interface:
 .\scripts\run_public_host.ps1 -HostName 0.0.0.0 -Port 8000
 ```
 
+For smoother live recommendations, run the model-heavy recommender as a local
+worker on the same Windows machine and let the public host call it over
+localhost:
+
+```powershell
+Copy-Item configs/local_worker.env.example configs/local_worker.env
+notepad configs/local_worker.env
+.\scripts\run_local_mainline_worker.ps1 -Port 18011
+```
+
+Then set these in `configs/public_host.env` and restart the public host:
+
+```env
+ECHO_MAINLINE_WORKER_URL=http://127.0.0.1:18011
+ECHO_MAINLINE_WORKER_TOKEN=the-same-long-random-token
+```
+
+Keep the worker bound to `127.0.0.1` unless you intentionally expose it through a
+private tunnel. The public Internet should still only reach the cloud Nginx
+proxy and the Windows public host on Tailscale.
+
+Set `ECHO_MAINLINE_PRELOAD=true` in `configs/local_worker.env` to load the
+recommendation model when the worker starts, instead of making the first user
+recommendation request pay the cold-start cost.
+
 Install optional local persistence:
 
 ```powershell
 .\scripts\install_public_host_task.ps1
+.\scripts\install_local_worker_task.ps1
 .\scripts\install_public_host_firewall.ps1
 ```
 
@@ -118,6 +144,10 @@ https://your-domain.com/music.html
 
 If the first curl works but the second fails, debug Nginx or DNS. If the first
 curl fails, debug Tailscale or the Windows firewall.
+
+The public proxy installer enables gzip and buffered proxying for normal pages
+and static assets. Uploaded recommendation audio and Kimi streaming responses
+stay unbuffered so large uploads and live AI text do not wait in Nginx.
 
 ## Legacy One-Line Installer
 

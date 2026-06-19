@@ -5,7 +5,7 @@ import math
 import random
 import re
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -107,6 +107,8 @@ class LightweightMainlineCatalog:
         self.loaded_at = time.time()
         self.metadata_mtime_ns = self.metadata_path.stat().st_mtime_ns
         self.rows = self._load_rows()
+        self._search_token_index: dict[str, set[int]] = {}
+        self._prepare_rows()
         self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
         self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
         self.source_counts = Counter(
@@ -120,6 +122,7 @@ class LightweightMainlineCatalog:
         self.loaded_at = time.time()
         self.metadata_mtime_ns = mtime_ns
         self.rows = self._load_rows()
+        self._prepare_rows()
         self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
         self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
         self.source_counts = Counter(
@@ -181,8 +184,10 @@ class LightweightMainlineCatalog:
         query = _norm_key(q)
         query_terms = [term for term in query.split(" ") if term]
 
+        candidate_indexes = self._candidate_indexes_for_query(query_terms)
         keep: list[dict[str, Any]] = []
-        for row in self.rows:
+        for row_index in candidate_indexes:
+            row = self.rows[row_index]
             if culture_key and _clean(row.get("culture")) != culture_key:
                 continue
             if source_key and _clean(row.get("source_dataset")) != source_key:
@@ -262,6 +267,42 @@ class LightweightMainlineCatalog:
                 if _clean(row.get("track_id")):
                     rows.append(dict(row))
         return rows
+
+    def _prepare_rows(self) -> None:
+        token_index: defaultdict[str, set[int]] = defaultdict(set)
+        for index, row in enumerate(self.rows):
+            row["_echo_low_signal"] = self._compute_low_signal(row)
+            row["_echo_search_hay"] = _norm_key(
+                " ".join(
+                    _clean(row.get(key))
+                    for key in (
+                        "track_id",
+                        "title",
+                        "artist",
+                        "album",
+                        "label",
+                        "tags",
+                        "culture",
+                        "source_dataset",
+                        "country",
+                        "country_original",
+                        "storefront_country",
+                    )
+                )
+            )
+            for token in set(str(row["_echo_search_hay"]).split()):
+                token_index[token].add(index)
+        self._search_token_index = dict(token_index)
+
+    def _candidate_indexes_for_query(self, query_terms: list[str]) -> range | list[int]:
+        if not query_terms:
+            return range(len(self.rows))
+        indexed_sets = [self._search_token_index.get(term) for term in query_terms]
+        if not indexed_sets or any(item is None for item in indexed_sets):
+            return range(len(self.rows))
+        if len(indexed_sets) == 1:
+            return sorted(indexed_sets[0] or set())
+        return sorted(set.intersection(*(item or set() for item in indexed_sets)))
 
     def _track_payload(self, row: dict[str, Any]) -> dict[str, Any]:
         track_id = _clean(row.get("track_id"))
@@ -353,29 +394,19 @@ class LightweightMainlineCatalog:
         }
 
     def _is_low_signal(self, row: dict[str, Any]) -> bool:
+        cached = row.get("_echo_low_signal")
+        if isinstance(cached, bool):
+            return cached
+        return self._compute_low_signal(row)
+
+    def _compute_low_signal(self, row: dict[str, Any]) -> bool:
         text = " ".join(
             _clean(row.get(key)).lower() for key in ("title", "artist", "album", "label", "tags", "description")
         )
         return any(term in text for term in LOW_SIGNAL_TERMS)
 
     def _matches_query(self, row: dict[str, Any], query_terms: list[str]) -> bool:
-        hay = _norm_key(
-            " ".join(
-                _clean(row.get(key))
-                for key in (
-                    "title",
-                    "artist",
-                    "album",
-                    "label",
-                    "tags",
-                    "culture",
-                    "source_dataset",
-                    "country",
-                    "country_original",
-                    "storefront_country",
-                )
-            )
-        )
+        hay = str(row.get("_echo_search_hay") or "")
         if all(term in hay for term in query_terms):
             return True
         origin_query_terms = [*query_terms, " ".join(query_terms)]

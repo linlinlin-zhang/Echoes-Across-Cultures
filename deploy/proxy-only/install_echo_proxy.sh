@@ -73,7 +73,14 @@ server {
 
     client_max_body_size ${ECHO_CLIENT_MAX_BODY_SIZE};
 
-    location / {
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/javascript application/javascript application/json application/xml image/svg+xml;
+
+    location = /api/mainline/upload_recommend {
         proxy_pass http://${ECHO_UPSTREAM};
 
         proxy_http_version 1.1;
@@ -87,6 +94,66 @@ server {
 
         proxy_buffering off;
         proxy_request_buffering off;
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 900s;
+        proxy_send_timeout 900s;
+    }
+
+    location = /api/ai/kimi/chat/stream {
+        proxy_pass http://${ECHO_UPSTREAM};
+
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection \$connection_upgrade;
+
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 900s;
+        proxy_send_timeout 900s;
+    }
+
+    location ^~ /api/mainline/audio/ {
+        proxy_pass http://${ECHO_UPSTREAM};
+
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Range \$http_range;
+        proxy_set_header If-Range \$http_if_range;
+
+        proxy_buffering off;
+        proxy_request_buffering on;
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 900s;
+        proxy_send_timeout 900s;
+    }
+
+    location / {
+        proxy_pass http://${ECHO_UPSTREAM};
+
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection \$connection_upgrade;
+
+        proxy_buffering on;
+        proxy_buffer_size 16k;
+        proxy_buffers 32 16k;
+        proxy_busy_buffers_size 64k;
+        proxy_request_buffering on;
         proxy_connect_timeout 60s;
         proxy_read_timeout 900s;
         proxy_send_timeout 900s;

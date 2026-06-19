@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -98,6 +99,23 @@ DEFAULT_CULTUREMERT_MODEL_ID = "ntua-slp/CultureMERT-95M"
 DEFAULT_UPLOAD_EMBEDDING_PROVIDER = "culturemert"
 DEFAULT_GEMINI_EMBEDDING_MODEL_ID = "gemini-embedding-2"
 DEFAULT_GEMINI_EMBEDDING_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
+SHORT_STATIC_CACHE_SECONDS = 300
+LONG_STATIC_CACHE_SECONDS = 604_800
+
+
+def _static_cache_control(path: str) -> str | None:
+    lower = str(path or "/").lower()
+    if lower.startswith("/api/"):
+        return None
+    if lower in {"", "/"} or lower.endswith(".html"):
+        return "no-cache"
+    if lower.startswith("/vendor/") or lower.endswith(
+        (".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".woff2", ".ttf", ".wasm")
+    ):
+        return f"public, max-age={LONG_STATIC_CACHE_SECONDS}, stale-while-revalidate=86400"
+    if lower.startswith("/data/") or lower.endswith((".js", ".css", ".json", ".svg", ".txt", ".map")):
+        return f"public, max-age={SHORT_STATIC_CACHE_SECONDS}, stale-while-revalidate=3600"
+    return None
 
 
 def _mainline_metadata_setting() -> str:
@@ -1835,6 +1853,7 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "X-Echo-Worker-Token"],
     )
+    app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=5)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
@@ -1843,6 +1862,9 @@ def create_app() -> FastAPI:
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        cache_control = _static_cache_control(request.url.path)
+        if cache_control and "cache-control" not in response.headers:
+            response.headers["Cache-Control"] = cache_control
         return response
 
     storage = Storage(root=Path(os.environ.get("ECHO_STORAGE_ROOT", "storage")))
@@ -1857,6 +1879,18 @@ def create_app() -> FastAPI:
     user_data_root = Path(os.environ.get("ECHO_USER_DATA_DIR", str(storage.resolve_rel("user_data"))))
     favorite_store = AnonymousFavoriteStore(user_data_root / "echo.sqlite3")
     app.include_router(create_prototype_router(storage))
+
+    @app.on_event("startup")
+    def preload_mainline_worker() -> None:
+        if not _env_bool("ECHO_MAINLINE_PRELOAD", False):
+            return
+        from .mainline_platform import get_mainline_platform
+
+        get_mainline_platform(
+            storage,
+            prefer_cuda=_env_bool("ECHO_MAINLINE_PRELOAD_CUDA", False),
+            **_mainline_platform_paths(),
+        )
 
     def seed_initial_favorites(session_id: str, *, prefer_cuda: bool = False) -> tuple[list[dict[str, Any]], bool]:
         existing = favorite_store.list_favorites(session_id)
