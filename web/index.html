@@ -1114,8 +1114,7 @@
     let currentRegionIndex = -1;
     let preparedText = [];
     let cachedRingRadius = 0;
-    let cachedRingText = "";
-    let cachedAnglePerChar = 0;
+    let cachedRingGlyphs = [];
     let textToFill = MUSIC_REGIONS[0].ring;
     let frameHandle = 0;
     let lastRenderTime = 0;
@@ -1286,14 +1285,22 @@
       if (Math.abs(cachedRingRadius - ringRadius) > 0.5) {
         cachedRingRadius = ringRadius;
         ctx2d.font = FONT_SPEC;
-        const charW = ctx2d.measureText("M").width;
-        const adjustedCharW = charW * 1.05;
-        const totalChars = Math.max(1, Math.floor((2 * Math.PI * ringRadius) / adjustedCharW));
-
-        cachedRingText = "";
-        while (cachedRingText.length < totalChars) cachedRingText += textToFill;
-        cachedRingText = cachedRingText.substring(0, totalChars);
-        cachedAnglePerChar = (Math.PI * 2) / cachedRingText.length;
+        const ringText = String(textToFill || "").replace(/\s+/g, " ").trim();
+        const source = Array.from(`${ringText || "Echo Atlas"}   `);
+        const maxGlyphs = Math.max(1, Math.ceil((2 * Math.PI * ringRadius) / 4));
+        const gap = Math.max(2.8, ctx2d.measureText("M").width * 0.32);
+        let angle = 0;
+        let index = 0;
+        cachedRingGlyphs = [];
+        while (angle < Math.PI * 2 && index < maxGlyphs) {
+          const char = source[index % source.length];
+          const charWidth = Math.max(4, ctx2d.measureText(char).width);
+          const step = (charWidth + gap) / ringRadius;
+          if (angle + step > Math.PI * 2) break;
+          cachedRingGlyphs.push({ char, angle: angle + step / 2 });
+          angle += step;
+          index += 1;
+        }
       }
 
       const visualCenter = new THREE.Vector3(GLOBE_OFFSET_X, currentGlobeOffsetY(), 0).project(camera);
@@ -1309,13 +1316,13 @@
       ctx2d.translate(centerX, centerY);
       ctx2d.rotate(time);
 
-      for (let i = 0; i < cachedRingText.length; i += 1) {
+      cachedRingGlyphs.forEach((glyph) => {
         ctx2d.save();
-        ctx2d.rotate(i * cachedAnglePerChar);
+        ctx2d.rotate(glyph.angle);
         ctx2d.translate(0, -ringRadius);
-        ctx2d.fillText(cachedRingText[i], 0, 0);
+        ctx2d.fillText(glyph.char, 0, 0);
         ctx2d.restore();
-      }
+      });
       ctx2d.restore();
 
       ctx2d.font = FONT_SPEC;

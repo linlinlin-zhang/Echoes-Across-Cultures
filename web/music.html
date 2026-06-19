@@ -232,6 +232,13 @@
       transform: translateY(-1px);
     }
 
+    .pill:disabled,
+    .pill.is-busy {
+      opacity: 0.56;
+      cursor: wait;
+      transform: none;
+    }
+
     .upload-input {
       position: absolute;
       width: 1px;
@@ -2448,6 +2455,7 @@
 
     <div class="rec-head">
       <nav class="top-actions" aria-label="音乐台导航" data-i18n-aria-label="music.aria.nav">
+        <button class="pill" id="map-export-button" type="button" data-i18n="music.export.map">导出地图</button>
         <a class="pill is-active" href="music.html" data-i18n="common.nav.music">音乐台</a>
         <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
         <a class="pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
@@ -3455,6 +3463,7 @@
       mapSvg: document.getElementById("map-svg"),
       mapCanvas: document.getElementById("map-canvas"),
       mapUi: document.getElementById("map-ui"),
+      mapExportButton: document.getElementById("map-export-button"),
       parameterMetrics: document.getElementById("parameter-metrics"),
       recommendationInsights: document.getElementById("recommendation-insights"),
       aiRunButton: document.getElementById("ai-run-button"),
@@ -4401,6 +4410,459 @@
           }))
         }
       };
+    }
+
+    function exportText(key, fallback, params = {}) {
+      const value = t(key, params);
+      return value === key ? fallback : value;
+    }
+
+    function exportDateLabel() {
+      try {
+        return new Intl.DateTimeFormat(window.EchoI18n?.currentLanguage || "zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(new Date());
+      } catch (_) {
+        return new Date().toLocaleString();
+      }
+    }
+
+    function exportFileToken(value) {
+      return String(value || "echo-map")
+        .replace(/[\\/:*?"<>|]+/g, " ")
+        .replace(/\s+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80) || "echo-map";
+    }
+
+    function roundedRectPath(ctx, x, y, w, h, r) {
+      const radius = Math.max(0, Math.min(r, w / 2, h / 2));
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, options = {}) {
+      const maxLines = Number.isFinite(options.maxLines) ? Math.max(1, options.maxLines) : Infinity;
+      const raw = String(text || "").replace(/\s+/g, " ").trim();
+      if (!raw) return y;
+      const useWordBreaks = /\s/.test(raw);
+      const words = useWordBreaks ? raw.split(" ") : Array.from(raw);
+      const joiner = useWordBreaks ? " " : "";
+      const lines = [];
+      let line = "";
+
+      words.forEach((word) => {
+        const candidate = line ? `${line}${joiner}${word}` : word;
+        if (ctx.measureText(candidate).width <= maxWidth || !line) {
+          line = candidate;
+          return;
+        }
+        lines.push(line);
+        line = word;
+      });
+      if (line) lines.push(line);
+
+      const visible = lines.slice(0, maxLines);
+      if (lines.length > visible.length && visible.length) {
+        let last = visible[visible.length - 1];
+        while (last.length > 1 && ctx.measureText(`${last}...`).width > maxWidth) {
+          last = last.slice(0, -1);
+        }
+        visible[visible.length - 1] = `${last}...`;
+      }
+      visible.forEach((item, index) => ctx.fillText(item, x, y + index * lineHeight));
+      return y + visible.length * lineHeight;
+    }
+
+    function drawExportKeyValue(ctx, label, value, x, y, width) {
+      ctx.fillStyle = "#767676";
+      ctx.font = "700 23px 'Courier New', monospace";
+      ctx.fillText(label, x, y);
+      ctx.fillStyle = "#111111";
+      ctx.font = "400 34px 'Helvetica Neue', Arial, sans-serif";
+      return drawWrappedText(ctx, value || "-", x, y + 42, width, 42, { maxLines: 2 }) + 6;
+    }
+
+    function drawExportStar(ctx, x, y, radius, color) {
+      ctx.save();
+      ctx.beginPath();
+      for (let i = 0; i < 16; i += 1) {
+        const angle = (i * Math.PI * 2) / 16 - Math.PI / 2;
+        const r = i % 2 === 0 ? radius : radius * 0.38;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function exportMapNodes() {
+      const items = [currentTrack, ...activeRecommendations];
+      return items.map((track, index) => {
+        const loc = locateTrack(track);
+        return {
+          track,
+          index,
+          lat: Number(loc.lat),
+          lng: Number(loc.lng),
+          precision: loc.precision || "",
+          label: index === 0 ? exportText("music.export.seed", "Seed") : String(index).padStart(2, "0"),
+          place: formatOrigin(track),
+          style: displayGenre(track)
+        };
+      }).filter((node) => Number.isFinite(node.lat) && Number.isFinite(node.lng));
+    }
+
+    function drawExportMap(ctx, x, y, w, h, nodes) {
+      roundedRectPath(ctx, x, y, w, h, 18);
+      ctx.fillStyle = "#fbfbfb";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(17, 17, 17, 0.18)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.save();
+      roundedRectPath(ctx, x, y, w, h, 18);
+      ctx.clip();
+
+      ctx.fillStyle = "#fbfbfb";
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = "rgba(17, 17, 17, 0.045)";
+      ctx.lineWidth = 1;
+      for (let gx = x + 64; gx < x + w; gx += 64) {
+        ctx.beginPath();
+        ctx.moveTo(gx, y);
+        ctx.lineTo(gx, y + h);
+        ctx.stroke();
+      }
+      for (let gy = y + 64; gy < y + h; gy += 64) {
+        ctx.beginPath();
+        ctx.moveTo(x, gy);
+        ctx.lineTo(x + w, gy);
+        ctx.stroke();
+      }
+
+      const features = worldFeatures || createFallbackWorldFeatures();
+      const exportProjection = (d3.geoNaturalEarth1 ? d3.geoNaturalEarth1() : d3.geoMercator())
+        .fitExtent([[x + 46, y + 70], [x + w - 46, y + h - 46]], features);
+      const exportPath = d3.geoPath(exportProjection, ctx);
+      const graticule = d3.geoGraticule ? d3.geoGraticule10() : null;
+
+      if (graticule) {
+        ctx.beginPath();
+        exportPath(graticule);
+        ctx.strokeStyle = "rgba(17, 17, 17, 0.08)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      exportPath(features);
+      ctx.fillStyle = "rgba(17, 17, 17, 0.052)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(17, 17, 17, 0.16)";
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+
+      if (borders) {
+        ctx.beginPath();
+        exportPath(borders);
+        ctx.strokeStyle = "rgba(17, 17, 17, 0.14)";
+        ctx.lineWidth = 0.9;
+        ctx.stroke();
+      }
+
+      const current = nodes[0];
+      const currentPoint = current ? exportProjection([current.lng, current.lat]) : null;
+      if (currentPoint) {
+        nodes.slice(1).forEach((node, index) => {
+          const point = exportProjection([node.lng, node.lat]);
+          if (!point) return;
+          ctx.save();
+          ctx.setLineDash([9, 12]);
+          ctx.beginPath();
+          ctx.moveTo(currentPoint[0], currentPoint[1]);
+          const midX = (currentPoint[0] + point[0]) / 2;
+          const midY = (currentPoint[1] + point[1]) / 2 - 54 - (index % 3) * 10;
+          ctx.quadraticCurveTo(midX, midY, point[0], point[1]);
+          ctx.strokeStyle = "rgba(17, 17, 17, 0.38)";
+          ctx.lineWidth = 2.1;
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+
+      nodes.forEach((node, index) => {
+        const point = exportProjection([node.lng, node.lat]);
+        if (!point) return;
+        const isCurrent = index === 0;
+        const color = isCurrent ? "#111111" : "#b72727";
+        const glow = ctx.createRadialGradient(point[0], point[1], 0, point[0], point[1], isCurrent ? 46 : 34);
+        glow.addColorStop(0, isCurrent ? "rgba(17, 17, 17, 0.18)" : "rgba(183, 39, 39, 0.18)");
+        glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.beginPath();
+        ctx.arc(point[0], point[1], isCurrent ? 46 : 34, 0, Math.PI * 2);
+        ctx.fillStyle = glow;
+        ctx.fill();
+        drawExportStar(ctx, point[0], point[1], isCurrent ? 15 : 12, color);
+
+        ctx.font = "700 20px 'Courier New', monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#ffffff";
+        if (!isCurrent) {
+          ctx.beginPath();
+          ctx.arc(point[0], point[1], 14, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(String(index).padStart(2, "0"), point[0], point[1] + 1);
+        }
+
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        const labelX = Math.min(x + w - 260, Math.max(x + 28, point[0] + (isCurrent ? 22 : 18)));
+        const labelY = Math.min(y + h - 48, Math.max(y + 76, point[1] + (index % 2 ? 30 : -20)));
+        ctx.fillStyle = isCurrent ? "#111111" : "#8d1f1f";
+        ctx.font = "700 23px 'Helvetica Neue', Arial, sans-serif";
+        drawWrappedText(ctx, isCurrent ? exportText("music.export.seedTrack", "Seed Track") : `${String(index).padStart(2, "0")} ${node.track.title}`, labelX, labelY, 230, 27, { maxLines: 1 });
+        ctx.fillStyle = "rgba(17, 17, 17, 0.62)";
+        ctx.font = "400 18px 'Helvetica Neue', Arial, sans-serif";
+        drawWrappedText(ctx, node.place, labelX, labelY + 28, 230, 23, { maxLines: 1 });
+      });
+
+      ctx.restore();
+
+      ctx.fillStyle = "#111111";
+      ctx.font = "400 42px 'Helvetica Neue', Arial, sans-serif";
+      ctx.fillText(exportText("music.export.mapTitle", "Music Map Overview"), x + 34, y + 54);
+      ctx.fillStyle = "#6c6c6c";
+      ctx.font = "400 23px 'Courier New', monospace";
+      ctx.fillText(exportText("music.export.mapSubtitle", "Seed and recommendation locations"), x + 34, y + h - 28);
+    }
+
+    function buildExportCanvas() {
+      const widthPx = 1600;
+      const margin = 86;
+      const mapHeight = 760;
+      const recRowHeight = 142;
+      const aiMessage = [...aiConversationMessages].reverse()
+        .find((message) => message.role === "assistant" && cleanMetaText(message.displayContent || message.content));
+      const aiHeight = aiMessage ? 300 : 0;
+      const recommendationRows = Math.max(activeRecommendations.length, 1);
+      const heightPx = 360 + 260 + mapHeight + 330 + recommendationRows * recRowHeight + aiHeight + 180;
+      const canvas = document.createElement("canvas");
+      canvas.width = widthPx;
+      canvas.height = heightPx;
+      const ctx = canvas.getContext("2d");
+      const contentWidth = widthPx - margin * 2;
+      let y = 0;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, widthPx, heightPx);
+      ctx.strokeStyle = "rgba(17, 17, 17, 0.045)";
+      ctx.lineWidth = 1;
+      for (let gx = 0; gx <= widthPx; gx += 72) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, heightPx);
+        ctx.stroke();
+      }
+      for (let gy = 0; gy <= heightPx; gy += 72) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(widthPx, gy);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#111111";
+      ctx.font = "400 96px 'Helvetica Neue', Arial, sans-serif";
+      ctx.fillText("Echo Atlas", margin, 132);
+      ctx.font = "400 42px 'Helvetica Neue', Arial, sans-serif";
+      ctx.fillText(exportText("music.export.slogan", "Hear the World"), margin, 190);
+      ctx.fillStyle = "#6c6c6c";
+      ctx.font = "400 25px 'Courier New', monospace";
+      ctx.fillText(exportText("music.export.generatedAt", "Generated at {time}", { time: exportDateLabel() }), margin, 244);
+      ctx.fillText(exportText("music.export.routeCount", "{count} recommendations", { count: activeRecommendations.length }), margin, 282);
+
+      y = 332;
+      roundedRectPath(ctx, margin, y, contentWidth, 210, 16);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(17, 17, 17, 0.2)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#767676";
+      ctx.font = "700 24px 'Courier New', monospace";
+      ctx.fillText(exportText("music.export.seedTrack", "Seed Track"), margin + 34, y + 48);
+      ctx.fillStyle = "#111111";
+      ctx.font = "400 54px 'Helvetica Neue', Arial, sans-serif";
+      drawWrappedText(ctx, currentTrack.title, margin + 34, y + 108, contentWidth * 0.45, 58, { maxLines: 2 });
+      ctx.fillStyle = "#555555";
+      ctx.font = "400 30px 'Helvetica Neue', Arial, sans-serif";
+      drawWrappedText(ctx, currentTrack.artist || t("music.default.unknown"), margin + 34, y + 180, contentWidth * 0.45, 34, { maxLines: 1 });
+
+      const kvX = margin + Math.round(contentWidth * 0.53);
+      const kvW = Math.round(contentWidth * 0.42);
+      drawExportKeyValue(ctx, exportText("music.readout.origin", "Origin"), formatOrigin(currentTrack), kvX, y + 46, kvW);
+      drawExportKeyValue(ctx, exportText("music.readout.style", "Style"), displayGenre(currentTrack), kvX, y + 128, kvW);
+
+      y += 250;
+      drawExportMap(ctx, margin, y, contentWidth, mapHeight, exportMapNodes());
+      y += mapHeight + 54;
+
+      const metrics = activeMetrics();
+      const metricCards = [
+        [t("music.param.serendipity"), activeRecommendations.length ? Number(metrics.serendipity).toFixed(3) : "0%"],
+        [t("music.param.calibrationKl"), activeRecommendations.length ? Number(metrics.calibrationKl).toFixed(2) : "0%"],
+        [t("music.param.targetAffinity"), formatPct(metrics.targetAffinity)],
+        [t("music.param.minorityExposure"), formatPct(metrics.minorityExposure)]
+      ];
+      ctx.fillStyle = "#111111";
+      ctx.font = "400 48px 'Helvetica Neue', Arial, sans-serif";
+      ctx.fillText(exportText("music.export.analysisTitle", "Analysis Parameters"), margin, y);
+      ctx.fillStyle = "#6c6c6c";
+      ctx.font = "400 25px 'Courier New', monospace";
+      ctx.fillText(`${exportText("music.recommend.optionsTitle", "Recommendation direction")}: ${describeRecommendationPreference()}`, margin, y + 42);
+      const cardGap = 18;
+      const cardWidth = (contentWidth - cardGap * 3) / 4;
+      metricCards.forEach((card, index) => {
+        const x = margin + index * (cardWidth + cardGap);
+        const cardY = y + 78;
+        roundedRectPath(ctx, x, cardY, cardWidth, 168, 12);
+        ctx.fillStyle = index === 3 ? "#111111" : "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(17, 17, 17, 0.18)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = index === 3 ? "rgba(255, 255, 255, 0.68)" : "#6c6c6c";
+        ctx.font = "700 21px 'Courier New', monospace";
+        ctx.fillText(card[0], x + 24, cardY + 42);
+        ctx.fillStyle = index === 3 ? "#ffffff" : "#111111";
+        ctx.font = "400 64px 'Helvetica Neue', Arial, sans-serif";
+        ctx.fillText(card[1], x + 24, cardY + 122);
+      });
+      y += 300;
+
+      ctx.fillStyle = "#111111";
+      ctx.font = "400 48px 'Helvetica Neue', Arial, sans-serif";
+      ctx.fillText(exportText("music.export.recommendationsTitle", "Recommended Music"), margin, y);
+      y += 56;
+
+      const rows = activeRecommendations.length ? activeRecommendations : [];
+      if (!rows.length) {
+        ctx.fillStyle = "#6c6c6c";
+        ctx.font = "400 30px 'Helvetica Neue', Arial, sans-serif";
+        ctx.fillText(exportText("music.export.noRecommendations", "No recommendations generated yet."), margin, y + 42);
+        y += recRowHeight;
+      } else {
+        rows.forEach((item, index) => {
+          roundedRectPath(ctx, margin, y, contentWidth, recRowHeight - 18, 12);
+          ctx.fillStyle = index % 2 ? "#ffffff" : "#fafafa";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(17, 17, 17, 0.14)";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.fillStyle = "#b72727";
+          ctx.font = "700 38px 'Courier New', monospace";
+          ctx.fillText(String(index + 1).padStart(2, "0"), margin + 28, y + 58);
+          ctx.fillStyle = "#111111";
+          ctx.font = "400 37px 'Helvetica Neue', Arial, sans-serif";
+          drawWrappedText(ctx, item.title, margin + 116, y + 48, contentWidth * 0.42, 42, { maxLines: 2 });
+          ctx.fillStyle = "#555555";
+          ctx.font = "400 25px 'Helvetica Neue', Arial, sans-serif";
+          drawWrappedText(ctx, item.artist || t("music.default.unknown"), margin + 116, y + 96, contentWidth * 0.42, 30, { maxLines: 1 });
+
+          const infoX = margin + Math.round(contentWidth * 0.57);
+          ctx.fillStyle = "#111111";
+          ctx.font = "400 27px 'Helvetica Neue', Arial, sans-serif";
+          drawWrappedText(ctx, formatOrigin(item), infoX, y + 46, contentWidth * 0.36, 31, { maxLines: 1 });
+          ctx.fillStyle = "#6c6c6c";
+          ctx.font = "400 23px 'Courier New', monospace";
+          drawWrappedText(ctx, `${displayGenre(item)} / ${displaySource(item)}`, infoX, y + 84, contentWidth * 0.36, 27, { maxLines: 2 });
+          y += recRowHeight;
+        });
+      }
+
+      if (aiMessage) {
+        y += 22;
+        ctx.fillStyle = "#111111";
+        ctx.font = "400 48px 'Helvetica Neue', Arial, sans-serif";
+        ctx.fillText(exportText("music.export.aiTitle", "AI Notes"), margin, y);
+        ctx.fillStyle = "#444444";
+        ctx.font = "400 28px 'Helvetica Neue', Arial, sans-serif";
+        drawWrappedText(ctx, aiMessage.displayContent || aiMessage.content, margin, y + 58, contentWidth, 36, { maxLines: 6 });
+        y += 280;
+      }
+
+      ctx.fillStyle = "#6c6c6c";
+      ctx.font = "400 24px 'Courier New', monospace";
+      ctx.fillText("Echo Atlas / " + exportText("music.export.slogan", "Hear the World"), margin, heightPx - 70);
+      ctx.fillText(window.location.origin || "local", widthPx - margin - 360, heightPx - 70);
+      return canvas;
+    }
+
+    function downloadCanvasPng(canvas, filename) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("Canvas export failed"));
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+          resolve();
+        }, "image/png", 0.98);
+      });
+    }
+
+    async function exportMusicMapImage() {
+      if (!els.mapExportButton) return;
+      const originalText = els.mapExportButton.textContent;
+      els.mapExportButton.disabled = true;
+      els.mapExportButton.classList.add("is-busy");
+      els.mapExportButton.textContent = exportText("music.export.generating", "Exporting...");
+      try {
+        if (!worldFeatures) {
+          await loadMap();
+        }
+        const canvas = buildExportCanvas();
+        const filename = `${exportFileToken(`Echo-Atlas-${currentTrack.title}`)}.png`;
+        await downloadCanvasPng(canvas, filename);
+        els.mapStatus.textContent = exportText("music.export.done", "Map exported");
+      } catch (error) {
+        console.error(error);
+        els.mapStatus.textContent = exportText("music.export.failed", "Map export failed");
+      } finally {
+        els.mapExportButton.disabled = false;
+        els.mapExportButton.classList.remove("is-busy");
+        els.mapExportButton.textContent = originalText || exportText("music.export.map", "Export Map");
+      }
     }
 
     function buildAiInitialPrompt(extraQuestion = "") {
@@ -6315,6 +6777,7 @@ Guidelines:
 
     document.addEventListener("wheel", routeGutterWheelToWholeStation, { passive: false });
 
+    els.mapExportButton?.addEventListener("click", exportMusicMapImage);
     els.libraryButton.addEventListener("click", openLibraryPicker);
     els.libraryClose.addEventListener("click", closeLibraryPicker);
     els.libraryPicker.addEventListener("click", (event) => {

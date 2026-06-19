@@ -1034,11 +1034,11 @@
     function readCoverConfig() {
       try {
         const parsed = JSON.parse(localStorage.getItem(coverConfigKey) || "{}");
-        const mode = ["color", "mono", "mixed"].includes(parsed.mode) ? parsed.mode : "mixed";
+        const mode = ["color", "mono", "mixed"].includes(parsed.mode) ? parsed.mode : "color";
         const colorRatio = coverRatios.includes(Number(parsed.colorRatio)) ? Number(parsed.colorRatio) : 30;
         return { mode, colorRatio };
       } catch (error) {
-        return { mode: "mixed", colorRatio: 30 };
+        return { mode: "color", colorRatio: 30 };
       }
     }
 
