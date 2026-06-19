@@ -240,10 +240,12 @@ class MainlineRecommendationPlatform:
         source_dataset: str | None = None,
         q: str | None = None,
         limit: int = 24,
+        offset: int = 0,
         random_seed: int | None = 42,
         exclude_low_signal: bool = True,
     ) -> dict[str, Any]:
         limit = max(1, min(200, int(limit)))
+        offset = max(0, int(offset))
         candidates = np.arange(len(self.tracks), dtype=np.int64)
         culture_key = _clean(culture)
         source_key = _clean(source_dataset)
@@ -268,7 +270,9 @@ class MainlineRecommendationPlatform:
             rng = np.random.default_rng(int(random_seed))
             rng.shuffle(keep)
 
-        items = [self._track_payload(idx) for idx in keep[:limit]]
+        page = keep[offset : offset + limit]
+        next_offset = offset + len(page)
+        items = [self._track_payload(idx) for idx in page]
         return {
             "ok": True,
             "request": {
@@ -276,10 +280,14 @@ class MainlineRecommendationPlatform:
                 "source_dataset": source_key,
                 "q": query,
                 "limit": limit,
+                "offset": offset,
                 "random_seed": random_seed,
                 "exclude_low_signal": bool(exclude_low_signal),
             },
             "total_available": int(len(keep)),
+            "offset": offset,
+            "next_offset": next_offset,
+            "has_more": next_offset < len(keep),
             "items": items,
         }
 

@@ -839,6 +839,9 @@
     const GLOBE_OFFSET_Y = 0.01;
     const GLOBE_COMPACT_OFFSET_Y = -0.12;
     const GLOBE_TILT = 0.08;
+    const GLOBE_TILT_LIMIT = 1.05;
+    const GLOBE_INTERACTION_HOLD_MS = 10000;
+    const GLOBE_RECOMMEND_HINT_KEY = "echo:globe-recommendation-hint";
     const AUTO_ROTATION_SPEED = 0.00012;
     const FRAME_INTERVAL = 1000 / 30;
     const TEXT_FRAME_INTERVAL = 1000 / 12;
@@ -852,6 +855,16 @@
       { key: "americas", center: -88 },
       { key: "oceania", center: 155 }
     ];
+    const REGION_RECOMMENDATION_POOLS = {
+      eastAsia: ["china", "japan", "korea"],
+      southeastAsia: ["southeast_asia"],
+      southAsia: ["india"],
+      mena: ["middle_east"],
+      europe: ["west", "celtic", "nordic", "balkans", "eastern_europe"],
+      westAfrica: ["africa"],
+      americas: ["latin", "brazil", "andean", "caribbean"],
+      oceania: ["southeast_asia", "caribbean"]
+    };
 
     function t(key) {
       return window.EchoI18n?.t(key) || key;
@@ -1114,9 +1127,44 @@
     let lastPointerX = 0;
     let lastPointerY = 0;
     let manualTilt = GLOBE_TILT;
+    let manualRotationHoldUntil = 0;
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
+    }
+
+    function recommendationPoolForRegion(regionKey) {
+      const pool = REGION_RECOMMENDATION_POOLS[regionKey] || [];
+      return pool.filter(Boolean);
+    }
+
+    function pickRecommendationCulture(regionKey) {
+      const pool = recommendationPoolForRegion(regionKey);
+      if (!pool.length) return "";
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function persistGlobeRecommendationHint(reason = "manual-rotation") {
+      const region = MUSIC_REGIONS[currentRegionIndex] || MUSIC_REGIONS[0];
+      if (!region) return;
+      const culturePool = recommendationPoolForRegion(region.key);
+      const culture = pickRecommendationCulture(region.key);
+      if (!culture) return;
+      const now = Date.now();
+      const hint = {
+        source: "home-globe",
+        reason,
+        regionKey: region.key,
+        regionName: region.name,
+        regionStyle: region.style,
+        culture,
+        culturePool,
+        createdAt: now,
+        expiresAt: now + GLOBE_INTERACTION_HOLD_MS
+      };
+      try {
+        window.localStorage.setItem(GLOBE_RECOMMEND_HINT_KEY, JSON.stringify(hint));
+      } catch (_) {}
     }
 
     const resize = () => {
@@ -1342,7 +1390,7 @@
       lastRenderTime = timestamp;
 
       earthGroup.rotation.x = manualTilt;
-      if (!globeDragging) {
+      if (!globeDragging && Date.now() > manualRotationHoldUntil) {
         earthGroup.rotation.y += AUTO_ROTATION_SPEED * delta;
       }
       syncActiveRegion();
@@ -1395,8 +1443,8 @@
       const dy = event.clientY - lastPointerY;
       lastPointerX = event.clientX;
       lastPointerY = event.clientY;
-      earthGroup.rotation.y += dx * 0.006;
-      manualTilt = clamp(manualTilt + dy * 0.0032, -0.52, 0.52);
+      earthGroup.rotation.y += dx * 0.008;
+      manualTilt = clamp(manualTilt + dy * 0.0042, -GLOBE_TILT_LIMIT, GLOBE_TILT_LIMIT);
       lastRenderTime = 0;
       needsTextRedraw = true;
       syncActiveRegion();
@@ -1411,6 +1459,8 @@
       if (event && container.hasPointerCapture?.(event.pointerId)) {
         container.releasePointerCapture(event.pointerId);
       }
+      manualRotationHoldUntil = Date.now() + GLOBE_INTERACTION_HOLD_MS;
+      persistGlobeRecommendationHint();
       lastRenderTime = 0;
       needsTextRedraw = true;
       scheduleFrame();

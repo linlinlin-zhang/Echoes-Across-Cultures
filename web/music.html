@@ -337,6 +337,14 @@
       overflow: auto;
     }
 
+    .library-load-marker {
+      padding: 0.9rem 0.2rem 1.1rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
     .recommend-options {
       display: grid;
       gap: 0.95rem;
@@ -2864,6 +2872,17 @@
     };
 
     const recommendRegionKeys = ["random", ...Object.keys(recommendRegionGroups)];
+    const globeRecommendationHintKey = "echo:globe-recommendation-hint";
+    const globeRegionFallbackCultures = {
+      eastAsia: ["china", "japan", "korea"],
+      southeastAsia: ["southeast_asia"],
+      southAsia: ["india"],
+      mena: ["middle_east"],
+      europe: ["west", "celtic", "nordic", "balkans", "eastern_europe"],
+      westAfrica: ["africa"],
+      americas: ["latin", "brazil", "andean", "caribbean"],
+      oceania: ["southeast_asia", "caribbean"]
+    };
 
     function localizedCulturePlace(key) {
       const entry = culturePlaces[key];
@@ -3455,7 +3474,14 @@
     let librarySearchResults = [];
     let librarySearchBusy = false;
     let librarySearchAbort = null;
+    let librarySearchQuery = "";
+    let librarySearchOffset = 0;
+    let libraryHasMore = false;
+    let libraryTotalAvailable = 0;
+    let libraryBrowseSeed = Date.now() % 1000000;
+    const libraryPageSize = 24;
     let recommendPreferences = { culture: "random", region: "random" };
+    applyGlobeRecommendationHint();
 
     function formatCount(value) {
       return Number(value || 0).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN");
@@ -3506,6 +3532,61 @@
     function recommendationRegionLabel(key) {
       if (key === "random") return t("music.recommend.randomRegion");
       return t("music.region." + key);
+    }
+
+    function readGlobeRecommendationHint() {
+      try {
+        const raw = window.localStorage.getItem(globeRecommendationHintKey);
+        if (!raw) return null;
+        const hint = JSON.parse(raw);
+        const expiresAt = Number(hint?.expiresAt || 0);
+        if (!expiresAt || Date.now() > expiresAt) {
+          window.localStorage.removeItem(globeRecommendationHintKey);
+          return null;
+        }
+        return hint;
+      } catch (_) {
+        try {
+          window.localStorage.removeItem(globeRecommendationHintKey);
+        } catch (_) {}
+        return null;
+      }
+    }
+
+    function recommendationRegionForCulture(culture) {
+      const cleanCulture = cleanMetaText(culture);
+      if (!cleanCulture || cleanCulture === "random") return "random";
+      const match = Object.entries(recommendRegionGroups)
+        .find(([, cultures]) => cultures.includes(cleanCulture));
+      return match ? match[0] : "random";
+    }
+
+    function cultureCandidatesForGlobeHint(hint) {
+      const explicit = cleanMetaText(hint?.culture);
+      const pool = Array.isArray(hint?.culturePool)
+        ? hint.culturePool.map(cleanMetaText).filter(Boolean)
+        : [];
+      const fallback = (globeRegionFallbackCultures[cleanMetaText(hint?.regionKey)] || [])
+        .map(cleanMetaText)
+        .filter(Boolean);
+      return [...new Set([explicit, ...pool, ...fallback].filter(Boolean))];
+    }
+
+    function applyGlobeRecommendationHint() {
+      const hint = readGlobeRecommendationHint();
+      if (!hint) return false;
+      const available = new Set(availableRecommendationCultures());
+      const culture = cultureCandidatesForGlobeHint(hint).find((item) => available.has(item));
+      if (!culture) return false;
+      recommendPreferences = {
+        culture,
+        region: recommendationRegionForCulture(culture),
+        source: "home-globe",
+        sourceRegionKey: cleanMetaText(hint.regionKey),
+        sourceRegionName: cleanMetaText(hint.regionName),
+        expiresAt: Number(hint.expiresAt || 0)
+      };
+      return true;
     }
 
     function setSelectOptions(select, options, selectedValue) {
@@ -3669,7 +3750,7 @@
       const countrySource = String(track.countrySource || track.country_source || track.locationPrecision || "");
       const aiCountryOnly = Boolean(track.raw?.ai_country_location)
         || /kimi|ai_country/i.test(String(track.countrySource || track.country_source || track.locationPrecision || ""));
-      const inferredCountryOnly = aiCountryOnly || /origin_hint|metadata_hint|country_hint|storefront_ignored/i.test(countrySource);
+      const inferredCountryOnly = aiCountryOnly || /origin_hint|metadata_hint|country_hint|itunes_storefront|storefront_ignored/i.test(countrySource);
       if (inferredCountryOnly && country) {
         return country;
       }
@@ -5484,7 +5565,7 @@ Guidelines:
       document.body.classList.add("is-library-open");
       window.setTimeout(() => els.librarySearchInput?.focus(), 40);
       if (!librarySearchResults.length) {
-        searchLibrary("");
+        searchLibrary("", { reset: true });
       }
     }
 
@@ -5502,10 +5583,38 @@ Guidelines:
       ].map(cleanMetaText).filter(Boolean).join(" / ");
     }
 
+    function libraryScrollHintText() {
+      if (librarySearchBusy && librarySearchResults.length) {
+        return isChineseLang() ? "正在加载更多歌曲" : "Loading more tracks";
+      }
+      if (libraryHasMore) {
+        return isChineseLang() ? "向下滑动继续加载更多歌曲" : "Scroll down to load more tracks";
+      }
+      if (librarySearchResults.length) {
+        return isChineseLang() ? "已显示所有匹配歌曲" : "All matching tracks are shown";
+      }
+      return "";
+    }
+
+    function updateLibraryStatus() {
+      if (!els.libraryStatus) return;
+      if (librarySearchBusy && !librarySearchResults.length) {
+        els.libraryStatus.textContent = librarySearchQuery
+          ? t("music.library.searching")
+          : t("music.library.browsing");
+        return;
+      }
+      if (librarySearchResults.length) {
+        els.libraryStatus.textContent = libraryScrollHintText();
+        return;
+      }
+      els.libraryStatus.textContent = librarySearchQuery ? t("music.library.empty") : t("music.library.ready");
+    }
+
     function renderLibraryResults() {
       if (!librarySearchResults.length) {
         els.libraryResults.innerHTML = `
-          <div class="library-status">${escapeHtml(t("music.library.empty"))}</div>
+          <div class="library-status">${escapeHtml(librarySearchBusy ? (librarySearchQuery ? t("music.library.searching") : t("music.library.browsing")) : t("music.library.empty"))}</div>
         `;
         return;
       }
@@ -5524,39 +5633,82 @@ Guidelines:
             <span class="library-result-action">${t("music.library.choose")}</span>
           </button>
         `;
-      }).join("");
+      }).join("") + `
+        <div class="library-load-marker" aria-live="polite">${escapeHtml(libraryScrollHintText())}</div>
+      `;
       els.libraryResults.querySelectorAll("[data-library-index]").forEach((button) => {
         button.addEventListener("click", () => importLibraryTrack(Number(button.dataset.libraryIndex)));
       });
     }
 
-    async function searchLibrary(query = "") {
+    function maybeLoadMoreLibraryResults() {
+      if (els.libraryPicker.hidden || librarySearchBusy || !libraryHasMore) return;
+      const el = els.libraryResults;
+      const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 180;
+      if (nearBottom) {
+        searchLibrary(librarySearchQuery, { append: true });
+      }
+    }
+
+    function maybeFillLibraryViewport() {
+      window.setTimeout(() => {
+        if (els.libraryPicker.hidden || librarySearchBusy || !libraryHasMore) return;
+        if (els.libraryResults.scrollHeight <= els.libraryResults.clientHeight + 24) {
+          searchLibrary(librarySearchQuery, { append: true });
+        }
+      }, 60);
+    }
+
+    async function searchLibrary(query = "", options = {}) {
+      const append = Boolean(options.append);
+      const reset = options.reset !== false && !append;
       if (librarySearchBusy && librarySearchAbort) {
+        if (append) return;
         librarySearchAbort.abort();
       }
       const text = String(query || "").trim();
+      if (reset) {
+        librarySearchQuery = text;
+        librarySearchOffset = 0;
+        libraryHasMore = false;
+        libraryTotalAvailable = 0;
+        libraryBrowseSeed = Date.now() % 1000000;
+        librarySearchResults = [];
+        els.libraryResults.scrollTop = 0;
+      }
       librarySearchBusy = true;
       const controller = new AbortController();
       librarySearchAbort = controller;
       els.librarySearchSubmit.classList.add("is-disabled");
-      els.libraryStatus.textContent = text ? t("music.library.searching") : t("music.library.browsing");
+      updateLibraryStatus();
+      renderLibraryResults();
       try {
+        const offset = append ? librarySearchOffset : 0;
         const endpoint = text
-          ? `/api/mainline/search?q=${encodeURIComponent(text)}&limit=32&prefer_cuda=${apiPreferCuda}`
-          : `/api/mainline/catalog?limit=24&random_seed=${encodeURIComponent(Date.now() % 100000)}&prefer_cuda=${apiPreferCuda}`;
+          ? `/api/mainline/search?q=${encodeURIComponent(text)}&limit=${libraryPageSize}&offset=${offset}&prefer_cuda=${apiPreferCuda}`
+          : `/api/mainline/catalog?limit=${libraryPageSize}&offset=${offset}&random_seed=${encodeURIComponent(libraryBrowseSeed)}&prefer_cuda=${apiPreferCuda}`;
         const response = await fetch(endpoint, { signal: controller.signal });
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`${response.status} ${errorText}`);
         }
         const data = await response.json();
-        librarySearchResults = (data.items || []).map((item, index) => trackFromApiItem(item, index));
-        els.libraryStatus.textContent = `${librarySearchResults.length}/${Number(data.total_available || librarySearchResults.length).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN")} ${t("music.library.loaded")}`;
+        const nextItems = (data.items || []).map((item, index) => trackFromApiItem(item, offset + index));
+        librarySearchResults = append ? [...librarySearchResults, ...nextItems] : nextItems;
+        libraryTotalAvailable = Number(data.total_available || librarySearchResults.length);
+        librarySearchOffset = Number(data.next_offset ?? (offset + nextItems.length));
+        libraryHasMore = Boolean(data.has_more ?? (librarySearchOffset < libraryTotalAvailable));
+        updateLibraryStatus();
         renderLibraryResults();
+        maybeFillLibraryViewport();
       } catch (error) {
         if (error.name === "AbortError") return;
         console.error(error);
-        librarySearchResults = [];
+        if (!append) {
+          librarySearchResults = [];
+          libraryHasMore = false;
+          librarySearchOffset = 0;
+        }
         els.libraryStatus.textContent = t("music.library.failed");
         renderLibraryResults();
       } finally {
@@ -5564,6 +5716,8 @@ Guidelines:
           librarySearchBusy = false;
           librarySearchAbort = null;
           els.librarySearchSubmit.classList.remove("is-disabled");
+          updateLibraryStatus();
+          renderLibraryResults();
         }
       }
     }
@@ -6170,6 +6324,7 @@ Guidelines:
       event.preventDefault();
       searchLibrary(els.librarySearchInput.value);
     });
+    els.libraryResults.addEventListener("scroll", maybeLoadMoreLibraryResults, { passive: true });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !els.libraryPicker.hidden) {
         closeLibraryPicker();

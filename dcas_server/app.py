@@ -2166,6 +2166,7 @@ def create_app() -> FastAPI:
         source_dataset: str | None = None,
         q: str | None = None,
         limit: int = 24,
+        offset: int = 0,
         random_seed: int | None = 42,
         exclude_low_signal: bool = True,
         prefer_cuda: bool = False,
@@ -2177,6 +2178,7 @@ def create_app() -> FastAPI:
                 source_dataset=source_dataset,
                 q=q,
                 limit=limit,
+                offset=offset,
                 random_seed=random_seed,
                 exclude_low_signal=exclude_low_signal,
             )
@@ -2193,6 +2195,7 @@ def create_app() -> FastAPI:
         culture: str | None = None,
         source_dataset: str | None = None,
         limit: int = 24,
+        offset: int = 0,
         exclude_low_signal: bool = True,
         prefer_cuda: bool = False,
     ):
@@ -2203,6 +2206,7 @@ def create_app() -> FastAPI:
                 source_dataset=source_dataset,
                 q=q,
                 limit=limit,
+                offset=offset,
                 random_seed=None,
                 exclude_low_signal=exclude_low_signal,
             )
