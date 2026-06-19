@@ -282,6 +282,190 @@
       pointer-events: none;
     }
 
+    .import-picker,
+    .library-picker {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      padding: clamp(1rem, 4vw, 3rem);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+    }
+
+    .import-picker[hidden],
+    .library-picker[hidden] {
+      display: none;
+    }
+
+    .import-dialog,
+    .library-dialog {
+      width: min(100%, 880px);
+      max-height: min(82vh, 760px);
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      border: 1px solid var(--ink);
+      background: #ffffff;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.14);
+    }
+
+    .import-dialog {
+      grid-template-rows: auto auto;
+    }
+
+    .dialog-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .dialog-head h2 {
+      margin-top: 0.35rem;
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .import-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--grid-gap);
+      padding: var(--grid-gap);
+      background: var(--line-soft);
+    }
+
+    .import-choice {
+      min-height: 14rem;
+      display: grid;
+      align-content: end;
+      gap: 0.8rem;
+      padding: 1.5rem;
+      border: 0;
+      background: #ffffff;
+      color: var(--ink);
+      text-align: left;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .import-choice:hover {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .import-choice span {
+      font-size: clamp(1.6rem, 4vw, 3rem);
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .import-choice small {
+      color: currentColor;
+      opacity: 0.62;
+      font-size: 0.9rem;
+    }
+
+    .library-search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .library-search-row input {
+      width: 100%;
+      min-height: 3.2rem;
+      border: 1px solid var(--ink);
+      background: #ffffff;
+      padding: 0 1rem;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    .library-results {
+      min-height: 18rem;
+      max-height: 52vh;
+      overflow: auto;
+      background: #ffffff;
+    }
+
+    .library-result,
+    .library-status,
+    .library-load-marker {
+      width: 100%;
+      min-height: 5.9rem;
+      display: grid;
+      grid-template-columns: 4.4rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.8rem 1.5rem;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .library-result:hover {
+      background: var(--card-hover);
+    }
+
+    .library-status,
+    .library-load-marker {
+      grid-template-columns: 1fr;
+      min-height: 4rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+
+    .library-result-cover {
+      width: 4.4rem;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: var(--card);
+      border: 1px solid var(--line);
+    }
+
+    .library-result-cover.is-empty {
+      display: grid;
+      place-items: center;
+      color: var(--light);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+    }
+
+    .library-result-main {
+      min-width: 0;
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .library-result-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1.02rem;
+    }
+
+    .library-result-meta {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .library-result-action {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
     .toolbar .control:first-of-type {
       grid-column: span 2;
     }
@@ -808,6 +992,34 @@
       .hero-stat-grid {
         grid-template-columns: 1fr;
       }
+
+      .import-dialog,
+      .library-dialog {
+        max-height: 88vh;
+      }
+
+      .dialog-head,
+      .library-search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dialog-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .import-choice-grid,
+      .library-search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .library-result {
+        grid-template-columns: 3.8rem minmax(0, 1fr);
+      }
+
+      .library-result-action {
+        grid-column: 2;
+      }
     }
   </style>
 </head>
@@ -851,7 +1063,7 @@
     </section>
 
     <section class="toolbar" aria-label="收藏夹工具栏" data-i18n-aria-label="favorites.aria.toolbar">
-      <label class="pill" for="favorite-import" data-i18n="favorites.import">点击导入歌曲</label>
+      <button class="pill" id="favorite-import-menu" type="button" data-i18n="favorites.import">点击导入歌曲</button>
       <input class="upload-input" id="favorite-import" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma" multiple>
 
       <div class="control">
@@ -894,6 +1106,45 @@
     </section>
   </main>
 
+  <div class="import-picker" id="import-picker" hidden>
+    <section class="import-dialog" role="dialog" aria-modal="true" aria-labelledby="import-picker-title">
+      <div class="dialog-head">
+        <div>
+          <div class="meta-label">导入方式</div>
+          <h2 id="import-picker-title">选择导入歌曲</h2>
+        </div>
+        <button class="pill" id="import-picker-close" type="button">关闭</button>
+      </div>
+      <div class="import-choice-grid">
+        <button class="import-choice" id="import-upload-choice" type="button">
+          <span>上传音乐</span>
+          <small>从本机选择音频文件</small>
+        </button>
+        <button class="import-choice" id="import-library-choice" type="button">
+          <span>曲库选择</span>
+          <small>搜索 iTunes / Jamendo 曲库</small>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="library-picker" id="library-picker" hidden>
+    <section class="library-dialog" role="dialog" aria-modal="true" aria-labelledby="library-picker-title">
+      <div class="dialog-head">
+        <div>
+          <div class="meta-label">曲库导入</div>
+          <h2 id="library-picker-title">选择曲库歌曲</h2>
+        </div>
+        <button class="pill" id="library-picker-close" type="button">关闭</button>
+      </div>
+      <div class="library-search-row">
+        <input id="library-search-input" type="search" autocomplete="off" placeholder="搜索歌名、歌手、流派、国家或地域">
+        <button class="pill" id="library-search-submit" type="button">搜索</button>
+      </div>
+      <div class="library-results" id="library-results" role="listbox" aria-label="曲库搜索结果"></div>
+    </section>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="favorite-store.js"></script>
   <script>
@@ -903,7 +1154,17 @@
       culture: document.getElementById("culture-filter"),
       source: document.getElementById("source-filter"),
       sort: document.getElementById("sort-select"),
+      importMenu: document.getElementById("favorite-import-menu"),
       import: document.getElementById("favorite-import"),
+      importPicker: document.getElementById("import-picker"),
+      importClose: document.getElementById("import-picker-close"),
+      importUploadChoice: document.getElementById("import-upload-choice"),
+      importLibraryChoice: document.getElementById("import-library-choice"),
+      libraryPicker: document.getElementById("library-picker"),
+      libraryClose: document.getElementById("library-picker-close"),
+      librarySearchInput: document.getElementById("library-search-input"),
+      librarySearchSubmit: document.getElementById("library-search-submit"),
+      libraryResults: document.getElementById("library-results"),
       statCount: document.getElementById("stat-count"),
       statCulture: document.getElementById("stat-culture"),
       statArtist: document.getElementById("stat-artist")
@@ -925,6 +1186,14 @@
     let masonryResizeFrame = 0;
     let removedTrackIds = readRemovedTrackIds();
     let coverConfig = readCoverConfig();
+    let librarySearchResults = [];
+    let librarySearchQuery = "";
+    let librarySearchOffset = 0;
+    let libraryHasMore = false;
+    let librarySearchBusy = false;
+    let librarySearchAbort = null;
+    let libraryBrowseSeed = Date.now() % 1000000;
+    const libraryPageSize = 24;
 
     function t(key, params = {}) {
       return window.EchoI18n?.t(key, params) || key;
@@ -1066,7 +1335,8 @@
         url: item.platform_track_url || item.full_track_url || item.preview_url || "",
         description: item.description || item.album_description || "",
         favorite: Boolean(item.favorite),
-        imported: false
+        imported: false,
+        raw: item.raw || item
       };
     }
 
@@ -1331,6 +1601,149 @@
       }));
     }
 
+    function openImportPicker() {
+      els.importPicker.hidden = false;
+    }
+
+    function closeImportPicker() {
+      els.importPicker.hidden = true;
+    }
+
+    function openLibraryPicker() {
+      closeImportPicker();
+      els.libraryPicker.hidden = false;
+      window.setTimeout(() => els.librarySearchInput?.focus(), 40);
+      if (!librarySearchResults.length) {
+        searchLibrary("", { reset: true });
+      }
+    }
+
+    function closeLibraryPicker() {
+      els.libraryPicker.hidden = true;
+    }
+
+    function libraryMeta(item) {
+      return [
+        item.artist,
+        item.genre,
+        item.country || item.city || item.culture,
+        item.source
+      ].map((value) => String(value || "").trim()).filter(Boolean).join(" / ");
+    }
+
+    function libraryScrollHintText() {
+      if (librarySearchBusy && librarySearchResults.length) return "正在加载更多歌曲";
+      if (libraryHasMore) return "向下滑动继续加载更多歌曲";
+      if (librarySearchResults.length) return "已显示所有匹配歌曲";
+      return "";
+    }
+
+    function renderLibraryResults() {
+      if (!librarySearchResults.length) {
+        els.libraryResults.innerHTML = `<div class="library-status">${escapeHtml(librarySearchBusy ? "正在搜索曲库" : "没有找到匹配歌曲")}</div>`;
+        return;
+      }
+      els.libraryResults.innerHTML = librarySearchResults.map((item, index) => {
+        const cover = safeUrl(item.cover)
+          ? `<img class="library-result-cover" src="${escapeHtml(safeUrl(item.cover))}" alt="${escapeHtml(item.title)} 封面" loading="lazy">`
+          : `<div class="library-result-cover is-empty" aria-hidden="true">ECHO</div>`;
+        return `
+          <button class="library-result" type="button" role="option" data-library-index="${index}">
+            ${cover}
+            <span class="library-result-main">
+              <span class="library-result-title">${escapeHtml(item.title || "未知歌曲")}</span>
+              <span class="library-result-meta">${escapeHtml(libraryMeta(item))}</span>
+            </span>
+            <span class="library-result-action">收藏</span>
+          </button>
+        `;
+      }).join("") + `<div class="library-load-marker" aria-live="polite">${escapeHtml(libraryScrollHintText())}</div>`;
+      els.libraryResults.querySelectorAll("[data-library-index]").forEach((button) => {
+        button.addEventListener("click", () => addLibraryFavorite(Number(button.dataset.libraryIndex)));
+      });
+    }
+
+    function maybeLoadMoreLibraryResults() {
+      if (els.libraryPicker.hidden || librarySearchBusy || !libraryHasMore) return;
+      const nearBottom = els.libraryResults.scrollTop + els.libraryResults.clientHeight >= els.libraryResults.scrollHeight - 180;
+      if (nearBottom) searchLibrary(librarySearchQuery, { append: true });
+    }
+
+    function maybeFillLibraryViewport() {
+      window.setTimeout(() => {
+        if (els.libraryPicker.hidden || librarySearchBusy || !libraryHasMore) return;
+        if (els.libraryResults.scrollHeight <= els.libraryResults.clientHeight + 24) {
+          searchLibrary(librarySearchQuery, { append: true });
+        }
+      }, 80);
+    }
+
+    async function searchLibrary(query = "", options = {}) {
+      const append = Boolean(options.append);
+      const reset = options.reset !== false && !append;
+      if (librarySearchBusy && librarySearchAbort) {
+        if (append) return;
+        librarySearchAbort.abort();
+      }
+      const text = String(query || "").trim();
+      if (reset) {
+        librarySearchQuery = text;
+        librarySearchOffset = 0;
+        libraryHasMore = false;
+        libraryBrowseSeed = Date.now() % 1000000;
+        librarySearchResults = [];
+        els.libraryResults.scrollTop = 0;
+      }
+      librarySearchBusy = true;
+      const controller = new AbortController();
+      librarySearchAbort = controller;
+      renderLibraryResults();
+      try {
+        const offset = append ? librarySearchOffset : 0;
+        const endpoint = text
+          ? `/api/mainline/search?q=${encodeURIComponent(text)}&limit=${libraryPageSize}&offset=${offset}`
+          : `/api/mainline/catalog?limit=${libraryPageSize}&offset=${offset}&random_seed=${encodeURIComponent(libraryBrowseSeed)}`;
+        const response = await fetch(endpoint, { signal: controller.signal });
+        if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
+        const data = await response.json();
+        const nextItems = (data.items || []).map((item, index) => normalizeItem(item, offset + index));
+        librarySearchResults = append ? [...librarySearchResults, ...nextItems] : nextItems;
+        const totalAvailable = Number(data.total_available || librarySearchResults.length);
+        librarySearchOffset = Number(data.next_offset ?? (offset + nextItems.length));
+        libraryHasMore = Boolean(data.has_more ?? (librarySearchOffset < totalAvailable));
+        renderLibraryResults();
+        maybeFillLibraryViewport();
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(error);
+        if (!append) {
+          librarySearchResults = [];
+          libraryHasMore = false;
+          librarySearchOffset = 0;
+        }
+        els.libraryResults.innerHTML = `<div class="library-status">曲库加载失败，请稍后再试</div>`;
+      } finally {
+        if (librarySearchAbort === controller) {
+          librarySearchBusy = false;
+          librarySearchAbort = null;
+          renderLibraryResults();
+        }
+      }
+    }
+
+    function addLibraryFavorite(index) {
+      const item = librarySearchResults[index];
+      if (!item) return;
+      window.EchoFavoriteStore?.add?.(item.raw || item);
+      loadStoredFavorites();
+      removedTrackIds.delete(itemKey(item));
+      writeRemovedTrackIds();
+      els.source.value = "favorite";
+      renderCustomSelect(els.source);
+      render();
+      closeLibraryPicker();
+    }
+
     async function importFiles(files) {
       const fileList = Array.from(files || []);
       const stamp = Date.now();
@@ -1511,7 +1924,31 @@
     [els.culture, els.source, els.sort].forEach((control) => {
       control.addEventListener("change", render);
     });
-    els.import.addEventListener("change", (event) => importFiles(event.target.files));
+    els.importMenu.addEventListener("click", openImportPicker);
+    els.importClose.addEventListener("click", closeImportPicker);
+    els.importUploadChoice.addEventListener("click", () => {
+      closeImportPicker();
+      els.import.click();
+    });
+    els.importLibraryChoice.addEventListener("click", openLibraryPicker);
+    els.importPicker.addEventListener("click", (event) => {
+      if (event.target === els.importPicker) closeImportPicker();
+    });
+    els.libraryClose.addEventListener("click", closeLibraryPicker);
+    els.libraryPicker.addEventListener("click", (event) => {
+      if (event.target === els.libraryPicker) closeLibraryPicker();
+    });
+    els.librarySearchSubmit.addEventListener("click", () => searchLibrary(els.librarySearchInput.value, { reset: true }));
+    els.librarySearchInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      searchLibrary(els.librarySearchInput.value, { reset: true });
+    });
+    els.libraryResults.addEventListener("scroll", maybeLoadMoreLibraryResults, { passive: true });
+    els.import.addEventListener("change", (event) => {
+      importFiles(event.target.files);
+      event.target.value = "";
+    });
     els.grid.addEventListener("click", (event) => {
       const removeButton = event.target.closest("[data-remove-id]");
       if (removeButton) {
@@ -1545,6 +1982,11 @@
     window.addEventListener("echo-cover-settings-change", () => {
       coverConfig = readCoverConfig();
       render();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      closeImportPicker();
+      closeLibraryPicker();
     });
 
     setupCustomSelects();

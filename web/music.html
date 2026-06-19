@@ -2803,10 +2803,9 @@
       const text = String(name || "").trim();
       if (!text) return "";
       const upper = text.toUpperCase();
-      if (geoData?.countries?.[upper]) return upper;
+      if (hasCountryIso(upper)) return upper;
       const geoAlias = geoData?.country_aliases?.[geoLookupKey(text)];
       if (geoAlias) return String(geoAlias).toUpperCase();
-      if (countryIsoCodes.includes(upper)) return upper;
       for (const code of countryIsoCodes) {
         if (countryNameLookupFn(code) === text) return code;
       }
@@ -2888,6 +2887,8 @@
       mena: ["middle_east"],
       europe: ["west", "celtic", "nordic", "balkans", "eastern_europe"],
       westAfrica: ["africa"],
+      northAmerica: ["west", "latin", "caribbean"],
+      southAmerica: ["brazil", "andean", "latin"],
       americas: ["latin", "brazil", "andean", "caribbean"],
       oceania: ["southeast_asia", "caribbean"]
     };
@@ -2906,6 +2907,15 @@
     function cultureLabel(key) { return t("culture." + key); }
 
     const countryIsoCodes = ["US","GB","CN","SG","MY","TH","VN","PH","TW","HK","MO","JP","KR","IN","ID","BR","MX","AR","CL","PE","TR","IR","SA","AE","IE","SE","NO","FI","DK","PL","RS","MK","KZ","KG","TJ","JM","HT","TT","ML","SN","GH","NG","TZ","ZA","CU","AU","NZ","DE","FR","IT","ES","CA"];
+    function isCountryIsoCode(value) {
+      return /^[A-Z]{2}$/.test(String(value || "").toUpperCase().trim());
+    }
+
+    function hasCountryIso(code) {
+      const upper = String(code || "").toUpperCase().trim();
+      return Boolean(upper && (geoData?.countries?.[upper] || countryIsoCodes.includes(upper) || isCountryIsoCode(upper)));
+    }
+
     function localizedCityName(iso, city, original = "") {
       const rawCity = cleanMetaText(city);
       if (!rawCity) return "";
@@ -2943,6 +2953,7 @@
           || upper;
       }
       if (countryIsoCodes.includes(upper)) return t("music.country." + upper);
+      if (hasCountryIso(upper)) return upper;
       if (code === "台湾" || code === "台灣" || code === "Taiwan") return specialRegionCountryName("TW") || t("music.country.TW");
       return "";
     }
@@ -3191,7 +3202,17 @@
       const culture = String(item.culture || "").trim();
       const lat = Number(item.lat ?? item.latitude);
       const lng = Number(item.lng ?? item.lon ?? item.longitude);
-      const rawCountry = firstCleanMetaValue(item.country, item.country_iso, item.countryIso, item.country_code, item.countryCode);
+      const rawCountry = firstCleanMetaValue(
+        item.country,
+        item.country_iso,
+        item.countryIso,
+        item.country_code,
+        item.countryCode,
+        item.country_original,
+        item.countryOriginal,
+        item.storefront_country,
+        item.storefrontCountry
+      );
       const country = readableCountry(rawCountry, culture);
       const isoCode = isoCodeForCountryName(rawCountry) || isoCodeForCountryName(country);
       const countryCapital = localizedCapital(isoCode);
@@ -3388,6 +3409,35 @@
         audioUrl: resolveApiUrl(item.audio_api_url),
         audioIsPreview: String(item.audio_is_preview || "").toLowerCase() === "true",
         raw: item
+      };
+    }
+
+    function rehydrateTrackPlace(track) {
+      if (!track || isUploadLikeTrack(track)) return track;
+      const item = { ...(track.raw || {}), ...track };
+      if (isMysteryPlaceValue(item.country)) {
+        item.country = firstCleanMetaValue(
+          item.countryIso,
+          item.country_iso,
+          item.countryCode,
+          item.country_code,
+          item.countryOriginal,
+          item.country_original,
+          item.storefrontCountry,
+          item.storefront_country
+        ) || item.country;
+      }
+      const place = placeForApiItem(item);
+      if (!place || isMysteryPlaceValue(place.country)) return track;
+      return {
+        ...track,
+        country: place.country,
+        city: place.city,
+        lat: place.lat,
+        lng: place.lng,
+        locationPrecision: place.precision || track.locationPrecision,
+        needsCountryLookup: Boolean(place.needsCountryLookup),
+        geoLookupStatus: place.needsCountryLookup ? "pending" : "ready"
       };
     }
 
@@ -3945,6 +3995,7 @@
     }
 
     function replaceCurrentTrack(track) {
+      const normalizedTrack = rehydrateTrackPlace(track);
       Object.keys(currentTrack).forEach((key) => {
         delete currentTrack[key];
       });
@@ -3953,7 +4004,7 @@
         capital: "",
         note: "",
         metrics: defaultMetrics,
-        ...track
+        ...normalizedTrack
       });
     }
 
@@ -4412,14 +4463,18 @@
       };
     }
 
+    function exportLanguage() {
+      return window.EchoI18n?.getLanguage?.() || "zh-CN";
+    }
+
     function exportText(key, fallback, params = {}) {
-      const value = t(key, params);
+      const value = window.EchoI18n?.t?.(key, params, exportLanguage()) || t(key, params);
       return value === key ? fallback : value;
     }
 
     function exportDateLabel() {
       try {
-        return new Intl.DateTimeFormat(window.EchoI18n?.currentLanguage || "zh-CN", {
+        return new Intl.DateTimeFormat(exportLanguage(), {
           year: "numeric",
           month: "2-digit",
           day: "2-digit",
@@ -4513,6 +4568,69 @@
       ctx.restore();
     }
 
+    function exportCoverUrl(track) {
+      return normalizeMediaUrl(track?.coverArtUrl || track?.cover_art_url || track?.raw?.cover_art_url_large || track?.raw?.cover_art_url || "");
+    }
+
+    async function loadExportImage(url) {
+      const src = normalizeMediaUrl(url);
+      if (!src) return null;
+      try {
+        const response = await fetch(src, { mode: "cors" });
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const image = new Image();
+        await new Promise((resolve, reject) => {
+          image.onload = resolve;
+          image.onerror = reject;
+          image.src = objectUrl;
+        });
+        return { image, objectUrl };
+      } catch (error) {
+        console.warn("export cover skipped", error);
+        return null;
+      }
+    }
+
+    function releaseExportImages(images) {
+      images.filter(Boolean).forEach((item) => {
+        if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+      });
+    }
+
+    function drawExportCover(ctx, imageInfo, x, y, size, title = "") {
+      roundedRectPath(ctx, x, y, size, size, 12);
+      ctx.fillStyle = "#f1f1f1";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(17, 17, 17, 0.16)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if (imageInfo?.image?.naturalWidth && imageInfo?.image?.naturalHeight) {
+        const image = imageInfo.image;
+        const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight);
+        const sw = size / scale;
+        const sh = size / scale;
+        const sx = (image.naturalWidth - sw) / 2;
+        const sy = (image.naturalHeight - sh) / 2;
+        ctx.save();
+        roundedRectPath(ctx, x, y, size, size, 12);
+        ctx.clip();
+        ctx.drawImage(image, sx, sy, sw, sh, x, y, size, size);
+        ctx.restore();
+        return;
+      }
+      ctx.fillStyle = "rgba(17, 17, 17, 0.34)";
+      ctx.font = "700 18px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("ECHO", x + size / 2, y + size / 2 - 10);
+      ctx.font = "400 13px 'Helvetica Neue', Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      drawWrappedText(ctx, title, x + 12, y + size / 2 + 14, size - 24, 17, { maxLines: 2 });
+    }
+
     function exportMapNodes() {
       const items = [currentTrack, ...activeRecommendations];
       return items.map((track, index) => {
@@ -4523,7 +4641,7 @@
           lat: Number(loc.lat),
           lng: Number(loc.lng),
           precision: loc.precision || "",
-          label: index === 0 ? exportText("music.export.seed", "Seed") : String(index).padStart(2, "0"),
+          label: index === 0 ? exportText("music.export.seed", "起点") : String(index).padStart(2, "0"),
           place: formatOrigin(track),
           style: displayGenre(track)
         };
@@ -4642,7 +4760,7 @@
         const labelY = Math.min(y + h - 48, Math.max(y + 76, point[1] + (index % 2 ? 30 : -20)));
         ctx.fillStyle = isCurrent ? "#111111" : "#8d1f1f";
         ctx.font = "700 23px 'Helvetica Neue', Arial, sans-serif";
-        drawWrappedText(ctx, isCurrent ? exportText("music.export.seedTrack", "Seed Track") : `${String(index).padStart(2, "0")} ${node.track.title}`, labelX, labelY, 230, 27, { maxLines: 1 });
+        drawWrappedText(ctx, isCurrent ? exportText("music.export.seedTrack", "起点歌曲") : `${String(index).padStart(2, "0")} ${node.track.title}`, labelX, labelY, 230, 27, { maxLines: 1 });
         ctx.fillStyle = "rgba(17, 17, 17, 0.62)";
         ctx.font = "400 18px 'Helvetica Neue', Arial, sans-serif";
         drawWrappedText(ctx, node.place, labelX, labelY + 28, 230, 23, { maxLines: 1 });
@@ -4652,22 +4770,22 @@
 
       ctx.fillStyle = "#111111";
       ctx.font = "400 42px 'Helvetica Neue', Arial, sans-serif";
-      ctx.fillText(exportText("music.export.mapTitle", "Music Map Overview"), x + 34, y + 54);
+      ctx.fillText(exportText("music.export.mapTitle", "音乐地图总览"), x + 34, y + 54);
       ctx.fillStyle = "#6c6c6c";
       ctx.font = "400 23px 'Courier New', monospace";
-      ctx.fillText(exportText("music.export.mapSubtitle", "Seed and recommendation locations"), x + 34, y + h - 28);
+      ctx.fillText(exportText("music.export.mapSubtitle", "起点与推荐歌曲的地理位置"), x + 34, y + h - 28);
     }
 
-    function buildExportCanvas() {
+    async function buildExportCanvas() {
       const widthPx = 1600;
       const margin = 86;
       const mapHeight = 760;
-      const recRowHeight = 142;
-      const aiMessage = [...aiConversationMessages].reverse()
-        .find((message) => message.role === "assistant" && cleanMetaText(message.displayContent || message.content));
-      const aiHeight = aiMessage ? 300 : 0;
+      const recRowHeight = 168;
       const recommendationRows = Math.max(activeRecommendations.length, 1);
-      const heightPx = 360 + 260 + mapHeight + 330 + recommendationRows * recRowHeight + aiHeight + 180;
+      const heightPx = 390 + 300 + mapHeight + 390 + recommendationRows * recRowHeight + 230;
+      const rows = activeRecommendations.length ? activeRecommendations : [];
+      const seedCover = await loadExportImage(exportCoverUrl(currentTrack));
+      const rowCovers = await Promise.all(rows.map((item) => loadExportImage(exportCoverUrl(item))));
       const canvas = document.createElement("canvas");
       canvas.width = widthPx;
       canvas.height = heightPx;
@@ -4696,38 +4814,39 @@
       ctx.font = "400 96px 'Helvetica Neue', Arial, sans-serif";
       ctx.fillText("Echo Atlas", margin, 132);
       ctx.font = "400 42px 'Helvetica Neue', Arial, sans-serif";
-      ctx.fillText(exportText("music.export.slogan", "Hear the World"), margin, 190);
+      ctx.fillText(exportText("music.export.slogan", "听见世界的声音"), margin, 190);
       ctx.fillStyle = "#6c6c6c";
       ctx.font = "400 25px 'Courier New', monospace";
-      ctx.fillText(exportText("music.export.generatedAt", "Generated at {time}", { time: exportDateLabel() }), margin, 244);
-      ctx.fillText(exportText("music.export.routeCount", "{count} recommendations", { count: activeRecommendations.length }), margin, 282);
+      ctx.fillText(exportText("music.export.generatedAt", "生成时间：{time}", { time: exportDateLabel() }), margin, 244);
+      ctx.fillText(exportText("music.export.routeCount", "{count} 首推荐", { count: activeRecommendations.length }), margin, 282);
 
-      y = 332;
-      roundedRectPath(ctx, margin, y, contentWidth, 210, 16);
+      y = 346;
+      roundedRectPath(ctx, margin, y, contentWidth, 244, 16);
       ctx.fillStyle = "#ffffff";
       ctx.fill();
       ctx.strokeStyle = "rgba(17, 17, 17, 0.2)";
       ctx.lineWidth = 2;
       ctx.stroke();
 
+      drawExportCover(ctx, seedCover, margin + 34, y + 52, 140, currentTrack.title);
       ctx.fillStyle = "#767676";
       ctx.font = "700 24px 'Courier New', monospace";
-      ctx.fillText(exportText("music.export.seedTrack", "Seed Track"), margin + 34, y + 48);
+      ctx.fillText(exportText("music.export.seedTrack", "起点歌曲"), margin + 202, y + 48);
       ctx.fillStyle = "#111111";
       ctx.font = "400 54px 'Helvetica Neue', Arial, sans-serif";
-      drawWrappedText(ctx, currentTrack.title, margin + 34, y + 108, contentWidth * 0.45, 58, { maxLines: 2 });
+      drawWrappedText(ctx, currentTrack.title, margin + 202, y + 108, contentWidth * 0.39, 58, { maxLines: 2 });
       ctx.fillStyle = "#555555";
       ctx.font = "400 30px 'Helvetica Neue', Arial, sans-serif";
-      drawWrappedText(ctx, currentTrack.artist || t("music.default.unknown"), margin + 34, y + 180, contentWidth * 0.45, 34, { maxLines: 1 });
+      drawWrappedText(ctx, currentTrack.artist || t("music.default.unknown"), margin + 202, y + 194, contentWidth * 0.39, 34, { maxLines: 1 });
 
-      const kvX = margin + Math.round(contentWidth * 0.53);
-      const kvW = Math.round(contentWidth * 0.42);
-      drawExportKeyValue(ctx, exportText("music.readout.origin", "Origin"), formatOrigin(currentTrack), kvX, y + 46, kvW);
-      drawExportKeyValue(ctx, exportText("music.readout.style", "Style"), displayGenre(currentTrack), kvX, y + 128, kvW);
+      const kvX = margin + Math.round(contentWidth * 0.58);
+      const kvW = Math.round(contentWidth * 0.37);
+      drawExportKeyValue(ctx, exportText("music.readout.origin", "地理位置"), formatOrigin(currentTrack), kvX, y + 46, kvW);
+      drawExportKeyValue(ctx, exportText("music.readout.style", "风格"), displayGenre(currentTrack), kvX, y + 128, kvW);
 
-      y += 250;
+      y += 316;
       drawExportMap(ctx, margin, y, contentWidth, mapHeight, exportMapNodes());
-      y += mapHeight + 54;
+      y += mapHeight + 86;
 
       const metrics = activeMetrics();
       const metricCards = [
@@ -4738,10 +4857,10 @@
       ];
       ctx.fillStyle = "#111111";
       ctx.font = "400 48px 'Helvetica Neue', Arial, sans-serif";
-      ctx.fillText(exportText("music.export.analysisTitle", "Analysis Parameters"), margin, y);
+      ctx.fillText(exportText("music.export.analysisTitle", "分析参数"), margin, y);
       ctx.fillStyle = "#6c6c6c";
       ctx.font = "400 25px 'Courier New', monospace";
-      ctx.fillText(`${exportText("music.recommend.optionsTitle", "Recommendation direction")}: ${describeRecommendationPreference()}`, margin, y + 42);
+      ctx.fillText(`${exportText("music.recommend.optionsTitle", "推荐方向")}: ${describeRecommendationPreference()}`, margin, y + 42);
       const cardGap = 18;
       const cardWidth = (contentWidth - cardGap * 3) / 4;
       metricCards.forEach((card, index) => {
@@ -4760,19 +4879,18 @@
         ctx.font = "400 64px 'Helvetica Neue', Arial, sans-serif";
         ctx.fillText(card[1], x + 24, cardY + 122);
       });
-      y += 300;
+      y += 342;
 
       ctx.fillStyle = "#111111";
       ctx.font = "400 48px 'Helvetica Neue', Arial, sans-serif";
-      ctx.fillText(exportText("music.export.recommendationsTitle", "Recommended Music"), margin, y);
+      ctx.fillText(exportText("music.export.recommendationsTitle", "推荐音乐"), margin, y);
       y += 56;
 
-      const rows = activeRecommendations.length ? activeRecommendations : [];
       if (!rows.length) {
         ctx.fillStyle = "#6c6c6c";
         ctx.font = "400 30px 'Helvetica Neue', Arial, sans-serif";
-        ctx.fillText(exportText("music.export.noRecommendations", "No recommendations generated yet."), margin, y + 42);
-        y += recRowHeight;
+        ctx.fillText(exportText("music.export.noRecommendations", "还没有生成推荐。"), margin, y + 42);
+        y += recRowHeight + 24;
       } else {
         rows.forEach((item, index) => {
           roundedRectPath(ctx, margin, y, contentWidth, recRowHeight - 18, 12);
@@ -4784,40 +4902,31 @@
 
           ctx.fillStyle = "#b72727";
           ctx.font = "700 38px 'Courier New', monospace";
-          ctx.fillText(String(index + 1).padStart(2, "0"), margin + 28, y + 58);
+          ctx.fillText(String(index + 1).padStart(2, "0"), margin + 28, y + 64);
+          drawExportCover(ctx, rowCovers[index], margin + 104, y + 23, 104, item.title);
           ctx.fillStyle = "#111111";
           ctx.font = "400 37px 'Helvetica Neue', Arial, sans-serif";
-          drawWrappedText(ctx, item.title, margin + 116, y + 48, contentWidth * 0.42, 42, { maxLines: 2 });
+          drawWrappedText(ctx, item.title, margin + 232, y + 48, contentWidth * 0.34, 42, { maxLines: 2 });
           ctx.fillStyle = "#555555";
           ctx.font = "400 25px 'Helvetica Neue', Arial, sans-serif";
-          drawWrappedText(ctx, item.artist || t("music.default.unknown"), margin + 116, y + 96, contentWidth * 0.42, 30, { maxLines: 1 });
+          drawWrappedText(ctx, item.artist || t("music.default.unknown"), margin + 232, y + 106, contentWidth * 0.34, 30, { maxLines: 1 });
 
-          const infoX = margin + Math.round(contentWidth * 0.57);
+          const infoX = margin + Math.round(contentWidth * 0.62);
           ctx.fillStyle = "#111111";
           ctx.font = "400 27px 'Helvetica Neue', Arial, sans-serif";
-          drawWrappedText(ctx, formatOrigin(item), infoX, y + 46, contentWidth * 0.36, 31, { maxLines: 1 });
+          drawWrappedText(ctx, formatOrigin(item), infoX, y + 46, contentWidth * 0.31, 31, { maxLines: 1 });
           ctx.fillStyle = "#6c6c6c";
           ctx.font = "400 23px 'Courier New', monospace";
-          drawWrappedText(ctx, `${displayGenre(item)} / ${displaySource(item)}`, infoX, y + 84, contentWidth * 0.36, 27, { maxLines: 2 });
+          drawWrappedText(ctx, `${displayGenre(item)} / ${displaySource(item)}`, infoX, y + 84, contentWidth * 0.31, 27, { maxLines: 2 });
           y += recRowHeight;
         });
       }
 
-      if (aiMessage) {
-        y += 22;
-        ctx.fillStyle = "#111111";
-        ctx.font = "400 48px 'Helvetica Neue', Arial, sans-serif";
-        ctx.fillText(exportText("music.export.aiTitle", "AI Notes"), margin, y);
-        ctx.fillStyle = "#444444";
-        ctx.font = "400 28px 'Helvetica Neue', Arial, sans-serif";
-        drawWrappedText(ctx, aiMessage.displayContent || aiMessage.content, margin, y + 58, contentWidth, 36, { maxLines: 6 });
-        y += 280;
-      }
-
       ctx.fillStyle = "#6c6c6c";
       ctx.font = "400 24px 'Courier New', monospace";
-      ctx.fillText("Echo Atlas / " + exportText("music.export.slogan", "Hear the World"), margin, heightPx - 70);
+      ctx.fillText("Echo Atlas / " + exportText("music.export.slogan", "听见世界的声音"), margin, heightPx - 70);
       ctx.fillText(window.location.origin || "local", widthPx - margin - 360, heightPx - 70);
+      releaseExportImages([seedCover, ...rowCovers]);
       return canvas;
     }
 
@@ -4843,25 +4952,24 @@
 
     async function exportMusicMapImage() {
       if (!els.mapExportButton) return;
-      const originalText = els.mapExportButton.textContent;
       els.mapExportButton.disabled = true;
       els.mapExportButton.classList.add("is-busy");
-      els.mapExportButton.textContent = exportText("music.export.generating", "Exporting...");
+      els.mapExportButton.textContent = exportText("music.export.generating", "正在导出...");
       try {
         if (!worldFeatures) {
           await loadMap();
         }
-        const canvas = buildExportCanvas();
+        const canvas = await buildExportCanvas();
         const filename = `${exportFileToken(`Echo-Atlas-${currentTrack.title}`)}.png`;
         await downloadCanvasPng(canvas, filename);
-        els.mapStatus.textContent = exportText("music.export.done", "Map exported");
+        els.mapStatus.textContent = exportText("music.export.done", "地图长图已导出");
       } catch (error) {
         console.error(error);
-        els.mapStatus.textContent = exportText("music.export.failed", "Map export failed");
+        els.mapStatus.textContent = exportText("music.export.failed", "地图导出失败");
       } finally {
         els.mapExportButton.disabled = false;
         els.mapExportButton.classList.remove("is-busy");
-        els.mapExportButton.textContent = originalText || exportText("music.export.map", "Export Map");
+        els.mapExportButton.textContent = exportText("music.export.map", "导出地图");
       }
     }
 
@@ -6468,17 +6576,17 @@ Guidelines:
       const saved = readMusicStationState();
       if (!saved) return false;
       const restoredRecommendations = saved.activeRecommendations
-        .map((item, index) => ({ ...item, metrics: item.metrics || metricsFromApiItem(item, index) }))
+        .map((item, index) => rehydrateTrackPlace({ ...item, metrics: item.metrics || metricsFromApiItem(item, index) }))
         .filter((item) => item.title);
       if (!restoredRecommendations.length) return false;
 
       recommendationsPersistable = true;
       recommendations = restoredRecommendations.map((item) => ({ ...item }));
       activeRecommendations = restoredRecommendations;
-      primaryTrack = {
+      primaryTrack = rehydrateTrackPlace({
         ...(saved.primaryTrack || restoredRecommendations[0]),
         metrics: saved.primaryTrack?.metrics || defaultMetrics
-      };
+      });
       uploadedAudioMeta = saved.uploadedAudioMeta || null;
       uploadedAudioFile = null;
       if (Array.isArray(saved.aiConversationMessages)) {

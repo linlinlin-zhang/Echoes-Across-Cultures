@@ -15,6 +15,7 @@
       --line: rgba(17, 17, 17, 0.14);
       --panel: #ffffff;
       --globe-bg: #ffffff;
+      --header-safe-offset: 5.9rem;
       --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
       --font-mono: "Courier New", Courier, monospace;
     }
@@ -186,7 +187,7 @@
     }
 
     #webgl-canvas {
-      filter: brightness(1.18) saturate(1.08) contrast(1.03);
+      filter: brightness(1.32) saturate(1.16) contrast(1.05);
     }
 
     #pretext-canvas {
@@ -201,7 +202,7 @@
 
     .globe-overlay {
       position: absolute;
-      inset: clamp(5rem, 8vh, 6.4rem) 1.25rem 1.5rem;
+      inset: calc(var(--header-safe-offset) + 0.85rem) 1.25rem 1.5rem;
       z-index: 3;
       pointer-events: none;
       display: grid;
@@ -611,6 +612,10 @@
     }
 
     @media (max-width: 720px) {
+      :root {
+        --header-safe-offset: 4.6rem;
+      }
+
       body {
         background-size: 42px 42px;
       }
@@ -635,7 +640,7 @@
       }
 
       .globe-overlay {
-        inset: 5.4rem 0.9rem 0.9rem;
+        inset: calc(var(--header-safe-offset) + 0.8rem) 0.9rem 0.9rem;
         font-size: 0.58rem;
       }
 
@@ -830,8 +835,7 @@
   <script type="module">
     import * as THREE from "three";
 
-    const FONT_SPEC = "12px 'Courier New', monospace";
-    const LINE_HEIGHT = 12;
+    const FONT_SPEC = "10.5px 'Courier New', monospace";
     const MASK_RESOLUTION = 128;
     const GLOBE_SCALE = 1.18;
     const GLOBE_COMPACT_SCALE = 1.36;
@@ -846,14 +850,56 @@
     const FRAME_INTERVAL = 1000 / 30;
     const TEXT_FRAME_INTERVAL = 1000 / 12;
     const REGION_CONFIGS = [
-      { key: "eastAsia", center: 116 },
-      { key: "southeastAsia", center: 103 },
-      { key: "southAsia", center: 78 },
-      { key: "mena", center: 36 },
-      { key: "europe", center: 10 },
-      { key: "westAfrica", center: -2 },
-      { key: "americas", center: -88 },
-      { key: "oceania", center: 155 }
+      { key: "eastAsia", center: 116, zones: [{ lng: [104, 146], lat: [23, 51], stepLng: 8, stepLat: 4.8 }] },
+      { key: "southeastAsia", center: 103, zones: [{ lng: [94, 126], lat: [-8, 23], stepLng: 7, stepLat: 4.8 }] },
+      { key: "southAsia", center: 78, zones: [{ lng: [67, 91], lat: [7, 33], stepLng: 6.5, stepLat: 4.6 }] },
+      { key: "mena", center: 36, zones: [{ lng: [-17, 58], lat: [15, 38], stepLng: 9, stepLat: 4.7 }] },
+      {
+        key: "europe",
+        center: 10,
+        zones: [
+          { lng: [-11, 36], lat: [38, 66], stepLng: 7.5, stepLat: 4.5 },
+          { lng: [22, 58], lat: [42, 62], stepLng: 6.8, stepLat: 4.2 },
+          { lng: [14, 34], lat: [36, 47], stepLng: 5.8, stepLat: 3.8 }
+        ]
+      },
+      {
+        key: "westAfrica",
+        center: -2,
+        zones: [
+          { lng: [-18, 16], lat: [4, 23], stepLng: 6.5, stepLat: 4.2 },
+          { lng: [8, 33], lat: [-6, 12], stepLng: 5.8, stepLat: 3.8 },
+          { lng: [20, 42], lat: [-29, 7], stepLng: 5.8, stepLat: 4.4 },
+          { lng: [16, 34], lat: [-35, -18], stepLng: 5.8, stepLat: 4.0 },
+          { lng: [32, 50], lat: [-25, -2], stepLng: 5.6, stepLat: 4.1 }
+        ]
+      },
+      {
+        key: "northAmerica",
+        center: -94,
+        zones: [
+          { lng: [-132, -58], lat: [24, 58], stepLng: 8.5, stepLat: 5.0 },
+          { lng: [-120, -86], lat: [14, 32], stepLng: 6.5, stepLat: 4.4 },
+          { lng: [-91, -61], lat: [10, 25], stepLng: 6.5, stepLat: 4.5 }
+        ]
+      },
+      {
+        key: "southAmerica",
+        center: -58,
+        zones: [
+          { lng: [-82, -35], lat: [-55, 13], stepLng: 7.0, stepLat: 5.0 },
+          { lng: [-76, -54], lat: [-25, 5], stepLng: 5.8, stepLat: 4.4 },
+          { lng: [-62, -38], lat: [-35, -5], stepLng: 5.8, stepLat: 4.5 }
+        ]
+      },
+      {
+        key: "oceania",
+        center: 155,
+        zones: [
+          { lng: [112, 178], lat: [-45, -5], stepLng: 8.5, stepLat: 5.2 },
+          { lng: [-178, -150], lat: [-25, 5], stepLng: 7.5, stepLat: 4.8 }
+        ]
+      }
     ];
     const REGION_RECOMMENDATION_POOLS = {
       eastAsia: ["china", "japan", "korea"],
@@ -862,7 +908,8 @@
       mena: ["middle_east"],
       europe: ["west", "celtic", "nordic", "balkans", "eastern_europe"],
       westAfrica: ["africa"],
-      americas: ["latin", "brazil", "andean", "caribbean"],
+      northAmerica: ["west", "latin", "caribbean"],
+      southAmerica: ["brazil", "andean", "latin"],
       oceania: ["southeast_asia", "caribbean"]
     };
 
@@ -1040,8 +1087,8 @@
     function ensureGlobeLights() {
       if (lightsReady) return;
       lightsReady = true;
-      scene.add(new THREE.AmbientLight(0xffffff, 0.72));
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.88));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.82);
       dirLight.position.set(5, 3, 5);
       scene.add(dirLight);
     }
@@ -1057,7 +1104,7 @@
         specularMap: waterMask,
         specular: new THREE.Color(0x333333),
         emissive: new THREE.Color(0x1d2d44),
-        emissiveIntensity: 0.14,
+        emissiveIntensity: 0.22,
         shininess: 15,
       });
 
@@ -1111,8 +1158,9 @@
 
     const regionName = document.getElementById("region-name");
     const regionStyle = document.getElementById("region-style");
+    regionName.removeAttribute("data-i18n");
+    regionStyle.removeAttribute("data-i18n");
     let currentRegionIndex = -1;
-    let preparedText = [];
     let cachedRingRadius = 0;
     let cachedRingGlyphs = [];
     let textToFill = MUSIC_REGIONS[0].ring;
@@ -1205,7 +1253,109 @@
     resize();
 
     function buildWords(region) {
-      return region.text.repeat(120).trim().split(/\s+/);
+      const source = [region.name, region.style, region.ring, region.text].join(" ");
+      const terms = source
+        .replace(/[\u3001\u3002\uff0c\uff1a:,.\/\-]+/g, " ")
+        .trim()
+        .split(/\s+/)
+        .map((term) => term.trim())
+        .filter((term) => term && term.length <= 12 && !/音乐表面|surface/i.test(term));
+      const seen = new Set();
+      const unique = terms.filter((term) => {
+        const key = term.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return unique.length ? unique : [region.name];
+    }
+
+    const projectionSource = new THREE.Vector3();
+    const projectionWorld = new THREE.Vector3();
+    const projectionNormal = new THREE.Vector3();
+
+    function vectorForLatLng(lng, lat) {
+      const latRad = THREE.MathUtils.degToRad(lat);
+      const phi = THREE.MathUtils.degToRad(lng + 180);
+      const cosLat = Math.cos(latRad);
+      projectionSource.set(
+        -Math.cos(phi) * cosLat,
+        Math.sin(latRad),
+        Math.sin(phi) * cosLat
+      );
+      return projectionSource;
+    }
+
+    function projectLatLng(lng, lat) {
+      vectorForLatLng(lng, lat);
+      projectionNormal.copy(projectionSource).applyQuaternion(earthGroup.quaternion);
+      if (projectionNormal.z < 0.08) return null;
+      projectionWorld.copy(projectionSource).applyMatrix4(earthGroup.matrixWorld).project(camera);
+      const x = (projectionWorld.x * 0.5 + 0.5) * width;
+      const y = (-projectionWorld.y * 0.5 + 0.5) * height;
+      if (x < 0 || x > width || y < 0 || y > height) return null;
+      return { x, y, depth: projectionNormal.z };
+    }
+
+    function isLandScreenPoint(x, y) {
+      const maskX = Math.floor((x / width) * MASK_RESOLUTION);
+      const maskY = Math.floor((height - 1 - y) / height * MASK_RESOLUTION);
+      if (maskX < 0 || maskX >= MASK_RESOLUTION || maskY < 0 || maskY >= MASK_RESOLUTION) return false;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const sx = maskX + dx;
+          const sy = maskY + dy;
+          if (sx < 0 || sx >= MASK_RESOLUTION || sy < 0 || sy >= MASK_RESOLUTION) continue;
+          const idx = (sy * MASK_RESOLUTION + sx) * 4;
+          if (maskPixels[idx] > 128) return true;
+        }
+      }
+      return false;
+    }
+
+    function nextRegionLabel(region, cursors) {
+      const words = region.words || buildWords(region);
+      region.words = words;
+      if (!words.length) return region.name;
+      const maxChars = isCompactGlobe() ? 6 : 8;
+      let cursor = cursors[region.key] || 0;
+      let label = words[cursor % words.length];
+      cursor += 1;
+      if (label.length <= 4) {
+        const nextWord = words[cursor % words.length];
+        const combined = `${label} ${nextWord}`;
+        if (combined.length <= maxChars) {
+          label = combined;
+          cursor += 1;
+        }
+      }
+      cursors[region.key] = cursor;
+      return label || region.name;
+    }
+
+    function labelBox(text, x, y) {
+      const widthPx = ctx2d.measureText(text).width + (isCompactGlobe() ? 5 : 6);
+      const heightPx = isCompactGlobe() ? 10.5 : 11.5;
+      return {
+        left: x - widthPx / 2,
+        right: x + widthPx / 2,
+        top: y - heightPx / 2,
+        bottom: y + heightPx / 2
+      };
+    }
+
+    function boxInsideCanvas(box) {
+      return box.left >= 2 && box.right <= width - 2 && box.top >= 2 && box.bottom <= height - 2;
+    }
+
+    function boxesOverlap(a, b) {
+      const pad = isCompactGlobe() ? 1 : 1.5;
+      return !(a.right + pad < b.left || a.left - pad > b.right || a.bottom + pad < b.top || a.top - pad > b.bottom);
+    }
+
+    function labelBudget() {
+      const base = isCompactGlobe() ? 90 : 210;
+      return Math.max(isCompactGlobe() ? 64 : 96, Math.min(base, Math.round((width * height) / (isCompactGlobe() ? 3900 : 2800))));
     }
 
     function normalizeLongitude(lon) {
@@ -1217,7 +1367,7 @@
     }
 
     function getFrontLongitude() {
-      return normalizeLongitude(-THREE.MathUtils.radToDeg(earthGroup.rotation.y) + 20);
+      return normalizeLongitude(-90 - THREE.MathUtils.radToDeg(earthGroup.rotation.y));
     }
 
     function syncActiveRegion() {
@@ -1237,7 +1387,6 @@
 
       currentRegionIndex = nextIndex;
       const region = MUSIC_REGIONS[currentRegionIndex];
-      preparedText = buildWords(region);
       textToFill = region.ring;
       cachedRingRadius = 0;
       needsTextRedraw = true;
@@ -1247,25 +1396,6 @@
     }
 
     syncActiveRegion();
-
-    function layoutNextLine(cursor, segmentWidth) {
-      const charWidth = Math.max(5, ctx2d.measureText("M").width * 0.72);
-      const maxChars = Math.max(1, Math.floor(segmentWidth / charWidth));
-      let text = "";
-
-      while (text.length < maxChars) {
-        if (cursor.wordIndex >= preparedText.length) cursor.wordIndex = 0;
-        const next = preparedText[cursor.wordIndex];
-        const candidate = text ? `${text} ${next}` : next;
-
-        if (candidate.length > maxChars && text) break;
-        text = candidate;
-        cursor.wordIndex += 1;
-        if (candidate.length >= maxChars) break;
-      }
-
-      return text ? { text, end: cursor } : null;
-    }
 
     function drawTextOverlay(timestamp) {
       renderer.setRenderTarget(maskRenderTarget);
@@ -1326,56 +1456,44 @@
       ctx2d.restore();
 
       ctx2d.font = FONT_SPEC;
-      ctx2d.fillStyle = "rgba(255, 255, 255, 0.92)";
-      ctx2d.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx2d.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx2d.shadowColor = "rgba(0, 0, 0, 0.72)";
       ctx2d.shadowBlur = 2;
-      ctx2d.textBaseline = "top";
-      ctx2d.textAlign = "left";
+      ctx2d.textBaseline = "middle";
+      ctx2d.textAlign = "center";
 
-      let cursor = { wordIndex: 0 };
-      const scaleX = MASK_RESOLUTION / width;
-      const scaleY = MASK_RESOLUTION / height;
-
-      for (let y = 0; y < height; y += LINE_HEIGHT) {
-        const maskY = Math.floor((height - 1 - y) * scaleY);
-        if (maskY < 0 || maskY >= MASK_RESOLUTION) continue;
-
-        let inLandSegment = false;
-        let segmentStartX = 0;
-
-        for (let x = 0; x < width; x += 2) {
-          const maskX = Math.floor(x * scaleX);
-          const idx = (maskY * MASK_RESOLUTION + maskX) * 4;
-          const isLand = maskPixels[idx] > 128;
-
-          if (isLand && !inLandSegment) {
-            inLandSegment = true;
-            segmentStartX = x;
-          } else if (!isLand && inLandSegment) {
-            inLandSegment = false;
-            const segmentWidth = x - segmentStartX;
-
-            if (segmentWidth > 15) {
-              const line = layoutNextLine(cursor, segmentWidth);
-              if (line) {
-                ctx2d.fillText(line.text, segmentStartX, y);
-                cursor = line.end;
-              }
+      const placedBoxes = [];
+      const cursors = {};
+      const maxLabels = labelBudget();
+      const densityScale = isCompactGlobe() ? 0.58 : 0.44;
+      MUSIC_REGIONS.forEach((region) => {
+        if (placedBoxes.length >= maxLabels) return;
+        (region.zones || []).forEach((zone) => {
+          if (placedBoxes.length >= maxLabels) return;
+          const [lngMin, lngMax] = zone.lng;
+          const [latMin, latMax] = zone.lat;
+          const stepLng = (zone.stepLng || 8) * densityScale;
+          const stepLat = (zone.stepLat || 5) * densityScale;
+          for (let lat = latMax; lat >= latMin; lat -= stepLat) {
+            if (placedBoxes.length >= maxLabels) break;
+            for (let lng = lngMin; lng <= lngMax; lng += stepLng) {
+              const offsetLng = ((Math.sin((lat + lng) * 0.73) + 1) * 0.5 - 0.5) * stepLng * 0.38;
+              const offsetLat = ((Math.cos((lat - lng) * 0.61) + 1) * 0.5 - 0.5) * stepLat * 0.32;
+              const projected = projectLatLng(lng + offsetLng, lat + offsetLat);
+              if (!projected || projected.depth < 0.14) continue;
+              if (!isLandScreenPoint(projected.x, projected.y)) continue;
+              const label = nextRegionLabel(region, cursors);
+              const box = labelBox(label, projected.x, projected.y);
+              if (!boxInsideCanvas(box) || placedBoxes.some((item) => boxesOverlap(item, box))) continue;
+              placedBoxes.push(box);
+              ctx2d.globalAlpha = Math.max(0.38, Math.min(0.92, 0.42 + projected.depth * 0.5));
+              ctx2d.fillText(label, projected.x, projected.y);
+              if (placedBoxes.length >= maxLabels) break;
             }
           }
-        }
-
-        if (inLandSegment) {
-          const segmentWidth = width - segmentStartX;
-          if (segmentWidth > 15) {
-            const line = layoutNextLine(cursor, segmentWidth);
-            if (line) {
-              ctx2d.fillText(line.text, segmentStartX, y);
-              cursor = line.end;
-            }
-          }
-        }
-      }
+        });
+      });
+      ctx2d.globalAlpha = 1;
       ctx2d.shadowBlur = 0;
     }
 
@@ -1490,7 +1608,6 @@
     window.addEventListener("echo-language-change", () => {
       MUSIC_REGIONS = buildMusicRegions();
       currentRegionIndex = -1;
-      preparedText = [];
       textToFill = MUSIC_REGIONS[0].ring;
       cachedRingRadius = 0;
       needsTextRedraw = true;

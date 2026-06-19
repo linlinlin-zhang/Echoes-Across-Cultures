@@ -342,10 +342,12 @@ def infer_catalog_origin(row: dict[str, Any]) -> dict[str, Any]:
 
     if storefront and raw_country:
         if raw_iso in CHINA_REVIEW_ISOS:
+            # Keep a low-confidence storefront location instead of erasing it.
+            # Strong artist/genre hints above still override storefront pollution.
             return {
-                "country": "",
-                "country_iso": "",
-                "country_source": "itunes_storefront_china_review",
+                "country": COUNTRY_NAMES.get(raw_iso, raw_country),
+                "country_iso": raw_iso,
+                "country_source": "itunes_storefront_china_unverified",
                 "country_original": raw_country,
                 "storefront_country": raw_country,
                 "catalog_country_is_storefront": True,

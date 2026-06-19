@@ -96,14 +96,18 @@
       "index.globe.region.europe.style": "法朵 / 弗拉门戈 / 香颂 / Techno",
       "index.globe.region.europe.ring": "欧洲 - 法朵 - 弗拉门戈 - 香颂 - 凯尔特 - Techno - 复调 - Krautrock - 巴洛克 - 斯拉夫 - ",
       "index.globe.region.europe.text": "欧洲 音乐表面：法朵 思念 旋律 吉他。 弗拉门戈 拍掌 扫弦 舞步 呐喊。 香颂 文本 前景 诗意。 凯尔特 里尔 舞步 风笛 提琴。 巴尔干 非对称 节拍 铜管。 斯拉夫 合唱 和声 忧郁。 阿尔卑斯 约德尔 假声 切换。 巴洛克 通奏低音 对位 羽管键琴。 古典 奏鸣曲 发展 再现。 浪漫 标题 音乐 诗意。 印象派 音色 和声 模糊。 Techno 四拍 地板 合成器。 Krautrock 机动 律动 重复。 Ambient 纹理 漂浮 空间。 后朋克 噪声 粗粝 反叛。 北欧 冰岛 氛围 空灵。 凯尔特 竖琴 泛音 古典。 民谣 叙事 手风琴 口琴。 歌剧 咏叹调 美声 戏剧。 复调 格里高利 经文歌 对位。",
-      "index.globe.region.westAfrica.name": "西非",
-      "index.globe.region.westAfrica.style": "非洲节拍 / Highlife / Mbalax / 科拉琴",
-      "index.globe.region.westAfrica.ring": "西非 - 非洲节拍 - Highlife - Mbalax - 科拉琴 - Juju - 棕榈酒 - 格里奥 - 布基纳 - 曼丁卡 - ",
-      "index.globe.region.westAfrica.text": "西非 音乐表面：非洲节拍 铜管 固定音型 费拉。 Highlife 吉他 网格 铜管 舞曲。 Mbalax 萨巴尔 复节奏 切分。 格里奥 科拉琴 琶音 叙事。 Juju 说话鼓 应答 赞美。 棕榈酒 吉他 轻拨 即兴。 富吉 赞美 人声 鼓声。 说话鼓 音调 变化 模仿。 金贝鼓 手掌 低音 高音。 巴拉风 木琴 泛音 合奏。 姆贝莱 铁琴 交错 装饰。 塞内加尔 萨巴尔 竞赛 舞蹈。 马里 曼丁卡 史诗 吟唱。 加纳 阿丁克拉 鼓语 信号。 尼日利亚 约鲁巴 鼓阵 仪式。 呼应 唱法 激活 对话。 复节奏 多层 交叉 位移。 非洲 吹奏 巴拉风 循环。",
-      "index.globe.region.americas.name": "美洲",
-      "index.globe.region.americas.style": "爵士 / 布鲁斯 / 萨尔萨 / 桑巴",
-      "index.globe.region.americas.ring": "美洲 - 爵士 - 布鲁斯 - 福音 - 萨尔萨 - 桑巴 - 昆比亚 - 嘻哈 - 雷鬼顿 - 探戈 - 蓝草 - ",
-      "index.globe.region.americas.text": "美洲 音乐表面：布鲁斯 弯音 十二小节 呼喊。 爵士 摇摆 镲片 即兴 和声。 福音 呼应 合唱 钢琴 管风琴。 萨尔萨 克拉维 铜管 钢琴。 桑巴 鼓阵 切分 踩踏。 桑巴 波萨诺瓦 吉他 摇摆。 波萨诺瓦 和声 行走 低音。 昆比亚 手风琴 线条 鼓点。 嘻哈 Breakbeat 采样 韵律。 雷鬼顿 Dembow 低音 循环。 乡村 小提琴 班卓 叙事。 蓝草 曼陀林 指弹 快速。 探戈 手风琴 悲剧 切分。 坎东布雷 仪式 鼓声 呼唤。 雷鬼 切分 反拍 社会。 斯卡 切分 牙买加 铜管。 索卡 节日 特立尼达 钢鼓。 安第斯 排箫 盖纳 悲歌。 马里亚奇 小号 铜管 合唱。 卡利普索 铁鼓 讽刺 叙事。 恰朗加 小提琴 墨西哥 舞曲。 芳丹戈 手鼓 巴西 东北。",
+      "index.globe.region.westAfrica.name": "非洲",
+      "index.globe.region.westAfrica.style": "非洲节拍 / Highlife / Mbalax / 姆比拉 / 科拉琴",
+      "index.globe.region.westAfrica.ring": "非洲 - 西非 - 中非 - 东非 - 南部非洲 - 非洲节拍 - Highlife - Mbalax - 科拉琴 - 姆比拉 - 伦巴 - 博莱罗 - 香戈 - ",
+      "index.globe.region.westAfrica.text": "非洲 音乐表面：非洲节拍 铜管 固定音型 费拉。 Highlife 吉他 网格 铜管 舞曲。 Mbalax 萨巴尔 复节奏 切分。 格里奥 科拉琴 琶音 叙事。 Juju 说话鼓 应答 赞美。 棕榈酒 吉他 轻拨 即兴。 富吉 赞美 人声 鼓声。 说话鼓 音调 变化 模仿。 金贝鼓 手掌 低音 高音。 巴拉风 木琴 泛音 合奏。 姆贝莱 铁琴 交错 装饰。 塞内加尔 萨巴尔 竞赛 舞蹈。 马里 曼丁卡 史诗 吟唱。 加纳 阿丁克拉 鼓语 信号。 尼日利亚 约鲁巴 鼓阵 仪式。 中非 伦巴 吉他 回旋 和声。 刚果 速弹 复调 舞步。 喀麦隆 马科萨 贝斯 摇摆。 东非 塔拉布 弦乐 合唱 海岸。 埃塞俄比亚 五声音阶 铜管 循环。 肯尼亚 本加 吉他 线条。 坦桑尼亚 姆齐基 舞曲。 南非 姆比拉 金属片 共鸣。 南非 kwaito 低频 城市 舞步。 阿玛皮亚诺 对数鼓 空间 和声。 祖鲁 合唱 呼应。 津巴布韦 姆比拉 多线条 泛音。 马达加斯加 瓦利哈 弦琴 波动。 复节奏 多层 交叉 位移。 非洲 吹奏 巴拉风 循环。",
+      "index.globe.region.northAmerica.name": "北美洲",
+      "index.globe.region.northAmerica.style": "布鲁斯 / 爵士 / 福音 / 墨西哥民谣 / 加勒比",
+      "index.globe.region.northAmerica.ring": "北美洲 - 布鲁斯 - 爵士 - 福音 - 乡村 - 蓝草 - 嘻哈 - 雷鬼顿 - 墨西哥民谣 - 马里亚奇 - 加勒比 - 斯卡 - ",
+      "index.globe.region.northAmerica.text": "北美洲 音乐表面：布鲁斯 弯音 十二小节 呼喊。 爵士 摇摆 镲片 即兴 和声。 福音 呼应 合唱 钢琴 管风琴。 乡村 小提琴 班卓 叙事。 蓝草 曼陀林 指弹 快速。 嘻哈 Breakbeat 采样 韵律。 R&B 人声 律动 蓝调根系。 灵魂乐 铜管 贝斯 声线。 放克 切分 贝斯 锁定。 摇滚 吉他 失真 鼓组。 墨西哥民谣 小号 吉他 合唱。 马里亚奇 铜管 小提琴 颂歌。 Norteño 手风琴 低音 六弦。 特哈诺 舞步 合成器。 雷鬼顿 Dembow 低音 循环。 加勒比 斯卡 反拍 铜管。 卡利普索 铁鼓 讽刺 叙事。 索卡 节日 特立尼达 钢鼓。 迪斯科 舞池 弦乐 脉冲。",
+      "index.globe.region.southAmerica.name": "南美洲",
+      "index.globe.region.southAmerica.style": "桑巴 / 波萨诺瓦 / 探戈 / 安第斯 / 昆比亚",
+      "index.globe.region.southAmerica.ring": "南美洲 - 桑巴 - 波萨诺瓦 - 探戈 - 安第斯 - 昆比亚 - Forró - Choro - Candombe - Vallenato - ",
+      "index.globe.region.southAmerica.text": "南美洲 音乐表面：桑巴 鼓阵 切分 踩踏。 波萨诺瓦 吉他 摇摆 和声。 Choro 长笛 曼陀林 即兴。 Forró 手风琴 三角鼓 舞步。 Tropicalia 拼贴 迷幻 诗意。 探戈 手风琴 悲剧 切分。 米隆加 节拍 低音 舞厅。 安第斯 排箫 盖纳 悲歌。 查兰戈 金属弦 高地。 昆比亚 手风琴 线条 鼓点。 Vallenato 叙事 手风琴 呼应。 Candombe 鼓阵 游行 乌拉圭。 Cueca 手帕 舞步 吉他。 Nueva Canción 诗歌 抗争 民谣。 巴西东北 Zabumba 手鼓 三角。 亚马逊 舞曲 呼应 长笛。 秘鲁 海岸 Cajón 切分。 阿根廷 民谣 吉他 合唱。",
       "index.globe.region.oceania.name": "大洋洲 / 太平洋",
       "index.globe.region.oceania.style": "呼拉 / 哈卡 / 迪吉里杜 / 岛屿雷鬼",
       "index.globe.region.oceania.ring": "大洋洲 太平洋 - 呼拉 - 哈卡 - 迪吉里杜 - 岛屿雷鬼 - 合唱吟唱 - 拉卡拉卡 - 冲浪摇滚 - ",
@@ -180,16 +184,22 @@
       text: "EUROPE SURFACE: FADO SAUDADE LINE GUITAR. FLAMENCO PALMAS RASGUEADO DANCE CRIER. CHANSON TEXT FORWARD POETIC FORM. CELTIC REEL PIPE FIDDLE STEP. BALKAN ASYMMETRIC BRASS METER. SLAVIC CHORAL HARMONY MELANCHOLY. ALPINE YODEL FALSETTO SWITCH. BAROQUE BASSO CONTINUO HARPSICHORD COUNTERPOINT. CLASSICAL SONATA DEVELOPMENT RECAPTURE. ROMANTIC PROGRAM MUSIC POETIC. IMPRESSIONIST TIMBRE HARMONY BLUR. TECHNO FOUR ON FLOOR SYNTHESIZER. KRAUTROCK MOTORIK REPETITION FLOW. AMBIENT TEXTURE FLOAT SPACE. POST PUNK NOISE RAW REBEL. NORDIC ICELAND ATMOSPHERE ETHEREAL. CELTIC HARP HARMONICS CLASSICAL. BALLAD NARRATIVE ACCORDION HARMONICA. OPERA ARIA BEL CANTO DRAMA. POLYPHONY GREGORIAN MOTET COUNTERPOINT. "
     },
     westAfrica: {
-      name: "WEST AFRICA",
-      style: "AFROBEAT / HIGHLIFE / MBALAX / KORA",
-      ring: "WEST AFRICA - AFROBEAT - HIGHLIFE - MBALAX - KORA - JUJU - PALM WINE - GRIOT - BURKINA - MANDING - ",
-      text: "WEST AFRICA SURFACE: AFROBEAT HORN OSTINATO FELA DRIVE. HIGHLIFE GUITAR LATTICE BRASS DANCE. MBALAX SABAR POLYRHYTHM CUT. GRIOT KORA ARPEGGIO NARRATIVE EPIC. JUJU TALKING DRUM RESPONSE PRAISE. PALM WINE GUITAR LIGHT STRUM JAM. FUJI VOCAL PRAISE DRUM CALL. TALKING DRUM PITCH SHIFT IMITATION. DJEMBE PALM BASS HIGH SLAP. BALAFON WOOD XYLOPHONE HARMONICS. MBIRA IRON KEYS INTERLOCK ORNAMENT. SENEGAL SABAR CONTEST DANCE. MALI MANDING EPIC CHANT LONG. GHANA ADINKRA DRUM LANGUAGE SIGNAL. NIGERIA YORUBA DRUM RITUAL ENSEMBLE. CALL RESPONSE FIELD ACTIVE DIALOGUE. POLYRHYTHM MULTILAYER CROSS DISPLACEMENT. AFRICAN BLOW BALAFON LOOP CYCLE. "
+      name: "AFRICA",
+      style: "AFROBEAT / HIGHLIFE / MBALAX / MBIRA / KORA",
+      ring: "AFRICA - WEST AFRICA - CENTRAL AFRICA - EAST AFRICA - SOUTHERN AFRICA - AFROBEAT - HIGHLIFE - MBALAX - KORA - MBIRA - RUMBA - BENGA - AMAPIANO - ",
+      text: "AFRICA SURFACE: AFROBEAT HORN OSTINATO FELA DRIVE. HIGHLIFE GUITAR LATTICE BRASS DANCE. MBALAX SABAR POLYRHYTHM CUT. GRIOT KORA ARPEGGIO NARRATIVE EPIC. JUJU TALKING DRUM RESPONSE PRAISE. PALM WINE GUITAR LIGHT STRUM JAM. FUJI VOCAL PRAISE DRUM CALL. TALKING DRUM PITCH SHIFT IMITATION. DJEMBE PALM BASS HIGH SLAP. BALAFON WOOD XYLOPHONE HARMONICS. SENEGAL SABAR CONTEST DANCE. MALI MANDING EPIC CHANT LONG. GHANA ADINKRA DRUM LANGUAGE SIGNAL. NIGERIA YORUBA DRUM RITUAL ENSEMBLE. CENTRAL AFRICAN RUMBA GUITAR SPIN HARMONY. CONGO SOUKOUS QUICK GUITAR POLYPHONY. CAMEROON MAKOSSA BASS SWAY. EAST AFRICA TAARAB STRINGS COASTAL CHOIR. ETHIOPIAN PENTATONIC BRASS LOOP. KENYA BENGA GUITAR LINE. TANZANIA DANCE BAND FLOW. SOUTH AFRICA MBIRA METAL TINES RESONANCE. KWAITO LOW-END URBAN STEP. AMAPIANO LOG DRUM SPACE HARMONY. ZULU CHORAL CALL RESPONSE. ZIMBABWE MBIRA MULTILINE HARMONICS. MADAGASCAR VALIHA STRING RIPPLE. POLYRHYTHM MULTILAYER CROSS DISPLACEMENT. AFRICAN BALAFON LOOP CYCLE. "
     },
-    americas: {
-      name: "AMERICAS",
-      style: "JAZZ / BLUES / SALSA / SAMBA",
-      ring: "AMERICAS - JAZZ - BLUES - GOSPEL - SALSA - SAMBA - CUMBIA - HIP HOP - REGGAETON - TANGO - BLUEGRASS - ",
-      text: "AMERICAS SURFACE: BLUES BENT NOTE TWELVE BAR CALL. JAZZ SWING RIDE CYMBAL IMPROVISE HARMONY. GOSPEL CALL RESPONSE CHOIR ORGAN PIANO. SALSA CLAVE BRASS PIANO MONTUNO. SAMBA BATUCADA CUT STOMP. BOSSA NOVA GUITAR SWAY WALK BASS. CUMBIA ACCORDION LINE DRUM PULSE. HIP HOP BREAKBEAT SAMPLE FLOW. REGGAETON DEMBOW BASS LOOP. COUNTRY FIDDLE BANJO NARRATIVE. BLUEGRASS MANDOLIN FLATPICK FAST. TANGO BANDONEON TRAGIC CUT. CANDELE RITUAL DRUM CALL. REGGAE CUT SOCIAL COMMENT SKA. SKA CUT JAMAICA BRASS HORN. SOCA FESTIVAL TRINIDAD PAN DRUM. ANDEAN PANPIPE QUENA LAMENT. MARIACHI TRUMPET BRASS CHORUS. CALYPSO IRON DRUM SATIRE NARRATIVE. CHARANGA FIDDLE MEXICAN DANCE. FORRO ACCORDION ZABUMBA TRIANGLE. "
+    northAmerica: {
+      name: "NORTH AMERICA",
+      style: "BLUES / JAZZ / GOSPEL / MEXICAN FOLK / CARIBBEAN",
+      ring: "NORTH AMERICA - BLUES - JAZZ - GOSPEL - COUNTRY - BLUEGRASS - HIP HOP - REGGAETON - MARIACHI - CARIBBEAN - SKA - ",
+      text: "NORTH AMERICA SURFACE: BLUES BENT NOTE TWELVE BAR CALL. JAZZ SWING RIDE CYMBAL IMPROVISE HARMONY. GOSPEL CALL RESPONSE CHOIR ORGAN PIANO. COUNTRY FIDDLE BANJO NARRATIVE. BLUEGRASS MANDOLIN FLATPICK FAST. HIP HOP BREAKBEAT SAMPLE FLOW. R&B VOCAL GROOVE BLUES ROOT. SOUL BRASS BASS VOICE. FUNK SYNCOPATED BASS LOCK. ROCK GUITAR DISTORTION DRUM KIT. MEXICAN FOLK TRUMPET GUITAR CHORUS. MARIACHI BRASS VIOLIN SONG. NORTENO ACCORDION BAJO SEXTO. TEJANO DANCE SYNTHESIZER. REGGAETON DEMBOW BASS LOOP. CARIBBEAN SKA OFFBEAT BRASS. CALYPSO IRON DRUM SATIRE NARRATIVE. SOCA FESTIVAL TRINIDAD PAN DRUM. DISCO DANCE FLOOR STRING PULSE. "
+    },
+    southAmerica: {
+      name: "SOUTH AMERICA",
+      style: "SAMBA / BOSSA NOVA / TANGO / ANDEAN / CUMBIA",
+      ring: "SOUTH AMERICA - SAMBA - BOSSA NOVA - TANGO - ANDEAN - CUMBIA - FORRO - CHORO - CANDOMBE - VALLENATO - ",
+      text: "SOUTH AMERICA SURFACE: SAMBA BATUCADA CUT STOMP. BOSSA NOVA GUITAR SWAY HARMONY. CHORO FLUTE MANDOLIN IMPROVISE. FORRO ACCORDION ZABUMBA TRIANGLE. TROPICALIA COLLAGE PSYCHEDELIA POETRY. TANGO BANDONEON TRAGIC CUT. MILONGA BEAT BASS DANCE HALL. ANDEAN PANPIPE QUENA LAMENT. CHARANGO METAL STRING HIGHLAND. CUMBIA ACCORDION LINE DRUM PULSE. VALLENATO NARRATIVE ACCORDION RESPONSE. CANDOMBE DRUM PARADE URUGUAY. CUECA HANDKERCHIEF STEP GUITAR. NUEVA CANCION POETRY PROTEST FOLK. BRAZIL NORTHEAST ZABUMBA HAND DRUM TRIANGLE. AMAZON DANCE CALL FLUTE. PERU COAST CAJON SYNCOPATION. ARGENTINE FOLK GUITAR CHOIR. "
     },
     oceania: {
       name: "OCEANIA / PACIFIC",
