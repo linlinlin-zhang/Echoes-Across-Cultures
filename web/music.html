@@ -19,6 +19,9 @@
       --alert: #b72727;
       --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
       --font-mono: "Courier New", Courier, monospace;
+      --station-left-fr: 0.76fr;
+      --station-right-fr: 0.24fr;
+      --station-divider-x: 76%;
     }
 
     * {
@@ -77,7 +80,7 @@
       top: 0;
       z-index: 30;
       display: grid;
-      grid-template-columns: minmax(720px, 1.55fr) minmax(420px, 0.45fr);
+      grid-template-columns: minmax(720px, var(--station-left-fr)) minmax(420px, var(--station-right-fr));
       align-items: stretch;
       gap: 0;
       padding: 0;
@@ -102,6 +105,7 @@
 
     .rec-head {
       justify-content: stretch;
+      container-type: inline-size;
     }
 
     .brand {
@@ -209,6 +213,16 @@
       flex-wrap: wrap;
     }
 
+    .station-nav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(7.4rem, 1fr));
+      align-items: stretch;
+      justify-content: end;
+      gap: 0.55rem 0.7rem;
+      width: min(100%, 18.6rem);
+      margin-left: auto;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -237,6 +251,25 @@
       opacity: 0.56;
       cursor: wait;
       transform: none;
+    }
+
+    .station-nav .pill {
+      width: 100%;
+      min-height: 2.35rem;
+      padding-left: 0.9rem;
+      padding-right: 0.9rem;
+    }
+
+    .station-nav .pill:hover,
+    .station-nav .pill.is-active {
+      transform: none;
+    }
+
+    @container (min-width: 640px) {
+      .station-nav {
+        grid-template-columns: repeat(4, minmax(6.4rem, 1fr));
+        width: 100%;
+      }
     }
 
     .upload-input {
@@ -479,9 +512,44 @@
       margin: 0;
       min-height: calc(100vh - 73px);
       display: grid;
-      grid-template-columns: minmax(720px, 1.55fr) minmax(420px, 0.45fr);
+      grid-template-columns: minmax(720px, var(--station-left-fr)) minmax(420px, var(--station-right-fr));
       border-left: 1px solid var(--line);
       border-right: 1px solid var(--line);
+    }
+
+    .layout-resizer {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: var(--station-divider-x);
+      z-index: 35;
+      width: 14px;
+      transform: translateX(-7px);
+      cursor: col-resize;
+      touch-action: none;
+    }
+
+    .layout-resizer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      transform: translateX(-50%);
+      background: var(--line);
+      transition: width 160ms ease, background 160ms ease;
+    }
+
+    .layout-resizer:hover::before,
+    .layout-resizer:focus-visible::before,
+    body.is-resizing-station .layout-resizer::before {
+      width: 2px;
+      background: var(--ink);
+    }
+
+    .layout-resizer:focus-visible {
+      outline: 0;
     }
 
     @media (min-width: 1121px) {
@@ -2053,6 +2121,10 @@
         align-items: start;
       }
 
+      .layout-resizer {
+        display: none;
+      }
+
       .player-head {
         grid-template-columns: auto minmax(220px, 1fr) auto;
         border-right: 0;
@@ -2155,6 +2227,28 @@
 
       .player-head > .pill {
         justify-self: start;
+      }
+
+      .station-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(8.4rem, 1fr));
+        justify-content: center;
+        align-items: stretch;
+        gap: 0.65rem 0.8rem;
+        width: min(100%, 28rem);
+        margin: 0 auto;
+      }
+
+      .station-nav .pill {
+        width: 100%;
+        min-height: 3.05rem;
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+      }
+
+      .station-nav .pill:hover,
+      .station-nav .pill.is-active {
+        transform: none;
       }
 
       .console-top {
@@ -2454,14 +2548,16 @@
     </div>
 
     <div class="rec-head">
-      <nav class="top-actions" aria-label="音乐台导航" data-i18n-aria-label="music.aria.nav">
+      <nav class="top-actions station-nav" aria-label="音乐台导航" data-i18n-aria-label="music.aria.nav">
         <button class="pill" id="map-export-button" type="button" data-i18n="music.export.map">导出地图</button>
         <a class="pill is-active" href="music.html" data-i18n="common.nav.music">音乐台</a>
-        <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
         <a class="pill" href="settings.html" data-i18n="common.nav.settings">设置界面</a>
+        <a class="pill" href="favorites.html" data-i18n="common.nav.favorites">收藏夹</a>
       </nav>
     </div>
   </header>
+
+  <button class="layout-resizer" id="layout-resizer" type="button" aria-label="调整音乐台左右栏宽度" title="拖动调整左右栏宽度"></button>
 
   <div class="library-picker" id="library-picker" hidden>
     <section class="library-dialog" role="dialog" aria-modal="true" aria-labelledby="library-picker-title">
@@ -3469,6 +3565,10 @@
     ];
 
     const els = {
+      stationHeader: document.querySelector(".station-header"),
+      stationShell: document.querySelector(".station-shell"),
+      recHead: document.querySelector(".rec-head"),
+      layoutResizer: document.getElementById("layout-resizer"),
       consolePanel: document.querySelector(".console"),
       sidePanel: document.querySelector(".side-panel"),
       topTitle: document.getElementById("top-title"),
@@ -3541,6 +3641,142 @@
     const libraryPageSize = 24;
     let recommendPreferences = { culture: "random", region: "random" };
     applyGlobeRecommendationHint();
+
+    const stationSplitStorageKey = "echo.stationSplitRatio";
+    const stationSplitDefaults = {
+      ratio: 0.76,
+      minLeftPx: 640,
+      minRightPx: 420
+    };
+    let stationSplitRatio = stationSplitDefaults.ratio;
+    let stationSplitResizeFrame = 0;
+
+    function isStationSplitLayoutActive() {
+      return window.matchMedia("(min-width: 1121px)").matches;
+    }
+
+    function stationSplitBounds() {
+      const viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1440);
+      const minLeft = Math.min(0.72, stationSplitDefaults.minLeftPx / viewportWidth);
+      const maxLeft = Math.max(minLeft, Math.min(0.84, 1 - stationSplitDefaults.minRightPx / viewportWidth));
+      return { minLeft, maxLeft };
+    }
+
+    function clampStationSplitRatio(ratio) {
+      const parsed = Number.parseFloat(ratio);
+      const value = Number.isFinite(parsed) ? parsed : stationSplitDefaults.ratio;
+      const { minLeft, maxLeft } = stationSplitBounds();
+      return Math.min(maxLeft, Math.max(minLeft, value));
+    }
+
+    function persistStationSplitRatio(ratio) {
+      try {
+        localStorage.setItem(stationSplitStorageKey, String(Number(ratio).toFixed(4)));
+      } catch (error) {
+        console.warn("Unable to persist station split", error);
+      }
+    }
+
+    function applyStationSplitRatio(ratio, options = {}) {
+      stationSplitRatio = clampStationSplitRatio(ratio);
+      const left = Number(stationSplitRatio).toFixed(4);
+      const right = Number(1 - stationSplitRatio).toFixed(4);
+      document.documentElement.style.setProperty("--station-left-fr", `${left}fr`);
+      document.documentElement.style.setProperty("--station-right-fr", `${right}fr`);
+      document.documentElement.style.setProperty("--station-divider-x", `${(stationSplitRatio * 100).toFixed(3)}%`);
+      if (options.persist) {
+        persistStationSplitRatio(stationSplitRatio);
+      }
+    }
+
+    function scheduleStationSplitResize() {
+      if (stationSplitResizeFrame) {
+        window.cancelAnimationFrame(stationSplitResizeFrame);
+      }
+      stationSplitResizeFrame = window.requestAnimationFrame(() => {
+        stationSplitResizeFrame = 0;
+        if (typeof resize === "function" && els.mapStage) {
+          resize();
+        }
+      });
+    }
+
+    function setStationSplitFromClientX(clientX, options = {}) {
+      const viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1440);
+      applyStationSplitRatio(clientX / viewportWidth, options);
+      scheduleStationSplitResize();
+    }
+
+    function beginStationSplitDrag(event) {
+      if (!els.layoutResizer || !isStationSplitLayoutActive()) return;
+      event.preventDefault();
+      document.body.classList.add("is-resizing-station");
+      try {
+        els.layoutResizer.setPointerCapture(event.pointerId);
+      } catch (error) {
+        console.warn("Station split pointer capture failed", error);
+      }
+      setStationSplitFromClientX(event.clientX);
+
+      const handleMove = (moveEvent) => {
+        moveEvent.preventDefault();
+        setStationSplitFromClientX(moveEvent.clientX);
+      };
+
+      const finishDrag = (finishEvent) => {
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", finishDrag);
+        window.removeEventListener("pointercancel", finishDrag);
+        document.body.classList.remove("is-resizing-station");
+        if (Number.isFinite(finishEvent?.clientX)) {
+          setStationSplitFromClientX(finishEvent.clientX, { persist: true });
+        } else {
+          applyStationSplitRatio(stationSplitRatio, { persist: true });
+        }
+        try {
+          els.layoutResizer.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          console.warn("Station split pointer release failed", error);
+        }
+      };
+
+      window.addEventListener("pointermove", handleMove, { passive: false });
+      window.addEventListener("pointerup", finishDrag);
+      window.addEventListener("pointercancel", finishDrag);
+    }
+
+    function handleStationSplitKeydown(event) {
+      if (!isStationSplitLayoutActive()) return;
+      const { minLeft, maxLeft } = stationSplitBounds();
+      const step = event.shiftKey ? 0.05 : 0.02;
+      let next = stationSplitRatio;
+      if (event.key === "ArrowLeft") next -= step;
+      else if (event.key === "ArrowRight") next += step;
+      else if (event.key === "Home") next = minLeft;
+      else if (event.key === "End") next = maxLeft;
+      else return;
+      event.preventDefault();
+      applyStationSplitRatio(next, { persist: true });
+      scheduleStationSplitResize();
+    }
+
+    function initStationSplitResize() {
+      let storedRatio = stationSplitDefaults.ratio;
+      try {
+        const stored = Number.parseFloat(localStorage.getItem(stationSplitStorageKey));
+        if (Number.isFinite(stored)) storedRatio = stored;
+      } catch (error) {
+        console.warn("Unable to read station split", error);
+      }
+      applyStationSplitRatio(storedRatio);
+      els.layoutResizer?.addEventListener("pointerdown", beginStationSplitDrag);
+      els.layoutResizer?.addEventListener("keydown", handleStationSplitKeydown);
+      window.addEventListener("resize", () => {
+        applyStationSplitRatio(stationSplitRatio);
+      });
+    }
+
+    initStationSplitResize();
 
     function formatCount(value) {
       return Number(value || 0).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN");
@@ -4930,11 +5166,54 @@
       return canvas;
     }
 
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          resolve(result.includes(",") ? result.split(",").pop() : result);
+        };
+        reader.onerror = () => reject(reader.error || new Error("Blob read failed"));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function saveBlobWithNativeBridge(blob, filename) {
+      const bridge = window.EchoAndroid;
+      if (!bridge || typeof bridge.savePngBase64 !== "function") return false;
+      const base64 = await blobToBase64(blob);
+      const rawResult = bridge.savePngBase64(filename, base64);
+      let result = null;
+      try {
+        result = rawResult ? JSON.parse(String(rawResult)) : null;
+      } catch (_) {
+        result = { ok: Boolean(rawResult), message: String(rawResult || "") };
+      }
+      if (!result?.ok) {
+        throw new Error(result?.error || result?.message || "Android save failed");
+      }
+      return {
+        native: true,
+        displayPath: result.displayPath || "",
+        uri: result.uri || ""
+      };
+    }
+
     function downloadCanvasPng(canvas, filename) {
       return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
+        canvas.toBlob(async (blob) => {
           if (!blob) {
             reject(new Error("Canvas export failed"));
+            return;
+          }
+          try {
+            const nativeResult = await saveBlobWithNativeBridge(blob, filename);
+            if (nativeResult) {
+              resolve(nativeResult);
+              return;
+            }
+          } catch (error) {
+            reject(error);
             return;
           }
           const url = URL.createObjectURL(blob);
@@ -4945,7 +5224,7 @@
           link.click();
           link.remove();
           window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-          resolve();
+          resolve({ native: false });
         }, "image/png", 0.98);
       });
     }
@@ -4961,8 +5240,8 @@
         }
         const canvas = await buildExportCanvas();
         const filename = `${exportFileToken(`Echo-Atlas-${currentTrack.title}`)}.png`;
-        await downloadCanvasPng(canvas, filename);
-        els.mapStatus.textContent = exportText("music.export.done", "地图长图已导出");
+        const saveResult = await downloadCanvasPng(canvas, filename);
+        els.mapStatus.textContent = saveResult?.displayPath || exportText("music.export.done", "地图长图已导出");
       } catch (error) {
         console.error(error);
         els.mapStatus.textContent = exportText("music.export.failed", "地图导出失败");
