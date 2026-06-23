@@ -2724,7 +2724,7 @@
   <script src="./vendor/topojson-client.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
-  <script src="i18n.js"></script>
+  <script src="i18n.js?v=20260623-session-state"></script>
   <script src="favorite-store.js"></script>
   <script>
     const apiBase = window.location.origin;
@@ -2736,6 +2736,7 @@
     const appConfigKey = "echo-app-config";
     const lastStartupTrackKey = "echo-last-startup-track-v2";
     const stationStateKey = "echo-music-station-state-v2";
+    const transientStationKeys = [lastStartupTrackKey, stationStateKey];
     const pendingLocalPlayKey = "echo-pending-local-play";
     const localAudioDbName = "echo-local-audio";
     const localAudioStore = "tracks";
@@ -2746,6 +2747,7 @@
       lng: -160,
       precision: t("music.mysteryPlace.precision")
     };
+    let skipTransientStationPersistence = false;
     let geoData = null;
     let geoCityLabels = {};
     const mysterySentinelValues = new Set([
@@ -4132,6 +4134,46 @@
       return raw >= 1 && raw <= 30 ? raw : 10;
     }
 
+    function removeStorageKey(storage, key) {
+      try {
+        storage?.removeItem?.(key);
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+
+    function clearTransientStationUsage(options = {}) {
+      transientStationKeys.forEach((key) => removeStorageKey(sessionStorage, key));
+      if (options.includeLegacyLocalStorage) {
+        transientStationKeys.forEach((key) => removeStorageKey(localStorage, key));
+      }
+    }
+
+    function cleanupLegacyStationUsage() {
+      transientStationKeys.forEach((key) => removeStorageKey(localStorage, key));
+    }
+
+    function markTransientStationReset() {
+      skipTransientStationPersistence = true;
+      clearTransientStationUsage({ includeLegacyLocalStorage: true });
+    }
+
+    function isHardRefreshShortcut(event) {
+      const key = String(event.key || "").toLowerCase();
+      const modifier = event.ctrlKey || event.metaKey;
+      return (event.key === "F5" && (event.ctrlKey || event.metaKey || event.shiftKey))
+        || (modifier && event.shiftKey && key === "r");
+    }
+
+    function handleHardRefreshShortcut(event) {
+      if (isHardRefreshShortcut(event)) {
+        markTransientStationReset();
+      }
+    }
+
+    cleanupLegacyStationUsage();
+    window.addEventListener("keydown", handleHardRefreshShortcut, { capture: true });
+
     function startupTrackSnapshot(track = currentTrack) {
       if (!track?.title || track.title === t("music.default.connecting") || track.title === t("music.default.noTrack")) {
         return null;
@@ -4155,10 +4197,11 @@
     }
 
     function persistLastStartupTrack() {
+      if (skipTransientStationPersistence) return;
       const snapshot = startupTrackSnapshot(currentTrack);
       if (!snapshot) return;
       try {
-        localStorage.setItem(lastStartupTrackKey, JSON.stringify(snapshot));
+        sessionStorage.setItem(lastStartupTrackKey, JSON.stringify(snapshot));
       } catch (error) {
         console.warn(error);
       }
@@ -4175,14 +4218,12 @@
     }
 
     function clearMusicStationState() {
-      try {
-        localStorage.removeItem(stationStateKey);
-      } catch (error) {
-        console.warn(error);
-      }
+      removeStorageKey(sessionStorage, stationStateKey);
+      removeStorageKey(localStorage, stationStateKey);
     }
 
     function persistMusicStationState() {
+      if (skipTransientStationPersistence) return;
       if (!recommendationsPersistable || !activeRecommendations.length) return;
       const activeSnapshot = activeRecommendations.map(compactTrackSnapshot).filter(Boolean);
       if (!activeSnapshot.length) return;
@@ -4209,7 +4250,7 @@
         }))
       };
       try {
-        localStorage.setItem(stationStateKey, JSON.stringify(snapshot));
+        sessionStorage.setItem(stationStateKey, JSON.stringify(snapshot));
       } catch (error) {
         console.warn(error);
       }
@@ -4217,7 +4258,7 @@
 
     function readMusicStationState() {
       try {
-        const saved = JSON.parse(localStorage.getItem(stationStateKey) || "null");
+        const saved = JSON.parse(sessionStorage.getItem(stationStateKey) || "null");
         if (!saved || saved.version !== 1 || !Array.isArray(saved.activeRecommendations)) return null;
         if (!saved.activeRecommendations.length) return null;
         return saved;
@@ -6986,7 +7027,7 @@ Guidelines:
       recommendationsPersistable = false;
       let saved = null;
       try {
-        saved = JSON.parse(localStorage.getItem(lastStartupTrackKey) || "null");
+        saved = JSON.parse(sessionStorage.getItem(lastStartupTrackKey) || "null");
       } catch (error) {
         saved = null;
       }
@@ -7321,8 +7362,12 @@ Guidelines:
       if (currentTrack.fileObjectUrl && currentTrack.fileObjectUrl.startsWith("blob:")) {
         URL.revokeObjectURL(currentTrack.fileObjectUrl);
       }
-      persistLastStartupTrack();
-      persistMusicStationState();
+      if (skipTransientStationPersistence) {
+        clearTransientStationUsage({ includeLegacyLocalStorage: true });
+      } else {
+        persistLastStartupTrack();
+        persistMusicStationState();
+      }
     });
     syncTrackReadouts();
     loadMainlineStatus();

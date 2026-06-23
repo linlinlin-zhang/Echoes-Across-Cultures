@@ -446,12 +446,12 @@
         <div class="field">
           <label data-i18n="settings.startupTrackLabel">进入音乐台时加载</label>
           <div class="choice-grid is-startup" role="radiogroup" aria-label="进入音乐台时加载" data-i18n-aria-label="settings.startupTrackLabel">
-            <button class="choice-button" type="button" data-startup-track="last" data-i18n="settings.startupTrack.last">上次关闭时的歌</button>
+            <button class="choice-button" type="button" data-startup-track="last" data-i18n="settings.startupTrack.last">本次会话上次歌曲</button>
             <button class="choice-button" type="button" data-startup-track="favorite-random" data-i18n="settings.startupTrack.favorite">从收藏夹随机</button>
             <button class="choice-button" type="button" data-startup-track="library-random" data-i18n="settings.startupTrack.library">从音乐库随机</button>
             <button class="choice-button" type="button" data-startup-track="none" data-i18n="settings.startupTrack.none">不加载歌曲</button>
           </div>
-          <p class="note" data-i18n="settings.startupTrackHelp">控制打开音乐台时播放器预先载入哪一首歌；通过收藏夹或链接进入的指定曲目仍会优先生效。</p>
+          <p class="note" data-i18n="settings.startupTrackHelp">控制打开音乐台时播放器预先载入哪一首歌；本次会话的上次歌曲会在普通刷新或页面切换后保留，强制刷新或重新打开浏览器后清空；通过收藏夹或链接进入的指定曲目仍会优先生效。</p>
         </div>
 
         <div class="field">
@@ -491,7 +491,7 @@
     </section>
   </main>
 
-  <script src="i18n.js"></script>
+  <script src="i18n.js?v=20260623-session-state"></script>
   <script>
     const els = {
       language: document.getElementById("app-language"),
