@@ -26,6 +26,7 @@ from .prototype_api import create_prototype_router
 from .schemas import (
     DatasetBuildRequest,
     KimiChatRequest,
+    KimiTrackCommandRequest,
     KimiTrackCountryRequest,
     MainlineRecommendRequest,
     OntologyAnnotationCreateRequest,
@@ -568,7 +569,7 @@ def _country_cache_key(req: KimiTrackCountryRequest) -> str:
     import hashlib
 
     parts = [
-        "track-country-v2",
+        "track-country-v5-local-artist",
         req.track_id,
         req.title,
         req.artist,
@@ -663,7 +664,7 @@ def _extract_json_object(text: str) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _clean_country_result(data: dict[str, Any], *, cached: bool = False) -> dict[str, Any]:
+def _clean_country_result(data: dict[str, Any], *, cached: bool = False, source: str = "kimi_web_search") -> dict[str, Any]:
     try:
         confidence = float(data.get("confidence") or 0)
     except Exception:
@@ -691,11 +692,342 @@ def _clean_country_result(data: dict[str, Any], *, cached: bool = False) -> dict
         "precision": "ai_country_capital",
         "confidence": confidence,
         "cached": cached,
-        "source": "kimi_web_search",
+        "source": str(data.get("source") or source or "kimi_web_search").strip(),
         "rationale": str(data.get("rationale") or data.get("reason") or "").strip()[:500],
         "evidence": [str(item).strip()[:300] for item in data.get("evidence", [])[:3] if str(item).strip()]
         if isinstance(data.get("evidence"), list)
         else [],
+    }
+
+
+def _country_capital_result(
+    *,
+    iso: str,
+    confidence: float,
+    source: str,
+    rationale: str = "",
+    evidence: list[str] | None = None,
+) -> dict[str, Any]:
+    capital = COUNTRY_CAPITALS.get(str(iso or "").upper().strip())
+    if not capital:
+        return {"ok": True, "resolved": False, "reason": "country_capital_missing", "source": source}
+    return {
+        "ok": True,
+        "resolved": True,
+        "country": str(capital["country"]),
+        "country_iso": str(iso).upper().strip(),
+        "capital": str(capital["capital"]),
+        "lat": float(capital["lat"]),
+        "lng": float(capital["lng"]),
+        "precision": "ai_country_capital",
+        "confidence": float(confidence),
+        "cached": False,
+        "source": source,
+        "rationale": str(rationale or "").strip()[:500],
+        "evidence": [str(item).strip()[:300] for item in (evidence or []) if str(item).strip()][:3],
+    }
+
+
+def _normalize_track_match_value(value: Any) -> str:
+    raw = str(value or "").casefold().strip()
+    chars: list[str] = []
+    for char in unicodedata.normalize("NFKD", raw):
+        if unicodedata.combining(char):
+            continue
+        chars.append(char)
+    return " ".join(re.sub(r"[^\w\s]+", " ", "".join(chars), flags=re.UNICODE).split())
+
+
+def _loose_text_match(left: Any, right: Any) -> bool:
+    a = _normalize_track_match_value(left)
+    b = _normalize_track_match_value(right)
+    if not a or not b:
+        return False
+    return a == b or a in b or b in a
+
+
+def _resolve_track_country_from_metadata(req: KimiTrackCountryRequest) -> dict[str, Any] | None:
+    parsed_city, parsed_country = _split_location_label(req.location)
+    city = str(req.city or parsed_city or "").strip()
+    country = str(parsed_country or req.location or "").strip()
+    iso = _country_iso(country)
+    city_location = _city_location(city or req.location, iso)
+    if city_location:
+        return _country_capital_result(
+            iso=str(city_location.get("country_iso") or ""),
+            confidence=0.98,
+            source="embedded_location_metadata",
+            rationale="Matched embedded city/location metadata.",
+            evidence=[city or str(req.location or "")],
+        )
+    if iso:
+        return _country_capital_result(
+            iso=iso,
+            confidence=0.96,
+            source="embedded_country_metadata",
+            rationale="Matched embedded country metadata.",
+            evidence=[country],
+        )
+    return None
+
+
+def _catalog_country_match_score(
+    req: KimiTrackCountryRequest, item: dict[str, Any], *, require_title_match: bool = True
+) -> float:
+    title = str(req.title or "").strip()
+    artist = str(req.artist or "").strip()
+    album = str(req.album or "").strip()
+    item_title = str(item.get("title") or "").strip()
+    item_artist = str(item.get("artist") or "").strip()
+    item_album = str(item.get("album") or "").strip()
+    if require_title_match and title and item_title and not _loose_text_match(title, item_title):
+        return 0.0
+    if artist and item_artist and not _loose_text_match(artist, item_artist):
+        return 0.0
+    score = 0.0
+    if require_title_match and title and _normalize_track_match_value(title) == _normalize_track_match_value(item_title):
+        score += 4.0
+    elif require_title_match and title and _loose_text_match(title, item_title):
+        score += 2.0
+    if artist and _normalize_track_match_value(artist) == _normalize_track_match_value(item_artist):
+        score += 4.0
+    elif artist and _loose_text_match(artist, item_artist):
+        score += 2.0
+    if album and item_album and _loose_text_match(album, item_album):
+        score += 1.0
+    country_source = str(item.get("country_source") or "").strip()
+    if country_source and country_source != "itunes_storefront":
+        score += 2.0
+    if str(item.get("catalog_country_is_storefront") or "").casefold() == "true" or item.get("catalog_country_is_storefront") is True:
+        score -= 0.25
+    if req.source_dataset and str(item.get("source_dataset") or "").casefold() == str(req.source_dataset).casefold():
+        score += 0.5
+    if req.platform and str(item.get("platform") or "").casefold() == str(req.platform).casefold():
+        score += 0.5
+    return score
+
+
+def _resolve_track_country_from_catalog(req: KimiTrackCountryRequest, storage: Storage) -> dict[str, Any] | None:
+    title_artist_query = " ".join(str(part or "").strip() for part in [req.title, req.artist] if str(part or "").strip())
+    artist_query = str(req.artist or "").strip()
+    queries: list[tuple[str, bool]] = []
+    if title_artist_query:
+        queries.append((title_artist_query, True))
+    if artist_query and artist_query != title_artist_query:
+        queries.append((artist_query, False))
+    if not queries:
+        return None
+    for query, require_title_match in queries:
+        try:
+            catalog = _mainline_catalog(storage)
+            page = catalog.catalog(q=query, limit=48, random_seed=None, exclude_low_signal=True)
+        except Exception:
+            continue
+        items = [item for item in page.get("items", []) if isinstance(item, dict)]
+        if not items:
+            continue
+        scored: list[tuple[float, dict[str, Any]]] = []
+        for item in items:
+            iso = _country_iso(item.get("country_iso") or item.get("country"))
+            if not iso or iso not in COUNTRY_CAPITALS:
+                continue
+            score = _catalog_country_match_score(req, item, require_title_match=require_title_match)
+            if score >= 6.0:
+                scored.append((score, item))
+        if not scored:
+            continue
+        non_storefront = [(score, item) for score, item in scored if not item.get("catalog_country_is_storefront")]
+        pool = non_storefront or scored
+        iso_set = {_country_iso(item.get("country_iso") or item.get("country")) for _, item in pool}
+        if len(iso_set) != 1:
+            continue
+        score, item = sorted(pool, key=lambda pair: pair[0], reverse=True)[0]
+        iso = _country_iso(item.get("country_iso") or item.get("country"))
+        source = "catalog_exact_match" if require_title_match else "catalog_artist_match"
+        if not non_storefront:
+            source = "catalog_itunes_storefront_match"
+        confidence = 0.94 if non_storefront and require_title_match else 0.86 if non_storefront else 0.82
+        return _country_capital_result(
+            iso=iso,
+            confidence=confidence,
+            source=source,
+            rationale="Matched the uploaded track against the local music catalog.",
+            evidence=[
+                " - ".join(part for part in [str(item.get("title") or ""), str(item.get("artist") or "")] if part),
+                str(item.get("source_dataset") or ""),
+            ],
+        )
+    return None
+
+
+def _resolve_user_location_text(*, country: Any = "", city: Any = "", location_text: Any = "") -> dict[str, Any]:
+    location = str(location_text or "").strip()
+    parsed_city, parsed_country = _split_location_label(location)
+    city_text = str(city or parsed_city or "").strip()
+    country_text = str(country or parsed_country or "").strip()
+    combined = " ".join(part for part in [city_text, country_text, location] if part).strip()
+
+    iso = _country_iso(country_text or location)
+    city_location = _city_location(city_text or location, iso)
+    if city_location:
+        city_iso = str(city_location.get("country_iso") or "").upper().strip()
+        capital = COUNTRY_CAPITALS.get(city_iso, {})
+        return {
+            "ok": True,
+            "resolved": True,
+            "country": str(capital.get("country") or city_iso),
+            "country_iso": city_iso,
+            "capital": str(capital.get("capital") or city_location.get("city") or ""),
+            "city": str(city_location.get("city") or city_text or location),
+            "lat": float(city_location["lat"]),
+            "lng": float(city_location["lng"]),
+            "precision": "user_corrected_city",
+            "confidence": 1.0,
+            "source": "user_correction",
+            "rationale": "User corrected the track location in chat.",
+            "evidence": [combined],
+        }
+    if iso and iso in COUNTRY_CAPITALS:
+        result = _country_capital_result(
+            iso=iso,
+            confidence=1.0,
+            source="user_correction",
+            rationale="User corrected the track country in chat.",
+            evidence=[combined],
+        )
+        if result.get("resolved"):
+            result["city"] = result.get("capital", "")
+            result["precision"] = "user_corrected_country"
+        return result
+    return {
+        "ok": True,
+        "resolved": False,
+        "reason": "location_not_recognized",
+        "source": "user_correction",
+        "evidence": [combined],
+    }
+
+
+def _heuristic_track_command(message: str) -> dict[str, Any] | None:
+    text = str(message or "").strip()
+    if not text:
+        return None
+    lower = text.casefold()
+    geo_words = ("位置", "地理", "国家", "地区", "来自", "来源", "origin", "country", "location", "region")
+    uncertain_words = ("不对", "错误", "错了", "有误", "不准", "不准确", "再查", "重新查", "重新搜索", "核查", "复查", "wrong", "incorrect", "recheck", "search again")
+    question_words = ("哪里", "哪儿", "是什么", "吗", "?", "？", "where", "what country")
+    if any(word in lower for word in uncertain_words) and any(word in lower for word in geo_words):
+        return {
+            "action": "recheck_location",
+            "updates": {},
+            "confidence": 0.86,
+            "reply": "I will recheck the track location with a deeper lookup.",
+        }
+    if any(word in lower for word in question_words) and not any(word in lower for word in ("改成", "改为", "设为", "是", "to ")):
+        return None
+    patterns = [
+        r"(?:位置|地理位置|国家|地区|来源|来自)\s*(?:应该)?\s*(?:是|在|为|设为|改成|改为|改到|=|:|：)\s*([^。！？!?，,；;\n]+)",
+        r"(?:set|change|update)\s+(?:the\s+)?(?:track\s+)?(?:location|country|region|origin)\s+(?:to|as)\s+([^.!?,;\n]+)",
+        r"(?:location|country|region|origin)\s+(?:is|should be)\s+([^.!?,;\n]+)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if not match:
+            continue
+        value = match.group(1).strip(" '\"“”‘’")
+        if not value or any(word in value.casefold() for word in question_words):
+            continue
+        return {
+            "action": "set_metadata",
+            "updates": {"location_text": value},
+            "confidence": 0.9,
+            "reply": "I will update the track location.",
+        }
+    return None
+
+
+def _track_command_prompt(req: KimiTrackCommandRequest) -> list[dict[str, str]]:
+    track = req.track if isinstance(req.track, dict) else {}
+    track_context = {
+        "title": track.get("title") or track.get("trackTitle") or "",
+        "artist": track.get("artist") or "",
+        "album": track.get("album") or "",
+        "country": track.get("country") or track.get("countryIso") or track.get("country_iso") or "",
+        "city": track.get("city") or "",
+        "genre": track.get("genre") or track.get("label") or track.get("style") or "",
+        "source": track.get("sourceDataset") or track.get("platform") or "",
+    }
+    return [
+        {
+            "role": "system",
+            "content": (
+                "Classify a user's chat message in a music app. "
+                "Return one strict JSON object only. Schema: "
+                '{"action":"none|set_metadata|recheck_location","updates":{"title":"","artist":"","album":"","genre":"","country":"","country_iso":"","city":"","location_text":""},'
+                '"confidence":0.0,"reply":""}. '
+                "Use set_metadata only when the user clearly wants to correct the current track info. "
+                "Use recheck_location when the user says the location/geographic info is wrong or asks to check/search it again. "
+                "Use none for ordinary questions or discussion. For location corrections, country-only is fine."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Current track:\n{json.dumps(track_context, ensure_ascii=False)}\n\n"
+                f"User message:\n{req.message}"
+            ),
+        },
+    ]
+
+
+def _parse_track_command_with_kimi(
+    *,
+    req: KimiTrackCommandRequest,
+    api_key: str,
+    endpoint: str,
+    model: str,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": _track_command_prompt(req),
+        "thinking": {"type": "disabled"},
+        "max_completion_tokens": 360,
+    }
+    data = _request_json(
+        url=endpoint,
+        api_key=api_key,
+        method="POST",
+        payload=payload,
+        timeout=max(1.0, float(req.timeout_seconds)),
+    )
+    if not isinstance(data, dict):
+        return {"action": "none", "updates": {}, "confidence": 0.0, "reply": ""}
+    message = ((data.get("choices") or [{}])[0].get("message") or {})
+    content = str(message.get("content") or "").strip()
+    return _extract_json_object(content)
+
+
+def _clean_track_command_result(data: dict[str, Any]) -> dict[str, Any]:
+    action = str(data.get("action") or "none").strip().lower()
+    if action not in {"none", "set_metadata", "recheck_location"}:
+        action = "none"
+    try:
+        confidence = float(data.get("confidence") or 0)
+    except Exception:
+        confidence = 0.0
+    raw_updates = data.get("updates") if isinstance(data.get("updates"), dict) else {}
+    updates: dict[str, str] = {}
+    for key in ("title", "artist", "album", "genre", "label", "tags", "country", "country_iso", "city", "location_text"):
+        value = str(raw_updates.get(key) or data.get(key) or "").strip()
+        if value:
+            updates[key] = value[:500]
+    return {
+        "ok": True,
+        "handled": action != "none" and confidence >= 0.55,
+        "action": action if confidence >= 0.55 else "none",
+        "updates": updates,
+        "confidence": confidence,
+        "reply": str(data.get("reply") or "").strip()[:500],
     }
 
 
@@ -741,24 +1073,99 @@ def _kimi_track_country_prompt(req: KimiTrackCountryRequest) -> list[dict[str, s
     ]
 
 
+def _kimi_track_country_fast_prompt(req: KimiTrackCountryRequest) -> list[dict[str, str]]:
+    fields = [
+        ("title", req.title),
+        ("artist", req.artist),
+        ("album", req.album),
+        ("label", req.label),
+        ("tags", req.tags),
+        ("culture", req.culture),
+        ("source", req.source_dataset or req.platform),
+        ("url", req.platform_track_url),
+        ("year", req.release_year or ""),
+    ]
+    metadata = "\n".join(f"{name}: {value}" for name, value in fields if str(value or "").strip())
+    return [
+        {
+            "role": "system",
+            "content": (
+                "Return one compact JSON object for the most likely country of a music track. "
+                "Use only provided metadata and well-known artist/work origin; no web search. "
+                "Resolve only when highly confident. Keys: resolved,country,country_iso,confidence,rationale,evidence."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "If the country is obvious, answer with ISO alpha-2. "
+                "Otherwise return {\"resolved\":false,\"country\":\"\",\"country_iso\":\"\",\"confidence\":0,"
+                "\"rationale\":\"needs web evidence\",\"evidence\":[]}.\n"
+                f"{metadata}"
+            ),
+        },
+    ]
+
+
+def _resolve_track_country_fast_with_kimi(
+    *,
+    req: KimiTrackCountryRequest,
+    api_key: str,
+    endpoint: str,
+    model: str,
+    timeout_seconds: float,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": _kimi_track_country_fast_prompt(req),
+        "thinking": {"type": "disabled"},
+        "max_completion_tokens": 160,
+    }
+    chat_data = _request_json(
+        url=endpoint,
+        api_key=api_key,
+        method="POST",
+        payload=payload,
+        timeout=max(1.0, float(timeout_seconds)),
+    )
+    if not isinstance(chat_data, dict):
+        return {"ok": True, "resolved": False, "reason": "invalid_fast_chat_response", "source": "kimi_fast_knowledge"}
+    message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
+    content = str(message.get("content") or "").strip()
+    if not content:
+        return {"ok": True, "resolved": False, "reason": "empty_fast_country_response", "source": "kimi_fast_knowledge"}
+    return _clean_country_result(_extract_json_object(content), cached=False, source="kimi_fast_knowledge")
+
+
 def _resolve_track_country_with_kimi(
     *,
     req: KimiTrackCountryRequest,
     api_key: str,
     endpoint: str,
     model: str,
+    timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
-    timeout = float(req.timeout_seconds)
+    timeout = max(1.0, float(timeout_seconds if timeout_seconds is not None else req.timeout_seconds))
+    deadline = time.monotonic() + timeout
+
+    def remaining_timeout() -> float:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("country lookup timed out")
+        return max(1.0, min(timeout, remaining))
+
     api_base = _moonshot_api_base(endpoint)
     formula = str(os.environ.get("KIMI_WEB_SEARCH_FORMULA") or "moonshot/web-search:latest").strip()
     tools_url = f"{api_base}/formulas/{formula}/tools"
     fibers_url = f"{api_base}/formulas/{formula}/fibers"
-    tools_data = _request_json(url=tools_url, api_key=api_key, timeout=timeout)
+    tools_data = _request_json(url=tools_url, api_key=api_key, timeout=remaining_timeout())
     tools = tools_data.get("tools") if isinstance(tools_data, dict) else tools_data
     if not isinstance(tools, list) or not tools:
         return {"ok": True, "resolved": False, "reason": "web_search_tools_unavailable"}
 
     messages: list[dict[str, Any]] = _kimi_track_country_prompt(req)
+    max_turns = _env_int("ECHO_KIMI_COUNTRY_WEB_MAX_TURNS", 2, min_value=1, max_value=6)
+    max_tool_calls = _env_int("ECHO_KIMI_COUNTRY_WEB_TOOL_CALL_LIMIT", 2, min_value=1, max_value=4)
     chat_payload: dict[str, Any] = {
         "model": model,
         "messages": messages,
@@ -767,8 +1174,14 @@ def _resolve_track_country_with_kimi(
         "max_completion_tokens": 768,
     }
     message: dict[str, Any] = {}
-    for turn in range(6):
-        chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=chat_payload, timeout=timeout)
+    for turn in range(max_turns):
+        chat_data = _request_json(
+            url=endpoint,
+            api_key=api_key,
+            method="POST",
+            payload=chat_payload,
+            timeout=remaining_timeout(),
+        )
         if not isinstance(chat_data, dict):
             return {"ok": True, "resolved": False, "reason": "invalid_chat_response"}
         message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
@@ -776,7 +1189,7 @@ def _resolve_track_country_with_kimi(
         if not isinstance(tool_calls, list) or not tool_calls:
             break
         messages.append(message)
-        for call in tool_calls[:4]:
+        for call in tool_calls[:max_tool_calls]:
             function_call = call.get("function") or {}
             encrypted_output = ""
             try:
@@ -785,7 +1198,7 @@ def _resolve_track_country_with_kimi(
                     api_key=api_key,
                     method="POST",
                     payload=function_call,
-                    timeout=timeout,
+                    timeout=remaining_timeout(),
                 )
                 if isinstance(fiber, dict):
                     encrypted_output = str(
@@ -803,7 +1216,7 @@ def _resolve_track_country_with_kimi(
                     "content": encrypted_output or '{"error":"empty_web_search_result"}',
                 }
             )
-        for call in tool_calls[4:]:
+        for call in tool_calls[max_tool_calls:]:
             messages.append(
                 {
                     "role": "tool",
@@ -837,14 +1250,20 @@ def _resolve_track_country_with_kimi(
             "thinking": {"type": "disabled"},
             "max_completion_tokens": 768,
         }
-        chat_data = _request_json(url=endpoint, api_key=api_key, method="POST", payload=final_payload, timeout=timeout)
+        chat_data = _request_json(
+            url=endpoint,
+            api_key=api_key,
+            method="POST",
+            payload=final_payload,
+            timeout=remaining_timeout(),
+        )
         if not isinstance(chat_data, dict):
             return {"ok": True, "resolved": False, "reason": "web_search_round_limit"}
         message = ((chat_data.get("choices") or [{}])[0].get("message") or {})
     content = str(message.get("content") or "").strip()
     if not content:
         return {"ok": True, "resolved": False, "reason": "empty_country_response"}
-    return _clean_country_result(_extract_json_object(content), cached=False)
+    return _clean_country_result(_extract_json_object(content), cached=False, source="kimi_web_search")
 
 
 def _mainline_catalog(storage: Storage):
@@ -2613,10 +3032,74 @@ def create_app() -> FastAPI:
             "endpoint": local.get("endpoint", "https://api.moonshot.cn/v1/chat/completions"),
         }
 
+    @app.post("/api/ai/kimi/track-command")
+    def api_kimi_track_command(req: KimiTrackCommandRequest):
+        message = str(req.message or "").strip()
+        if not message:
+            return {"ok": True, "handled": False, "action": "none", "updates": {}, "reason": "empty_message"}
+
+        parsed = _heuristic_track_command(message)
+        if parsed is None:
+            local = _load_local_kimi_config()
+            api_key = str(req.api_key or "").strip() or str(local.get("api_key") or "").strip()
+            if not api_key:
+                return {"ok": True, "handled": False, "action": "none", "updates": {}, "reason": "kimi_api_key_not_configured"}
+            endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get(
+                "endpoint", "https://api.moonshot.cn/v1/chat/completions"
+            )
+            if not endpoint.startswith("https://"):
+                raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+            model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
+            try:
+                parsed = _parse_track_command_with_kimi(req=req, api_key=api_key, endpoint=endpoint, model=model)
+            except Exception as e:
+                return {"ok": True, "handled": False, "action": "none", "updates": {}, "reason": str(e)[:1000]}
+
+        result = _clean_track_command_result(parsed)
+        updates = result.get("updates") if isinstance(result.get("updates"), dict) else {}
+        if result.get("action") == "set_metadata":
+            location_text = updates.get("location_text") or " ".join(
+                part for part in [updates.get("city", ""), updates.get("country", ""), updates.get("country_iso", "")] if part
+            )
+            if location_text or updates.get("city") or updates.get("country") or updates.get("country_iso"):
+                result["location_result"] = _resolve_user_location_text(
+                    country=updates.get("country") or updates.get("country_iso"),
+                    city=updates.get("city"),
+                    location_text=location_text,
+                )
+        return result
+
     @app.post("/api/ai/kimi/track-country")
     def api_kimi_track_country(req: KimiTrackCountryRequest):
         if not (str(req.title or "").strip() or str(req.artist or "").strip() or str(req.platform_track_url or "").strip()):
             return {"ok": True, "resolved": False, "reason": "insufficient_track_metadata"}
+        key = _country_cache_key(req)
+        cache = _read_country_cache(storage)
+
+        def remember(result: dict[str, Any]) -> dict[str, Any]:
+            cache[key] = {
+                "resolved": bool(result.get("resolved")),
+                "country": result.get("country", ""),
+                "country_iso": result.get("country_iso", ""),
+                "confidence": float(result.get("confidence") or 0),
+                "rationale": result.get("rationale") or result.get("reason") or "",
+                "evidence": result.get("evidence") or [],
+                "source": result.get("source", ""),
+                "updated_at": time.time(),
+            }
+            _write_country_cache(storage, cache)
+            return result
+
+        cached = cache.get(key)
+        if isinstance(cached, dict) and not req.force_refresh:
+            return _clean_country_result(cached, cached=True)
+        if not req.force_refresh and not req.require_web_search:
+            local_result = _resolve_track_country_from_metadata(req)
+            if local_result and local_result.get("resolved"):
+                return remember(local_result)
+            local_result = _resolve_track_country_from_catalog(req, storage)
+            if local_result and local_result.get("resolved"):
+                return remember(local_result)
         local = _load_local_kimi_config()
         api_key = str(req.api_key or "").strip() or str(local.get("api_key") or "").strip()
         if not api_key:
@@ -2627,26 +3110,40 @@ def create_app() -> FastAPI:
         if not endpoint.startswith("https://"):
             raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
         model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
-        key = _country_cache_key(req)
-        cache = _read_country_cache(storage)
-        cached = cache.get(key)
-        if isinstance(cached, dict):
-            return _clean_country_result(cached, cached=True)
+        result: dict[str, Any] | None = None
+        started = time.monotonic()
+        if _env_bool("ECHO_KIMI_COUNTRY_FAST_FIRST", True) and not req.require_web_search:
+            fast_timeout = min(
+                float(req.timeout_seconds),
+                _env_float("ECHO_KIMI_COUNTRY_FAST_TIMEOUT_SECONDS", 3.5, min_value=1.0, max_value=30.0),
+            )
+            try:
+                fast_result = _resolve_track_country_fast_with_kimi(
+                    req=req,
+                    api_key=api_key,
+                    endpoint=endpoint,
+                    model=model,
+                    timeout_seconds=fast_timeout,
+                )
+                if fast_result.get("resolved"):
+                    result = fast_result
+            except Exception:
+                result = None
+        if result is None and _env_bool("ECHO_KIMI_COUNTRY_DISABLE_WEB_SEARCH", False):
+            result = {"ok": True, "resolved": False, "reason": "web_search_disabled", "source": "kimi_fast_knowledge"}
         try:
-            result = _resolve_track_country_with_kimi(req=req, api_key=api_key, endpoint=endpoint, model=model)
+            if result is None:
+                remaining_timeout = max(1.0, float(req.timeout_seconds) - (time.monotonic() - started))
+                result = _resolve_track_country_with_kimi(
+                    req=req,
+                    api_key=api_key,
+                    endpoint=endpoint,
+                    model=model,
+                    timeout_seconds=remaining_timeout,
+                )
         except Exception as e:
-            return {"ok": True, "resolved": False, "reason": str(e)[:1000]}
-        cache[key] = {
-            "resolved": bool(result.get("resolved")),
-            "country": result.get("country", ""),
-            "country_iso": result.get("country_iso", ""),
-            "confidence": float(result.get("confidence") or 0),
-            "rationale": result.get("rationale") or result.get("reason") or "",
-            "evidence": result.get("evidence") or [],
-            "updated_at": time.time(),
-        }
-        _write_country_cache(storage, cache)
-        return result
+            result = {"ok": True, "resolved": False, "reason": str(e)[:1000], "source": "kimi_timeout"}
+        return remember(result)
 
     @app.post("/api/ai/kimi/chat")
     def api_kimi_chat(req: KimiChatRequest):

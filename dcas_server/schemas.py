@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -102,6 +104,17 @@ class KimiTrackCountryRequest(BaseModel):
     platform_track_url: str = Field(default="", max_length=1000)
     release_year: int | None = None
     timeout_seconds: float = Field(default=45.0, gt=0, le=120)
+    force_refresh: bool = Field(default=False)
+    require_web_search: bool = Field(default=False)
+
+
+class KimiTrackCommandRequest(BaseModel):
+    api_key: str | None = None
+    model: str = Field(default="kimi-k2.6", min_length=1)
+    endpoint: str = Field(default="https://api.moonshot.cn/v1/chat/completions", min_length=1)
+    message: str = Field(default="", min_length=1, max_length=2000)
+    track: dict[str, Any] = Field(default_factory=dict)
+    timeout_seconds: float = Field(default=24.0, gt=0, le=90)
 
 
 class StyleTransferRequest(BaseModel):

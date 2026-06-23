@@ -2698,7 +2698,7 @@
           <div class="ai-composer" id="ai-composer">
             <div class="field">
               <label for="ai-question" data-i18n="music.ai.followup">进行对话</label>
-              <textarea id="ai-question" placeholder="介绍一下被推荐的音乐吧" data-i18n-placeholder="music.ai.followupPlaceholder"></textarea>
+              <textarea id="ai-question" placeholder="可以问推荐，也可以说：这首歌的位置是巴西 / 地理信息不对再查查" data-i18n-placeholder="music.ai.followupPlaceholder"></textarea>
             </div>
             <button class="pill ai-send" id="ai-send-button" type="button" data-i18n="music.ai.send">发送</button>
           </div>
@@ -5714,7 +5714,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       }
     }
 
-    const countryLookupCacheKey = "echo-track-country-cache-v2";
+    const countryLookupCacheKey = "echo-track-country-cache-v5-local-artist";
     const countryLookupInFlight = new Map();
 
     function readCountryLookupCache() {
@@ -5772,15 +5772,19 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       item.country = name;
       item.countryIso = code || result.country_iso || "";
       item.countrySource = result.source || "kimi_web_search";
-      item.city = capital?.city || cleanMetaText(result.capital) || name;
+      const precision = String(result.precision || "");
+      item.city = precision === "user_corrected_country"
+        ? ""
+        : (cleanMetaText(result.city) || capital?.city || cleanMetaText(result.capital) || name);
       item.lat = lat;
       item.lng = lng;
-      item.locationPrecision = t("music.precision.capitalCity");
+      item.locationPrecision = precision || t("music.precision.capitalCity");
       item.needsCountryLookup = false;
       item.geoLookupStatus = "resolved";
+      const locationRecordKey = result.source === "user_correction" ? "user_country_location" : "ai_country_location";
       item.raw = {
         ...(item.raw || {}),
-        ai_country_location: {
+        [locationRecordKey]: {
           country: result.country,
           country_iso: code || result.country_iso || "",
           capital: result.capital || item.city,
@@ -5828,8 +5832,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       });
     }
 
-    async function requestKimiTrackCountry(item) {
+    async function requestKimiTrackCountry(item, options = {}) {
       const config = getKimiConfig();
+      const ignoreCurrentLocation = Boolean(options.ignoreCurrentLocation);
       const payload = {
         model: config.model,
         endpoint: config.endpoint,
@@ -5837,8 +5842,8 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         title: item.title || "",
         artist: item.artist || "",
         album: item.album || "",
-        city: item.originalCity || (item.country === mysteryPlace.country ? "" : item.city || ""),
-        location: item.originalLocation || "",
+        city: ignoreCurrentLocation ? "" : (item.originalCity || (item.country === mysteryPlace.country ? "" : item.city || "")),
+        location: ignoreCurrentLocation ? "" : (item.originalLocation || ""),
         label: item.label || item.genre || "",
         tags: item.tags || "",
         culture: item.culture || "",
@@ -5846,7 +5851,9 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         platform: item.platform || "",
         platform_track_url: item.platformTrackUrl || item.fullTrackUrl || "",
         release_year: item.releaseYear || null,
-        timeout_seconds: 45
+        timeout_seconds: options.timeoutSeconds || 8,
+        force_refresh: Boolean(options.forceRefresh),
+        require_web_search: Boolean(options.requireWebSearch)
       };
       if (config.apiKey) {
         payload.api_key = config.apiKey;
@@ -5860,6 +5867,210 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         return { ok: false, resolved: false, reason: `http_${response.status}` };
       }
       return response.json();
+    }
+
+    function fallbackFormat(template, params = {}) {
+      return String(template || "").replace(/\{(\w+)\}/g, (_, key) => (
+        Object.prototype.hasOwnProperty.call(params, key) ? String(params[key]) : ""
+      ));
+    }
+
+    function aiControlText(key, fallback, params = {}) {
+      const value = t(key, params);
+      return value === key ? fallbackFormat(fallback, params) : value;
+    }
+
+    function controlTrackPayload(track = currentTrack) {
+      return {
+        title: track.title || "",
+        artist: track.artist || "",
+        album: track.album || "",
+        country: track.country || "",
+        countryIso: track.countryIso || track.country_iso || "",
+        city: track.city || "",
+        genre: displayGenre(track),
+        label: track.label || "",
+        tags: track.tags || "",
+        culture: track.culture || "",
+        sourceDataset: track.sourceDataset || "",
+        platform: track.platform || "",
+        platformTrackUrl: track.platformTrackUrl || track.fullTrackUrl || ""
+      };
+    }
+
+    async function requestTrackCommand(question) {
+      const config = getKimiConfig();
+      const payload = {
+        model: config.model,
+        endpoint: config.endpoint,
+        message: question,
+        track: controlTrackPayload(currentTrack),
+        timeout_seconds: 20
+      };
+      if (config.apiKey) {
+        payload.api_key = config.apiKey;
+      }
+      const response = await fetch("/api/ai/kimi/track-command", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) return { ok: false, handled: false, action: "none", reason: `http_${response.status}` };
+      return response.json();
+    }
+
+    function matchingTracksForControl(sourceTrack = currentTrack) {
+      const sourceKey = trackCountryKey(sourceTrack);
+      return [primaryTrack, currentTrack, ...recommendations, ...activeRecommendations]
+        .filter(Boolean)
+        .filter((item, index, all) => all.indexOf(item) === index)
+        .filter((item) => item === sourceTrack || (sourceKey && trackCountryKey(item) === sourceKey) || isSameTrack(item, sourceTrack));
+    }
+
+    function applyTrackControlLocation(targets, result) {
+      if (!result?.resolved) return false;
+      let changedCurrent = false;
+      targets.forEach((target) => {
+        const changed = applyCountryLookupResult(target, result);
+        changedCurrent = changedCurrent || (changed && target === currentTrack);
+      });
+      const cache = readCountryLookupCache();
+      targets.forEach((target) => {
+        const key = trackCountryKey(target);
+        if (key) cache[key] = result;
+      });
+      writeCountryLookupCache(cache);
+      if (changedCurrent) {
+        centerLng = currentTrack.lng;
+        centerLat = currentTrack.lat;
+      }
+      return changedCurrent || targets.length > 0;
+    }
+
+    function applyTrackControlUpdates(command) {
+      const targets = matchingTracksForControl(currentTrack);
+      const updates = command?.updates || {};
+      let changed = false;
+      const locationResult = command?.location_result || command?.locationResult;
+      if (locationResult?.resolved) {
+        changed = applyTrackControlLocation(targets, locationResult) || changed;
+      }
+      targets.forEach((target) => {
+        if (updates.title) {
+          target.title = updates.title;
+          changed = true;
+        }
+        if (updates.artist) {
+          target.artist = updates.artist;
+          changed = true;
+        }
+        if (updates.album) {
+          target.album = updates.album;
+          changed = true;
+        }
+        const genre = updates.genre || updates.label;
+        if (genre) {
+          target.genre = genre;
+          target.label = genre;
+          target.style = genre;
+          changed = true;
+        }
+        if (updates.tags) {
+          target.tags = updates.tags;
+          changed = true;
+        }
+        if (target.raw && typeof target.raw === "object") {
+          target.raw = {
+            ...target.raw,
+            user_metadata_correction: {
+              ...(target.raw.user_metadata_correction || {}),
+              ...updates,
+              updated_at: new Date().toISOString()
+            }
+          };
+        }
+      });
+      if (changed) {
+        syncTrackReadouts();
+        renderRecommendations();
+        drawMap();
+        persistLastStartupTrack();
+        persistMusicStationState();
+      }
+      return changed;
+    }
+
+    async function recheckCurrentTrackLocation(assistantMessage) {
+      currentTrack.geoLookupStatus = "querying";
+      currentTrack.needsCountryLookup = true;
+      syncTrackReadouts();
+      drawMap();
+      const result = await requestKimiTrackCountry(currentTrack, {
+        timeoutSeconds: 45,
+        forceRefresh: true,
+        requireWebSearch: true,
+        ignoreCurrentLocation: true
+      });
+      if (result?.resolved) {
+        applyTrackControlLocation(matchingTracksForControl(currentTrack), result);
+        syncTrackReadouts();
+        renderRecommendations();
+        drawMap();
+        persistLastStartupTrack();
+        persistMusicStationState();
+        assistantMessage.content = aiControlText(
+          "music.ai.control.recheckDone",
+          "我重新核查后，把这首歌的位置更新为 {origin}。",
+          { origin: formatOrigin(currentTrack) }
+        );
+        return true;
+      }
+      currentTrack.geoLookupStatus = "unresolved";
+      currentTrack.needsCountryLookup = false;
+      assistantMessage.content = aiControlText(
+        "music.ai.control.recheckUnclear",
+        "我重新查了一轮，但仍然没有足够可靠的国家信息，所以先不硬改位置。"
+      );
+      persistMusicStationState();
+      return false;
+    }
+
+    async function handleTrackControlCommand(question) {
+      const command = await requestTrackCommand(question);
+      if (!command?.handled) return false;
+      if (command.action === "set_metadata") {
+        const changed = applyTrackControlUpdates(command);
+        const locationResult = command.location_result || command.locationResult;
+        const message = changed
+          ? aiControlText("music.ai.control.updated", "已更新当前曲目信息：{origin}", { origin: formatOrigin(currentTrack) })
+          : locationResult && !locationResult.resolved
+            ? aiControlText("music.ai.control.locationUnknown", "我还不能识别这个地点，暂时没有改动。")
+            : aiControlText("music.ai.control.noChange", "我理解这是修改指令，但没有找到可安全更新的信息。");
+        aiConversationMessages.push({ role: "assistant", content: message });
+        renderAiMessages();
+        persistMusicStationState();
+        return true;
+      }
+      if (command.action === "recheck_location") {
+        const assistantMessage = {
+          role: "assistant",
+          content: aiControlText("music.ai.control.rechecking", "我会用更长时间重新核查这首歌的位置。"),
+          isStreaming: true
+        };
+        aiConversationMessages.push(assistantMessage);
+        renderAiMessages();
+        try {
+          await recheckCurrentTrackLocation(assistantMessage);
+        } catch (error) {
+          assistantMessage.content = kimiErrorMessage(error);
+        } finally {
+          assistantMessage.isStreaming = false;
+          renderAiMessages();
+          persistMusicStationState();
+        }
+        return true;
+      }
+      return false;
     }
 
     async function hydrateTrackCountries(items) {
@@ -6070,7 +6281,22 @@ Guidelines:
       els.aiQuestion.value = "";
 
       if (!aiConversationMessages.length) {
-        await runAiAnalysis(question);
+        setAiBusy(true);
+        aiConversationMessages.push({ role: "user", content: question });
+        renderAiMessages();
+        let handledControl = false;
+        try {
+          handledControl = await handleTrackControlCommand(question);
+        } catch (error) {
+          addAiNotice(kimiErrorMessage(error));
+          handledControl = true;
+        } finally {
+          setAiBusy(false);
+        }
+        if (!handledControl) {
+          aiConversationMessages = [];
+          await runAiAnalysis(question);
+        }
         return;
       }
 
@@ -6079,6 +6305,8 @@ Guidelines:
       renderAiMessages();
 
       try {
+        const handledControl = await handleTrackControlCommand(question);
+        if (handledControl) return;
         await streamAiAssistantReply(aiConversationMessages.slice(), aiMode);
       } catch (error) {
         addAiNotice(kimiErrorMessage(error));
