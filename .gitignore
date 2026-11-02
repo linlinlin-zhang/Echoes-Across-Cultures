@@ -93,3 +93,24 @@ reports/benchmarks/v3_main_gemini_embedding2/comparisons/
 reports/benchmarks/v3_main_gemini_embedding2/eval/
 reports/benchmarks/v3_main_gemini_harmonized_open_prepal/
 reports/benchmarks/v3_main_gemini_open_prepal/
+
+# Exhibition public dictionaries (exclude credentials and runtime artifacts).
+*.env
+*.pem
+*.key
+configs/secrets/
+!storage/public/merged/
+storage/public/merged/*
+!storage/public/merged/metadata_merged.csv
+!storage/public/merged/artist_locations.json
+!storage/public/merged/artist_locations.report.json
+!storage/public/merged/artist_locations.unresolved.csv
+!storage/public/merged/catalog_market_locations.json
+!storage/public/merged/descriptions_en.json
+!storage/public/merged/jamendo_artist_locations.json
+!storage/public/merged/musicbrainz_artist_locations.json
+!storage/public/merged/recording_verified_artist_locations.json
+!storage/artist_location_cache/
+storage/artist_location_cache/*
+!storage/artist_location_cache/capitals.json
+!storage/artist_location_cache/city-labels.index.json
