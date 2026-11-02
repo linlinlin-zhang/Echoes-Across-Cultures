@@ -33,16 +33,29 @@
   function normalize(track) {
     const raw = track?.raw || track || {};
     const id = trackKey(track) || trackKey(raw);
+    const precision = raw.location_precision || track.locationPrecision || "";
+    const hasPoint = precision !== "unknown" && precision !== "pacific_default";
     return {
       id,
       track_id: raw.track_id || track.trackId || id,
       title: raw.title || track.title || "",
       artist: raw.artist || track.artist || "",
+      artist_id: raw.artist_id || "",
       album: raw.album || track.album || "",
       culture: raw.culture || track.culture || "",
       source_dataset: raw.source_dataset || track.sourceDataset || track.platform || "",
       label: raw.label || track.label || track.genre || "",
+      label_en: raw.label_en || track.genreEn || "",
+      country_source: raw.country_source || "",
       country: raw.country || track.country || "",
+      city: raw.city || track.city || "",
+      city_labels: raw.city_labels || track.cityLabels || {},
+      lat: hasPoint ? (raw.lat ?? track.lat ?? null) : null,
+      lng: hasPoint ? (raw.lng ?? track.lng ?? null) : null,
+      location_precision: precision,
+      location_source_url: raw.location_source_url || track.locationSourceUrl || "",
+      location_place_url: raw.location_place_url || "",
+      location_relation: raw.location_relation || "",
       duration_ms: raw.duration_ms || (track.durationSeconds ? Math.round(Number(track.durationSeconds) * 1000) : 0),
       cover_art_url: raw.cover_art_url || track.coverArtUrl || "",
       cover_art_url_large: raw.cover_art_url_large || track.coverArtUrl || "",
@@ -52,6 +65,8 @@
       full_track_url: raw.full_track_url || track.fullTrackUrl || "",
       preview_url: raw.preview_url || track.previewUrl || "",
       description: raw.description || track.description || track.aiDescription || "",
+      description_en: raw.description_en || track.descriptionEn || "",
+      album_description_en: raw.album_description_en || track.albumDescriptionEn || "",
       album_description: raw.album_description || track.albumDescription || "",
       tags: raw.tags || track.tags || "",
       favorite_added_at: new Date().toISOString()

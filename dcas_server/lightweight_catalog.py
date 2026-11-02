@@ -5,11 +5,16 @@ import math
 import random
 import re
 import time
+import threading
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
 from .paths import Storage
+from .description_translations import apply_description_translations
+from .track_locations import location_fields
+from .artist_locations import apply_artist_location
+from .catalog_search import query_rank
 
 
 DEFAULT_METADATA_REL = "public/merged/metadata_merged.csv"
@@ -195,6 +200,9 @@ class LightweightMainlineCatalog:
         if random_seed is not None:
             random.Random(int(random_seed)).shuffle(keep)
 
+        if query:
+            keep.sort(key=lambda row: query_rank(row, query))
+
         return {
             "ok": True,
             "mode": "lightweight_catalog",
@@ -277,7 +285,7 @@ class LightweightMainlineCatalog:
             ),
         )
         release_year = _release_year(row, release_date)
-        return {
+        payload = {
             "track_id": track_id,
             "rank": None,
             "title": _first_clean(row, ("title", "name", "track_name")) or track_id,
@@ -344,6 +352,10 @@ class LightweightMainlineCatalog:
             "license_url": _clean(row.get("license_url")),
             "audio_api_url": f"/api/mainline/audio/{track_id}",
         }
+        payload["artist_id"] = _clean(row.get("artist_id"))
+        payload.update(location_fields(row))
+        apply_artist_location(payload, self.storage.root)
+        return apply_description_translations(payload, self.storage.root)
 
     def _is_low_signal(self, row: dict[str, Any]) -> bool:
         text = " ".join(
@@ -373,12 +385,16 @@ class LightweightMainlineCatalog:
 _CATALOGS: dict[tuple[str, str], LightweightMainlineCatalog] = {}
 
 
+_LOAD_LOCK = threading.Lock()
+
+
 def get_lightweight_catalog(
     storage: Storage, *, metadata_rel: str = DEFAULT_METADATA_REL
 ) -> LightweightMainlineCatalog:
     key = (str(storage.root.resolve()), str(metadata_rel))
-    catalog = _CATALOGS.get(key)
-    if catalog is None:
-        catalog = LightweightMainlineCatalog(storage=storage, metadata_rel=metadata_rel)
-        _CATALOGS[key] = catalog
-    return catalog
+    with _LOAD_LOCK:
+        catalog = _CATALOGS.get(key)
+        if catalog is None:
+            catalog = LightweightMainlineCatalog(storage=storage, metadata_rel=metadata_rel)
+            _CATALOGS[key] = catalog
+        return catalog

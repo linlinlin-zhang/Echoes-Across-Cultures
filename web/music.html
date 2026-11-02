@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <style>html.i18n-pending body { visibility: hidden; }</style>
+  <script src="i18n.js?v=20261101b"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Echo 音乐台 — 跨文化音乐推荐系统，上传音频或从曲库探索世界各地的音乐。">
   <title>Echo | 音乐台</title>
@@ -389,6 +391,8 @@
 
     .map-corner {
       position: absolute;
+      max-width: calc(50% - 2.5rem);
+      overflow-wrap: anywhere;
       color: var(--muted);
       font-family: var(--font-mono);
       font-size: 0.78rem;
@@ -709,7 +713,8 @@
     }
 
     .insights-empty-bar {
-      display: flex;
+      display: grid;
+      gap: 0.35rem;
       align-items: center;
       min-height: 4.2rem;
       padding: 0.9rem 1.2rem;
@@ -1935,6 +1940,17 @@
         min-height: 300px;
       }
 
+      .map-corner {
+        font-size: 0.68rem;
+        line-height: 1.4;
+      }
+
+      #readout-origin {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-size: 1rem;
+      }
+
       .console-bottom {
         grid-template-columns: 1fr;
       }
@@ -2139,7 +2155,7 @@
         <div>
           <div class="track-kicker" data-i18n="music.currentPlaying">当前播放</div>
           <div class="track-title-line">
-            <strong id="top-title" data-i18n="music.default.connecting">正在连接曲库</strong>
+            <strong id="top-title"></strong>
             <span id="top-meta" data-i18n="music.default.artist">Echo</span>
           </div>
         </div>
@@ -2166,7 +2182,7 @@
       <div class="console-top">
         <div class="readout">
           <div class="meta-label" data-i18n="music.readout.track">曲目</div>
-          <strong id="readout-track" data-i18n="music.default.connecting">正在连接曲库</strong>
+          <strong id="readout-track"></strong>
         </div>
         <div class="readout">
           <div class="meta-label" data-i18n="music.readout.origin">地理位置</div>
@@ -2193,7 +2209,7 @@
           <div class="map-corner top-left" data-i18n="music.map.flatEarth">平面地球 / 音乐地图</div>
           <div class="map-corner top-right" id="map-mode" data-i18n="music.map.currentCenter">当前曲目居中</div>
           <div class="map-corner bottom-left" data-i18n="music.map.dragMap">拖动地图 / 边缘控制</div>
-          <div class="map-corner bottom-right" id="map-status" data-i18n="music.map.recStandby">推荐连接待机</div>
+          <div class="map-corner bottom-right" id="map-status"></div>
         </div>
         <div class="pan-zone left">
           <button class="pan-button" type="button" data-pan-x="-1" data-pan-y="0" data-i18n-aria-label="music.pan.left" aria-label="向左移动地图">‹</button>
@@ -2216,7 +2232,7 @@
           <button class="skip-button" id="next-button" type="button" data-i18n-aria-label="music.transport.next" aria-label="下一首">›</button>
           <div class="progress-wrap">
             <div class="progress-meta">
-              <span id="play-state" data-i18n="music.default.playStateConnecting">正在连接曲库 - Echo</span>
+              <span id="play-state">Echo</span>
               <span id="time-code">00:00 / 03:42</span>
             </div>
             <div class="progress-track" id="progress-track" role="slider" data-i18n-aria-label="music.transport.progress" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
@@ -2277,19 +2293,23 @@
     </aside>
   </main>
 
+  <script>window.EchoI18n?.apply(document); document.documentElement.classList.remove("i18n-pending");</script>
   <script src="./vendor/d3.v7.min.js"></script>
   <script src="./vendor/topojson-client.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
-  <script src="i18n.js"></script>
-  <script src="favorite-store.js"></script>
+  <script src="/vendor/marked.umd.js"></script>
+  <script src="/vendor/purify.min.js"></script>
+  <script src="geo-data.js?v=20261101b"></script>
+  <script src="geo.js?v=20261101b"></script>
+  <script src="metadata-i18n.js?v=20261101"></script>
+  <script src="favorite-store.js?v=20261101b"></script>
   <script>
+  document.addEventListener("DOMContentLoaded", () => {
     const apiBase = window.location.origin;
     const urlParams = new URLSearchParams(window.location.search);
     const initialSeedTrackId = urlParams.get("seed") || "";
     const initialSeedCulture = urlParams.get("culture") || "";
     const initialLocalAudioId = urlParams.get("local") || "";
-    const apiPreferCuda = ["1", "true", "yes"].includes(String(urlParams.get("cuda") || "").toLowerCase());
+    const apiPreferCuda = !["0", "false", "no"].includes(String(urlParams.get("cuda") || "true").toLowerCase());
     const appConfigKey = "echo-app-config";
     const lastStartupTrackKey = "echo-last-startup-track";
     const stationStateKey = "echo-music-station-state";
@@ -2301,7 +2321,7 @@
       city: t("music.mysteryPlace.city"),
       lat: 0,
       lng: -160,
-      precision: t("music.mysteryPlace.precision")
+      precision: "unknown"
     };
 
     function openLocalAudioDb() {
@@ -2335,7 +2355,7 @@
     }
 
     const currentTrack = {
-      title: t("music.default.connecting"),
+      title: "",
       artist: t("music.default.artist"),
       city: mysteryPlace.city,
       province: "",
@@ -2343,6 +2363,7 @@
       capital: "",
       lat: mysteryPlace.lat,
       lng: mysteryPlace.lng,
+      locationPrecision: "unknown",
       genre: t("music.default.unknown"),
       sourceDataset: t("music.default.source"),
       style: t("music.default.unknown"),
@@ -2359,53 +2380,6 @@
         unexpectedness: 0.91
       }
     };
-
-    const capitalLookup = {
-      CN: { cityKey: "BEIJING", lat: 39.9042, lng: 116.4074 },
-      TW: { cityKey: "TAIPEI", lat: 25.0330, lng: 121.5654 },
-      BR: { cityKey: "BRASILIA", lat: -15.7939, lng: -47.8828 },
-      ML: { cityKey: "BAMAKO", lat: 12.6392, lng: -8.0029 },
-      PT: { cityKey: "LISBON", lat: 38.7223, lng: -9.1393 },
-      ID: { cityKey: "JAKARTA", lat: -6.2088, lng: 106.8456 },
-      TR: { cityKey: "ANKARA", lat: 39.9334, lng: 32.8597 },
-      JP: { cityKey: "TOKYO", lat: 35.6762, lng: 139.6503 },
-      IN: { cityKey: "NEW_DELHI", lat: 28.6139, lng: 77.2090 },
-      KR: { cityKey: "SEOUL", lat: 37.5665, lng: 126.9780 },
-      SE: { cityKey: "STOCKHOLM", lat: 59.3293, lng: 18.0686 },
-      PL: { cityKey: "WARSAW", lat: 52.2297, lng: 21.0122 },
-      RS: { cityKey: "BELGRADE", lat: 44.7866, lng: 20.4489 },
-      PE: { cityKey: "LIMA", lat: -12.0464, lng: -77.0428 },
-      KZ: { cityKey: "ASTANA", lat: 51.1694, lng: 71.4491 },
-      JM: { cityKey: "KINGSTON", lat: 17.9712, lng: -76.7936 },
-      GB: { cityKey: "LONDON", lat: 51.5072, lng: -0.1276 },
-      SG: { cityKey: "SINGAPORE", lat: 1.3521, lng: 103.8198 },
-      MY: { cityKey: "KUALA_LUMPUR", lat: 3.1390, lng: 101.6869 },
-      TH: { cityKey: "BANGKOK", lat: 13.7563, lng: 100.5018 },
-      VN: { cityKey: "HANOI", lat: 21.0278, lng: 105.8342 },
-      PH: { cityKey: "MANILA", lat: 14.5995, lng: 120.9842 },
-      ES: { cityKey: "MADRID", lat: 40.4168, lng: -3.7038 },
-      AR: { cityKey: "BUENOS_AIRES", lat: -34.6037, lng: -58.3816 },
-      CL: { cityKey: "SANTIAGO", lat: -33.4489, lng: -70.6693 },
-      AU: { cityKey: "CANBERRA", lat: -35.2809, lng: 149.1300 },
-      CA: { cityKey: "OTTAWA", lat: 45.4215, lng: -75.6972 }
-    };
-
-    function isoCodeForCountryName(name) {
-      const text = String(name || "").trim();
-      if (!text) return "";
-      const upper = text.toUpperCase();
-      if (countryIsoCodes.includes(upper)) return upper;
-      for (const code of countryIsoCodes) {
-        if (countryNameLookupFn(code) === text) return code;
-      }
-      return "";
-    }
-
-    function localizedCapital(code) {
-      const entry = capitalLookup[code];
-      if (!entry) return null;
-      return { city: t("music.city." + entry.cityKey), lat: entry.lat, lng: entry.lng };
-    }
 
     const culturePlaces = {
       west: { countryKey: "GB", cityKey: "LONDON", lat: 51.5072, lng: -0.1276 },
@@ -2427,26 +2401,7 @@
       andean: { countryKey: "PE", cityKey: "CUSCO", lat: -13.5319, lng: -71.9675 }
     };
 
-    function localizedCulturePlace(key) {
-      const entry = culturePlaces[key];
-      if (!entry) return null;
-      return {
-        country: t("music.country." + entry.countryKey),
-        city: t("music.city." + entry.cityKey),
-        lat: entry.lat,
-        lng: entry.lng
-      };
-    }
-
     function cultureLabel(key) { return t("culture." + key); }
-
-    const countryIsoCodes = ["US","GB","CN","SG","MY","TH","VN","PH","TW","HK","JP","KR","IN","ID","BR","MX","AR","CL","PE","TR","IR","SA","AE","IE","SE","NO","FI","DK","PL","RS","MK","KZ","KG","TJ","JM","HT","TT","ML","TZ","ZA","AU","NZ","DE","FR","IT","ES","CA"];
-    function countryNameLookupFn(code) {
-      const upper = String(code || "").toUpperCase().trim();
-      if (countryIsoCodes.includes(upper)) return t("music.country." + upper);
-      if (code === "台湾" || code === "Taiwan") return t("music.country.TW");
-      return "";
-    }
 
     const southChinaSeaSourceSegments = [
       [
@@ -2605,47 +2560,29 @@
         .filter(Boolean)[0] || "";
     }
 
-    function readableCountry(value, culture) {
-      const text = cleanMetaText(value);
-      const mapped = countryNameLookupFn(text) || countryNameLookupFn(text.toUpperCase());
-      if (mapped) return mapped;
-      if (text) return text;
-      const cp = localizedCulturePlace(culture);
-      return (cp && cp.country) || cultureLabel(culture) || mysteryPlace.country;
-    }
-
     function placeForApiItem(item) {
       const culture = String(item.culture || "").trim();
-      const lat = Number(item.lat ?? item.latitude);
-      const lng = Number(item.lng ?? item.lon ?? item.longitude);
-      const rawCountry = cleanMetaText(item.country || item.country_code || item.countryCode);
-      const country = readableCountry(rawCountry, culture);
-      const isoCode = isoCodeForCountryName(rawCountry) || isoCodeForCountryName(country);
-      const countryCapital = localizedCapital(isoCode);
-      const explicitCity = cleanMetaText(item.city || item.location_city || item.location || item.artist_city);
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        return {
-          country,
-          city: explicitCity || countryCapital?.city || country,
-          lat,
-          lng,
-          precision: cleanMetaText(item.location_precision) || t("music.precision.audioTag")
-        };
-      }
-      if (String(item.source_dataset || item.platform || "").trim().toLowerCase() === "upload" && !rawCountry) {
-        return { ...mysteryPlace };
-      }
-      if (!rawCountry && !culture) {
-        return { ...mysteryPlace };
-      }
-      const fallback = localizedCulturePlace(culture) || localizedCulturePlace("west");
-      return {
-        country,
-        city: explicitCity || countryCapital?.city || (rawCountry ? country : fallback?.city || country),
-        lat: countryCapital?.lat ?? fallback?.lat ?? mysteryPlace.lat,
-        lng: countryCapital?.lng ?? fallback?.lng ?? mysteryPlace.lng,
-        precision: countryCapital ? t("music.precision.capitalCity") : t("music.precision.cultureCenter")
-      };
+      const place = window.EchoGeo.resolve(item, culturePlaces[culture]);
+      const country = place.countryCode ? window.EchoGeo.countryName(place.countryCode) :
+        (place.precision === "culture_region" ? cultureLabel(culture) : t("music.precision.unknown"));
+      const lang = window.EchoI18n.getLanguage();
+      const city = place.cityLabels?.[lang] || place.cityLabels?.en || window.EchoGeo.cityName(place.city);
+      return { ...place, country, city };
+    }
+
+    function localizeTrack(track) {
+      // Old snapshots stored already-translated geography. Rebuild from source metadata
+      // or ISO identifiers, never from previously inferred coordinates.
+      const raw = track.raw;
+      const legacyCountry = window.EchoGeo.countryCode(track.countryCode || track.country);
+      const source = track.sourceDataset || track.platform || "";
+      const item = raw || { culture: track.culture, source_dataset: source,
+        country: String(source).toLowerCase() === "jamendo" ? "" : legacyCountry,
+        ...((track.locationPrecision === "coordinates" || track.titleEn) ? {lat:track.lat,lng:track.lng,city:track.city} : {}) };
+      const place = placeForApiItem(item);
+      Object.assign(track, { country: place.country, countryCode: place.countryCode, city: place.city,
+        lat: place.lat, lng: place.lng, locationPrecision: place.precision, locationSourceUrl: item.location_source_url || track.locationSourceUrl || "" });
+      return track;
     }
 
     function parseReleaseYear(value) {
@@ -2710,6 +2647,7 @@
         album: String(item.album || "").trim(),
         label,
         genre,
+        genreEn: cleanMetaText(item.label_en),
         releaseDate,
         releaseYear,
         era: cleanMetaText(item.era),
@@ -2717,12 +2655,15 @@
         description: String(item.description || item.track_description || "").trim(),
         descriptionEn: String(item.description_en || "").trim(),
         albumDescription: String(item.album_description || "").trim(),
+        albumDescriptionEn: String(item.album_description_en || "").trim(),
         tags: (!isChineseLang() && item.tags_en) ? String(item.tags_en).trim() : String(item.tags || "").trim(),
         country: place.country,
+        countryCode: place.countryCode,
         city: place.city,
         lat: place.lat,
         lng: place.lng,
         locationPrecision: place.precision || item.location_precision || "",
+        locationSourceUrl: item.location_source_url || "",
         culture,
         sourceDataset: String(item.source_dataset || platform || "").trim(),
         platform,
@@ -2824,12 +2765,29 @@
       const described = Number(coverage.description_rows || 0);
       const missing = Number(coverage.missing_description_rows || Math.max(0, total - described));
       if (described > 0 && missing <= 0) {
-        return `${formatCount(described)}/${formatCount(total)} ${t("music.desc.genre")}`;
+        return `${formatCount(described)}/${formatCount(total)}`;
       }
       if (described > 0) {
-        return `${formatCount(described)}/${formatCount(total)} ${t("music.desc.genre")}`;
+        return `${formatCount(described)}/${formatCount(total)}`;
       }
-      return `30k ${t("music.desc.genre")}`;
+      return `30k ${t("music.catalog.descriptions")}`;
+    }
+
+    function verifiedRecommendationCount() {
+      return activeRecommendations.filter(item => item.locationPrecision !== "unknown" && window.EchoGeo.coordinates(item)).length;
+    }
+
+    function setMapStatus(key, count = null, embeddingSeconds = null) {
+      els.mapStatus.dataset.statusKey = key;
+      els.mapStatus.dataset.count = count == null ? "" : String(count);
+      els.mapStatus.dataset.embeddingSeconds = embeddingSeconds == null ? "" : String(embeddingSeconds);
+      els.mapStatus.textContent = (count == null ? "" : `${formatCount(count)} `) + t(key) +
+        (embeddingSeconds == null ? "" : ` / embedding ${Number(embeddingSeconds).toFixed(1)}s`);
+    }
+
+    function setMapMode(key) {
+      els.mapMode.dataset.statusKey = key;
+      els.mapMode.textContent = t(key);
     }
 
     async function loadMainlineStatus() {
@@ -2865,6 +2823,7 @@
     let centerLng = locateTrack(currentTrack).lng;
     let centerLat = locateTrack(currentTrack).lat;
     let dragging = false;
+    let mapUserMoved = false;
     let lastX = 0;
     let lastY = 0;
     let panInterval = null;
@@ -2873,38 +2832,24 @@
     const dpr = window.devicePixelRatio || 1;
 
     function locateTrack(track) {
-      if (Number.isFinite(track.lat) && Number.isFinite(track.lng)) {
-        return { lat: track.lat, lng: track.lng, precision: track.locationPrecision || (track.city ? t("music.precision.cityCoord") : t("music.precision.countryCoord")) };
-      }
-      const isoCode = isoCodeForCountryName(track.country);
-      const fallback = localizedCapital(isoCode) || mysteryPlace;
-      return { ...fallback, precision: fallback.precision || t("music.precision.capitalFallback") };
+      const point = window.EchoGeo.coordinates(track);
+      return point ? { ...point, precision: track.locationPrecision } : { lat: 0, lng: -160, precision: "unknown" };
     }
 
     function formatOrigin(track) {
-      if (track.country === mysteryPlace.country) {
-        return t("music.desc.songFrom") + t("music.mysteryPlace.country");
-      }
-      const parts = [track.country, track.province, track.city]
-        .map(cleanMetaText)
-        .filter(Boolean)
-        .filter((part, index, all) => all.indexOf(part) === index);
-      if (parts.some((part) => /[A-Za-z_]/.test(String(part)))) {
-        return parts.join(" / ");
-      }
-      return parts.join("");
+      const precision = track.locationPrecision || "unknown";
+      const country = window.EchoGeo.countryName(track.countryCode || track.country) ||
+        (precision === "culture_region" ? cultureLabel(track.culture) : "");
+      const city = ["coordinates", "artist_city", "country_capital"].includes(precision) ? window.EchoGeo.cityName(track.city) : "";
+      const place = [city, country].filter(Boolean).join(" / ");
+      return precision === "coordinates" ? (place || t("music.precision.coordinates")) :
+        [place, t("music.precision." + precision)].filter(Boolean).join(" · ");
     }
 
     function displayGenre(track) {
       const raw = track.raw || {};
-      return cleanMetaText(track.genre)
-        || cleanMetaText(track.primaryGenreName)
-        || cleanMetaText(raw.primaryGenreName)
-        || cleanMetaText(raw.primary_genre_name)
-        || cleanMetaText(track.label)
-        || cleanMetaText(track.style)
-        || firstTagValue(track.tags || raw.tags)
-        || t("music.default.unknown");
+      const value = (!isChineseLang() && (track.genreEn || raw.label_en)) || track.genre || raw.label || track.label || track.style || firstTagValue(track.tags);
+      return window.EchoMetadata.keyword(value) || t("music.default.unknown");
     }
 
     function displaySource(track) {
@@ -2915,6 +2860,7 @@
         || cleanMetaText(raw.platform)
         || cleanMetaText(raw.source_dataset)
         || cleanMetaText(raw.source);
+      if (window.EchoI18n.languages.some(lang => window.EchoI18n.t("music.default.source", {}, lang.code) === value)) return t("music.default.source");
       if (/itunes/i.test(value)) return "iTunes";
       if (/jamendo/i.test(value)) return "Jamendo";
       if (/upload|local|本地|用户|收藏夹/i.test(value) || track.fileObjectUrl || track.localAudioId) return t("music.source.userUpload");
@@ -2922,7 +2868,8 @@
     }
 
     function playbackTrackLabel(track = currentTrack) {
-      return `${track.title || t("music.default.noTrack")} - ${track.artist || t("music.default.unknown")}`;
+      if (!track.title) return track.artist || "Echo";
+      return `${track.title} - ${track.artist || t("music.default.unknown")}`;
     }
 
     function syncTopCover() {
@@ -2965,7 +2912,7 @@
     }
 
     function startupTrackSnapshot(track = currentTrack) {
-      if (!track?.title || track.title === t("music.default.connecting") || track.title === t("music.default.noTrack")) {
+      if (!track?.title || track.title === t("music.default.noTrack")) {
         return null;
       }
       if (track.fileObjectUrl && !track.localAudioId) {
@@ -2973,9 +2920,9 @@
       }
       const allowed = [
         "trackId", "track_id", "localAudioId", "title", "artist", "album", "country", "city", "province",
-        "capital", "lat", "lng", "locationPrecision", "culture", "sourceDataset", "platform", "genre",
-        "label", "style", "note", "metrics", "durationSeconds", "releaseDate", "releaseYear", "era", "language", "coverArtUrl", "platformTrackUrl",
-        "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "descriptionEn", "albumDescription", "tags", "tagsEn", "aiDescription", "fromFavorites"
+        "capital", "countryCode", "raw", "lat", "lng", "locationPrecision", "locationSourceUrl", "culture", "sourceDataset", "platform", "genre",
+        "label", "genreEn", "style", "note", "metrics", "durationSeconds", "releaseDate", "releaseYear", "era", "language", "coverArtUrl", "platformTrackUrl",
+        "fullTrackUrl", "previewUrl", "audioUrl", "audioIsPreview", "description", "descriptionEn", "albumDescription", "albumDescriptionEn", "tags", "tagsEn", "aiDescription", "aiDescriptionLanguage", "fromFavorites"
       ];
       return allowed.reduce((snapshot, key) => {
         if (track[key] !== undefined && track[key] !== null && track[key] !== "") {
@@ -3027,8 +2974,8 @@
         centerLng,
         centerLat,
         mapZoom,
-        mapStatus: els.mapStatus?.textContent || "",
-        mapMode: els.mapMode?.textContent || "",
+        mapStatusKey: els.mapStatus?.dataset.statusKey || "",
+        mapModeKey: els.mapMode?.dataset.statusKey || "",
         uploadedAudioMeta,
         aiConversationMessages: aiConversationMessages.slice(-12).map((message) => ({
           role: message.role,
@@ -3086,9 +3033,9 @@
         province: metadata.province || "",
         country: metadata.country || mysteryPlace.country,
         capital: "",
-        lat: Number.isFinite(Number(metadata.lat)) ? Number(metadata.lat) : mysteryPlace.lat,
-        lng: Number.isFinite(Number(metadata.lng)) ? Number(metadata.lng) : mysteryPlace.lng,
-        locationPrecision: metadata.locationPrecision || mysteryPlace.precision,
+        lat: window.EchoGeo.coordinates(metadata)?.lat ?? mysteryPlace.lat,
+        lng: window.EchoGeo.coordinates(metadata)?.lng ?? mysteryPlace.lng,
+        locationPrecision: window.EchoGeo.coordinates(metadata) ? "coordinates" : "unknown",
         culture: metadata.culture || "",
         sourceDataset: metadata.sourceDataset || metadata.source || "upload",
         platform: metadata.platform || "upload",
@@ -3159,6 +3106,7 @@
         URL.revokeObjectURL(currentTrack.fileObjectUrl);
       }
       replaceCurrentTrack(track);
+      mapUserMoved = false;
       const loc = locateTrack(currentTrack);
       centerLng = loc.lng;
       centerLat = loc.lat;
@@ -3435,7 +3383,7 @@
       if (!items.length) {
         els.recommendationInsights.classList.add("is-empty");
         els.recommendationInsights.innerHTML = `
-          <div class="insights-empty-bar">${t("music.insight.emptyGenre")}${t("music.insight.emptyEra")}</div>
+          <div class="insights-empty-bar"><span>${t("music.insight.emptyGenre")}</span><span>${t("music.insight.emptyEra")}</span></div>
         `;
         return;
       }
@@ -3865,6 +3813,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
 
     const descriptionCacheKey = "echo-recommendation-descriptions";
     let descriptionHydrationRun = 0;
+    let activeDescriptionLanguage = isChineseLang() ? "zh" : "en";
     let kimiDescriptionAvailable = null;
 
     function readDescriptionCache() {
@@ -3883,21 +3832,12 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     function descriptionKey(item) {
-      return String(item.trackId || `${item.title}::${item.artist}::${item.album}`).trim();
+      return `${isChineseLang() ? "zh" : "en"}::${String(item.trackId || `${item.title}::${item.artist}::${item.album}`).trim()}`;
     }
 
     function metadataDescription(item) {
-      const useEn = !isChineseLang();
-      const desc = useEn ? (item.descriptionEn || item.description) : item.description;
-      const trackDescription = String(desc || "").trim();
-      if (trackDescription) {
-        return { text: trackDescription, source: "track" };
-      }
-      const albumDescription = String(item.albumDescription || "").trim();
-      if (albumDescription) {
-        return { text: albumDescription, source: "album" };
-      }
-      return null;
+      const text = window.EchoMetadata.description({ ...item, album_description: item.albumDescription });
+      return text ? { text, source: "track" } : null;
     }
 
     function conciseText(value, maxLength = 260) {
@@ -3907,22 +3847,18 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
     }
 
     function fallbackDescription(item) {
-      const parts = [
-        item.album ? `${t("music.desc.albumPrefix")}${item.album}${t("music.desc.albumSuffix")}` : "",
-        item.label ? `${t("music.desc.genre")} ${item.label}` : "",
-        item.culture ? `${t("music.desc.culture")} ${cultureLabel(item.culture) || item.culture}` : "",
-        item.tags ? `${t("music.desc.tags")} ${item.tags}` : ""
-      ].filter(Boolean);
-      if (parts.length) {
-        return `${t("music.desc.songFrom")}${item.artist || t("music.default.unknown")}，${parts.join("，")}${t("music.desc.candidateSuffix")}`;
-      }
-      return `${t("music.desc.songFrom")}${item.artist || t("music.default.unknown")}${t("music.desc.candidateSuffix")}`;
+      const language = isChineseLang() ? "zh-CN" : "en";
+      const translate = (key) => window.EchoI18n.t(key, {}, language);
+      const genre = window.EchoMetadata.keyword(item.genreEn || item.label || item.genre || item.style, language);
+      const culture = item.culture ? translate("culture." + item.culture) : "";
+      return language === "en" ? `A track${genre ? ` in the ${genre} style` : ""}${culture ? ` from the ${culture} catalog` : ""}.` :
+        [genre, culture, translate("music.desc.candidateSuffix")].filter(Boolean).join(" · ");
     }
 
     function recommendationDescription(item) {
       const fromMetadata = metadataDescription(item);
       if (fromMetadata) return conciseText(fromMetadata.text);
-      if (item.aiDescription) return conciseText(item.aiDescription);
+      if (item.aiDescription && item.aiDescriptionLanguage === (isChineseLang() ? "zh" : "en")) return conciseText(item.aiDescription);
       if (item.descriptionLoading) return t("music.recommend.running");
       return conciseText(fallbackDescription(item));
     }
@@ -3955,12 +3891,13 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         const key = descriptionKey(item);
         if (!metadataDescription(item) && key && cache[key]) {
           item.aiDescription = cache[key];
+          item.aiDescriptionLanguage = isChineseLang() ? "zh" : "en";
         }
       });
     }
 
     function descriptionPrompt(item) {
-      const responseLanguage = aiResponseLanguageName();
+      const responseLanguage = isChineseLang() ? "中文" : "English";
       return `请使用 ${responseLanguage} 为这首音乐写一段简短介绍，1-2 句即可。
 
 要求：
@@ -3983,7 +3920,7 @@ ${t("music.readout.source")}：${item.sourceDataset || item.platform || ""}`;
         [
           {
             role: "system",
-            content: `You are Echo's music description writer. Use ${aiResponseLanguageName()}. Only output the music introduction text — no titles, bullet points, or disclaimers.`
+            content: `You are Echo's music description writer. Use ${isChineseLang() ? "Chinese" : "English"}. Only output the music introduction text — no titles, bullet points, or disclaimers.`
           },
           {
             role: "user",
@@ -3997,7 +3934,8 @@ ${t("music.readout.source")}：${item.sourceDataset || item.platform || ""}`;
 
     async function hydrateRecommendationDescriptions(items) {
       const run = ++descriptionHydrationRun;
-      const missing = items.filter((item) => !metadataDescription(item) && !item.aiDescription);
+      const descriptionLanguage = isChineseLang() ? "zh" : "en";
+      const missing = items.filter((item) => !metadataDescription(item) && !(item.aiDescription && item.aiDescriptionLanguage === descriptionLanguage));
       if (!missing.length) return;
       const canUseKimi = await canUseKimiDescriptions();
       if (run !== descriptionHydrationRun) return;
@@ -4024,6 +3962,7 @@ ${t("music.readout.source")}：${item.sourceDataset || item.platform || ""}`;
           item.descriptionLoading = false;
           if (result.status === "fulfilled" && result.value) {
             item.aiDescription = result.value;
+            item.aiDescriptionLanguage = descriptionLanguage;
             const key = descriptionKey(item);
             if (key) cache[key] = result.value;
             if (window.EchoFavoriteStore?.isFavorite(item)) {
@@ -4147,6 +4086,7 @@ Guidelines:
       els.playState.textContent = playbackTrackLabel(currentTrack);
       els.readoutTrack.textContent = currentTrack.title;
       els.readoutOrigin.textContent = formatOrigin(currentTrack);
+      els.readoutOrigin.title = formatOrigin(currentTrack);
       els.readoutStyle.textContent = displayGenre(currentTrack);
       if (els.readoutSource) {
         els.readoutSource.textContent = displaySource(currentTrack);
@@ -4183,13 +4123,15 @@ Guidelines:
     function updateProjection() {
       const scale = Math.min(width, height) * 0.82 * mapZoom;
       projection = d3.geoMercator()
-        .center([centerLng, centerLat])
+        .rotate([-centerLng, 0])
+        .center([0, centerLat])
         .scale(scale)
         .translate([width / 2, height / 2]);
       path = d3.geoPath(projection);
     }
 
     function projectedPoint(item) {
+      if (item.locationPrecision === "unknown" || !window.EchoGeo.coordinates(item)) return { x: NaN, y: NaN };
       const point = projection([item.lng, item.lat]);
       if (!point) return { x: NaN, y: NaN };
       return { x: point[0], y: point[1] };
@@ -4216,8 +4158,10 @@ Guidelines:
         label.tabIndex = 0;
         label.setAttribute("aria-label", `${t("music.recommend.start")} ${item.title}`);
       }
-      const placeLabel = item.country === mysteryPlace.country ? t("music.mysteryPlace.country") : (item.city || item.country);
-      const styleLabel = item.country === mysteryPlace.country ? item.city : displayGenre(item);
+      const placeLabel = ["coordinates", "artist_city", "country_capital"].includes(item.locationPrecision) ? (window.EchoGeo.cityName(item.city) || window.EchoGeo.countryName(item.countryCode)) :
+        (window.EchoGeo.countryName(item.countryCode) || cultureLabel(item.culture));
+      const styleLabel = displayGenre(item);
+      label.title = formatOrigin(item);
       label.innerHTML = `${escapeHtml(placeLabel)}<br>${escapeHtml(styleLabel)}`;
       label.addEventListener("pointerdown", (event) => {
         event.stopPropagation();
@@ -4282,7 +4226,12 @@ Guidelines:
 
       clearLabels();
       addLabel(currentTrack, "is-current");
-      activeRecommendations.forEach((item, index) => addLabel(item, "is-recommendation", index));
+      const occupied = new Set(currentTrack.locationPrecision === "unknown" ? [] : [`${currentTrack.lat}:${currentTrack.lng}`]);
+      activeRecommendations.forEach((item, index) => {
+        const key = `${item.lat}:${item.lng}`;
+        if (!occupied.has(key)) addLabel(item, "is-recommendation", index);
+        occupied.add(key);
+      });
     }
 
     function drawStar(ctx, x, y, inner, outer, alpha, color) {
@@ -4315,13 +4264,9 @@ Guidelines:
       }
 
       const current = projectedPoint(currentTrack);
-      if (!Number.isFinite(current.x) || !Number.isFinite(current.y)) {
-        requestAnimationFrame(drawCanvas);
-        return;
-      }
       const elapsed = time * 0.001;
 
-      if (activeRecommendations.length) {
+      if (activeRecommendations.length && Number.isFinite(current.x) && Number.isFinite(current.y)) {
         activeRecommendations.forEach((item, index) => {
           const target = projectedPoint(item);
           if (!Number.isFinite(target.x) || !Number.isFinite(target.y)) return;
@@ -4341,7 +4286,7 @@ Guidelines:
         });
       }
 
-      const allNodes = [currentTrack, ...activeRecommendations];
+      const allNodes = [currentTrack, ...activeRecommendations].filter((item, index, all) => all.findIndex(other => other.lat === item.lat && other.lng === item.lng) === index);
       allNodes.forEach((item, index) => {
         const p = projectedPoint(item);
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
@@ -4391,9 +4336,10 @@ Guidelines:
 
     async function loadMapDataWithRetry() {
       let lastError = null;
+      const sources = ["./vendor/countries-50m.json", "./vendor/countries-50m.json", "./vendor/countries-110m.json"];
       for (let attempt = 1; attempt <= 3; attempt += 1) {
         try {
-          const data = await d3.json("./vendor/countries-110m.json");
+          const data = await d3.json(sources[attempt - 1]);
           if (data?.objects?.countries) return data;
           throw new Error("Map data is missing countries topology");
         } catch (error) {
@@ -4418,7 +4364,7 @@ Guidelines:
         worldFeatures = createFallbackWorldFeatures();
         borders = null;
         if (els.mapStatus) {
-          els.mapStatus.textContent = t("music.status.mapDataFailed");
+          setMapStatus("music.status.mapDataFailed");
         }
       }
       resize();
@@ -4446,6 +4392,7 @@ Guidelines:
         const platformLink = item.platformTrackUrl
           ? `<a class="rec-link" href="${escapeHtml(item.platformTrackUrl)}" target="_blank" rel="noopener">${t("music.rec.platformPlay")}</a>`
           : "";
+        const locationLink = /^https:\/\//.test(item.locationSourceUrl || "") ? `<a class="rec-link" href="${escapeHtml(item.locationSourceUrl)}" target="_blank" rel="noopener">${t("music.location.source")}</a>` : "";
         const fullLink = item.fullTrackUrl && item.fullTrackUrl !== item.platformTrackUrl
           ? `<a class="rec-link" href="${escapeHtml(item.fullTrackUrl)}" target="_blank" rel="noopener">${t("music.rec.originalLink")}</a>`
           : "";
@@ -4457,16 +4404,16 @@ Guidelines:
           <div class="rec-card-main">
             ${cover}
             <div class="rec-card-content">
-              <div class="meta-label">${String(index + 1).padStart(2, "0")} / ${escapeHtml(item.country)} / ${escapeHtml(item.sourceDataset || item.platform || "catalog")}</div>
+              <div class="meta-label">${String(index + 1).padStart(2, "0")} / ${escapeHtml(window.EchoGeo.countryName(item.countryCode || item.country) || cultureLabel(item.culture) || t("music.precision.unknown"))} / ${escapeHtml(displaySource(item))}</div>
               <h2>${escapeHtml(item.title)}</h2>
-              <p>${escapeHtml(item.artist)} - ${escapeHtml(item.city)}, ${escapeHtml(item.country)}</p>
+              <p>${escapeHtml(item.artist)} - ${escapeHtml(formatOrigin(item))}</p>
               <p class="rec-description${item.descriptionLoading ? " is-loading" : ""}">${escapeHtml(recommendationDescription(item))}</p>
               <div class="rec-meta">
                 <span class="tag">${escapeHtml(displayGenre(item))}</span>
                 <span class="tag">${escapeHtml(displaySource(item))}</span>
                 <span class="tag">${recommendationMatchLabel(item, index)}</span>
               </div>
-              ${platformLink || fullLink ? `<div class="rec-links">${platformLink}${fullLink}</div>` : ""}
+              ${platformLink || fullLink || locationLink ? `<div class="rec-links">${platformLink}${fullLink}${locationLink}</div>` : ""}
             </div>
           </div>
         </article>
@@ -4504,7 +4451,7 @@ Guidelines:
       els.recommendButton.classList.add("is-running");
       els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
-      els.mapStatus.textContent = t("music.status.generatingPath");
+      setMapStatus("music.status.generatingPath");
       recommendationsPersistable = false;
       activeRecommendations = [];
       clearMusicStationState();
@@ -4622,8 +4569,8 @@ Guidelines:
         recommendBusy = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
-        els.mapStatus.textContent = `${activeRecommendations.length}${t("music.status.connectionsActive")}${embeddingTime}`;
-        els.mapMode.textContent = t("music.status.networkExpanded");
+        setMapStatus("music.status.connectionsActive", verifiedRecommendationCount(), data.embedding?.elapsed_seconds || null);
+        setMapMode("music.status.networkExpanded");
         syncTrackReadouts();
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
@@ -4639,7 +4586,7 @@ Guidelines:
         els.recommendButton.classList.remove("is-disabled");
         recommendBusy = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
-        els.mapStatus.textContent = t("music.status.apiFallback");
+        setMapStatus("music.status.apiFallback");
         renderRecommendations();
         hydrateRecommendationDescriptions(activeRecommendations);
         renderParameterPanel();
@@ -4652,6 +4599,7 @@ Guidelines:
     }
 
     function panBy(deltaLng = 0, deltaLat = 0) {
+      mapUserMoved = true;
       centerLng += deltaLng;
       centerLat = clampLat(centerLat + deltaLat);
       if (centerLng > 180) centerLng -= 360;
@@ -4700,6 +4648,7 @@ Guidelines:
     }
 
     function handleMapWheel(event) {
+      mapUserMoved = true;
       const rect = els.mapStage.getBoundingClientRect();
       const x = event.clientX - rect.left;
       if (x < 40 || x > rect.width - 40) {
@@ -4713,11 +4662,25 @@ Guidelines:
       event.stopPropagation();
     }
 
+    async function refreshSavedMetadata() {
+      const tracks = [primaryTrack, currentTrack, ...activeRecommendations];
+      const ids = [...new Set(tracks.map(item => item.trackId || item.track_id).filter(Boolean))];
+      await Promise.allSettled(ids.map(async id => {
+        const response = await fetch(`/api/mainline/tracks/${encodeURIComponent(id)}`);
+        if (!response.ok) return;
+        const item = trackFromApiItem(await response.json());
+        tracks.filter(track => (track.trackId || track.track_id) === id).forEach(track => Object.assign(track, item));
+      }));
+      if (!mapUserMoved) { centerLng = locateTrack(currentTrack).lng; centerLat = locateTrack(currentTrack).lat; }
+      if (["music.status.connectionsActive", "music.status.connectionsRestored"].includes(els.mapStatus.dataset.statusKey)) setMapStatus(els.mapStatus.dataset.statusKey, verifiedRecommendationCount());
+      syncTrackReadouts(); renderRecommendations(); drawMap(); persistMusicStationState();
+    }
+
     function restoreMusicStationState() {
       const saved = readMusicStationState();
       if (!saved) return false;
       const restoredRecommendations = saved.activeRecommendations
-        .map((item, index) => ({ ...item, metrics: item.metrics || metricsFromApiItem(item, index) }))
+        .map((item, index) => localizeTrack({ ...item, metrics: item.metrics || metricsFromApiItem(item, index) }))
         .filter((item) => item.title);
       if (!restoredRecommendations.length) return false;
 
@@ -4743,19 +4706,17 @@ Guidelines:
           }));
       }
 
-      const selectedTrack = saved.currentTrack || primaryTrack;
+      localizeTrack(primaryTrack);
+      const selectedTrack = localizeTrack({ ...(saved.currentTrack || primaryTrack) });
       selectTrack(selectedTrack, { autoplay: false });
-      if (Number.isFinite(Number(saved.centerLng)) && Number.isFinite(Number(saved.centerLat))) {
-        centerLng = Number(saved.centerLng);
-        centerLat = Number(saved.centerLat);
-      }
       if (Number.isFinite(Number(saved.mapZoom))) {
         mapZoom = Math.max(0.9, Math.min(1.3, Number(saved.mapZoom)));
       }
       els.recommendButton.classList.remove("is-running");
       els.recommendButton.textContent = t("music.recommend.regenerate");
-      els.mapStatus.textContent = saved.mapStatus || `${activeRecommendations.length}${t("music.status.connectionsRestored")}`;
-      els.mapMode.textContent = saved.mapMode || t("music.status.networkRestored");
+      setMapStatus("music.status.connectionsRestored", verifiedRecommendationCount());
+      setMapMode("music.status.networkRestored");
+      refreshSavedMetadata();
       applyCachedDescriptions(activeRecommendations);
       renderRecommendations();
       hydrateRecommendationDescriptions(activeRecommendations);
@@ -4804,7 +4765,7 @@ Guidelines:
       centerLng = currentTrack.lng;
       centerLat = currentTrack.lat;
       els.mapStatus.textContent = statusText;
-      els.mapMode.textContent = t("music.status.waitingTrack");
+      setMapMode("music.status.waitingTrack");
       syncTrackReadouts();
       renderRecommendations();
       renderParameterPanel();
@@ -4815,7 +4776,7 @@ Guidelines:
     async function loadInitialTrack(options = {}) {
       recommendationsPersistable = false;
       clearMusicStationState();
-      els.mapStatus.textContent = t("music.status.connectingLibrary");
+      setMapStatus("music.status.connectingLibrary");
       try {
         const randomSeed = options.randomSeed ?? Date.now();
         const cultureQuery = initialSeedCulture ? `culture=${encodeURIComponent(initialSeedCulture)}&` : "";
@@ -4833,12 +4794,12 @@ Guidelines:
         primaryTrack = track;
         activeRecommendations = [];
         selectTrack(track, { autoplay: false });
-        els.mapStatus.textContent = t("music.status.libraryConnected");
-        els.mapMode.textContent = t("music.status.realLoaded");
+        setMapStatus("music.status.libraryConnected");
+        setMapMode("music.status.realLoaded");
         return true;
       } catch (error) {
-        console.error(error);
-        els.mapStatus.textContent = t("music.status.libraryUnavailable");
+        console.error("loadInitialTrack error:", error);
+        setMapStatus("music.status.libraryUnavailable");
         return false;
       }
     }
@@ -4864,7 +4825,7 @@ Guidelines:
               lastModified: record.lastModified || Date.now()
             });
             applyLocalAudioFile(file, { ...saved, ...record, source: t("music.status.favLocalLoaded"), fromFavorites: true });
-            els.mapStatus.textContent = t("music.status.favLocalLoaded");
+            setMapStatus("music.status.favLocalLoaded");
             return true;
           }
         } catch (error) {
@@ -4874,8 +4835,8 @@ Guidelines:
       primaryTrack = { ...saved, metrics: saved.metrics || defaultMetrics };
       activeRecommendations = [];
       selectTrack(primaryTrack, { autoplay: false });
-      els.mapStatus.textContent = t("music.status.favLocalLoaded");
-      els.mapMode.textContent = t("music.status.favRandom");
+      setMapStatus("music.status.favLocalLoaded");
+      setMapMode("music.status.favRandom");
       return true;
     }
 
@@ -4892,8 +4853,8 @@ Guidelines:
       primaryTrack = track;
       activeRecommendations = [];
       selectTrack(track, { autoplay: false });
-      els.mapStatus.textContent = t("music.status.favRandomLoaded");
-      els.mapMode.textContent = t("music.status.favRandom");
+      setMapStatus("music.status.favRandomLoaded");
+      setMapMode("music.status.favRandom");
       return true;
     }
 
@@ -4921,8 +4882,29 @@ Guidelines:
       await loadInitialTrack({ randomSeed: Date.now() });
     }
 
+    function forceRefreshTrackUI() {
+      if (!currentTrack.title || currentTrack.title === t("music.default.noTrack")) {
+        loadInitialTrack({ randomSeed: Date.now() }).then((ok) => {
+          if (!ok) setNoStartupTrack(t("music.status.initFailed"));
+        }).catch(() => setNoStartupTrack(t("music.status.initFailed")));
+      }
+    }
+
+    setTimeout(() => {
+      if (!currentTrack.title) {
+        forceRefreshTrackUI();
+      }
+    }, 3000);
+
+    setTimeout(() => {
+      if (!currentTrack.title) {
+        setNoStartupTrack(t("music.status.initFailed"));
+      }
+    }, 8000);
+
     async function loadPendingLocalAudio() {
-      const raw = sessionStorage.getItem(pendingLocalPlayKey) || "{}";
+      let raw = "{}";
+      try { raw = sessionStorage.getItem(pendingLocalPlayKey) || "{}"; } catch (_) { /* tracking prevention */ }
       let metadata = {};
       try {
         metadata = JSON.parse(raw);
@@ -4935,7 +4917,7 @@ Guidelines:
       try {
         const record = await getLocalAudioRecord(localId);
         if (!record?.blob) {
-          els.mapStatus.textContent = t("music.status.favLocalNotFound");
+          setMapStatus("music.status.favLocalNotFound");
           return false;
         }
         const fileName = record.fileName || metadata.fileName || `${record.title || metadata.title || "local-audio"}.mp3`;
@@ -4952,17 +4934,18 @@ Guidelines:
           fromFavorites: true
         });
         sessionStorage.removeItem(pendingLocalPlayKey);
-        els.mapStatus.textContent = t("music.status.favLocalLoaded");
+        setMapStatus("music.status.favLocalLoaded");
         return true;
       } catch (error) {
         console.error(error);
-        els.mapStatus.textContent = t("music.status.favLocalFailed");
+        setMapStatus("music.status.favLocalFailed");
         return false;
       }
     }
 
     els.mapStage.addEventListener("pointerdown", (event) => {
       dragging = true;
+      mapUserMoved = true;
       lastX = event.clientX;
       lastY = event.clientY;
       els.mapStage.classList.add("is-dragging");
@@ -5095,13 +5078,14 @@ Guidelines:
         els.recordButton.setAttribute("data-i18n", "music.record");
         return;
       }
+      let stream = null;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         recordedChunks = [];
-        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-          ? "audio/webm;codecs=opus"
-          : "audio/webm";
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        const requestedType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus", "audio/ogg"]
+          .find(type => MediaRecorder.isTypeSupported(type));
+        mediaRecorder = new MediaRecorder(stream, requestedType ? { mimeType: requestedType } : {});
+        const mimeType = mediaRecorder.mimeType || requestedType || "audio/webm";
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) recordedChunks.push(e.data);
         };
@@ -5109,7 +5093,7 @@ Guidelines:
           stream.getTracks().forEach((trk) => trk.stop());
           if (!recordedChunks.length) return;
           const blob = new Blob(recordedChunks, { type: mimeType });
-          const ext = mimeType.includes("opus") ? "webm" : "webm";
+          const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
           const file = new File([blob], `recorded_audio.${ext}`, { type: mimeType });
           applyLocalAudioFile(file, { source: t("music.local.recordSource") });
         };
@@ -5118,7 +5102,13 @@ Guidelines:
         els.recordButton.textContent = t("music.record.stop");
         els.recordButton.setAttribute("data-i18n", "music.record.stop");
       } catch (err) {
-        console.error("Microphone access denied:", err);
+        stream?.getTracks().forEach((track) => track.stop());
+        mediaRecorder = null;
+        els.recordButton.classList.remove("is-recording");
+        els.recordButton.textContent = t("music.record");
+        els.recordButton.setAttribute("data-i18n", "music.record");
+        setMapStatus("music.record.error");
+        console.warn("Recording could not start:", err);
       }
     });
 
@@ -5133,8 +5123,21 @@ Guidelines:
     }
     window.addEventListener("resize", resize);
     window.addEventListener("echo-language-change", () => {
-      renderAiMessages();
-      setAiBusy(aiBusy);
+      const nextDescriptionLanguage = isChineseLang() ? "zh" : "en";
+      const descriptionLanguageChanged = activeDescriptionLanguage !== nextDescriptionLanguage;
+      activeDescriptionLanguage = nextDescriptionLanguage;
+      if (descriptionLanguageChanged) descriptionHydrationRun += 1;
+      [currentTrack, primaryTrack, ...activeRecommendations].forEach(localizeTrack);
+      applyCachedDescriptions(activeRecommendations);
+      renderRecommendations(); syncTrackReadouts(); renderParameterPanel(); drawMap();
+      if (mainlineStatus) els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
+      if (els.mapStatus.dataset.statusKey) setMapStatus(els.mapStatus.dataset.statusKey,
+        els.mapStatus.dataset.count === "" ? null : Number(els.mapStatus.dataset.count),
+        els.mapStatus.dataset.embeddingSeconds === "" ? null : Number(els.mapStatus.dataset.embeddingSeconds));
+      setMapMode(els.mapMode.dataset.statusKey || "music.map.currentCenter");
+      els.recommendButton.textContent = t(recommendBusy ? "music.recommend.running" : activeRecommendations.length ? "music.recommend.regenerate" : "music.recommend.start");
+      renderAiMessages(); setAiBusy(aiBusy);
+      if (descriptionLanguageChanged) hydrateRecommendationDescriptions(activeRecommendations);
     });
     window.addEventListener("pagehide", () => {
       if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -5155,12 +5158,14 @@ Guidelines:
     renderParameterPanel();
     syncAiModeControls();
     renderAiMessages();
-    initializeStartupTrack().catch((error) => {
+    initializeStartupTrack().then(() => {
+      requestAnimationFrame(forceRefreshTrackUI);
+    }).catch((error) => {
       console.error(error);
       setNoStartupTrack(t("music.status.initFailed"));
     });
     loadMap().catch((error) => {
-      els.mapStatus.textContent = t("music.status.mapDataFailed");
+      setMapStatus("music.status.mapDataFailed");
       console.error(error);
     });
     if (window.location.hash === "#ai-analysis") {
@@ -5168,6 +5173,7 @@ Guidelines:
         document.getElementById("ai-analysis")?.scrollIntoView({ block: "start" });
       }, 900);
     }
+  });
   </script>
 </body>
 </html>

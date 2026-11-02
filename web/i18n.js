@@ -669,6 +669,7 @@
       "music.upload": "上传音乐",
       "music.record": "录制",
       "music.record.stop": "停止录制",
+      "music.record.error": "无法开始录音，请检查麦克风权限并使用 HTTPS。",
       "music.ai.meta": "AI 分析",
       "music.ai.title": "推荐讲解",
       "music.ai.copy": "把当前上传曲目、跨文化推荐结果等内容发送给AI，由 AI 对这次推荐路线做分析。",
@@ -1054,6 +1055,7 @@
       "music.upload": "Upload music",
       "music.record": "Record",
       "music.record.stop": "Stop recording",
+      "music.record.error": "Recording could not start. Check microphone permissions and use HTTPS.",
       "music.ai.meta": "AI Analysis",
       "music.ai.title": "Recommendation Notes",
       "music.ai.copy": "Send the uploaded track and cross-cultural recommendations to AI, then let AI analyze this recommendation route.",
@@ -1438,6 +1440,7 @@
       "music.upload": "Musik hochladen",
       "music.record": "Aufnehmen",
       "music.record.stop": "Aufnahme stoppen",
+      "music.record.error": "Aufnahme nicht möglich. Prüfe die Mikrofonberechtigung und verwende HTTPS.",
       "music.ai.meta": "AI Analyse",
       "music.ai.title": "Empfehlung erklären",
       "music.ai.copy": "Sende den aktuellen Titel und die interkulturellen Empfehlungen an die AI, damit sie diese Route analysiert.",
@@ -1830,6 +1833,7 @@
       "music.upload": "Subir música",
       "music.record": "Grabar",
       "music.record.stop": "Detener grabación",
+      "music.record.error": "No se pudo iniciar la grabación. Revisa el permiso del micrófono y usa HTTPS.",
       "music.ai.meta": "Análisis AI",
       "music.ai.title": "Explicación",
       "music.ai.copy": "Envía la pista actual y las recomendaciones interculturales a la AI para analizar esta ruta.",
@@ -2219,6 +2223,7 @@
       "music.upload": "Enviar música",
       "music.record": "Gravar",
       "music.record.stop": "Parar gravação",
+      "music.record.error": "Não foi possível iniciar a gravação. Verifique a permissão do microfone e use HTTPS.",
       "music.ai.meta": "Análise AI",
       "music.ai.title": "Explicação",
       "music.ai.copy": "Envie a faixa atual e as recomendações interculturais para a AI analisar esta rota.",
@@ -2608,6 +2613,7 @@
       "music.upload": "音楽をアップロード",
       "music.record": "録音",
       "music.record.stop": "録音停止",
+      "music.record.error": "録音を開始できません。マイクの権限を確認し、HTTPSで接続してください。",
       "music.ai.meta": "AI 分析",
       "music.ai.title": "推薦解説",
       "music.ai.copy": "現在の曲と異文化推薦結果を AI に送り、この推薦ルートを分析します。",
@@ -2997,6 +3003,7 @@
       "music.upload": "음악 업로드",
       "music.record": "녹음",
       "music.record.stop": "녹음 중지",
+      "music.record.error": "녹음을 시작할 수 없습니다. 마이크 권한을 확인하고 HTTPS로 접속해 주세요.",
       "music.ai.meta": "AI 분석",
       "music.ai.title": "추천 해설",
       "music.ai.copy": "현재 곡과 교차 문화 추천 결과를 AI에 보내 추천 경로를 분석합니다.",
@@ -3374,6 +3381,15 @@
     }
   };
 
+  const locationTranslations = {"zh-CN": {"music.precision.coordinates": "坐标位置", "music.precision.country_region": "国家区域（约略）", "music.precision.catalog_market": "曲库市场（非艺人所在地）", "music.precision.culture_region": "文化区域（约略）", "music.precision.unknown": "位置未知", "music.catalog.descriptions": "条描述"}, "en": {"music.precision.coordinates": "Coordinates", "music.precision.country_region": "Country region (approx.)", "music.precision.catalog_market": "Catalog market, not artist location", "music.precision.culture_region": "Culture region (approx.)", "music.precision.unknown": "Location unknown", "music.catalog.descriptions": "descriptions"}, "de": {"music.precision.coordinates": "Koordinaten", "music.precision.country_region": "Landesregion (ungefähr)", "music.precision.catalog_market": "Katalogmarkt, kein Künstlerstandort", "music.precision.culture_region": "Kulturregion (ungefähr)", "music.precision.unknown": "Standort unbekannt", "music.catalog.descriptions": "Beschreibungen"}, "es": {"music.precision.coordinates": "Coordenadas", "music.precision.country_region": "Región del país (aprox.)", "music.precision.catalog_market": "Mercado del catálogo, no del artista", "music.precision.culture_region": "Región cultural (aprox.)", "music.precision.unknown": "Ubicación desconocida", "music.catalog.descriptions": "descripciones"}, "pt": {"music.precision.coordinates": "Coordenadas", "music.precision.country_region": "Região do país (aprox.)", "music.precision.catalog_market": "Mercado do catálogo, não do artista", "music.precision.culture_region": "Região cultural (aprox.)", "music.precision.unknown": "Localização desconhecida", "music.catalog.descriptions": "descrições"}, "ja": {"music.precision.coordinates": "座標", "music.precision.country_region": "国の地域（概算）", "music.precision.catalog_market": "配信市場（アーティストの所在地ではありません）", "music.precision.culture_region": "文化圏（概算）", "music.precision.unknown": "位置不明", "music.catalog.descriptions": "件の説明"}, "ko": {"music.precision.coordinates": "좌표", "music.precision.country_region": "국가 지역 (대략)", "music.precision.catalog_market": "카탈로그 시장 (아티스트 위치 아님)", "music.precision.culture_region": "문화권 (대략)", "music.precision.unknown": "위치 알 수 없음", "music.catalog.descriptions": "개 설명"}};
+  for (const [language, values] of Object.entries(locationTranslations)) Object.assign(translations[language], values);
+
+  const artistLocationTranslations = {"zh-CN": {"music.precision.artist_city": "艺人公开活动／来源城市", "music.precision.country_capital": "艺人国家（首都代替）", "music.location.source": "地点来源"}, "en": {"music.precision.artist_city": "Artist activity / origin city", "music.precision.country_capital": "Artist country (capital fallback)", "music.location.source": "Location source"}, "de": {"music.precision.artist_city": "Öffentliche Künstlerstadt / Herkunft", "music.precision.country_capital": "Künstlerland (Hauptstadt als Ersatz)", "music.location.source": "Standortquelle"}, "es": {"music.precision.artist_city": "Ciudad de actividad / origen", "music.precision.country_capital": "País del artista (capital de referencia)", "music.location.source": "Fuente de ubicación"}, "pt": {"music.precision.artist_city": "Cidade de atividade / origem", "music.precision.country_capital": "País do artista (capital de referência)", "music.location.source": "Fonte da localização"}, "ja": {"music.precision.artist_city": "アーティストの活動地・出身地", "music.precision.country_capital": "アーティストの国（首都で代用）", "music.location.source": "所在地の出典"}, "ko": {"music.precision.artist_city": "아티스트 활동 / 출신 도시", "music.precision.country_capital": "아티스트 국가 (수도로 대체)", "music.location.source": "위치 출처"}};
+  for (const [language, values] of Object.entries(artistLocationTranslations)) Object.assign(translations[language], values);
+
+  const mappedLocationStatus = {"zh-CN": {"music.status.connectionsActive": "个推荐地点已确认", "music.status.connectionsRestored": "个推荐地点已恢复"}, "en": {"music.status.connectionsActive": " recommendation locations verified", "music.status.connectionsRestored": " recommendation locations restored"}, "de": {"music.status.connectionsActive": " bestätigte Empfehlungsorte", "music.status.connectionsRestored": " wiederhergestellte Empfehlungsorte"}, "es": {"music.status.connectionsActive": " ubicaciones recomendadas verificadas", "music.status.connectionsRestored": " ubicaciones recomendadas restauradas"}, "pt": {"music.status.connectionsActive": " locais recomendados verificados", "music.status.connectionsRestored": " locais recomendados restaurados"}, "ja": {"music.status.connectionsActive": " 件の推薦地点を確認", "music.status.connectionsRestored": " 件の推薦地点を復元"}, "ko": {"music.status.connectionsActive": "개 추천 위치 확인됨", "music.status.connectionsRestored": "개 추천 위치 복원됨"}};
+  for (const [language, values] of Object.entries(mappedLocationStatus)) Object.assign(translations[language], values);
+
   function normalizeLanguage(value) {
     const raw = String(value || "").trim();
     if (!raw) return DEFAULT_LANGUAGE;
@@ -3389,8 +3405,11 @@
     }
   }
 
+  let activeLanguage = null;
   function getLanguage() {
-    const direct = localStorage.getItem(STORAGE_KEY);
+    if (activeLanguage) return activeLanguage;
+    let direct;
+    try { direct = localStorage.getItem(STORAGE_KEY); } catch (_) {}
     if (direct) return normalizeLanguage(direct);
     const appConfig = readJson(APP_CONFIG_KEY);
     if (appConfig.language) return normalizeLanguage(appConfig.language);
@@ -3401,10 +3420,10 @@
 
   function storeLanguage(language) {
     const code = normalizeLanguage(language);
-    localStorage.setItem(STORAGE_KEY, code);
+    try { localStorage.setItem(STORAGE_KEY, code); } catch (_) {}
     const appConfig = readJson(APP_CONFIG_KEY);
     appConfig.language = code;
-    localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
+    try { localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig)); } catch (_) {}
     return code;
   }
 
@@ -3460,6 +3479,7 @@
 
   function setLanguage(language) {
     const code = storeLanguage(language);
+    activeLanguage = code;
     apply(document, code);
     window.dispatchEvent(new CustomEvent("echo-language-change", { detail: { language: code } }));
     return code;
@@ -3478,9 +3498,13 @@
     }
   };
 
+  document.documentElement.lang = languageInfo().htmlLang;
+  document.documentElement.classList.add("i18n-pending");
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => apply(document));
+    document.addEventListener("DOMContentLoaded", () => {
+      try { apply(document); } finally { document.documentElement.classList.remove("i18n-pending"); }
+    });
   } else {
-    apply(document);
+    try { apply(document); } finally { document.documentElement.classList.remove("i18n-pending"); }
   }
 }());

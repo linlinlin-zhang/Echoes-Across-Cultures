@@ -4,6 +4,7 @@ import csv
 import math
 import re
 import time
+import threading
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,10 @@ from dcas.ot.sinkhorn import sinkhorn_plan, squared_euclidean_cost
 from dcas.serialization import load_checkpoint
 
 from .paths import Storage
+from .description_translations import apply_description_translations
+from .track_locations import location_fields
+from .artist_locations import apply_artist_location
+from .catalog_search import query_rank
 
 
 DEFAULT_TRACKS_REL = "public/merged/tracks_culturemert.npz"
@@ -266,6 +271,11 @@ class MainlineRecommendationPlatform:
         if random_seed is not None:
             rng = np.random.default_rng(int(random_seed))
             rng.shuffle(keep)
+
+        if query:
+            keep.sort(
+                key=lambda idx: query_rank(self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {}), query)
+            )
 
         items = [self._track_payload(idx) for idx in keep[:limit]]
         return {
@@ -1067,7 +1077,10 @@ class MainlineRecommendationPlatform:
             payload["score"] = float(score)
         if score_components is not None:
             payload["score_components"] = {k: float(v) for k, v in score_components.items()}
-        return payload
+        payload["artist_id"] = _clean(row.get("artist_id"))
+        payload.update(location_fields(row))
+        apply_artist_location(payload, self.storage.root)
+        return apply_description_translations(payload, self.storage.root)
 
     def _result_metrics(self, *, recommendations: list[dict[str, Any]]) -> dict[str, Any]:
         cultures = Counter(_clean(item.get("culture")) for item in recommendations)
@@ -1140,6 +1153,9 @@ class MainlineRecommendationPlatform:
 _PLATFORMS: dict[tuple[str, bool, str, str, str], MainlineRecommendationPlatform] = {}
 
 
+_LOAD_LOCK = threading.Lock()
+
+
 def get_mainline_platform(
     storage: Storage,
     *,
@@ -1155,14 +1171,15 @@ def get_mainline_platform(
         str(metadata_rel),
         str(model_rel),
     )
-    platform = _PLATFORMS.get(key)
-    if platform is None:
-        platform = MainlineRecommendationPlatform(
-            storage=storage,
-            prefer_cuda=bool(prefer_cuda),
-            tracks_rel=tracks_rel,
-            metadata_rel=metadata_rel,
-            model_rel=model_rel,
-        )
-        _PLATFORMS[key] = platform
-    return platform
+    with _LOAD_LOCK:
+        platform = _PLATFORMS.get(key)
+        if platform is None:
+            platform = MainlineRecommendationPlatform(
+                storage=storage,
+                prefer_cuda=bool(prefer_cuda),
+                tracks_rel=tracks_rel,
+                metadata_rel=metadata_rel,
+                model_rel=model_rel,
+            )
+            _PLATFORMS[key] = platform
+        return platform

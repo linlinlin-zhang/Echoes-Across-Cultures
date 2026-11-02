@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <style>html.i18n-pending body { visibility: hidden; }</style>
+  <script src="i18n.js?v=20261101b"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Echo 收藏夹 — 浏览、筛选和管理来自 iTunes、Jamendo 与上传音频的跨文化音乐收藏。">
   <title>Echo | 收藏夹</title>
@@ -512,12 +514,13 @@
       color: var(--ink);
       font-size: 1rem;
       line-height: 1;
-      opacity: 0;
-      pointer-events: none;
+      opacity: 0.82;
+      pointer-events: auto;
       transition: opacity 180ms ease, transform 180ms var(--ease-out), background 180ms ease;
     }
 
-    .track-card:hover .remove-track {
+    .track-card:hover .remove-track,
+    .track-card:focus-within .remove-track {
       opacity: 1;
       pointer-events: auto;
     }
@@ -526,6 +529,11 @@
       background: var(--ink);
       color: #ffffff;
       transform: scale(1.06);
+    }
+
+    .remove-track:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 3px;
     }
 
     .track-card.is-dark .remove-track {
@@ -894,9 +902,13 @@
     </section>
   </main>
 
-  <script src="i18n.js"></script>
-  <script src="favorite-store.js"></script>
+  <script>window.EchoI18n?.apply(document); document.documentElement.classList.remove("i18n-pending");</script>
+  <script src="geo-data.js?v=20261101b"></script>
+  <script src="geo.js?v=20261101b"></script>
+  <script src="metadata-i18n.js?v=20261101"></script>
+  <script src="favorite-store.js?v=20261101b"></script>
   <script>
+  document.addEventListener("DOMContentLoaded", () => {
     const els = {
       grid: document.getElementById("masonry-grid"),
       search: document.getElementById("search-input"),
@@ -991,13 +1003,13 @@
     }
 
     function itemGenre(item) {
-      return String(item.genre || "").trim() || t("favorites.unknownGenre");
+      return window.EchoMetadata.keyword((window.EchoI18n.getLanguage() !== "zh-CN" && item.genre_en) || item.genre) || t("favorites.unknownGenre");
     }
 
     function itemPlaceLabel(item) {
       const culture = String(item.culture || "").trim();
       if (culture) return cultureLabel(culture);
-      const place = [item.country, item.region, item.province, item.city, item.location]
+      const place = [window.EchoGeo.countryName(item.country), window.EchoGeo.cityName(item.city)]
         .map((part) => String(part || "").trim())
         .filter(Boolean)
         .join(" / ");
@@ -1005,7 +1017,8 @@
     }
 
     function itemDescription(item) {
-      return String(item.description || "").trim();
+      const useEn = (window.EchoI18n?.getLanguage() || "zh-CN") !== "zh-CN";
+      return window.EchoMetadata.description(item) || (useEn ? "Description unavailable." : "暂无描述。");
     }
 
     function itemKey(item) {
@@ -1055,6 +1068,7 @@
         title: item.title || item.track_id || "",
         artist: item.artist || item.source_dataset || "",
         genre: item.genre || item.label || "",
+        genre_en: item.genre_en || item.label_en || "",
         culture: item.culture || "",
         country: item.country || item.country_name || "",
         region: item.region || "",
@@ -1065,6 +1079,7 @@
         cover: item.cover_art_url_large || item.cover_art_url || item.artwork_url_large || item.image_url || "",
         url: item.platform_track_url || item.full_track_url || item.preview_url || "",
         description: item.description || item.album_description || "",
+        description_en: item.description_en || item.album_description_en || "",
         favorite: Boolean(item.favorite),
         imported: false
       };
@@ -1558,6 +1573,7 @@
       }
       els.grid.innerHTML = `<div class="empty-state">${escapeHtml(t("favorites.loadFailed"))}</div>`;
     });
+  });
   </script>
 </body>
 </html>

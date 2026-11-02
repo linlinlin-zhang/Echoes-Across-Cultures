@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <style>html.i18n-pending body { visibility: hidden; }</style>
+  <script src="i18n.js?v=20261101b"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Echo 设置 — 配置 AI 接口、推荐数量、封面显示与界面语言。">
   <title>Echo | 设置界面</title>
@@ -472,8 +474,9 @@
     </section>
   </main>
 
-  <script src="i18n.js"></script>
+  <script>window.EchoI18n?.apply(document); document.documentElement.classList.remove("i18n-pending");</script>
   <script>
+  document.addEventListener("DOMContentLoaded", () => {
     const els = {
       language: document.getElementById("app-language"),
       coverModeButtons: Array.from(document.querySelectorAll("[data-cover-mode]")),
@@ -717,6 +720,7 @@
     });
     loadConfig();
     loadBackendKimiStatus();
+  });
   </script>
 </body>
 </html>

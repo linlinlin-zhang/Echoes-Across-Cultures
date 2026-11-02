@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import json
+import asyncio
+import logging
+from contextlib import contextmanager
 import os
 import re
 import sqlite3
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 from urllib.parse import urlencode, urljoin
 from uuid import uuid4
 
@@ -15,10 +18,15 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, Response, Uploa
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from .exhibition_security import ExhibitionGuard
 
 from dcas.ontology import OntologyStore
 
 from .lightweight_catalog import get_lightweight_catalog
+from .description_translations import apply_description_translations
+from .track_locations import location_fields
+from .artist_locations import apply_artist_location
 from .paths import Storage
 from .prototype_api import create_prototype_router
 from .schemas import (
@@ -331,6 +339,28 @@ def _kimi_thinking_config(mode: str) -> dict[str, str]:
     return {"type": "disabled"}
 
 
+def _kimi_request_endpoint(req: KimiChatRequest, local: dict[str, str]) -> str:
+    configured = str(local.get("endpoint") or "https://api.moonshot.cn/v1/chat/completions").strip()
+    endpoint = str(req.endpoint or "").strip() or configured
+    if _env_bool("ECHO_PUBLIC_MODE"):
+        if endpoint != configured:
+            raise HTTPException(status_code=400, detail="The exhibition uses its configured AI endpoint only")
+        if not str(req.api_key or "").strip() and req.model != local.get("model", "kimi-k2.6"):
+            raise HTTPException(status_code=400, detail="The exhibition uses its configured AI model only")
+        if len(req.messages) > 32 or sum(len(str(m.get("content", ""))) for m in req.messages) > 24000:
+            raise HTTPException(status_code=413, detail="AI conversation is too long; start a new conversation")
+    if not endpoint.startswith("https://"):
+        raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+    # A caller may choose where to send their own key, but must never redirect
+    # a server-managed credential to an endpoint supplied in the request.
+    if not str(req.api_key or "").strip() and endpoint != configured:
+        raise HTTPException(
+            status_code=400,
+            detail="A custom AI endpoint requires your own API key. The server key can only use its configured endpoint.",
+        )
+    return endpoint
+
+
 def _kimi_request_payload(req: KimiChatRequest, model: str, *, stream: bool = False) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model,
@@ -364,7 +394,11 @@ def _track_key(track: dict[str, Any]) -> str:
         track.get("track_id")
         or track.get("trackId")
         or track.get("id")
-        or f"{track.get('title', '')}::{track.get('artist', '')}::{track.get('album', '')}"
+        or (
+            f"{track.get('title', '')}::{track.get('artist', '')}::{track.get('album', '')}"
+            if any(str(track.get(k) or "").strip() for k in ("title", "artist", "album"))
+            else ""
+        )
     ).strip()
 
 
@@ -386,12 +420,17 @@ class AnonymousFavoriteStore:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
         conn = sqlite3.connect(str(self.db_path), timeout=30)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        return conn
+        try:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     def _init_db(self) -> None:
         with self._connect() as conn:
@@ -453,18 +492,35 @@ class AnonymousFavoriteStore:
         return items
 
     def upsert_favorite(self, session_id: str, track: dict[str, Any]) -> dict[str, Any]:
-        item = dict(track)
-        key = _track_key(item)
-        if not key:
-            raise ValueError("favorite track requires an id, track_id, or title")
-        item.setdefault("id", key)
-        item.setdefault("track_id", key)
-        item["favorite"] = True
-        item["favorite_added_at"] = item.get("favorite_added_at") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        return self.upsert_favorites(session_id, [track])[0]
+
+    def upsert_favorites(self, session_id: str, tracks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        items, values = [], []
         now = time.time()
-        self.touch_session(session_id)
+        for index, track in enumerate(tracks):
+            item = dict(track)
+            key = _track_key(item)
+            if not key:
+                raise ValueError("favorite track requires an id, track_id, or title")
+            item.setdefault("id", key)
+            item.setdefault("track_id", key)
+            item["favorite"] = True
+            item["favorite_added_at"] = item.get("favorite_added_at") or time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+            )
+            items.append(item)
+            values.append((session_id, key, json.dumps(item, ensure_ascii=False), now + index * 0.000001, now))
+        if not items:
+            return []
+        # Seed a visitor's initial collection in one transaction rather than
+        # forty separate session/favorite commits on the Windows filesystem.
         with self._connect() as conn:
             conn.execute(
+                """INSERT INTO anonymous_sessions (session_id, created_at, last_seen_at)
+                VALUES (?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET last_seen_at=excluded.last_seen_at""",
+                (session_id, now, now),
+            )
+            conn.executemany(
                 """
                 INSERT INTO favorite_tracks (session_id, track_key, track_json, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?)
@@ -472,9 +528,9 @@ class AnonymousFavoriteStore:
                     track_json=excluded.track_json,
                     updated_at=excluded.updated_at
                 """,
-                (session_id, key, json.dumps(item, ensure_ascii=False), now, now),
+                values,
             )
-        return item
+        return items
 
     def remove_favorite(self, session_id: str, track_key: str) -> bool:
         with self._connect() as conn:
@@ -901,23 +957,43 @@ def _extract_embedded_cover(source: Path, target: Path) -> bool:
 
 
 def _upload_place_from_tags(tags: dict[str, str]) -> dict[str, object]:
-    country = _tag_first(tags, "country", "location", "artist_location", "com.apple.iTunes.location")
+    country = _tag_first(tags, "country", "artist_country", "location", "artist_location", "com.apple.iTunes.location")
+    city = _tag_first(tags, "city", "location_city", "artist_city")
+    lat = _tag_first(tags, "latitude", "lat", "gpslatitude")
+    lng = _tag_first(tags, "longitude", "lng", "lon", "gpslongitude")
+    # Apple / QuickTime ISO 6709 coordinates, e.g. +25.0330+121.5654/.
+    iso = _tag_first(tags, "com.apple.quicktime.location.iso6709", "location-eng", "location")
+    match = re.fullmatch(r"([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)(?:[+-]\d+(?:\.\d+)?)?/?", iso)
+    if match and not (lat and lng):
+        lat, lng = match.group(1), match.group(2)
+        if country == iso:
+            country = ""
+    coordinates = location_fields({"lat": lat, "lng": lng})
+    if coordinates["location_precision"] == "coordinates":
+        return {
+            "country": country,
+            "city": city,
+            "lat": coordinates["lat"],
+            "lng": coordinates["lng"],
+            "location_precision": "coordinates",
+            "location_note": "From embedded audio coordinates",
+        }
     if country:
         return {
             "country": country,
-            "city": _tag_first(tags, "city", "venue") or country,
+            "city": city,
             "lat": None,
             "lng": None,
             "location_precision": "audio_tag",
-            "location_note": "From embedded audio file metadata",
+            "location_note": "From embedded audio metadata; coordinates unavailable",
         }
     return {
         "country": "mystery_place",
-        "city": "central_pacific",
-        "lat": 0.0,
-        "lng": -160.0,
+        "city": "",
+        "lat": None,
+        "lng": None,
         "location_precision": "pacific_default",
-        "location_note": "Upload audio has no region info, defaulting to mystery place",
+        "location_note": "No location metadata available",
     }
 
 
@@ -963,6 +1039,20 @@ def _load_local_kimi_config() -> dict[str, str]:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="DCAS API", version="0.1.0")
+    public_mode = _env_bool("ECHO_PUBLIC_MODE")
+    if public_mode:
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=[
+                "resonance.website",
+                "www.resonance.website",
+                "47.250.196.219",
+                "localhost",
+                "127.0.0.1",
+                "testserver",
+            ],
+        )
+    app.add_middleware(ExhibitionGuard, enabled=public_mode)
 
     @app.middleware("http")
     async def worker_token_guard(request: Request, call_next):
@@ -1005,6 +1095,8 @@ def create_app() -> FastAPI:
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        if request.url.path.startswith(("/api/favorites", "/api/session", "/api/ai/")):
+            response.headers["Cache-Control"] = "no-store"
         return response
 
     storage = Storage(root=Path(os.environ.get("ECHO_STORAGE_ROOT", "storage")))
@@ -1019,6 +1111,27 @@ def create_app() -> FastAPI:
     user_data_root = Path(os.environ.get("ECHO_USER_DATA_DIR", str(storage.resolve_rel("user_data"))))
     favorite_store = AnonymousFavoriteStore(user_data_root / "echo.sqlite3")
     app.include_router(create_prototype_router(storage))
+    app.state.recommendation_state = "not_loaded"
+
+    @app.on_event("startup")
+    async def prewarm_mainline():
+        if not _env_bool("ECHO_PREWARM_MAINLINE"):
+            return
+        app.state.recommendation_state = "warming"
+
+        def warm():
+            try:
+                from .mainline_platform import get_mainline_platform
+
+                get_mainline_platform(storage, prefer_cuda=True, **_mainline_platform_paths())
+                app.state.recommendation_state = "ready"
+                logging.getLogger("uvicorn.error").info("Echo recommendation model prewarm completed")
+            except Exception:
+                app.state.recommendation_state = "failed"
+                logging.getLogger("uvicorn.error").exception("Echo recommendation model prewarm failed")
+
+        # Health and browsing stay available while model files and CUDA initialize.
+        app.state.prewarm_task = asyncio.create_task(asyncio.to_thread(warm))
 
     def seed_initial_favorites(session_id: str, *, prefer_cuda: bool = False) -> tuple[list[dict[str, Any]], bool]:
         existing = favorite_store.list_favorites(session_id)
@@ -1034,16 +1147,14 @@ def create_app() -> FastAPI:
         except Exception:
             return [], False
         items = catalog_result.get("items") or []
-        seeded: list[dict[str, Any]] = []
-        for item in items[:DEFAULT_INITIAL_FAVORITES]:
-            if not isinstance(item, dict):
-                continue
-            seeded.append(favorite_store.upsert_favorite(session_id, item))
+        seeded = favorite_store.upsert_favorites(
+            session_id, [item for item in items[:DEFAULT_INITIAL_FAVORITES] if isinstance(item, dict)]
+        )
         return favorite_store.list_favorites(session_id), bool(seeded)
 
     @app.get("/api/health")
     def health():
-        return {"ok": True, "time": time.time()}
+        return {"ok": True, "time": time.time(), "recommendation_state": app.state.recommendation_state}
 
     @app.get("/api/session")
     def api_session(request: Request, response: Response):
@@ -1062,6 +1173,30 @@ def create_app() -> FastAPI:
             items, seeded = seed_initial_favorites(session_id, prefer_cuda=prefer_cuda)
         else:
             items, seeded = favorite_store.list_favorites(session_id), False
+        for item in items:
+            # Older favorites predate artist identifiers and geographic sources.
+            try:
+                catalog_item = _mainline_catalog(storage).track(str(item.get("track_id") or item.get("id") or ""))
+                for key in (
+                    "artist_id",
+                    "country",
+                    "catalog_country",
+                    "country_source",
+                    "city",
+                    "city_labels",
+                    "lat",
+                    "lng",
+                    "location_precision",
+                    "location_relation",
+                    "location_source_url",
+                    "location_place_url",
+                ):
+                    if key in catalog_item:
+                        item[key] = catalog_item[key]
+            except (KeyError, ValueError, FileNotFoundError):
+                pass
+            apply_artist_location(item, storage.root)
+            apply_description_translations(item, storage.root)
         return {
             "ok": True,
             "session_id": session_id,
@@ -1372,6 +1507,8 @@ def create_app() -> FastAPI:
     @app.post("/api/mainline/recommend")
     def api_mainline_recommend(req: MainlineRecommendRequest, request: Request):
         _require_worker_token(request)
+        if _env_bool("ECHO_PUBLIC_MODE") and (req.k > 20 or req.recall_k > 1500 or len(req.seed_track_ids) > 20):
+            raise HTTPException(status_code=400, detail="Use up to 20 results, 1500 recall candidates and 20 seeds")
         if _mainline_worker_url():
             return _hydrate_worker_mainline_metadata(
                 _proxy_worker_json("/api/mainline/recommend", req.dict()),
@@ -1394,6 +1531,7 @@ def create_app() -> FastAPI:
         )
         try:
             platform = get_mainline_platform(storage, prefer_cuda=req.prefer_cuda, **_mainline_platform_paths())
+            app.state.recommendation_state = "ready"
             return platform.recommend(
                 seed_track_ids=seed_track_ids,
                 seed_culture=req.seed_culture,
@@ -1460,7 +1598,7 @@ def create_app() -> FastAPI:
         }
 
     @app.post("/api/mainline/upload_recommend")
-    async def api_mainline_upload_recommend(
+    def api_mainline_upload_recommend(
         request: Request,
         file: UploadFile = File(...),
         title: str | None = Form(default=None),
@@ -1491,11 +1629,18 @@ def create_app() -> FastAPI:
         compressed_dir = storage.ensure_dir("uploads/mainline/compressed")
         dest = (raw_dir / saved_name).resolve()
         max_bytes = 200 * 1024 * 1024
-        content = await file.read()
+        # Run probing/FFmpeg/model inference in the thread pool, not the event loop.
+        # Read one bounded payload so a chunked oversized upload cannot exhaust memory.
+        content = file.file.read(max_bytes + 1)
+        file.file.close()
         if not content:
             raise HTTPException(status_code=400, detail="empty upload")
         if len(content) > max_bytes:
             raise HTTPException(status_code=413, detail="uploaded audio is larger than 200MB")
+        if not (0 < max_seconds <= 60 and 1 <= window_count <= 3 and 1 <= k <= 20 and 10 <= recall_k <= 1500):
+            raise HTTPException(
+                status_code=400, detail="Use up to 60 seconds, 3 windows, 20 results and 1500 recall candidates"
+            )
         upload_embedding_provider = _upload_embedding_provider()
         if upload_embedding_provider not in {"culturemert", "gemini"}:
             raise HTTPException(
@@ -1719,11 +1864,7 @@ def create_app() -> FastAPI:
                 status_code=400,
                 detail="Kimi API key is not configured. Set it in settings.html, KIMI_API_KEY, or configs/secrets/kimi.local.json.",
             )
-        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get(
-            "endpoint", "https://api.moonshot.cn/v1/chat/completions"
-        )
-        if not endpoint.startswith("https://"):
-            raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+        endpoint = _kimi_request_endpoint(req, local)
         model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
         payload = _kimi_request_payload(req, model)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -1788,11 +1929,7 @@ def create_app() -> FastAPI:
                 status_code=400,
                 detail="Kimi API key is not configured. Set it in settings.html, KIMI_API_KEY, or configs/secrets/kimi.local.json.",
             )
-        endpoint = (req.endpoint.strip() if req.endpoint else "") or local.get(
-            "endpoint", "https://api.moonshot.cn/v1/chat/completions"
-        )
-        if not endpoint.startswith("https://"):
-            raise HTTPException(status_code=400, detail="Kimi endpoint must use https")
+        endpoint = _kimi_request_endpoint(req, local)
         model = (req.model.strip() if req.model else "") or local.get("model", "kimi-k2.6")
         body = json.dumps(_kimi_request_payload(req, model, stream=True), ensure_ascii=False).encode("utf-8")
 
