@@ -1,0 +1,23 @@
+[Unit]
+Description=Echo exhibition read-only cloud catalog
+After=network.target
+
+[Service]
+User=echo
+Group=echo
+WorkingDirectory=/srv/echo-exhibition/current
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/echo/.venv/bin/python -m uvicorn edge_app:app --host 127.0.0.1 --port 18030 --proxy-headers --forwarded-allow-ips 127.0.0.1 --limit-concurrency 128 --timeout-keep-alive 15
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=900M
+TasksMax=80
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

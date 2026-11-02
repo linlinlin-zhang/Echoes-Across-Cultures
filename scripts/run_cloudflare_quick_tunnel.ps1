@@ -2,6 +2,7 @@ param(
     [int]$Port = 18011,
     [string]$HostName = "127.0.0.1",
     [string]$Protocol = "http2",
+    [string]$ProxyUrl = "",
     [switch]$UseWsl
 )
 
@@ -15,6 +16,30 @@ function Test-CloudflaredExecutable {
     } catch {
         return $false
     }
+}
+
+function Install-WindowsCloudflared {
+    param([string]$Path)
+
+    $dir = Split-Path -Parent $Path
+    if (-not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    }
+
+    $downloadUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+    $tmpPath = "$Path.download"
+    if (Test-Path $tmpPath) {
+        Remove-Item -Force $tmpPath
+    }
+
+    Write-Host "Downloading Windows cloudflared to $Path"
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $tmpPath -UseBasicParsing
+    Move-Item -Force $tmpPath $Path
+
+    if (-not (Test-CloudflaredExecutable $Path)) {
+        throw "Downloaded cloudflared is still unusable: $Path"
+    }
+    return $Path
 }
 
 function Convert-WindowsPathToWslPath {
@@ -44,6 +69,11 @@ function Invoke-WslTunnel {
         "PORT='$Port'",
         "PROTOCOL='$Protocol'"
     )
+    if ($ProxyUrl) {
+        $envParts += "HTTPS_PROXY='$ProxyUrl'"
+        $envParts += "HTTP_PROXY='$ProxyUrl'"
+        $envParts += "ALL_PROXY='$ProxyUrl'"
+    }
     if ($HostName -and $HostName -notin @("127.0.0.1", "localhost")) {
         $envParts += "HOST_NAME='$HostName'"
     } else {
@@ -75,6 +105,14 @@ if (-not $UseWsl) {
         }
         Write-Warning "Ignoring unusable cloudflared executable: $candidate"
     }
+
+    if (-not $cloudflared) {
+        try {
+            $cloudflared = Install-WindowsCloudflared $repoCloudflared
+        } catch {
+            Write-Warning $_.Exception.Message
+        }
+    }
 }
 
 if (-not $cloudflared) {
@@ -85,5 +123,11 @@ $target = "http://$HostName`:$Port"
 Write-Host "Starting Cloudflare Quick Tunnel for $target"
 Write-Host "Copy the generated https://*.trycloudflare.com URL into ECHO_MAINLINE_WORKER_URL on the cloud server."
 Write-Host "Using cloudflared: $cloudflared"
+if ($ProxyUrl) {
+    Write-Host "Using proxy: $ProxyUrl"
+    $env:HTTPS_PROXY = $ProxyUrl
+    $env:HTTP_PROXY = $ProxyUrl
+    $env:ALL_PROXY = $ProxyUrl
+}
 
 & $cloudflared tunnel --protocol $Protocol --url $target
