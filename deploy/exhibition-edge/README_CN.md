@@ -103,3 +103,5 @@ python3 install_release.py exhibition-edge.tar.gz --sha256 <打包脚本输出�
 本轮测试结果及已知限制见 [2026-11-02 展览自检](../ssh-reverse-tunnel/EXHIBITION_CHECK_2026-11-02_CN.md)。
 
 配置依据：[Nginx 限速](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html)、[代理重试规则](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream)、[OpenSSH PermitListen](https://man.openbsd.org/sshd_config#PermitListen)、[HTTPX HTTP/2](https://www.python-httpx.org/http2/)。
+
+性能与仓库上传更新见 [2026-11-02 性能记录](../ssh-reverse-tunnel/PERFORMANCE_AND_PUBLICATION_2026-11-02_CN.md)。打包现在会自动为公共资源生成内容哈希 URL 和 gzip 副本；Nginx 保持 HTML 重新验证、公共哈希资源长期缓存，私人接口继续不缓存。

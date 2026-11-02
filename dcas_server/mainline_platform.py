@@ -165,6 +165,7 @@ class MainlineRecommendationPlatform:
         self.track_id_to_idx = {str(tid): int(i) for i, tid in enumerate(self.tracks.track_id.tolist())}
         self.metadata_mtime_ns = self.metadata_path.stat().st_mtime_ns
         self.metadata_by_id, self.metadata_fields = self._load_metadata(self.metadata_path)
+        self._low_signal_cache: dict[int, bool] = {}
         self.culture_counts = Counter(str(c) for c in self.tracks.culture.tolist())
         self.source_counts = Counter(
             str(s) for s in (self.tracks.source_dataset.tolist() if self.tracks.source_dataset is not None else [])
@@ -182,6 +183,7 @@ class MainlineRecommendationPlatform:
             return
         self.metadata_mtime_ns = mtime_ns
         self.metadata_by_id, self.metadata_fields = self._load_metadata(self.metadata_path)
+        self._low_signal_cache.clear()
         self.loaded_at = time.time()
 
     def status(self) -> dict[str, Any]:
@@ -274,7 +276,10 @@ class MainlineRecommendationPlatform:
 
         if query:
             keep.sort(
-                key=lambda idx: query_rank(self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {}), query)
+                key=lambda idx: query_rank(
+                    self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {}),
+                    query,
+                )
             )
 
         items = [self._track_payload(idx) for idx in keep[:limit]]
@@ -1111,6 +1116,9 @@ class MainlineRecommendationPlatform:
         return warnings
 
     def _is_low_signal(self, idx: int) -> bool:
+        idx = int(idx)
+        if idx in self._low_signal_cache:
+            return self._low_signal_cache[idx]
         row = self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {})
         text = " ".join(
             [
@@ -1120,7 +1128,9 @@ class MainlineRecommendationPlatform:
                 _norm_key(row.get("tags")),
             ]
         )
-        return any(term in text for term in LOW_SIGNAL_TERMS)
+        result = any(term in text for term in LOW_SIGNAL_TERMS)
+        self._low_signal_cache[idx] = result
+        return result
 
     def _matches_query(self, idx: int, query_terms: list[str]) -> bool:
         row = self.metadata_by_id.get(str(self.tracks.track_id[int(idx)]), {})

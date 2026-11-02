@@ -110,34 +110,75 @@ class LightweightMainlineCatalog:
             raise FileNotFoundError(f"mainline metadata missing: {self.metadata_path}")
         self.loaded_at = time.time()
         self.metadata_mtime_ns = self.metadata_path.stat().st_mtime_ns
-        self.rows = self._load_rows()
-        self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
-        self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
+        self._metadata_lock = threading.RLock()
+        self._install_rows(self._load_rows())
+
+    def _install_rows(self, rows: list[dict[str, Any]]) -> None:
+        # Build immutable filter pools once per metadata version. User-supplied
+        # filter strings never add cache entries, so cache size stays bounded.
+        pools: dict[tuple[str, str, bool], list[dict[str, Any]]] = {}
+        query_text = {}
+        for row in rows:
+            culture = _clean(row.get("culture"))
+            source = _clean(row.get("source_dataset"))
+            low_signal = self._is_low_signal(row)
+            query_text[id(row)] = _norm_key(
+                " ".join(
+                    _clean(row.get(k))
+                    for k in (
+                        "title",
+                        "artist",
+                        "album",
+                        "label",
+                        "tags",
+                        "culture",
+                        "source_dataset",
+                        "country",
+                    )
+                )
+            )
+            for culture_key in {"", culture}:
+                for source_key in {"", source}:
+                    pools.setdefault((culture_key, source_key, False), []).append(row)
+                    if not low_signal:
+                        pools.setdefault((culture_key, source_key, True), []).append(row)
+        description_count = sum(bool(_clean(row.get("description"))) for row in rows)
+        coverage = {
+            "description_rows": description_count,
+            "missing_description_rows": len(rows) - description_count,
+            "album_description_rows": sum(bool(_clean(row.get("album_description"))) for row in rows),
+            "tagged_rows": sum(bool(_clean(row.get("tags"))) for row in rows),
+            "description_ratio": description_count / max(1, len(rows)),
+            "description_sources": dict(
+                sorted(
+                    Counter(
+                        _clean(row.get("description_source")) or "unknown"
+                        for row in rows
+                        if _clean(row.get("description"))
+                    ).items()
+                )
+            ),
+        }
+        self.rows = rows
+        self.by_id = {str(row.get("track_id")): row for row in rows if _clean(row.get("track_id"))}
+        self.culture_counts = Counter(_clean(row.get("culture")) for row in rows if _clean(row.get("culture")))
         self.source_counts = Counter(
-            _clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset"))
+            _clean(row.get("source_dataset")) for row in rows if _clean(row.get("source_dataset"))
         )
+        self._search_index = (pools, query_text)
+        self._coverage = coverage
 
     def _refresh_metadata_if_needed(self) -> None:
-        mtime_ns = self.metadata_path.stat().st_mtime_ns
-        if mtime_ns == self.metadata_mtime_ns:
-            return
-        self.loaded_at = time.time()
-        self.metadata_mtime_ns = mtime_ns
-        self.rows = self._load_rows()
-        self.by_id = {str(row.get("track_id")): row for row in self.rows if _clean(row.get("track_id"))}
-        self.culture_counts = Counter(_clean(row.get("culture")) for row in self.rows if _clean(row.get("culture")))
-        self.source_counts = Counter(
-            _clean(row.get("source_dataset")) for row in self.rows if _clean(row.get("source_dataset"))
-        )
+        with self._metadata_lock:
+            mtime_ns = self.metadata_path.stat().st_mtime_ns
+            if mtime_ns == self.metadata_mtime_ns:
+                return
+            self._install_rows(self._load_rows())
+            self.metadata_mtime_ns = mtime_ns
+            self.loaded_at = time.time()
 
     def status(self) -> dict[str, Any]:
         self._refresh_metadata_if_needed()
-        description_count = sum(1 for row in self.rows if _clean(row.get("description")))
-        album_description_count = sum(1 for row in self.rows if _clean(row.get("album_description")))
-        tag_count = sum(1 for row in self.rows if _clean(row.get("tags")))
-        description_sources = Counter(
-            _clean(row.get("description_source")) or "unknown" for row in self.rows if _clean(row.get("description"))
-        )
         return {
             "ok": True,
             "mode": "lightweight_catalog",
@@ -146,12 +187,8 @@ class LightweightMainlineCatalog:
             "n_tracks": int(len(self.rows)),
             "n_metadata_rows": int(len(self.rows)),
             "metadata_coverage": {
-                "description_rows": int(description_count),
-                "missing_description_rows": int(max(0, len(self.rows) - description_count)),
-                "album_description_rows": int(album_description_count),
-                "tagged_rows": int(tag_count),
-                "description_ratio": float(description_count / max(1, len(self.rows))),
-                "description_sources": dict(sorted(description_sources.items())),
+                **self._coverage,
+                "description_sources": dict(self._coverage["description_sources"]),
             },
             "cultures": dict(sorted(self.culture_counts.items())),
             "sources": dict(sorted(self.source_counts.items())),
@@ -185,17 +222,13 @@ class LightweightMainlineCatalog:
         query = _norm_key(q)
         query_terms = [term for term in query.split(" ") if term]
 
-        keep: list[dict[str, Any]] = []
-        for row in self.rows:
-            if culture_key and _clean(row.get("culture")) != culture_key:
-                continue
-            if source_key and _clean(row.get("source_dataset")) != source_key:
-                continue
-            if exclude_low_signal and self._is_low_signal(row):
-                continue
-            if query_terms and not self._matches_query(row, query_terms):
-                continue
-            keep.append(row)
+        pools, query_text = self._search_index
+        eligible = pools.get((culture_key, source_key, bool(exclude_low_signal)), ())
+        keep = (
+            [row for row in eligible if all(term in query_text[id(row)] for term in query_terms)]
+            if query_terms
+            else list(eligible)
+        )
 
         if random_seed is not None:
             random.Random(int(random_seed)).shuffle(keep)
