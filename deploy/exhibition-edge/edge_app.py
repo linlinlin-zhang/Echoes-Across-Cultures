@@ -65,6 +65,7 @@ def listing(
     source_dataset: str | None = None,
     q: str | None = Query(default=None, max_length=200),
     limit: int = Query(default=24, ge=1, le=200),
+    offset: int = Query(default=0, ge=0, le=30000),
     random_seed: int | None = 42,
     exclude_low_signal: bool = True,
 ):
@@ -73,6 +74,7 @@ def listing(
         source_dataset=source_dataset,
         q=q,
         limit=limit,
+        offset=offset,
         random_seed=random_seed,
         exclude_low_signal=exclude_low_signal,
     )

@@ -14,7 +14,7 @@ from typing import Any, Iterator
 from urllib.parse import urlencode, urljoin
 from uuid import uuid4
 
-from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -1429,6 +1429,7 @@ def create_app() -> FastAPI:
         source_dataset: str | None = None,
         q: str | None = None,
         limit: int = 24,
+        offset: int = Query(default=0, ge=0, le=30000),
         random_seed: int | None = 42,
         exclude_low_signal: bool = True,
         prefer_cuda: bool = False,
@@ -1440,6 +1441,7 @@ def create_app() -> FastAPI:
                 source_dataset=source_dataset,
                 q=q,
                 limit=limit,
+                offset=offset,
                 random_seed=random_seed,
                 exclude_low_signal=exclude_low_signal,
             )

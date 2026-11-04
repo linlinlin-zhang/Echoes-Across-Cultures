@@ -1,4 +1,4 @@
-// Regression checks for translated chart text and the library picker. No paid APIs.
+// Regression checks for translated chart text and the original repository library picker. No paid APIs.
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -28,7 +28,7 @@ async function main() {
         localStorage.setItem('echo-music-station-state',JSON.stringify({version:1,
           activeRecommendations:items,currentTrack:items[0],primaryTrack:items[0]}));
       },{language,fixtures});
-      let failNext = false;
+
       await context.route('**/api/**',async route=>{
         const url = new URL(route.request().url());
         if(url.pathname.startsWith('/api/ai/')&&route.request().method()==='POST') {
@@ -36,9 +36,12 @@ async function main() {
         }
         if(real&&!url.pathname.includes('/tracks/fixture'))return route.continue();
         if(url.pathname.endsWith('/catalog')) {
-          if(failNext) {failNext=false;return route.fulfill({status:503,json:{detail:'Temporary test failure'}});}
           const q=url.searchParams.get('q')||'';
-          return route.fulfill({json:{ok:true,items:q==='nothing'?[]:[{...track,title:q||track.title}],total_available:q==='nothing'?0:30000}});
+          if(q==='failure')return route.fulfill({status:503,json:{detail:'Temporary test failure'}});
+          const offset=Number(url.searchParams.get('offset')||0),limit=Number(url.searchParams.get('limit')||24);
+          const all=Array.from({length:q==='nothing'?0:60},(_,i)=>({...track,track_id:`catalog_${i}`,title:`${q||'Library song'} ${i}`}));
+          const items=all.slice(offset,offset+limit),next=offset+items.length;
+          return route.fulfill({json:{ok:true,items,total_available:all.length,offset,next_offset:next,has_more:next<all.length}});
         }
         if(url.pathname.includes('/mainline/status'))return route.fulfill({json:{ok:true,n_tracks:30000}});
         if(url.pathname.includes('/favorites'))return route.fulfill({json:{ok:true,items:[]}});
@@ -63,27 +66,39 @@ async function main() {
           return result;
         });
         assert.deepEqual(failures,[],`${language}/${width}: chart text must fit`);
-        assert(await page.locator('#catalog-button').isVisible());
-        await page.locator('#catalog-button').click();
-        await page.waitForFunction(()=>document.querySelector('.catalog-results button')||document.querySelector('[data-retry]:not([hidden])'));
-        assert(await page.locator('.catalog-results button').count()>0,'Catalog must load');
-        assert(await page.locator('[data-retry]').isHidden(),'Retry control only appears after a failure');
-        const box=await page.locator('dialog').boundingBox();
+        assert(await page.locator('#library-picker-button').isVisible());
+        await page.locator('#library-picker-button').click();
+        await page.waitForSelector('.library-result');
+        assert(await page.locator('.library-result').count()>0,'Catalog must load');
+        const box=await page.locator('.library-dialog').boundingBox();
         assert(box.x>=0&&box.x+box.width<=width+1,'Picker must fit viewport');
-        assert.equal(await page.evaluate(()=>document.activeElement.id),'catalog-query');
+        await page.waitForFunction(()=>document.activeElement.id==='library-search-input');
+        if(language==='en'&&[390,1440].includes(width))await page.locator('#library-picker').screenshot({path:`${out}/original-library-${width}.png`});
         await page.keyboard.press('Escape');
-        assert.equal(await page.locator('dialog[open]').count(),0);
+        assert(await page.locator('#library-picker').isHidden());
         report.checks.push(`${language}/${width}: chart labels and catalog modal fit`);
         if(language==='en'&&[390,1440].includes(width))await page.locator('#recommendation-insights').screenshot({path:`${out}/charts-${width}.png`});
       }
-      await page.locator('#catalog-button').click();
-      const input=page.locator('#catalog-query');
+      if(real&&language==='en') {
+        await page.locator('#library-picker-button').click();
+        const before=await page.locator('.library-result').count();
+        await page.locator('#library-results').evaluate(n=>{n.scrollTop=n.scrollHeight;n.dispatchEvent(new Event('scroll'));});
+        await page.waitForFunction(before=>document.querySelectorAll('.library-result').length>before,before);
+        await page.locator('#library-picker-close').click();
+        const first=await (await page.request.get(base+'/api/mainline/catalog?limit=24&offset=0&random_seed=42')).json();
+        const second=await (await page.request.get(base+'/api/mainline/catalog?limit=24&offset=24&random_seed=42')).json();
+        assert.equal(first.next_offset,24);assert.equal(second.offset,24);
+        assert.equal(new Set([...first.items,...second.items].map(x=>x.track_id)).size,48);
+        report.checks.push('live: original infinite scroll and non-repeating catalog pagination');
+      }
+      await page.locator('#library-picker-button').click();
+      const input=page.locator('#library-search-input');
       const query=real?'Lynyrd Skynyrd':'Selected song';
-      await input.fill(query);await page.locator('.catalog-search').evaluate(form=>form.requestSubmit());
-      await page.waitForFunction(q=>document.querySelector('.catalog-results')?.textContent.toLowerCase().includes(q.toLowerCase()),query);
-      const selectedTitle=await page.locator('.catalog-results button strong').first().innerText();
-      await page.locator('.catalog-results button').first().click();
-      assert.equal(await page.locator('dialog[open]').count(),0);
+      await input.fill(query);await page.locator('#library-search-form').evaluate(form=>form.requestSubmit());
+      await page.waitForFunction(q=>document.querySelector('#library-results')?.textContent.toLowerCase().includes(q.toLowerCase()),query);
+      const selectedTitle=await page.locator('.library-result-title').first().innerText();
+      await page.locator('.library-result').first().click();
+      assert(await page.locator('#library-picker').isHidden());
       assert.equal(await page.locator('#top-title').innerText(),selectedTitle,'Selecting library song must update player');
       assert.equal(await page.locator('.rec-card[data-rec-index]').count(),0,'Selecting a new seed must clear old recommendations');
       report.checks.push(`${language}: search and select new recommendation seed`);
@@ -97,22 +112,30 @@ async function main() {
         const rec=await response;assert.equal(rec.status(),200);
         assert(audio.includes(rec.request().postDataJSON().seed_track_id));
         await page.waitForSelector('.rec-card[data-rec-index]');
-        assert(await page.locator('#catalog-button').isEnabled());
+        assert(await page.locator('#library-picker-button').isEnabled());
         report.checks.push('live: chosen catalog song audio Range and real GPU recommendations');
       }
       if(!real) {
-        await page.locator('#catalog-button').click();await input.fill('nothing');
-        await page.waitForFunction(()=>document.querySelector('.catalog-results').children.length===0&&document.querySelector('.catalog-status').textContent===EchoI18n.t('music.catalog.empty'));
-        await input.fill('retry');failNext=true;
-        await page.waitForSelector('[data-retry]:not([hidden])');
-        await page.locator('[data-retry]').click();await page.waitForSelector('.catalog-results button');
-        const searchBefore=await page.locator('.catalog-results').innerText();
-        await page.locator('[data-shuffle]').click();await page.waitForSelector('.catalog-results button');
-        assert.equal(await page.locator('.catalog-results').innerText(),searchBefore);
+        await page.locator('#library-picker-button').click();
+        await input.fill('browse');await page.locator('#library-search-form').evaluate(form=>form.requestSubmit());
+        await page.waitForFunction(()=>document.querySelectorAll('.library-result').length>=24);
+        await page.locator('#library-results').evaluate(n=>{n.scrollTop=n.scrollHeight;n.dispatchEvent(new Event('scroll'));});
+        await page.waitForFunction(()=>document.querySelectorAll('.library-result').length>=48);
+        const ids=await page.locator('.library-result-title').allTextContents();
+        assert.equal(new Set(ids).size,ids.length,'Scroll pages must not repeat songs');
+        report.checks.push(`${language}: original cover/metadata list and incremental pagination`);
+        await page.locator('#library-picker-close').click();
+        await page.locator('#library-picker-button').click();await input.fill('nothing');
+        await page.locator('#library-search-form').evaluate(form=>form.requestSubmit());
+        await page.waitForFunction(()=>document.querySelector('#library-status').textContent===EchoI18n.t('music.library.empty'));
+        await input.fill('failure');await page.locator('#library-search-form').evaluate(form=>form.requestSubmit());
+        await page.waitForFunction(()=>document.querySelector('#library-status').textContent===EchoI18n.t('music.library.failed'));
+        await input.fill('retry');await page.locator('#library-search-form').evaluate(form=>form.requestSubmit());
+        await page.waitForSelector('.library-result');
         await page.evaluate(()=>EchoI18n.setLanguage('en'));
-        assert.equal(await page.locator('#catalog-heading').innerText(),'Choose from library');
-        await page.locator('[data-close]').click();
-        report.checks.push(`${language}: empty search, recoverable error, shuffle and live translation`);
+        assert.equal(await page.locator('#library-picker-title').innerText(),'Choose From Library');
+        await page.locator('#library-picker-close').click();
+        report.checks.push(`${language}: empty search, failure recovery and live translation`);
       }
       await context.close();
     }

@@ -212,11 +212,13 @@ class LightweightMainlineCatalog:
         source_dataset: str | None = None,
         q: str | None = None,
         limit: int = 24,
+        offset: int = 0,
         random_seed: int | None = 42,
         exclude_low_signal: bool = True,
     ) -> dict[str, Any]:
         self._refresh_metadata_if_needed()
         limit = max(1, min(200, int(limit)))
+        offset = max(0, int(offset))
         culture_key = _clean(culture)
         source_key = _clean(source_dataset)
         query = _norm_key(q)
@@ -236,6 +238,8 @@ class LightweightMainlineCatalog:
         if query:
             keep.sort(key=lambda row: query_rank(row, query))
 
+        page = keep[offset : offset + limit]
+        next_offset = offset + len(page)
         return {
             "ok": True,
             "mode": "lightweight_catalog",
@@ -244,11 +248,15 @@ class LightweightMainlineCatalog:
                 "source_dataset": source_key,
                 "q": query,
                 "limit": limit,
+                "offset": offset,
                 "random_seed": random_seed,
                 "exclude_low_signal": bool(exclude_low_signal),
             },
             "total_available": int(len(keep)),
-            "items": [self._track_payload(row) for row in keep[:limit]],
+            "offset": offset,
+            "next_offset": next_offset,
+            "has_more": next_offset < len(keep),
+            "items": [self._track_payload(row) for row in page],
         }
 
     def random_track(

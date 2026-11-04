@@ -1,5 +1,7 @@
 # 2026-11-04 音乐台选曲与多语言自检
 
+更正：本记录中的新增选曲弹窗误解了用户意图，随后已撤下并恢复仓库原组件。原因与最终实现见 [原选曲界面恢复记录](LIBRARY_RESTORATION_2026-11-04_CN.md)。以下保留当时检查记录。
+
 入口：https://resonance.website/music.html 。本次在已发布的展览版本上修复网页，并继续上传到 `codex/exhibition-reliability-performance` 分支；未合并主分支或覆盖其他远程分支的开发。
 
 ## 修复结果

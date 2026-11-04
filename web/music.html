@@ -248,6 +248,157 @@
       animation: record-pulse 1.2s ease-in-out infinite;
     }
 
+    .library-picker {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 1.25rem;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(12px);
+    }
+
+    .library-picker[hidden] {
+      display: none;
+    }
+
+    .library-dialog {
+      width: min(860px, 100%);
+      max-height: min(760px, calc(100vh - 2.5rem));
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      border: 1px solid var(--ink);
+      background: #ffffff;
+      box-shadow: 0 1.4rem 4rem rgba(17, 17, 17, 0.12);
+    }
+
+    .library-head,
+    .library-search,
+    .library-status {
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .library-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .library-head h2 {
+      font-size: 1.45rem;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .library-search {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.7rem;
+    }
+
+    .library-search input {
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.68rem 0.85rem;
+      border: 1px solid var(--line-strong);
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+
+    .library-search input:focus {
+      border-color: var(--ink);
+    }
+
+    .library-status {
+      position: relative;
+      z-index: 1;
+      min-height: 3.2rem;
+      background: #ffffff;
+    }
+
+    .library-results {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .library-load-marker {
+      padding: 0.9rem 0.2rem 1.1rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    .library-result {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) auto;
+      gap: 0.9rem;
+      align-items: center;
+      padding: 0.92rem 1.15rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      transition: background 160ms ease;
+    }
+
+    .library-result:hover,
+    .library-result:focus-visible {
+      background: var(--soft);
+      outline: none;
+    }
+
+    .library-result-cover {
+      width: 64px;
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      object-fit: cover;
+      background:
+        linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(183, 39, 39, 0.09)),
+        #ffffff;
+    }
+
+    .library-result-cover.is-empty {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      text-transform: uppercase;
+    }
+
+    .library-result-main {
+      display: grid;
+      gap: 0.36rem;
+      min-width: 0;
+    }
+
+    .library-result-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1.02rem;
+    }
+
+    .library-result-meta,
+    .library-status {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .library-result-action {
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     @keyframes record-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -2118,6 +2269,28 @@
         max-width: 100%;
       }
 
+    .library-picker {
+        padding: 0.75rem;
+        align-items: end;
+      }
+
+    .library-dialog {
+        max-height: min(82vh, 720px);
+      }
+
+    .library-search,
+    .library-result {
+        grid-template-columns: 1fr;
+      }
+
+    .library-result {
+        align-items: start;
+      }
+
+    .library-result-cover {
+        width: 56px;
+          }
+
       .rec-card-main {
         grid-template-columns: 56px minmax(0, 1fr);
       }
@@ -2127,7 +2300,6 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="catalog-picker.css">
 </head>
 <body data-i18n-title="music.title">
   <header class="station-header">
@@ -2152,9 +2324,9 @@
       </section>
 
       <div class="top-actions">
-        <button class="pill" id="catalog-button" type="button" aria-haspopup="dialog" data-i18n="music.catalog.choose">选择曲库歌曲</button>
         <button class="pill record-btn" id="record-button" type="button" data-i18n="music.record">录制</button>
         <label class="pill" for="music-upload" data-i18n="music.upload">上传音乐</label>
+        <button class="pill" id="library-picker-button" type="button" data-i18n="music.library.open">曲库选择</button>
         <input class="upload-input" id="music-upload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma">
       </div>
     </div>
@@ -2167,6 +2339,24 @@
       </nav>
     </div>
   </header>
+
+  <div class="library-picker" id="library-picker" hidden>
+    <section class="library-dialog" role="dialog" aria-modal="true" aria-labelledby="library-picker-title">
+      <div class="library-head">
+        <div>
+          <div class="meta-label" data-i18n="music.library.meta">曲库导入</div>
+          <h2 id="library-picker-title" data-i18n="music.library.title">选择曲库歌曲</h2>
+        </div>
+        <button class="pill" id="library-picker-close" type="button" data-i18n="music.library.close">关闭</button>
+      </div>
+      <form class="library-search" id="library-search-form">
+        <input id="library-search-input" type="search" autocomplete="off" data-i18n-placeholder="music.library.placeholder" placeholder="搜索歌名、歌手、流派、国家或地域">
+        <button class="pill" id="library-search-submit" type="submit" data-i18n="music.library.search">搜索</button>
+      </form>
+      <div class="library-status" id="library-status" data-i18n="music.library.ready">输入关键词或直接浏览曲库。</div>
+      <div class="library-results" id="library-results" role="listbox" aria-label="曲库搜索结果" data-i18n-aria-label="music.library.resultsAria"></div>
+    </section>
+  </div>
 
   <main class="station-shell">
     <section class="console" aria-label="音乐播放与地图" data-i18n-aria-label="music.aria.console">
@@ -2292,7 +2482,6 @@
   <script src="geo-data.js?v=20261101b"></script>
   <script src="geo.js?v=20261101b"></script>
   <script src="metadata-i18n.js?v=20261101"></script>
-  <script src="catalog-picker.js"></script>
   <script src="favorite-store.js?v=20261101b"></script>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -2538,6 +2727,25 @@
       return `${apiBase}${value.startsWith("/") ? "" : "/"}${value}`;
     }
 
+    function normalizeMediaUrl(path) {
+      const value = String(path || "").trim();
+      if (!value) return "";
+      try {
+        const url = new URL(value, window.location.origin);
+        if (url.pathname.endsWith("/api/files/download") && url.searchParams.has("path")) {
+          const filePath = url.searchParams.get("path") || "";
+          url.search = "";
+          url.searchParams.set("path", filePath);
+        }
+        if (url.origin === window.location.origin) {
+          return `${url.pathname}${url.search}${url.hash}`;
+        }
+        return url.href;
+      } catch (_) {
+        return resolveApiUrl(value);
+      }
+    }
+
     function cleanMetaText(value) {
       const text = String(value ?? "").trim();
       if (!text) return "";
@@ -2714,6 +2922,14 @@
       readoutCatalog: document.getElementById("readout-catalog"),
       upload: document.getElementById("music-upload"),
       recordButton: document.getElementById("record-button"),
+      libraryButton: document.getElementById("library-picker-button"),
+      libraryPicker: document.getElementById("library-picker"),
+      libraryClose: document.getElementById("library-picker-close"),
+      librarySearchForm: document.getElementById("library-search-form"),
+      librarySearchInput: document.getElementById("library-search-input"),
+      librarySearchSubmit: document.getElementById("library-search-submit"),
+      libraryStatus: document.getElementById("library-status"),
+      libraryResults: document.getElementById("library-results"),
       audio: document.getElementById("audio-player"),
       playButton: document.getElementById("play-button"),
       prevButton: document.getElementById("prev-button"),
@@ -2746,6 +2962,17 @@
     let uploadedAudioFile = null;
     let mainlineStatus = null;
     let recommendationsPersistable = false;
+    let librarySearchFailed = false;
+    let librarySearchResults = [];
+    let librarySearchBusy = false;
+    let librarySearchAbort = null;
+    let librarySearchQuery = "";
+    let librarySearchOffset = 0;
+    let libraryHasMore = false;
+    let libraryTotalAvailable = 0;
+    let libraryBrowseSeed = Date.now() % 1000000;
+    const libraryPageSize = 24;
+
 
     function formatCount(value) {
       return Number(value || 0).toLocaleString(window.EchoI18n?.currentLanguage || "zh-CN");
@@ -4439,11 +4666,200 @@ Guidelines:
       });
     }
 
+    function openLibraryPicker() {
+      els.libraryPicker.hidden = false;
+      document.body.classList.add("is-library-open");
+      window.setTimeout(() => els.librarySearchInput?.focus(), 40);
+      if (!librarySearchResults.length) {
+        searchLibrary("", { reset: true });
+      }
+    }
+
+    function closeLibraryPicker() {
+      els.libraryPicker.hidden = true;
+      document.body.classList.remove("is-library-open");
+      els.libraryButton.focus();
+    }
+
+    function libraryResultMeta(track) {
+      return [
+        track.artist,
+        displayGenre(track),
+        formatOrigin(track),
+        displaySource(track)
+      ].map(cleanMetaText).filter(Boolean).join(" / ");
+    }
+
+    function libraryScrollHintText() {
+      if (librarySearchBusy && librarySearchResults.length) {
+        return t("music.library.loadingMore");
+      }
+      if (libraryHasMore) {
+        return t("music.library.scrollMore");
+      }
+      if (librarySearchResults.length) {
+        return t("music.library.allShown");
+      }
+      return "";
+    }
+
+    function updateLibraryStatus() {
+      if (!els.libraryStatus) return;
+      if (librarySearchFailed) {
+        els.libraryStatus.textContent = t("music.library.failed");
+        return;
+      }
+      if (librarySearchBusy && !librarySearchResults.length) {
+        els.libraryStatus.textContent = librarySearchQuery
+          ? t("music.library.searching")
+          : t("music.library.browsing");
+        return;
+      }
+      if (librarySearchResults.length) {
+        els.libraryStatus.textContent = libraryScrollHintText();
+        return;
+      }
+      els.libraryStatus.textContent = librarySearchQuery ? t("music.library.empty") : t("music.library.ready");
+    }
+
+    function renderLibraryResults() {
+      if (!librarySearchResults.length) {
+        els.libraryResults.innerHTML = `
+          <div class="library-status">${escapeHtml(librarySearchBusy ? (librarySearchQuery ? t("music.library.searching") : t("music.library.browsing")) : t("music.library.empty"))}</div>
+        `;
+        return;
+      }
+      els.libraryResults.innerHTML = librarySearchResults.map((track, index) => {
+        const coverUrl = normalizeMediaUrl(track.coverArtUrl);
+        const cover = coverUrl
+          ? `<img class="library-result-cover" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(track.title)} ${t("music.cover.suffix")}" loading="lazy">`
+          : `<div class="library-result-cover is-empty" aria-hidden="true">ECHO</div>`;
+        return `
+          <button class="library-result" type="button" role="option" data-library-index="${index}">
+            ${cover}
+            <span class="library-result-main">
+              <span class="library-result-title">${escapeHtml(track.title)}</span>
+              <span class="library-result-meta">${escapeHtml(libraryResultMeta(track))}</span>
+            </span>
+            <span class="library-result-action">${t("music.library.choose")}</span>
+          </button>
+        `;
+      }).join("") + `
+        <div class="library-load-marker" aria-live="polite">${escapeHtml(libraryScrollHintText())}</div>
+      `;
+      els.libraryResults.querySelectorAll("[data-library-index]").forEach((button) => {
+        button.addEventListener("click", () => importLibraryTrack(Number(button.dataset.libraryIndex)));
+      });
+    }
+
+    function maybeLoadMoreLibraryResults() {
+      if (els.libraryPicker.hidden || librarySearchBusy || !libraryHasMore) return;
+      const el = els.libraryResults;
+      const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 180;
+      if (nearBottom) {
+        searchLibrary(librarySearchQuery, { append: true });
+      }
+    }
+
+    function maybeFillLibraryViewport() {
+      window.setTimeout(() => {
+        if (els.libraryPicker.hidden || librarySearchBusy || !libraryHasMore) return;
+        if (els.libraryResults.scrollHeight <= els.libraryResults.clientHeight + 24) {
+          searchLibrary(librarySearchQuery, { append: true });
+        }
+      }, 60);
+    }
+
+    async function searchLibrary(query = "", options = {}) {
+      const append = Boolean(options.append);
+      const reset = options.reset !== false && !append;
+      if (librarySearchBusy && librarySearchAbort) {
+        if (append) return;
+        librarySearchAbort.abort();
+      }
+      const text = String(query || "").trim();
+      if (reset) {
+        librarySearchQuery = text;
+        librarySearchOffset = 0;
+        libraryHasMore = false;
+        libraryTotalAvailable = 0;
+        libraryBrowseSeed = Date.now() % 1000000;
+        librarySearchResults = [];
+        els.libraryResults.scrollTop = 0;
+      }
+      librarySearchBusy = true;
+      librarySearchFailed = false;
+      const controller = new AbortController();
+      librarySearchAbort = controller;
+      els.librarySearchSubmit.classList.add("is-disabled");
+      updateLibraryStatus();
+      renderLibraryResults();
+      try {
+        const offset = append ? librarySearchOffset : 0;
+        const endpoint = text
+          ? `/api/mainline/catalog?q=${encodeURIComponent(text)}&limit=${libraryPageSize}&offset=${offset}&prefer_cuda=${apiPreferCuda}`
+          : `/api/mainline/catalog?limit=${libraryPageSize}&offset=${offset}&random_seed=${encodeURIComponent(libraryBrowseSeed)}&prefer_cuda=${apiPreferCuda}`;
+        const response = await fetch(endpoint, { signal: controller.signal });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`${response.status} ${errorText}`);
+        }
+        const data = await response.json();
+        if (librarySearchAbort !== controller) return;
+        const nextItems = (data.items || []).map((item, index) => trackFromApiItem(item, offset + index));
+        librarySearchResults = append ? [...librarySearchResults, ...nextItems] : nextItems;
+        libraryTotalAvailable = Number(data.total_available || librarySearchResults.length);
+        librarySearchOffset = Number(data.next_offset ?? (offset + nextItems.length));
+        libraryHasMore = Boolean(data.has_more ?? (librarySearchOffset < libraryTotalAvailable));
+        updateLibraryStatus();
+        renderLibraryResults();
+        maybeFillLibraryViewport();
+      } catch (error) {
+        if (librarySearchAbort !== controller || error.name === "AbortError") return;
+        librarySearchFailed = true;
+        if (!append) {
+          librarySearchResults = [];
+          libraryHasMore = false;
+          librarySearchOffset = 0;
+        }
+        els.libraryStatus.textContent = t("music.library.failed");
+        renderLibraryResults();
+      } finally {
+        if (librarySearchAbort === controller) {
+          librarySearchBusy = false;
+          librarySearchAbort = null;
+          els.librarySearchSubmit.classList.remove("is-disabled");
+          updateLibraryStatus();
+          renderLibraryResults();
+        }
+      }
+    }
+
+    function importLibraryTrack(index) {
+      const track = librarySearchResults[index];
+      if (!track) return;
+      if (currentTrack.fileObjectUrl && currentTrack.fileObjectUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(currentTrack.fileObjectUrl);
+      }
+      uploadedAudioFile = null;
+      uploadedAudioMeta = null;
+      recommendationsPersistable = false;
+      activeRecommendations = [];
+      recommendations = [];
+      clearMusicStationState();
+      primaryTrack = { ...track };
+      currentQueueIndex = 0;
+      selectTrack(primaryTrack, { autoplay: false });
+      setMapStatus("music.library.selected");
+      setMapMode("music.status.realLoaded");
+      closeLibraryPicker();
+    }
+
     let recommendBusy = false;
     async function startRecommendations() {
       if (recommendBusy) return;
       recommendBusy = true;
-      document.getElementById("catalog-button").disabled = true;
+      document.getElementById("library-picker-button").disabled = true;
       els.recommendButton.classList.add("is-running");
       els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
@@ -4563,7 +4979,7 @@ Guidelines:
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.classList.remove("is-disabled");
         recommendBusy = false;
-        document.getElementById("catalog-button").disabled = false;
+        document.getElementById("library-picker-button").disabled = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
         setMapStatus("music.status.connectionsActive", verifiedRecommendationCount(), data.embedding?.elapsed_seconds || null);
@@ -4582,7 +4998,7 @@ Guidelines:
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.classList.remove("is-disabled");
         recommendBusy = false;
-        document.getElementById("catalog-button").disabled = false;
+        document.getElementById("library-picker-button").disabled = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         setMapStatus("music.status.apiFallback");
         renderRecommendations();
@@ -5135,6 +5551,7 @@ Guidelines:
       setMapMode(els.mapMode.dataset.statusKey || "music.map.currentCenter");
       els.recommendButton.textContent = t(recommendBusy ? "music.recommend.running" : activeRecommendations.length ? "music.recommend.regenerate" : "music.recommend.start");
       renderAiMessages(); setAiBusy(aiBusy);
+      renderLibraryResults(); updateLibraryStatus();
       if (descriptionLanguageChanged) hydrateRecommendationDescriptions(activeRecommendations);
     });
     window.addEventListener("pagehide", () => {
@@ -5147,18 +5564,22 @@ Guidelines:
       persistLastStartupTrack();
       persistMusicStationState();
     });
-    window.EchoCatalogPicker.mount({
-      onSelect(item) {
-        recommendationsPersistable = false;
-        clearMusicStationState();
-        const track = trackFromApiItem(item);
-        primaryTrack = track;
-        activeRecommendations = [];
-        selectTrack(track, { autoplay: false });
-        setMapStatus("music.status.libraryConnected");
-        setMapMode("music.status.realLoaded");
+    els.libraryButton.addEventListener("click", openLibraryPicker);
+    els.libraryClose.addEventListener("click", closeLibraryPicker);
+    els.libraryPicker.addEventListener("click", (event) => {
+      if (event.target === els.libraryPicker) closeLibraryPicker();
+    });
+    els.librarySearchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      searchLibrary(els.librarySearchInput.value);
+    });
+    els.libraryResults.addEventListener("scroll", maybeLoadMoreLibraryResults, { passive: true });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.libraryPicker.hidden) {
+        closeLibraryPicker();
       }
     });
+
     syncTrackReadouts();
     loadMainlineStatus();
     window.EchoFavoriteStore?.hydrateFromServer?.({ seed: false }).then(() => {

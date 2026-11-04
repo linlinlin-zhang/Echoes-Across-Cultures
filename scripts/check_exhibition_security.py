@@ -76,6 +76,7 @@ def main():
                 "ECHO_STORAGE_ROOT": folder,
                 "ECHO_USER_DATA_DIR": folder + "/user_data",
                 "ECHO_WORKER_REQUIRE_TOKEN": "false",
+                "ECHO_PREWARM_MAINLINE": "false",
             },
         ):
             module = importlib.import_module("dcas_server.app")
@@ -95,6 +96,13 @@ def main():
             print("PASS batch favorite upserts, session isolation and invalid-batch atomicity")
             with TestClient(module.create_app(), base_url="https://resonance.website") as client:
                 assert client.get("/api/health").status_code == 200
+                with patch.object(module, "_mainline_catalog") as get_catalog:
+                    get_catalog.return_value.catalog.return_value = {"ok": True, "items": []}
+                    assert client.get("/api/mainline/catalog?offset=24&limit=24").status_code == 200
+                    assert get_catalog.return_value.catalog.call_args.kwargs["offset"] == 24
+                    assert client.get("/api/mainline/catalog?offset=-1").status_code == 422
+                    assert client.get("/api/mainline/catalog?offset=30001").status_code == 422
+                print("PASS application startup and validated library pagination handoff")
                 for route in [
                     "/api/train",
                     "/api/files?dir=models",

@@ -70,6 +70,16 @@ def main():
         assert catalog.catalog(culture="not-a-culture")["items"] == []
         assert catalog.catalog(q="quiet night")["items"][0]["track_id"] == "one"
         assert catalog.catalog(q="Queen")["items"][0]["artist"] == "Queen"
+        first = catalog.catalog(limit=1, offset=0, random_seed=123)
+        second = catalog.catalog(limit=1, offset=first["next_offset"], random_seed=123)
+        assert first["has_more"] and not second["has_more"]
+        combined = [item["track_id"] for page in [first, second] for item in page["items"]]
+        assert len(set(combined)) == 2
+        assert combined == [item["track_id"] for item in catalog.catalog(random_seed=123)["items"]]
+        end = catalog.catalog(offset=999)
+        assert end["items"] == [] and not end["has_more"]
+        filtered = catalog.catalog(q="Queen", limit=1, offset=1, random_seed=None)
+        assert filtered["items"][0]["track_id"] == "two" and not filtered["has_more"]
         expected = [x["track_id"] for x in catalog.catalog(random_seed=123)["items"]]
         with ThreadPoolExecutor(max_workers=20) as pool:
             actual = list(
