@@ -739,25 +739,19 @@
     }
 
     .insight-card-title {
-      position: absolute;
-      top: 1.45rem;
-      left: 1.35rem;
-      right: 1.35rem;
-      z-index: 0;
-      overflow: hidden;
-      color: rgba(30, 42, 68, 0.08);
-      font-size: 3.6rem;
+      position: relative;
+      padding: 1.35rem 1.35rem 0;
+      color: #667085;
+      font-size: 1.4rem;
       font-weight: 700;
-      line-height: 1;
-      white-space: nowrap;
-      pointer-events: none;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
     }
 
     .insight-card-body {
       position: relative;
       z-index: 1;
-      height: 100%;
-      padding: 5.9rem 1.35rem 1.35rem;
+      padding: 1.35rem;
     }
 
     .insight-empty {
@@ -831,12 +825,14 @@
     .era-row {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(4.4rem, 0.86fr) 1.2rem minmax(3.6rem, 0.68fr) minmax(3.4rem, 0.54fr);
+      grid-template-columns: minmax(0, 0.9fr) 1rem minmax(0, 0.65fr) minmax(0, 0.7fr);
       gap: 0.72rem;
       align-items: center;
     }
 
     .era-label {
+      min-width: 0;
+      overflow-wrap: anywhere;
       font-size: 2.45rem;
       font-weight: 800;
       line-height: 0.98;
@@ -877,18 +873,19 @@
     }
 
     .era-count {
-      font-size: 2.1rem;
+      min-width: 0;
+      font-size: 1.65rem;
       font-weight: 800;
-      line-height: 1;
-      white-space: nowrap;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
     }
 
     .era-row.is-rank-2 .era-count {
-      font-size: 1.82rem;
+      font-size: 1.5rem;
     }
 
     .era-row.is-rank-3 .era-count {
-      font-size: 1.56rem;
+      font-size: 1.35rem;
     }
 
     .genre-hero {
@@ -905,12 +902,10 @@
     }
 
     .genre-sub {
-      overflow: hidden;
       color: #7b8290;
       font-size: 0.98rem;
       line-height: 1.35;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
     }
 
     .genre-bars {
@@ -927,7 +922,7 @@
 
     .genre-bar-track {
       min-width: 0;
-      height: 3rem;
+      height: 0.7rem;
       border-radius: 999px;
       background: #f2f3f6;
       overflow: hidden;
@@ -936,11 +931,9 @@
     .genre-bar {
       display: flex;
       align-items: center;
-      min-width: 5.8rem;
       width: var(--bar-width);
       max-width: 100%;
       height: 100%;
-      padding: 0 0.88rem;
       border-radius: 999px;
       background: linear-gradient(90deg, var(--alert), #9f1f1f);
       color: #ffffff;
@@ -950,6 +943,14 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .genre-bar-label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
     .genre-percent {
@@ -1889,10 +1890,6 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .insight-card-title {
-        font-size: 2.65rem;
-      }
-
       .genre-title {
         font-size: 2.45rem;
       }
@@ -1990,16 +1987,8 @@
         min-height: auto;
       }
 
-      .insight-card-body {
-        padding-top: 6rem;
-      }
-
-      .insight-card-title {
-        font-size: 2.8rem;
-      }
-
       .era-row {
-        grid-template-columns: minmax(3.2rem, 0.8fr) 1rem minmax(2.8rem, 0.6fr) minmax(2.6rem, 0.5fr);
+        grid-template-columns: minmax(0, 0.9fr) 0.7rem minmax(0, 0.65fr) minmax(0, 0.7fr);
         gap: 0.5rem;
       }
 
@@ -2138,6 +2127,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="catalog-picker.css">
 </head>
 <body data-i18n-title="music.title">
   <header class="station-header">
@@ -2162,6 +2152,7 @@
       </section>
 
       <div class="top-actions">
+        <button class="pill" id="catalog-button" type="button" aria-haspopup="dialog" data-i18n="music.catalog.choose">选择曲库歌曲</button>
         <button class="pill record-btn" id="record-button" type="button" data-i18n="music.record">录制</button>
         <label class="pill" for="music-upload" data-i18n="music.upload">上传音乐</label>
         <input class="upload-input" id="music-upload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/opus,audio/webm,.mp3,.m4a,.mp4,.aac,.wav,.wave,.flac,.ogg,.oga,.opus,.webm,.aif,.aiff,.wma">
@@ -2301,6 +2292,7 @@
   <script src="geo-data.js?v=20261101b"></script>
   <script src="geo.js?v=20261101b"></script>
   <script src="metadata-i18n.js?v=20261101"></script>
+  <script src="catalog-picker.js"></script>
   <script src="favorite-store.js?v=20261101b"></script>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -3323,7 +3315,7 @@
               <div class="era-label">${row.accent ? `<span class=\"top-label\">${t("music.insight.top")}</span>` : ""}${row.html}</div>
               <span class="era-dot" aria-hidden="true"></span>
               ${coverMarkup(row.item)}
-              <div class="era-count">${row.count}${t("music.insight.songCount")}</div>
+              <div class="era-count">${row.count}${t(row.count === 1 ? "music.insight.songCountOne" : "music.insight.songCount")}</div>
             </div>
           `).join("")}</div>`
         : `<div class="insight-empty">${t("music.insight.emptyEra")}</div>`;
@@ -3361,8 +3353,11 @@
             <div class="genre-bars">
               ${rows.map((row) => `
                 <div class="genre-bar-row">
-                  <div class="genre-bar-track">
-                    <div class="genre-bar" style="--bar-width:${Math.max(24, (row.count / maxCount) * 100).toFixed(1)}%">${escapeHtml(row.label)}</div>
+                  <div>
+                    <span class="genre-bar-label">${escapeHtml(row.label)}</span>
+                    <div class="genre-bar-track" aria-hidden="true">
+                      <div class="genre-bar" style="--bar-width:${((row.count / maxCount) * 100).toFixed(1)}%"></div>
+                    </div>
                   </div>
                   <div class="genre-percent">${formatPct(row.pct)}</div>
                 </div>
@@ -4448,6 +4443,7 @@ Guidelines:
     async function startRecommendations() {
       if (recommendBusy) return;
       recommendBusy = true;
+      document.getElementById("catalog-button").disabled = true;
       els.recommendButton.classList.add("is-running");
       els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
@@ -4567,6 +4563,7 @@ Guidelines:
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.classList.remove("is-disabled");
         recommendBusy = false;
+        document.getElementById("catalog-button").disabled = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         const embeddingTime = data.embedding?.elapsed_seconds ? ` / embedding ${Number(data.embedding.elapsed_seconds).toFixed(1)}s` : "";
         setMapStatus("music.status.connectionsActive", verifiedRecommendationCount(), data.embedding?.elapsed_seconds || null);
@@ -4585,6 +4582,7 @@ Guidelines:
         els.recommendButton.classList.remove("is-running");
         els.recommendButton.classList.remove("is-disabled");
         recommendBusy = false;
+        document.getElementById("catalog-button").disabled = false;
         els.recommendButton.textContent = t("music.recommend.regenerate");
         setMapStatus("music.status.apiFallback");
         renderRecommendations();
@@ -5148,6 +5146,18 @@ Guidelines:
       }
       persistLastStartupTrack();
       persistMusicStationState();
+    });
+    window.EchoCatalogPicker.mount({
+      onSelect(item) {
+        recommendationsPersistable = false;
+        clearMusicStationState();
+        const track = trackFromApiItem(item);
+        primaryTrack = track;
+        activeRecommendations = [];
+        selectTrack(track, { autoplay: false });
+        setMapStatus("music.status.libraryConnected");
+        setMapMode("music.status.realLoaded");
+      }
     });
     syncTrackReadouts();
     loadMainlineStatus();
