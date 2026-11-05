@@ -109,8 +109,13 @@ async function main() {
         assert.equal(range.status(),206);assert.equal((await range.body()).length,4096);
         const response=page.waitForResponse(r=>r.url().endsWith('/api/mainline/recommend')&&r.request().method()==='POST',{timeout:180000});
         await page.locator('#recommend-button').click();
+            await page.waitForSelector('#recommend-picker:not([hidden])');
+            await page.locator('#recommend-culture-select').selectOption('brazil');
+            await page.locator('#recommend-confirm-button').click();
         const rec=await response;assert.equal(rec.status(),200);
         assert(audio.includes(rec.request().postDataJSON().seed_track_id));
+        assert.equal(rec.request().postDataJSON().target_culture,'brazil');
+        assert.equal((await rec.json()).request.effective_target_culture,'brazil');
         await page.waitForSelector('.rec-card[data-rec-index]');
         assert(await page.locator('#library-picker-button').isEnabled());
         report.checks.push('live: chosen catalog song audio Range and real GPU recommendations');

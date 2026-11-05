@@ -32,13 +32,8 @@ async function main() {
     assert.equal(await page.locator('#ai-messages script').count(),0);
     assert.equal(await page.evaluate(()=>Boolean(window.unsafeSelfCheck)),false);
     checks.push('fast streamed response and sanitized Markdown');
-    await page.locator('[data-ai-mode="thinking"]').click();
-    await page.locator('#ai-run-button').click();
-    await page.waitForFunction(()=>!document.querySelector('#ai-run-button').disabled&&document.querySelector('.ai-thinking-text')?.textContent.includes('Self-check reasoning'));
-    assert.equal(requests.at(-1).thinking_mode,'thinking');
-    await page.locator('.ai-thinking-toggle').click();
-    assert.equal(await page.locator('.ai-thinking-toggle').getAttribute('aria-expanded'),'false');
-    checks.push('thinking response and reasoning toggle');
+    assert.equal(await page.locator('[data-ai-mode],.ai-mode-toggle').count(),0);
+    checks.push('mode selector removed; analysis uses fast mode');
     await page.locator('#ai-question').fill('Compare the rhythms.');
     await page.locator('#ai-send-button').click();
     await page.waitForFunction(()=>!document.querySelector('#ai-send-button').disabled&&document.querySelectorAll('.ai-message.is-assistant').length===2);
@@ -50,6 +45,7 @@ async function main() {
     await page.locator('#ai-send-button').click();
     await page.waitForFunction(()=>!document.querySelector('#ai-send-button').disabled&&document.querySelector('.ai-message.is-system')?.textContent.includes('503'));
     checks.push('provider failure is visible and controls recover');
+    assert(requests.every(request=>request.thinking_mode==='fast'),'Analysis and follow-up must always use fast mode');
     assert.deepEqual(errors,[]);
     const report = {base,checks,simulated_provider_requests:requests.length,actual_paid_provider_requests:0,page_errors:errors};
     fs.mkdirSync('tmp/web-self-check',{recursive:true});

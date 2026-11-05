@@ -84,6 +84,9 @@ async function main() {
             console.log('RUN real GPU recommendation');
             const recResponse=page.waitForResponse(r=>r.url().endsWith('/api/mainline/recommend')&&r.request().method()==='POST',{timeout:360000});
             await page.locator('#recommend-button').click();
+            await page.waitForSelector('#recommend-picker:not([hidden])');
+            await page.locator('#recommend-culture-select').selectOption('brazil');
+            await page.locator('#recommend-confirm-button').click();
             const rec=await recResponse;assert.equal(rec.status(),200);
             assert.equal(rec.request().postDataJSON().prefer_cuda,true,'The page should prefer an available GPU by default');
             await page.waitForFunction(()=>document.querySelectorAll('.rec-card').length===3,{},{timeout:30000});
@@ -91,6 +94,9 @@ async function main() {
             assert(desc.every(s=>s.trim()&&!/[\u3400-\u9fff]/.test(s)),'English mode requires English song descriptions');
             checked('real recommendation and English descriptions');
             const responseJSON=await rec.json();
+            assert.equal(rec.request().postDataJSON().target_culture,'brazil');
+            assert.equal(responseJSON.request.effective_target_culture,'brazil');
+            checked('selected target culture is applied by the recommendation engine');
             fs.writeFileSync(`${out}/recommendation.json`,JSON.stringify(responseJSON,null,2));
             const favoriteResponse=page.waitForResponse(r=>r.url().includes('/api/favorites')&&r.request().method()==='POST',{timeout:15000});
             await page.locator('[data-favorite-index="0"]').click();

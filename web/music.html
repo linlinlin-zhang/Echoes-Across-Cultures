@@ -399,6 +399,93 @@
       white-space: nowrap;
     }
 
+    .recommend-picker {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 1.25rem;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(12px);
+    }
+
+    .recommend-picker[hidden] {
+      display: none;
+    }
+
+    .recommend-dialog {
+      min-width: 0;
+      overflow: auto;
+      width: min(560px, 100%);
+      max-height: min(640px, calc(100vh - 2.5rem));
+      display: grid;
+      grid-template-rows: auto auto;
+      border: 1px solid var(--ink);
+      background: #ffffff;
+      box-shadow: 0 1.4rem 4rem rgba(17, 17, 17, 0.12);
+    }
+
+    .recommend-options {
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .recommend-options {
+      display: grid;
+      gap: 0.95rem;
+      border-bottom: 0;
+    }
+
+    .recommend-field {
+      display: grid;
+      gap: 0.38rem;
+    }
+
+    .recommend-field label {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .recommend-select {
+      min-width: 0;
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--line-strong);
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+
+    .recommend-select:focus {
+      border-color: var(--ink);
+    }
+
+    .recommend-status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .recommend-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .recommend-actions .pill { white-space: normal; }
+
+    .recommend-actions .is-primary {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
     @keyframes record-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -1278,44 +1365,6 @@
       justify-content: flex-end;
       flex-wrap: wrap;
       gap: 0.65rem;
-    }
-
-    .ai-mode-toggle {
-      display: inline-flex;
-      align-items: stretch;
-      min-height: 2.75rem;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      overflow: hidden;
-      background: #ffffff;
-    }
-
-    .ai-mode-option {
-      min-width: 4.7rem;
-      border: 0;
-      border-right: 1px solid var(--ink);
-      background: transparent;
-      color: var(--ink);
-      font: inherit;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 160ms ease, color 160ms ease;
-    }
-
-    .ai-mode-option:last-child {
-      border-right: 0;
-    }
-
-    .ai-mode-option:hover,
-    .ai-mode-option.is-active {
-      background: var(--ink);
-      color: #ffffff;
-    }
-
-    .ai-mode-option:disabled {
-      cursor: wait;
-      opacity: 0.66;
     }
 
     .ai-panel-head {
@@ -2216,15 +2265,10 @@
         justify-content: flex-start;
       }
 
-      .ai-mode-toggle,
       .ai-run {
         width: 100%;
       }
 
-      .ai-mode-option {
-        flex: 1;
-        min-width: 0;
-      }
 
       .ai-context,
       .ai-chat {
@@ -2291,6 +2335,20 @@
         width: 56px;
           }
 
+    .recommend-picker {
+        padding: 0.75rem;
+        align-items: end;
+    }
+
+    .recommend-dialog {
+        max-height: min(82vh, 720px);
+    }
+
+    .recommend-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
       .rec-card-main {
         grid-template-columns: 56px minmax(0, 1fr);
       }
@@ -2355,6 +2413,33 @@
       </form>
       <div class="library-status" id="library-status" data-i18n="music.library.ready">输入关键词或直接浏览曲库。</div>
       <div class="library-results" id="library-results" role="listbox" aria-label="曲库搜索结果" data-i18n-aria-label="music.library.resultsAria"></div>
+    </section>
+  </div>
+
+  <div class="recommend-picker" id="recommend-picker" hidden>
+    <section class="recommend-dialog" role="dialog" aria-modal="true" aria-labelledby="recommend-picker-title">
+      <div class="library-head">
+        <div>
+          <div class="meta-label" data-i18n="music.recommend.optionsMeta">推荐方向</div>
+          <h2 id="recommend-picker-title" data-i18n="music.recommend.optionsTitle">选择这次去哪里听</h2>
+        </div>
+        <button class="pill" id="recommend-picker-close" type="button" data-i18n="music.recommend.optionsClose">关闭</button>
+      </div>
+      <form class="recommend-options" id="recommend-options-form">
+        <div class="recommend-field">
+          <label for="recommend-culture-select" data-i18n="music.recommend.cultureLabel">文化域</label>
+          <select class="recommend-select" id="recommend-culture-select"></select>
+        </div>
+        <div class="recommend-field">
+          <label for="recommend-region-select" data-i18n="music.recommend.regionLabel">地域</label>
+          <select class="recommend-select" id="recommend-region-select"></select>
+        </div>
+        <div class="recommend-status" id="recommend-status" data-i18n="music.recommend.optionsReady">当前方向：随机探索</div>
+        <div class="recommend-actions">
+          <button class="pill" id="recommend-random-button" type="button" data-i18n="music.recommend.randomStart">随机生成</button>
+          <button class="pill is-primary" id="recommend-confirm-button" type="submit" data-i18n="music.recommend.confirm">开始生成</button>
+        </div>
+      </form>
     </section>
   </div>
 
@@ -2439,10 +2524,6 @@
           </div>
           <p data-i18n="music.ai.copy">把当前上传曲目、跨文化推荐结果等内容发送给AI，由 AI 对这次推荐路线做分析。</p>
           <div class="ai-controls">
-            <div class="ai-mode-toggle" role="radiogroup" aria-label="AI 模式" data-i18n-aria-label="music.ai.modeAria">
-              <button class="ai-mode-option is-active" type="button" role="radio" aria-checked="true" data-ai-mode="fast" data-i18n="music.ai.modeFast">快速</button>
-              <button class="ai-mode-option" type="button" role="radio" aria-checked="false" data-ai-mode="thinking" data-i18n="music.ai.modeThinking">思考</button>
-            </div>
             <button class="pill ai-run" id="ai-run-button" type="button" data-i18n="music.ai.generate">生成分析</button>
           </div>
         </div>
@@ -2562,6 +2643,19 @@
       }
     };
 
+    const recommendRegionGroups = {
+      east_asia: ["china", "japan", "korea"],
+      southeast_asia: ["southeast_asia"],
+      south_asia: ["india"],
+      west_asia_mena: ["middle_east"],
+      europe: ["west", "eastern_europe", "celtic", "nordic", "balkans"],
+      africa: ["africa"],
+      latin_america: ["latin", "brazil", "andean"],
+      caribbean: ["caribbean"],
+      central_asia: ["central_asia"]
+    };
+
+    const recommendRegionKeys = ["random", ...Object.keys(recommendRegionGroups)];
     const culturePlaces = {
       west: { countryKey: "GB", cityKey: "LONDON", lat: 51.5072, lng: -0.1276 },
       china: { countryKey: "CN", cityKey: "BEIJING", lat: 39.9042, lng: 116.4074 },
@@ -2939,6 +3033,14 @@
       progressTrack: document.getElementById("progress-track"),
       progressFill: document.getElementById("progress-fill"),
       recommendButton: document.getElementById("recommend-button"),
+      recommendPicker: document.getElementById("recommend-picker"),
+      recommendClose: document.getElementById("recommend-picker-close"),
+      recommendOptionsForm: document.getElementById("recommend-options-form"),
+      recommendCultureSelect: document.getElementById("recommend-culture-select"),
+      recommendRegionSelect: document.getElementById("recommend-region-select"),
+      recommendRandomButton: document.getElementById("recommend-random-button"),
+      recommendConfirmButton: document.getElementById("recommend-confirm-button"),
+      recommendStatus: document.getElementById("recommend-status"),
       recommendList: document.getElementById("recommend-list"),
       mapStatus: document.getElementById("map-status"),
       mapMode: document.getElementById("map-mode"),
@@ -2949,7 +3051,6 @@
       parameterMetrics: document.getElementById("parameter-metrics"),
       recommendationInsights: document.getElementById("recommendation-insights"),
       aiRunButton: document.getElementById("ai-run-button"),
-      aiModeButtons: document.querySelectorAll("[data-ai-mode]"),
       aiMessages: document.getElementById("ai-messages"),
       aiComposer: document.getElementById("ai-composer"),
       aiQuestion: document.getElementById("ai-question"),
@@ -2962,6 +3063,7 @@
     let uploadedAudioFile = null;
     let mainlineStatus = null;
     let recommendationsPersistable = false;
+    let recommendPreferences = { culture: "random", region: "random" };
     let librarySearchFailed = false;
     let librarySearchResults = [];
     let librarySearchBusy = false;
@@ -2996,11 +3098,12 @@
       return activeRecommendations.filter(item => item.locationPrecision !== "unknown" && window.EchoGeo.coordinates(item)).length;
     }
 
-    function setMapStatus(key, count = null, embeddingSeconds = null) {
+    function setMapStatus(key, count = null, embeddingSeconds = null, targetCulture = "") {
       els.mapStatus.dataset.statusKey = key;
       els.mapStatus.dataset.count = count == null ? "" : String(count);
       els.mapStatus.dataset.embeddingSeconds = embeddingSeconds == null ? "" : String(embeddingSeconds);
-      els.mapStatus.textContent = (count == null ? "" : `${formatCount(count)} `) + t(key) +
+      els.mapStatus.dataset.targetCulture = targetCulture;
+      els.mapStatus.textContent = (count == null ? "" : `${formatCount(count)} `) + t(key, { target: cultureLabel(targetCulture) }) +
         (embeddingSeconds == null ? "" : ` / embedding ${Number(embeddingSeconds).toFixed(1)}s`);
     }
 
@@ -3014,6 +3117,7 @@
         const response = await fetch(`/api/mainline/status?prefer_cuda=${apiPreferCuda}`);
         if (!response.ok) throw new Error(`status ${response.status}`);
         mainlineStatus = await response.json();
+        renderRecommendOptions();
         if (els.readoutCatalog) {
           els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
         }
@@ -3025,7 +3129,7 @@
     }
     let aiConversationMessages = [];
     let aiBusy = false;
-    let aiMode = "fast";
+    const aiMode = "fast";
     let aiRenderQueued = false;
     let currentQueueIndex = 0;
     let isPlaying = false;
@@ -3744,19 +3848,6 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       return String(value || "").toLowerCase() === "thinking" ? "thinking" : "fast";
     }
 
-    function syncAiModeControls() {
-      els.aiModeButtons.forEach((button) => {
-        const isActive = normalizeAiMode(button.dataset.aiMode) === aiMode;
-        button.classList.toggle("is-active", isActive);
-        button.setAttribute("aria-checked", isActive ? "true" : "false");
-      });
-    }
-
-    function setAiMode(nextMode) {
-      aiMode = normalizeAiMode(nextMode);
-      syncAiModeControls();
-    }
-
     function scheduleAiMessagesRender() {
       if (aiRenderQueued) return;
       aiRenderQueued = true;
@@ -3841,14 +3932,11 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
       aiBusy = nextBusy;
       els.aiRunButton.disabled = nextBusy;
       els.aiSendButton.disabled = nextBusy;
-      els.aiModeButtons.forEach((button) => {
-        button.disabled = nextBusy;
-      });
       els.aiRunButton.classList.toggle("is-running", nextBusy);
       els.aiSendButton.classList.toggle("is-running", nextBusy);
       els.aiRunButton.textContent = nextBusy ? t("music.ai.generating") : t("music.ai.generate");
       els.aiSendButton.textContent = nextBusy ? t("music.ai.sending") : t("music.ai.send");
-      syncAiModeControls();
+
     }
 
     function readStoredKimiConfig() {
@@ -3892,7 +3980,7 @@ ${JSON.stringify(buildAiPayload(), null, 2)}${followup}`;
         model,
         endpoint,
         messages: toKimiMessages(messages),
-        thinking_mode: normalizeAiMode(options.thinkingMode),
+        thinking_mode: "fast",
         max_completion_tokens: options.maxCompletionTokens || 8192,
         timeout_seconds: options.timeoutSeconds || 180
       };
@@ -4666,6 +4754,140 @@ Guidelines:
       });
     }
 
+    function availableRecommendationCultures() {
+      const keys = new Set(Object.keys(culturePlaces));
+      Object.keys(mainlineStatus?.cultures || {}).forEach((key) => {
+        const clean = cleanMetaText(key);
+        if (clean) keys.add(clean);
+      });
+      return [...keys]
+        .filter((key) => key && key.toLowerCase() !== "nan")
+        .sort((a, b) => (cultureLabel(a) || a).localeCompare(cultureLabel(b) || b, window.EchoI18n?.currentLanguage || "zh-CN"));
+    }
+
+    function recommendationRegionLabel(key) {
+      if (key === "random") return t("music.recommend.randomRegion");
+      return t("music.region." + key);
+    }
+
+    function setSelectOptions(select, options, selectedValue) {
+      if (!select) return;
+      select.innerHTML = "";
+      options.forEach((option) => {
+        select.appendChild(new Option(option.label, option.value));
+      });
+      const values = new Set(options.map((option) => option.value));
+      select.value = values.has(selectedValue) ? selectedValue : "random";
+    }
+
+    function describeRecommendationPreference(options = recommendPreferences) {
+      const culture = cleanMetaText(options.culture || "random");
+      const region = cleanMetaText(options.region || "random");
+      if (culture && culture !== "random") {
+        return cultureLabel(culture) || culture;
+      }
+      if (region && region !== "random") {
+        return t("music.recommend.randomInRegion", { region: recommendationRegionLabel(region) });
+      }
+      return t("music.recommend.randomTarget");
+    }
+
+    function syncRecommendStatus() {
+      if (!els.recommendStatus) return;
+      recommendPreferences = {
+        culture: els.recommendCultureSelect?.value || "random",
+        region: els.recommendRegionSelect?.value || "random"
+      };
+      els.recommendStatus.textContent = t("music.recommend.currentTarget", {
+        target: describeRecommendationPreference(recommendPreferences)
+      });
+    }
+
+    function renderRecommendOptions() {
+      const selectedCulture = els.recommendCultureSelect?.value || recommendPreferences.culture || "random";
+      const selectedRegion = els.recommendRegionSelect?.value || recommendPreferences.region || "random";
+      const availableCultures = new Set(availableRecommendationCultures());
+      const cultureKeys = selectedRegion && selectedRegion !== "random"
+        ? (recommendRegionGroups[selectedRegion] || []).filter((culture) => availableCultures.has(culture))
+        : [...availableCultures];
+      const cultureOptions = [
+        { value: "random", label: t("music.recommend.randomCulture") },
+        ...cultureKeys.map((culture) => ({
+          value: culture,
+          label: cultureLabel(culture) || culture
+        }))
+      ];
+      const regionOptions = recommendRegionKeys.map((region) => ({
+        value: region,
+        label: recommendationRegionLabel(region)
+      }));
+      setSelectOptions(els.recommendCultureSelect, cultureOptions, selectedCulture);
+      setSelectOptions(els.recommendRegionSelect, regionOptions, selectedRegion);
+      syncRecommendStatus();
+    }
+
+    function readRecommendationOptions() {
+      return {
+        culture: els.recommendCultureSelect?.value || "random",
+        region: els.recommendRegionSelect?.value || "random"
+      };
+    }
+
+    function currentSeedCulture() {
+      return cleanMetaText(primaryTrack?.culture || currentTrack?.culture || initialSeedCulture || "");
+    }
+
+    function randomCultureFromPool(pool = []) {
+      const available = new Set(availableRecommendationCultures());
+      let candidates = pool.filter((culture) => available.has(culture));
+      if (!candidates.length) {
+        candidates = [...available];
+      }
+      const seedCulture = currentSeedCulture();
+      const crossCultureCandidates = candidates.filter((culture) => culture !== seedCulture);
+      if (crossCultureCandidates.length) {
+        candidates = crossCultureCandidates;
+      }
+      if (!candidates.length) return "";
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function resolveRecommendationTarget(options = recommendPreferences) {
+      const culture = cleanMetaText(options.culture || "random");
+      const region = cleanMetaText(options.region || "random");
+      if (culture && culture !== "random") {
+        return { culture, label: cultureLabel(culture) || culture, region };
+      }
+      const pool = region && region !== "random"
+        ? (recommendRegionGroups[region] || [])
+        : availableRecommendationCultures();
+      const targetCulture = randomCultureFromPool(pool);
+      return {
+        culture: targetCulture,
+        label: targetCulture ? (cultureLabel(targetCulture) || targetCulture) : t("music.recommend.randomTarget"),
+        region
+      };
+    }
+
+    function openRecommendPicker() {
+      if (recommendBusy) return;
+      renderRecommendOptions();
+      els.recommendPicker.hidden = false;
+      document.body.classList.add("is-recommend-picker-open");
+      window.setTimeout(() => els.recommendConfirmButton?.focus(), 40);
+    }
+
+    function closeRecommendPicker() {
+      els.recommendPicker.hidden = true;
+      document.body.classList.remove("is-recommend-picker-open");
+      els.recommendButton.focus();
+    }
+
+    function submitRecommendationOptions(options) {
+      recommendPreferences = options || readRecommendationOptions();
+      closeRecommendPicker();
+      startRecommendations(recommendPreferences);
+    }
     function openLibraryPicker() {
       els.libraryPicker.hidden = false;
       document.body.classList.add("is-library-open");
@@ -4856,14 +5078,16 @@ Guidelines:
     }
 
     let recommendBusy = false;
-    async function startRecommendations() {
+    async function startRecommendations(options = recommendPreferences) {
       if (recommendBusy) return;
+      const targetChoice = resolveRecommendationTarget(options);
+      const targetCulture = targetChoice.culture || "";
       recommendBusy = true;
       document.getElementById("library-picker-button").disabled = true;
       els.recommendButton.classList.add("is-running");
       els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
-      setMapStatus("music.status.generatingPath");
+      setMapStatus(targetCulture ? "music.recommend.targetStatus" : "music.status.generatingPath", null, null, targetCulture);
       recommendationsPersistable = false;
       activeRecommendations = [];
       clearMusicStationState();
@@ -4882,6 +5106,7 @@ Guidelines:
           if (currentTrack.culture) {
             form.append("seed_culture", currentTrack.culture);
           }
+          if (targetCulture) form.append("target_culture", targetCulture);
           form.append("mode", "open");
           form.append("k", String(getRecommendCount()));
           form.append("recall_k", "900");
@@ -4904,6 +5129,7 @@ Guidelines:
           const body = {
             seed_track_id: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId || null,
             seed_culture: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId ? null : (initialSeedCulture || null),
+            target_culture: targetCulture || null,
             mode: "open",
             k: getRecommendCount(),
             recall_k: 900,
@@ -5416,14 +5642,23 @@ Guidelines:
 
     document.addEventListener("wheel", routeGutterWheelToWholeStation, { passive: false });
 
-    els.recommendButton.addEventListener("click", startRecommendations);
-
-    els.aiModeButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        if (aiBusy) return;
-        setAiMode(button.dataset.aiMode);
-      });
+    els.recommendButton.addEventListener("click", openRecommendPicker);
+    els.recommendClose.addEventListener("click", closeRecommendPicker);
+    els.recommendPicker.addEventListener("click", (event) => {
+      if (event.target === els.recommendPicker) closeRecommendPicker();
     });
+    els.recommendCultureSelect.addEventListener("change", syncRecommendStatus);
+    els.recommendRegionSelect.addEventListener("change", renderRecommendOptions);
+    els.recommendOptionsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitRecommendationOptions(readRecommendationOptions());
+    });
+    els.recommendRandomButton.addEventListener("click", () => {
+      submitRecommendationOptions({ culture: "random", region: "random" });
+    });
+
+
+
     els.aiRunButton.addEventListener("click", () => runAiAnalysis());
     els.aiSendButton.addEventListener("click", sendAiFollowup);
     els.aiQuestion.addEventListener("keydown", (event) => {
@@ -5547,11 +5782,12 @@ Guidelines:
       if (mainlineStatus) els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
       if (els.mapStatus.dataset.statusKey) setMapStatus(els.mapStatus.dataset.statusKey,
         els.mapStatus.dataset.count === "" ? null : Number(els.mapStatus.dataset.count),
-        els.mapStatus.dataset.embeddingSeconds === "" ? null : Number(els.mapStatus.dataset.embeddingSeconds));
+        els.mapStatus.dataset.embeddingSeconds === "" ? null : Number(els.mapStatus.dataset.embeddingSeconds),
+        els.mapStatus.dataset.targetCulture || "");
       setMapMode(els.mapMode.dataset.statusKey || "music.map.currentCenter");
       els.recommendButton.textContent = t(recommendBusy ? "music.recommend.running" : activeRecommendations.length ? "music.recommend.regenerate" : "music.recommend.start");
       renderAiMessages(); setAiBusy(aiBusy);
-      renderLibraryResults(); updateLibraryStatus();
+      renderLibraryResults(); updateLibraryStatus(); renderRecommendOptions();
       if (descriptionLanguageChanged) hydrateRecommendationDescriptions(activeRecommendations);
     });
     window.addEventListener("pagehide", () => {
@@ -5575,6 +5811,7 @@ Guidelines:
     });
     els.libraryResults.addEventListener("scroll", maybeLoadMoreLibraryResults, { passive: true });
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.recommendPicker.hidden) closeRecommendPicker();
       if (event.key === "Escape" && !els.libraryPicker.hidden) {
         closeLibraryPicker();
       }
@@ -5587,7 +5824,7 @@ Guidelines:
     }).catch(() => {});
     renderRecommendations();
     renderParameterPanel();
-    syncAiModeControls();
+
     renderAiMessages();
     initializeStartupTrack().then(() => {
       requestAnimationFrame(forceRefreshTrackUI);
