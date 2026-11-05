@@ -1,0 +1,932 @@
+{
+  "schema_version": 1,
+  "notes": [
+    "Preserve platform genre distinctions; never infer genre from artist nationality.",
+    "Regional and instrument tags remain explicit tags, not invented music genres.",
+    "Radio drama is kept in raw data but excluded when exclude_low_signal is enabled."
+  ],
+  "english_overrides": {
+    "100107": "Radio Drama",
+    "1119": "Latin Urban",
+    "1117": "Latin Pop",
+    "1124": "Salsa and Tropical",
+    "1251": "Cantopop",
+    "1123": "Regional Mexican",
+    "1121": "Alternative and Latin Rock",
+    "1120": "Ballads and Boleros",
+    "41": "Alté"
+  },
+  "genre_label_overrides": {
+    "100107": {
+      "en": "Radio Drama",
+      "zh-CN": "广播剧",
+      "de": "Hörspiele",
+      "es": "Radioteatro",
+      "pt": "Radioteatro",
+      "ja": "ラジオドラマ",
+      "ko": "라디오 드라마"
+    },
+    "21": {
+      "zh-CN": "摇滚"
+    },
+    "14": {
+      "zh-CN": "流行"
+    },
+    "15": {
+      "zh-CN": "节奏布鲁斯 / 灵魂乐"
+    },
+    "51": {
+      "zh-CN": "韩国流行"
+    },
+    "27": {
+      "zh-CN": "日本流行"
+    },
+    "1183": {
+      "zh-CN": "现代舞厅雷鬼"
+    },
+    "13": {
+      "zh-CN": "新世纪音乐"
+    },
+    "1048": {
+      "zh-CN": "浩室"
+    },
+    "1022": {
+      "zh-CN": "古典跨界"
+    },
+    "25": {
+      "zh-CN": "轻音乐"
+    },
+    "50000066": {
+      "zh-CN": "德国流行"
+    },
+    "1062": {
+      "zh-CN": "另类民谣"
+    },
+    "1058": {
+      "zh-CN": "电子乐（Electronica）"
+    },
+    "1175": {
+      "zh-CN": "人声爵士"
+    },
+    "1042": {
+      "zh-CN": "传统乡村"
+    },
+    "50000163": {
+      "zh-CN": "泰国流行"
+    },
+    "1050": {
+      "zh-CN": "科技舞曲"
+    },
+    "1063": {
+      "zh-CN": "当代民谣"
+    },
+    "1252": {
+      "zh-CN": "韩国民谣流行"
+    },
+    "1274": {
+      "zh-CN": "当杜特"
+    },
+    "1157": {
+      "zh-CN": "摇滚乐（Rock & Roll）"
+    },
+    "1057": {
+      "zh-CN": "慢拍"
+    },
+    "1012": {
+      "zh-CN": "三角洲布鲁斯"
+    },
+    "1192": {
+      "zh-CN": "根源雷鬼"
+    },
+    "50000068": {
+      "zh-CN": "德国民谣"
+    },
+    "1131": {
+      "zh-CN": "成人当代"
+    },
+    "1176": {
+      "zh-CN": "人声流行"
+    },
+    "1136": {
+      "zh-CN": "当代节奏布鲁斯"
+    },
+    "1134": {
+      "zh-CN": "软摇滚"
+    },
+    "1144": {
+      "zh-CN": "成人另类"
+    },
+    "1037": {
+      "zh-CN": "当代乡村"
+    },
+    "1005": {
+      "zh-CN": "新浪潮"
+    },
+    "1172": {
+      "zh-CN": "电视原声"
+    },
+    "1054": {
+      "zh-CN": "沙发音乐"
+    },
+    "1064": {
+      "zh-CN": "当代唱作人"
+    },
+    "28": {
+      "zh-CN": "演歌"
+    },
+    "1138": {
+      "zh-CN": "嘟喔普"
+    },
+    "1155": {
+      "zh-CN": "前卫摇滚 / 艺术摇滚"
+    },
+    "1116": {
+      "zh-CN": "当代拉丁"
+    },
+    "1148": {
+      "zh-CN": "英国入侵摇滚"
+    },
+    "1034": {
+      "zh-CN": "美式根源音乐"
+    },
+    "1149": {
+      "zh-CN": "死亡金属 / 黑金属"
+    },
+    "1193": {
+      "zh-CN": "Dub 雷鬼"
+    },
+    "1171": {
+      "zh-CN": "单口喜剧"
+    },
+    "1047": {
+      "zh-CN": "硬核"
+    },
+    "1194": {
+      "zh-CN": "斯卡"
+    },
+    "1207": {
+      "zh-CN": "硬波普"
+    },
+    "1150": {
+      "zh-CN": "华丽摇滚"
+    },
+    "1010": {
+      "zh-CN": "当代布鲁斯"
+    },
+    "1173": {
+      "zh-CN": "经典标准曲"
+    },
+    "1039": {
+      "zh-CN": "酒馆乡村"
+    },
+    "1181": {
+      "zh-CN": "凯尔特民谣"
+    },
+    "1108": {
+      "zh-CN": "跨界爵士"
+    },
+    "1077": {
+      "zh-CN": "地下说唱"
+    },
+    "1096": {
+      "zh-CN": "基督教流行"
+    },
+    "1043": {
+      "zh-CN": "都市牛仔乡村"
+    },
+    "1074": {
+      "zh-CN": "拉丁说唱"
+    },
+    "1111": {
+      "zh-CN": "拉丁爵士"
+    },
+    "1250": {
+      "zh-CN": "华语流行"
+    },
+    "1117": {
+      "zh-CN": "拉丁流行"
+    },
+    "1123": {
+      "zh-CN": "墨西哥音乐"
+    },
+    "1121": {
+      "zh-CN": "拉丁另类与摇滚"
+    },
+    "1119": {
+      "zh-CN": "拉丁都市"
+    },
+    "1264": {
+      "zh-CN": "泰米尔语音乐"
+    },
+    "1265": {
+      "zh-CN": "泰卢固语音乐"
+    },
+    "1263": {
+      "zh-CN": "宝莱坞音乐"
+    },
+    "1168": {
+      "zh-CN": "原声配乐"
+    },
+    "1177": {
+      "zh-CN": "非洲节拍（Afrobeat）"
+    },
+    "100051": {
+      "zh-CN": "非洲流行节奏（Afrobeats）"
+    },
+    "1223": {
+      "zh-CN": "Forró（福罗）"
+    },
+    "1204": {
+      "zh-CN": "亚洲音乐"
+    },
+    "1205": {
+      "zh-CN": "欧洲音乐"
+    },
+    "1195": {
+      "zh-CN": "加勒比音乐"
+    },
+    "1196": {
+      "zh-CN": "南美音乐"
+    },
+    "1198": {
+      "zh-CN": "北美音乐"
+    },
+    "1202": {
+      "zh-CN": "法国音乐"
+    },
+    "1201": {
+      "zh-CN": "日本音乐"
+    },
+    "1199": {
+      "zh-CN": "夏威夷音乐"
+    },
+    "1206": {
+      "zh-CN": "南非音乐"
+    },
+    "1082": {
+      "zh-CN": "圣诞节：经典"
+    },
+    "1083": {
+      "zh-CN": "圣诞节：古典"
+    },
+    "1086": {
+      "zh-CN": "圣诞节：流行"
+    },
+    "1084": {
+      "zh-CN": "圣诞节：爵士"
+    },
+    "1087": {
+      "zh-CN": "圣诞节：节奏布鲁斯"
+    },
+    "1089": {
+      "zh-CN": "圣诞节：摇滚"
+    },
+    "100106": {
+      "zh-CN": "圣诞节：乡村"
+    }
+  },
+  "extra_aliases": {
+    "dancehall": "Modern Dancehall",
+    "reggaeton": "Reggaeton",
+    "salsa": "Salsa and Tropical",
+    "indie": "Indie",
+    "bachata": "Bachata",
+    "鄉村音樂": "Country",
+    "cumbia": "Cumbia",
+    "rai": "Maghreb Rai",
+    "Bandas sonoras": "Soundtrack",
+    "Sudamérica": "South America",
+    "En forma": "Fitness & Workout",
+    "廣東歌/香港流行樂": "Cantopop",
+    "El Caribe": "Caribbean",
+    "R&B/騷靈樂": "R&B/Soul",
+    "國語流行樂": "Mandopop",
+    "carnatic": "Carnatic Classical",
+    "Inspiración": "Inspirational",
+    "原聲配樂": "Original Score",
+    "Crossover clásica": "Classical Crossover",
+    "Época festiva": "Holiday",
+    "forro": "Forró",
+    "Música tranquila": "Easy Listening",
+    "África": "African",
+    "Recitación": "Spoken Word",
+    "古典樂": "Classical",
+    "Rock indie": "Indie Rock",
+    "hindustani": "Hindustani Classical"
+  },
+  "preferred_aliases": {
+    "Hip-Hop/Rap": "Hip-Hop/Rap",
+    "Electronic": "Electronic",
+    "J-Pop": "J-Pop",
+    "Christmas": "Christmas",
+    "Electrónica": "Electronic",
+    "Eletrônica": "Electronic",
+    "Elettronica": "Electronic",
+    "日本流行樂": "J-Pop",
+    "Vokalmusik": "Vocal",
+    "聲樂": "Vocal",
+    "世界音樂": "Worldwide",
+    "非洲节奏": "Afrobeats",
+    "Pop indiano": "Indian Pop",
+    "Natale": "Christmas",
+    "Hörspiele": "Radio Drama",
+    "Hiphop/Rap": "Hip-Hop/Rap"
+  },
+  "custom_genres": [
+    {
+      "id": "custom:reggaeton",
+      "aliases": [
+        "reggaeton"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Reggaeton",
+        "zh-CN": "雷鬼顿",
+        "de": "Reggaeton",
+        "es": "Reguetón",
+        "pt": "Reggaeton",
+        "ja": "レゲトン",
+        "ko": "레게톤"
+      }
+    },
+    {
+      "id": "custom:indie",
+      "aliases": [
+        "indie"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Indie",
+        "zh-CN": "独立音乐",
+        "de": "Indie",
+        "es": "Indie",
+        "pt": "Indie",
+        "ja": "インディー",
+        "ko": "인디"
+      }
+    },
+    {
+      "id": "custom:bachata",
+      "aliases": [
+        "bachata"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Bachata",
+        "zh-CN": "巴恰塔",
+        "de": "Bachata",
+        "es": "Bachata",
+        "pt": "Bachata",
+        "ja": "バチャータ",
+        "ko": "바차타"
+      }
+    },
+    {
+      "id": "custom:cumbia",
+      "aliases": [
+        "cumbia"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Cumbia",
+        "zh-CN": "昆比亚",
+        "de": "Cumbia",
+        "es": "Cumbia",
+        "pt": "Cumbia",
+        "ja": "クンビア",
+        "ko": "쿰비아"
+      }
+    },
+    {
+      "id": "custom:zouk",
+      "aliases": [
+        "zouk"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Zouk",
+        "zh-CN": "祖克",
+        "de": "Zouk",
+        "es": "Zouk",
+        "pt": "Zouk",
+        "ja": "ズーク",
+        "ko": "주크"
+      }
+    },
+    {
+      "id": "custom:bhangra",
+      "aliases": [
+        "bhangra"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Bhangra",
+        "zh-CN": "邦格拉",
+        "de": "Bhangra",
+        "es": "Bhangra",
+        "pt": "Bhangra",
+        "ja": "バングラ",
+        "ko": "방그라"
+      }
+    },
+    {
+      "id": "custom:huayno",
+      "aliases": [
+        "huayno"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "Huayno",
+        "zh-CN": "瓦伊诺",
+        "de": "Huayno",
+        "es": "Huayno",
+        "pt": "Huayno",
+        "ja": "ワイノ",
+        "ko": "와이노"
+      }
+    },
+    {
+      "id": "custom:edm",
+      "aliases": [
+        "edm"
+      ],
+      "kind": "genre",
+      "labels": {
+        "en": "EDM",
+        "zh-CN": "电子舞曲",
+        "de": "EDM",
+        "es": "Música electrónica de baile",
+        "pt": "Música eletrônica de dança",
+        "ja": "EDM",
+        "ko": "EDM"
+      }
+    },
+    {
+      "id": "tag:fiddle",
+      "aliases": [
+        "fiddle"
+      ],
+      "kind": "instrument_tag",
+      "labels": {
+        "en": "Fiddle (instrument tag)",
+        "zh-CN": "小提琴（乐器标签）",
+        "de": "Fiddle (Instrumenten-Tag)",
+        "es": "Violín (etiqueta de instrumento)",
+        "pt": "Violino (tag de instrumento)",
+        "ja": "フィドル（楽器タグ）",
+        "ko": "피들(악기 태그)"
+      }
+    },
+    {
+      "id": "tag:charango",
+      "aliases": [
+        "charango"
+      ],
+      "kind": "instrument_tag",
+      "labels": {
+        "en": "Charango (instrument tag)",
+        "zh-CN": "查朗戈琴（乐器标签）",
+        "de": "Charango (Instrumenten-Tag)",
+        "es": "Charango (etiqueta de instrumento)",
+        "pt": "Charango (tag de instrumento)",
+        "ja": "チャランゴ（楽器タグ）",
+        "ko": "차랑고(악기 태그)"
+      }
+    },
+    {
+      "id": "tag:scottish",
+      "aliases": [
+        "scottish"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Scotland (regional tag)",
+        "zh-CN": "苏格兰（地域标签）",
+        "de": "Schottland (Regions-Tag)",
+        "es": "Escocia (etiqueta regional)",
+        "pt": "Escócia (tag regional)",
+        "ja": "スコットランド（地域タグ）",
+        "ko": "스코틀랜드(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:balkan",
+      "aliases": [
+        "balkan"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Balkans (regional tag)",
+        "zh-CN": "巴尔干（地域标签）",
+        "de": "Balkan (Regions-Tag)",
+        "es": "Balcanes (etiqueta regional)",
+        "pt": "Bálcãs (tag regional)",
+        "ja": "バルカン（地域タグ）",
+        "ko": "발칸(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:oriental",
+      "aliases": [
+        "oriental"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Middle East (regional tag)",
+        "zh-CN": "中东（地域标签）",
+        "de": "Naher Osten (Regions-Tag)",
+        "es": "Oriente Medio (etiqueta regional)",
+        "pt": "Oriente Médio (tag regional)",
+        "ja": "中東（地域タグ）",
+        "ko": "중동(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:nordic",
+      "aliases": [
+        "nordic"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Nordic (regional tag)",
+        "zh-CN": "北欧（地域标签）",
+        "de": "Nordisch (Regions-Tag)",
+        "es": "Nórdica (etiqueta regional)",
+        "pt": "Nórdica (tag regional)",
+        "ja": "北欧（地域タグ）",
+        "ko": "북유럽(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:breton",
+      "aliases": [
+        "breton"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Brittany (regional tag)",
+        "zh-CN": "布列塔尼（地域标签）",
+        "de": "Bretagne (Regions-Tag)",
+        "es": "Bretaña (etiqueta regional)",
+        "pt": "Bretanha (tag regional)",
+        "ja": "ブルターニュ（地域タグ）",
+        "ko": "브르타뉴(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:slavic",
+      "aliases": [
+        "slavic"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Slavic (regional tag)",
+        "zh-CN": "斯拉夫（地域标签）",
+        "de": "Slawisch (Regions-Tag)",
+        "es": "Eslava (etiqueta regional)",
+        "pt": "Eslava (tag regional)",
+        "ja": "スラヴ（地域タグ）",
+        "ko": "슬라브(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:gaelic",
+      "aliases": [
+        "gaelic"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Gaelic (regional tag)",
+        "zh-CN": "盖尔（地域标签）",
+        "de": "Gälisch (Regions-Tag)",
+        "es": "Gaélica (etiqueta regional)",
+        "pt": "Gaélica (tag regional)",
+        "ja": "ゲール（地域タグ）",
+        "ko": "게일(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:scandinavian",
+      "aliases": [
+        "scandinavian"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Scandinavia (regional tag)",
+        "zh-CN": "斯堪的纳维亚（地域标签）",
+        "de": "Skandinavien (Regions-Tag)",
+        "es": "Escandinavia (etiqueta regional)",
+        "pt": "Escandinávia (tag regional)",
+        "ja": "スカンディナヴィア（地域タグ）",
+        "ko": "스칸디나비아(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:ukrainian",
+      "aliases": [
+        "ukrainian"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Ukraine (regional tag)",
+        "zh-CN": "乌克兰（地域标签）",
+        "de": "Ukraine (Regions-Tag)",
+        "es": "Ucrania (etiqueta regional)",
+        "pt": "Ucrânia (tag regional)",
+        "ja": "ウクライナ（地域タグ）",
+        "ko": "우크라이나(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:japanese",
+      "aliases": [
+        "japanese"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Japan (regional tag)",
+        "zh-CN": "日本（地域标签）",
+        "de": "Japan (Regions-Tag)",
+        "es": "Japón (etiqueta regional)",
+        "pt": "Japão (tag regional)",
+        "ja": "日本（地域タグ）",
+        "ko": "일본(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:czech",
+      "aliases": [
+        "czech"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Czechia (regional tag)",
+        "zh-CN": "捷克（地域标签）",
+        "de": "Tschechien (Regions-Tag)",
+        "es": "Chequia (etiqueta regional)",
+        "pt": "Tchéquia (tag regional)",
+        "ja": "チェコ（地域タグ）",
+        "ko": "체코(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:danish",
+      "aliases": [
+        "danish"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Denmark (regional tag)",
+        "zh-CN": "丹麦（地域标签）",
+        "de": "Dänemark (Regions-Tag)",
+        "es": "Dinamarca (etiqueta regional)",
+        "pt": "Dinamarca (tag regional)",
+        "ja": "デンマーク（地域タグ）",
+        "ko": "덴마크(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:polish",
+      "aliases": [
+        "polish"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Poland (regional tag)",
+        "zh-CN": "波兰（地域标签）",
+        "de": "Polen (Regions-Tag)",
+        "es": "Polonia (etiqueta regional)",
+        "pt": "Polônia (tag regional)",
+        "ja": "ポーランド（地域タグ）",
+        "ko": "폴란드(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:greek",
+      "aliases": [
+        "greek"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Greece (regional tag)",
+        "zh-CN": "希腊（地域标签）",
+        "de": "Griechenland (Regions-Tag)",
+        "es": "Grecia (etiqueta regional)",
+        "pt": "Grécia (tag regional)",
+        "ja": "ギリシャ（地域タグ）",
+        "ko": "그리스(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:swedish",
+      "aliases": [
+        "swedish"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Sweden (regional tag)",
+        "zh-CN": "瑞典（地域标签）",
+        "de": "Schweden (Regions-Tag)",
+        "es": "Suecia (etiqueta regional)",
+        "pt": "Suécia (tag regional)",
+        "ja": "スウェーデン（地域タグ）",
+        "ko": "스웨덴(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:indonesian",
+      "aliases": [
+        "indonesian"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Indonesia (regional tag)",
+        "zh-CN": "印度尼西亚（地域标签）",
+        "de": "Indonesien (Regions-Tag)",
+        "es": "Indonesia (etiqueta regional)",
+        "pt": "Indonésia (tag regional)",
+        "ja": "インドネシア（地域タグ）",
+        "ko": "인도네시아(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:finnish",
+      "aliases": [
+        "finnish"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Finland (regional tag)",
+        "zh-CN": "芬兰（地域标签）",
+        "de": "Finnland (Regions-Tag)",
+        "es": "Finlandia (etiqueta regional)",
+        "pt": "Finlândia (tag regional)",
+        "ja": "フィンランド（地域タグ）",
+        "ko": "핀란드(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:peruvian",
+      "aliases": [
+        "peruvian"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Peru (regional tag)",
+        "zh-CN": "秘鲁（地域标签）",
+        "de": "Peru (Regions-Tag)",
+        "es": "Perú (etiqueta regional)",
+        "pt": "Peru (tag regional)",
+        "ja": "ペルー（地域タグ）",
+        "ko": "페루(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:irish",
+      "aliases": [
+        "irish"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Ireland (regional tag)",
+        "zh-CN": "爱尔兰（地域标签）",
+        "de": "Irland (Regions-Tag)",
+        "es": "Irlanda (etiqueta regional)",
+        "pt": "Irlanda (tag regional)",
+        "ja": "アイルランド（地域タグ）",
+        "ko": "아일랜드(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:persian",
+      "aliases": [
+        "persian"
+      ],
+      "kind": "cultural_tag",
+      "labels": {
+        "en": "Persian (cultural tag)",
+        "zh-CN": "波斯（文化标签）",
+        "de": "Persisch (Kultur-Tag)",
+        "es": "Persa (etiqueta cultural)",
+        "pt": "Persa (tag cultural)",
+        "ja": "ペルシャ（文化タグ）",
+        "ko": "페르시아(문화 태그)"
+      }
+    },
+    {
+      "id": "tag:malay",
+      "aliases": [
+        "malay"
+      ],
+      "kind": "cultural_tag",
+      "labels": {
+        "en": "Malay (cultural tag)",
+        "zh-CN": "马来（文化标签）",
+        "de": "Malaiisch (Kultur-Tag)",
+        "es": "Malaya (etiqueta cultural)",
+        "pt": "Malaia (tag cultural)",
+        "ja": "マレー（文化タグ）",
+        "ko": "말레이(문화 태그)"
+      }
+    },
+    {
+      "id": "tag:vietnamese",
+      "aliases": [
+        "vietnamese"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Vietnam (regional tag)",
+        "zh-CN": "越南（地域标签）",
+        "de": "Vietnam (Regions-Tag)",
+        "es": "Vietnam (etiqueta regional)",
+        "pt": "Vietnã (tag regional)",
+        "ja": "ベトナム（地域タグ）",
+        "ko": "베트남(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:bulgarian",
+      "aliases": [
+        "bulgarian"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Bulgaria (regional tag)",
+        "zh-CN": "保加利亚（地域标签）",
+        "de": "Bulgarien (Regions-Tag)",
+        "es": "Bulgaria (etiqueta regional)",
+        "pt": "Bulgária (tag regional)",
+        "ja": "ブルガリア（地域タグ）",
+        "ko": "불가리아(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:tajik",
+      "aliases": [
+        "tajik"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Tajikistan (regional tag)",
+        "zh-CN": "塔吉克斯坦（地域标签）",
+        "de": "Tadschikistan (Regions-Tag)",
+        "es": "Tayikistán (etiqueta regional)",
+        "pt": "Tadjiquistão (tag regional)",
+        "ja": "タジキスタン（地域タグ）",
+        "ko": "타지키스탄(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:norwegian",
+      "aliases": [
+        "norwegian"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Norway (regional tag)",
+        "zh-CN": "挪威（地域标签）",
+        "de": "Norwegen (Regions-Tag)",
+        "es": "Noruega (etiqueta regional)",
+        "pt": "Noruega (tag regional)",
+        "ja": "ノルウェー（地域タグ）",
+        "ko": "노르웨이(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:icelandic",
+      "aliases": [
+        "icelandic"
+      ],
+      "kind": "regional_tag",
+      "labels": {
+        "en": "Iceland (regional tag)",
+        "zh-CN": "冰岛（地域标签）",
+        "de": "Island (Regions-Tag)",
+        "es": "Islandia (etiqueta regional)",
+        "pt": "Islândia (tag regional)",
+        "ja": "アイスランド（地域タグ）",
+        "ko": "아이슬란드(지역 태그)"
+      }
+    },
+    {
+      "id": "tag:francophone",
+      "aliases": [
+        "Musique francophone"
+      ],
+      "kind": "language_tag",
+      "labels": {
+        "en": "Francophone (language tag)",
+        "zh-CN": "法语（语言标签）",
+        "de": "Französisch (Sprach-Tag)",
+        "es": "Francófona (etiqueta de idioma)",
+        "pt": "Francófona (tag de idioma)",
+        "ja": "フランス語（言語タグ）",
+        "ko": "프랑스어(언어 태그)"
+      }
+    }
+  ],
+  "non_music_ids": [
+    "apple:100107"
+  ]
+}
