@@ -15,6 +15,7 @@ from .description_translations import apply_description_translations
 from .track_locations import location_fields
 from .artist_locations import apply_artist_location
 from .catalog_search import query_rank
+from .genre_metadata import apply_genre_metadata, genre_search_text, is_non_music
 
 
 DEFAULT_METADATA_REL = "public/merged/metadata_merged.csv"
@@ -136,6 +137,8 @@ class LightweightMainlineCatalog:
                         "country",
                     )
                 )
+                + " "
+                + _norm_key(genre_search_text(row))
             )
             for culture_key in {"", culture}:
                 for source_key in {"", source}:
@@ -396,13 +399,13 @@ class LightweightMainlineCatalog:
         payload["artist_id"] = _clean(row.get("artist_id"))
         payload.update(location_fields(row))
         apply_artist_location(payload, self.storage.root)
-        return apply_description_translations(payload, self.storage.root)
+        return apply_genre_metadata(apply_description_translations(payload, self.storage.root))
 
     def _is_low_signal(self, row: dict[str, Any]) -> bool:
         text = " ".join(
             _clean(row.get(key)).lower() for key in ("title", "artist", "album", "label", "tags", "description")
         )
-        return any(term in text for term in LOW_SIGNAL_TERMS)
+        return is_non_music(row) or any(term in text for term in LOW_SIGNAL_TERMS)
 
     def _matches_query(self, row: dict[str, Any], query_terms: list[str]) -> bool:
         hay = _norm_key(

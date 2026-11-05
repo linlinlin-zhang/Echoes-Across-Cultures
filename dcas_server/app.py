@@ -25,6 +25,7 @@ from dcas.ontology import OntologyStore
 
 from .lightweight_catalog import get_lightweight_catalog
 from .description_translations import apply_description_translations
+from .genre_metadata import apply_genre_metadata
 from .track_locations import location_fields
 from .artist_locations import apply_artist_location
 from .paths import Storage
@@ -1197,6 +1198,7 @@ def create_app() -> FastAPI:
                 pass
             apply_artist_location(item, storage.root)
             apply_description_translations(item, storage.root)
+            apply_genre_metadata(item)
         return {
             "ok": True,
             "session_id": session_id,

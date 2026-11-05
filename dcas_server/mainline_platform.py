@@ -20,6 +20,7 @@ from dcas.serialization import load_checkpoint
 
 from .paths import Storage
 from .description_translations import apply_description_translations
+from .genre_metadata import apply_genre_metadata, is_non_music
 from .track_locations import location_fields
 from .artist_locations import apply_artist_location
 from .catalog_search import query_rank
@@ -1085,7 +1086,7 @@ class MainlineRecommendationPlatform:
         payload["artist_id"] = _clean(row.get("artist_id"))
         payload.update(location_fields(row))
         apply_artist_location(payload, self.storage.root)
-        return apply_description_translations(payload, self.storage.root)
+        return apply_genre_metadata(apply_description_translations(payload, self.storage.root))
 
     def _result_metrics(self, *, recommendations: list[dict[str, Any]]) -> dict[str, Any]:
         cultures = Counter(_clean(item.get("culture")) for item in recommendations)
@@ -1128,7 +1129,7 @@ class MainlineRecommendationPlatform:
                 _norm_key(row.get("tags")),
             ]
         )
-        result = any(term in text for term in LOW_SIGNAL_TERMS)
+        result = is_non_music(row) or any(term in text for term in LOW_SIGNAL_TERMS)
         self._low_signal_cache[idx] = result
         return result
 

@@ -10,6 +10,7 @@ const track = {track_id:'fixture_br',title:'歌曲原名 / Original title',artis
   city:'João Pessoa',lat:-7.12,lng:-34.88,location_precision:'artist_city',country_source:'artist_location',
   release_year:2021};
 const fixtures = Array.from({length:10}, (_,i)=>({...track,track_id:`fixture_${i}`,release_year:i<5?2015:i<9?2021:2005,
+  label:i<2?'Contemporary instrumental music with extended acoustic arrangements':`Style ${i}`,
   label_en:i<2?'Contemporary instrumental music with extended acoustic arrangements':`Style ${i}`}));
 async function main() {
   const browser = await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,

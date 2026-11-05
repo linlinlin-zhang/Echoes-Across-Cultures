@@ -2562,6 +2562,7 @@
   <script src="/vendor/purify.min.js"></script>
   <script src="geo-data.js?v=20261101b"></script>
   <script src="geo.js?v=20261101b"></script>
+  <script src="genre-data.js"></script>
   <script src="metadata-i18n.js?v=20261101"></script>
   <script src="favorite-store.js?v=20261101b"></script>
   <script>
@@ -3170,9 +3171,7 @@
     }
 
     function displayGenre(track) {
-      const raw = track.raw || {};
-      const value = (!isChineseLang() && (track.genreEn || raw.label_en)) || track.genre || raw.label || track.label || track.style || firstTagValue(track.tags);
-      return window.EchoMetadata.keyword(value) || t("music.default.unknown");
+      return window.EchoMetadata.genre(track) || t("music.default.unknown");
     }
 
     function displaySource(track) {

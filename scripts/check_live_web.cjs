@@ -97,6 +97,8 @@ async function main() {
             assert.equal(rec.request().postDataJSON().target_culture,'brazil');
             assert.equal(responseJSON.request.effective_target_culture,'brazil');
             checked('selected target culture is applied by the recommendation engine');
+            assert(responseJSON.recommendations.every(item=>item.genre_normalized&&item.genre_id&&item.label_original&&item.content_kind!=='spoken_drama'));
+            checked('recommendation payloads use normalized genres and exclude radio drama');
             fs.writeFileSync(`${out}/recommendation.json`,JSON.stringify(responseJSON,null,2));
             const favoriteResponse=page.waitForResponse(r=>r.url().includes('/api/favorites')&&r.request().method()==='POST',{timeout:15000});
             await page.locator('[data-favorite-index="0"]').click();

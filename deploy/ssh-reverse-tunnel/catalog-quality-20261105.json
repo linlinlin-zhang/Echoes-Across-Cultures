@@ -1,0 +1,47 @@
+{
+  "grain": "one platform track ID per row",
+  "metadata_sha256": "a99b68025c9c123392f7a34bce0183ac5e6bd29c91bc9a491e4e8dba3171ac4e",
+  "rows": 30000,
+  "sources": {
+    "itunes": 27449,
+    "jamendo": 2551
+  },
+  "missing_required": {
+    "track_id": 0,
+    "title": 0,
+    "artist": 0,
+    "label": 0,
+    "culture": 0
+  },
+  "duplicate_track_ids": 0,
+  "duplicate_complete_rows": 0,
+  "repeated_title_artist_groups": 2012,
+  "repeated_title_artist_rows": 4643,
+  "raw_genre_variants": 651,
+  "normalized_genres_used": 284,
+  "changed_display_genre_rows": 7339,
+  "raw_label_en_nonempty": 817,
+  "raw_label_en_east_asian_script": 709,
+  "normalized_label_en_east_asian_script": 0,
+  "unresolved_genre_rows": 0,
+  "non_music_rows": 30,
+  "unknown_duration_rows": 13,
+  "missing_release_date_rows": 8,
+  "genre_kinds": {
+    "genre": 29367,
+    "language_tag": 4,
+    "spoken_drama": 30,
+    "regional_tag": 442,
+    "cultural_tag": 2,
+    "instrument_tag": 155
+  },
+  "rules": [
+    "Normalize via public platform genre IDs plus reviewed aliases; do not infer from nationality.",
+    "Keep raw inputs and original labels; filter explicit spoken drama only in music browsing/recommendation.",
+    "Treat duration <= 0 as unknown; do not invent missing dates or merge recordings by title."
+  ],
+  "limitations": [
+    "No audio listening, fingerprint deduplication or factual audit of generated descriptions.",
+    "Source category normalization does not independently reclassify musical content."
+  ]
+}

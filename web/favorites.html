@@ -905,6 +905,7 @@
   <script>window.EchoI18n?.apply(document); document.documentElement.classList.remove("i18n-pending");</script>
   <script src="geo-data.js?v=20261101b"></script>
   <script src="geo.js?v=20261101b"></script>
+  <script src="genre-data.js"></script>
   <script src="metadata-i18n.js?v=20261101"></script>
   <script src="favorite-store.js?v=20261101b"></script>
   <script>
@@ -1003,7 +1004,7 @@
     }
 
     function itemGenre(item) {
-      return window.EchoMetadata.keyword((window.EchoI18n.getLanguage() !== "zh-CN" && item.genre_en) || item.genre) || t("favorites.unknownGenre");
+      return window.EchoMetadata.genre(item) || t("favorites.unknownGenre");
     }
 
     function itemPlaceLabel(item) {

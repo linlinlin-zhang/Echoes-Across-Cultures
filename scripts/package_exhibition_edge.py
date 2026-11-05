@@ -85,6 +85,7 @@ def main():
         "paths.py",
         "catalog_search.py",
         "description_translations.py",
+        "genre_metadata.py",
         "artist_locations.py",
         "track_locations.py",
         "lightweight_catalog.py",
