@@ -35,7 +35,7 @@ async function main(){
    assert.equal(await page.locator('.genre-bar-label').innerText(),expected[language]);
    assert.equal(await page.locator('.genre-percent').innerText(),'100%');
    assert.equal(await page.locator('[data-ai-mode]').count(),0);
-   await page.locator('#recommend-button').click();assert(await page.locator('#recommend-picker').isVisible());
+   assert.equal(await page.locator('#recommend-picker').count(),0);
    await page.keyboard.press('Escape');
    report.checks.push(`${language}: legacy Korean genre, invalid English field, merged chart group and restored features`);
    if(language==='zh-CN')await page.screenshot({path:`${out}/music-zh.png`,fullPage:true});

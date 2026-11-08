@@ -399,92 +399,18 @@
       white-space: nowrap;
     }
 
-    .recommend-picker {
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-      display: grid;
-      place-items: center;
-      padding: 1.25rem;
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(12px);
-    }
 
-    .recommend-picker[hidden] {
-      display: none;
-    }
 
-    .recommend-dialog {
-      min-width: 0;
-      overflow: auto;
-      width: min(560px, 100%);
-      max-height: min(640px, calc(100vh - 2.5rem));
-      display: grid;
-      grid-template-rows: auto auto;
-      border: 1px solid var(--ink);
-      background: #ffffff;
-      box-shadow: 0 1.4rem 4rem rgba(17, 17, 17, 0.12);
-    }
 
-    .recommend-options {
-      padding: 1rem 1.15rem;
-      border-bottom: 1px solid var(--line);
-    }
 
-    .recommend-options {
-      display: grid;
-      gap: 0.95rem;
-      border-bottom: 0;
-    }
 
-    .recommend-field {
-      display: grid;
-      gap: 0.38rem;
-    }
 
-    .recommend-field label {
-      color: var(--muted);
-      font-family: var(--font-mono);
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
 
-    .recommend-select {
-      min-width: 0;
-      width: 100%;
-      min-height: 2.75rem;
-      padding: 0.65rem 0.8rem;
-      border: 1px solid var(--line-strong);
-      background: #ffffff;
-      color: var(--ink);
-      font: inherit;
-      outline: none;
-    }
 
-    .recommend-select:focus {
-      border-color: var(--ink);
-    }
 
-    .recommend-status {
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.45;
-    }
 
-    .recommend-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.65rem;
-      flex-wrap: wrap;
-    }
 
-    .recommend-actions .pill { white-space: normal; }
 
-    .recommend-actions .is-primary {
-      background: var(--ink);
-      color: #ffffff;
-    }
 
     @keyframes record-pulse {
       0%, 100% { opacity: 1; }
@@ -2335,19 +2261,8 @@
         width: 56px;
           }
 
-    .recommend-picker {
-        padding: 0.75rem;
-        align-items: end;
-    }
 
-    .recommend-dialog {
-        max-height: min(82vh, 720px);
-    }
 
-    .recommend-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 
       .rec-card-main {
         grid-template-columns: 56px minmax(0, 1fr);
@@ -2413,33 +2328,6 @@
       </form>
       <div class="library-status" id="library-status" data-i18n="music.library.ready">输入关键词或直接浏览曲库。</div>
       <div class="library-results" id="library-results" role="listbox" aria-label="曲库搜索结果" data-i18n-aria-label="music.library.resultsAria"></div>
-    </section>
-  </div>
-
-  <div class="recommend-picker" id="recommend-picker" hidden>
-    <section class="recommend-dialog" role="dialog" aria-modal="true" aria-labelledby="recommend-picker-title">
-      <div class="library-head">
-        <div>
-          <div class="meta-label" data-i18n="music.recommend.optionsMeta">推荐方向</div>
-          <h2 id="recommend-picker-title" data-i18n="music.recommend.optionsTitle">选择这次去哪里听</h2>
-        </div>
-        <button class="pill" id="recommend-picker-close" type="button" data-i18n="music.recommend.optionsClose">关闭</button>
-      </div>
-      <form class="recommend-options" id="recommend-options-form">
-        <div class="recommend-field">
-          <label for="recommend-culture-select" data-i18n="music.recommend.cultureLabel">文化域</label>
-          <select class="recommend-select" id="recommend-culture-select"></select>
-        </div>
-        <div class="recommend-field">
-          <label for="recommend-region-select" data-i18n="music.recommend.regionLabel">地域</label>
-          <select class="recommend-select" id="recommend-region-select"></select>
-        </div>
-        <div class="recommend-status" id="recommend-status" data-i18n="music.recommend.optionsReady">当前方向：随机探索</div>
-        <div class="recommend-actions">
-          <button class="pill" id="recommend-random-button" type="button" data-i18n="music.recommend.randomStart">随机生成</button>
-          <button class="pill is-primary" id="recommend-confirm-button" type="submit" data-i18n="music.recommend.confirm">开始生成</button>
-        </div>
-      </form>
     </section>
   </div>
 
@@ -2564,6 +2452,7 @@
   <script src="geo.js?v=20261101b"></script>
   <script src="genre-data.js"></script>
   <script src="metadata-i18n.js?v=20261101"></script>
+  <script src="recommendation-metrics.js"></script>
   <script src="favorite-store.js?v=20261101b"></script>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -2631,32 +2520,9 @@
       sourceDataset: t("music.default.source"),
       style: t("music.default.unknown"),
       note: t("music.default.connectingNote"),
-      metrics: {
-        serendipity: 0.832,
-        calibrationKl: 2.03,
-        targetAffinity: 0.188,
-        minorityExposure: 0.402,
-        userAlignmentKl: 0.000001,
-        palUncertainty: 0.64,
-        score: 0.86,
-        relevance: 0.79,
-        unexpectedness: 0.91
-      }
+      metrics: window.EchoRecommendationMetrics.read({})
     };
 
-    const recommendRegionGroups = {
-      east_asia: ["china", "japan", "korea"],
-      southeast_asia: ["southeast_asia"],
-      south_asia: ["india"],
-      west_asia_mena: ["middle_east"],
-      europe: ["west", "eastern_europe", "celtic", "nordic", "balkans"],
-      africa: ["africa"],
-      latin_america: ["latin", "brazil", "andean"],
-      caribbean: ["caribbean"],
-      central_asia: ["central_asia"]
-    };
-
-    const recommendRegionKeys = ["random", ...Object.keys(recommendRegionGroups)];
     const culturePlaces = {
       west: { countryKey: "GB", cityKey: "LONDON", lat: 51.5072, lng: -0.1276 },
       china: { countryKey: "CN", cityKey: "BEIJING", lat: 39.9042, lng: 116.4074 },
@@ -2734,73 +2600,7 @@
     ];
     const southChinaSeaNineDashSegments = southChinaSeaSourceSegments;
 
-    let recommendations = [
-      {
-        title: "巴伊亚镜像", titleEn: "Bahia Mirror",
-        artist: "安娜·莉拉", artistEn: "Ana Lilah",
-        country: "巴西", countryEn: "Brazil",
-        culture: "brazil",
-        city: "萨尔瓦多", cityEn: "Salvador",
-        lat: -12.9777, lng: -38.5016,
-        releaseYear: 2022,
-        style: "桑巴雷鬼 / 坎东布雷节奏", styleEn: "Samba Reggae / Candomblé Rhythm",
-        why: "保留明亮拨弦的轮廓，同时把律动推进到更温暖的狂欢打击乐场域。",
-        whyEn: "Keeps the bright plucked outlines while pushing the groove into warmer carnival percussion territory.",
-        metrics: { serendipity: 0.821, calibrationKl: 2.04, targetAffinity: 0.205, minorityExposure: 0.38, userAlignmentKl: 0.009, palUncertainty: 0.57, score: 0.88, relevance: 0.8, unexpectedness: 0.9 }
-      },
-      {
-        title: "雨后科拉琴", titleEn: "Post-Rain Kora",
-        artist: "穆萨·迪亚拉", artistEn: "Moussa Diarra",
-        country: "马里", countryEn: "Mali",
-        culture: "africa",
-        city: "巴马科", cityEn: "Bamako",
-        lat: 12.6392, lng: -8.0029,
-        releaseYear: 2016,
-        style: "科拉琴 / 曼德赞歌", styleEn: "Kora / Mandé Praise",
-        why: "把琵琶式的级联线条接到西非竖琴鲁特琴的短句语法上。",
-        whyEn: "Splices pipa-style cascading lines into the short-phrase syntax of the West African harp-lute.",
-        metrics: { serendipity: 0.846, calibrationKl: 2.01, targetAffinity: 0.214, minorityExposure: 0.46, userAlignmentKl: 0.013, palUncertainty: 0.72, score: 0.91, relevance: 0.77, unexpectedness: 0.96 }
-      },
-      {
-        title: "里斯本低潮", titleEn: "Lisbon Low Tide",
-        artist: "玛塔·瓦莱", artistEn: "Marta Vale",
-        country: "葡萄牙", countryEn: "Portugal",
-        culture: "west",
-        city: "里斯本", cityEn: "Lisbon",
-        lat: 38.7223, lng: -9.1393,
-        releaseYear: 2011,
-        style: "法朵 / 环境吉他", styleEn: "Fado / Ambient Guitar",
-        why: "延续夜色里的忧郁感，同时替换成人声装饰和更海岸化的和声色彩。",
-        whyEn: "Extends the nocturnal melancholy, swapping in vocal ornamentation and more coastal harmonic colours.",
-        metrics: { serendipity: 0.802, calibrationKl: 2.08, targetAffinity: 0.181, minorityExposure: 0.34, userAlignmentKl: 0.006, palUncertainty: 0.49, score: 0.84, relevance: 0.83, unexpectedness: 0.84 }
-      },
-      {
-        title: "加美兰轨道", titleEn: "Gamelan Orbit",
-        artist: "莎丽·乌兰", artistEn: "Sari Ulan",
-        country: "印度尼西亚", countryEn: "Indonesia",
-        culture: "southeast_asia",
-        city: "日惹", cityEn: "Yogyakarta",
-        lat: -7.7956, lng: 110.3695,
-        releaseYear: 2020,
-        style: "加美兰 / 柔和电子", styleEn: "Gamelan / Soft Electronic",
-        why: "用互锁的金属键盘循环重构原曲的旋律轮廓。",
-        whyEn: "Reconstructs the original melody with interlocking metal-keyboard loops.",
-        metrics: { serendipity: 0.858, calibrationKl: 1.99, targetAffinity: 0.231, minorityExposure: 0.5, userAlignmentKl: 0.017, palUncertainty: 0.76, score: 0.93, relevance: 0.75, unexpectedness: 0.98 }
-      },
-      {
-        title: "伊斯坦布尔即兴漂流", titleEn: "Istanbul Improv Drift",
-        artist: "埃姆雷·艾登", artistEn: "Emre Aydın",
-        country: "土耳其", countryEn: "Turkey",
-        culture: "middle_east",
-        city: "伊斯坦布尔", cityEn: "Istanbul",
-        lat: 41.0082, lng: 28.9784,
-        releaseYear: 2018,
-        style: "乌德琴 / 木卡姆 / 慢拍", styleEn: "Oud / Maqam / Slow Beat",
-        why: "把丝路调式感接入带有木卡姆转音的即兴段落。",
-        whyEn: "Channels Silk Road modality into improvised passages with maqam inflections.",
-        metrics: { serendipity: 0.835, calibrationKl: 2.02, targetAffinity: 0.202, minorityExposure: 0.42, userAlignmentKl: 0.011, palUncertainty: 0.68, score: 0.9, relevance: 0.81, unexpectedness: 0.89 }
-      }
-    ];
+    let recommendations = [];
 
     function localizeDefaultRec(rec) {
       if (isChineseLang()) return rec;
@@ -2889,25 +2689,8 @@
       return Number.isFinite(year) ? year : 0;
     }
 
-    function metricsFromApiItem(item, index = 0) {
-      const components = item.score_components || {};
-      const relevance = Number(components.relevance ?? item.score ?? defaultMetrics.relevance);
-      const unexpectedness = Number(components.novelty ?? defaultMetrics.unexpectedness);
-      const targetAffinity = Number(components.target_affinity ?? defaultMetrics.targetAffinity);
-      const minorityExposure = Number(components.minority ?? defaultMetrics.minorityExposure);
-      const sourceBalance = Number(components.source ?? 0.5);
-      const score = Number(item.score ?? relevance);
-      return {
-        serendipity: Math.max(0, Math.min(1, relevance * (0.58 + unexpectedness * 0.42))),
-        calibrationKl: Math.max(0.1, 2.4 - targetAffinity * 1.2 + index * 0.012),
-        targetAffinity: Math.max(0, Math.min(1, targetAffinity)),
-        minorityExposure: Math.max(0, Math.min(1, minorityExposure)),
-        userAlignmentKl: Math.max(0.000001, 0.025 * (1 - sourceBalance)),
-        palUncertainty: Math.max(0.18, Math.min(0.92, 0.36 + unexpectedness * 0.36 + minorityExposure * 0.18)),
-        score: Math.max(0, Math.min(1, score)),
-        relevance: Math.max(0, Math.min(1, relevance)),
-        unexpectedness: Math.max(0, Math.min(1, unexpectedness))
-      };
+    function metricsFromApiItem(item) {
+      return window.EchoRecommendationMetrics.read(item);
     }
 
     function isChineseLang() {
@@ -2978,31 +2761,14 @@
     }
 
     function recommendationMatchLabel(item, index) {
-      const score = Number(item.metrics?.score ?? 0.82 + index * 0.01);
+      const score = window.EchoRecommendationMetrics.value(item.metrics?.score);
+      if (score === null) return "—";
       return `${Math.round(Math.max(0.1, Math.min(0.99, score)) * 100)}% ${t("music.match.bridging")}`;
     }
 
-    const emptyMetrics = {
-      serendipity: 0,
-      calibrationKl: 0,
-      targetAffinity: 0,
-      minorityExposure: 0,
-      userAlignmentKl: 0,
-      palUncertainty: 0,
-      score: 0,
-      relevance: 0,
-      unexpectedness: 0
-    };
-
-    const defaultMetrics = { ...currentTrack.metrics };
-    const rerankWeights = [
-      { label: t("music.rerank.relevance"), code: t("music.rerank.relevanceCode"), value: 0.62, signal: t("music.rerank.relevanceSignal") },
-      { label: t("music.rerank.novelty"), code: t("music.rerank.noveltyCode"), value: 0.12, signal: t("music.rerank.noveltySignal") },
-      { label: t("music.rerank.serendipity"), code: t("music.rerank.serendipityCode"), value: 0.14, signal: t("music.rerank.serendipitySignal") },
-      { label: t("music.rerank.exposure"), code: t("music.rerank.exposureCode"), value: 0.08, signal: t("music.rerank.exposureSignal") },
-      { label: t("music.rerank.coverage"), code: t("music.rerank.coverageCode"), value: 0.04, signal: t("music.rerank.coverageSignal") },
-      { label: t("music.rerank.alignment"), code: t("music.rerank.alignmentCode"), value: 0.03, signal: t("music.rerank.alignmentSignal") }
-    ];
+    const emptyMetrics = window.EchoRecommendationMetrics.average([]);
+    const defaultMetrics = { ...emptyMetrics };
+    let rerankWeights = null;
 
     const els = {
       consolePanel: document.querySelector(".console"),
@@ -3034,14 +2800,6 @@
       progressTrack: document.getElementById("progress-track"),
       progressFill: document.getElementById("progress-fill"),
       recommendButton: document.getElementById("recommend-button"),
-      recommendPicker: document.getElementById("recommend-picker"),
-      recommendClose: document.getElementById("recommend-picker-close"),
-      recommendOptionsForm: document.getElementById("recommend-options-form"),
-      recommendCultureSelect: document.getElementById("recommend-culture-select"),
-      recommendRegionSelect: document.getElementById("recommend-region-select"),
-      recommendRandomButton: document.getElementById("recommend-random-button"),
-      recommendConfirmButton: document.getElementById("recommend-confirm-button"),
-      recommendStatus: document.getElementById("recommend-status"),
       recommendList: document.getElementById("recommend-list"),
       mapStatus: document.getElementById("map-status"),
       mapMode: document.getElementById("map-mode"),
@@ -3064,7 +2822,6 @@
     let uploadedAudioFile = null;
     let mainlineStatus = null;
     let recommendationsPersistable = false;
-    let recommendPreferences = { culture: "random", region: "random" };
     let librarySearchFailed = false;
     let librarySearchResults = [];
     let librarySearchBusy = false;
@@ -3099,12 +2856,11 @@
       return activeRecommendations.filter(item => item.locationPrecision !== "unknown" && window.EchoGeo.coordinates(item)).length;
     }
 
-    function setMapStatus(key, count = null, embeddingSeconds = null, targetCulture = "") {
+    function setMapStatus(key, count = null, embeddingSeconds = null) {
       els.mapStatus.dataset.statusKey = key;
       els.mapStatus.dataset.count = count == null ? "" : String(count);
       els.mapStatus.dataset.embeddingSeconds = embeddingSeconds == null ? "" : String(embeddingSeconds);
-      els.mapStatus.dataset.targetCulture = targetCulture;
-      els.mapStatus.textContent = (count == null ? "" : `${formatCount(count)} `) + t(key, { target: cultureLabel(targetCulture) }) +
+      els.mapStatus.textContent = (count == null ? "" : `${formatCount(count)} `) + t(key) +
         (embeddingSeconds == null ? "" : ` / embedding ${Number(embeddingSeconds).toFixed(1)}s`);
     }
 
@@ -3118,7 +2874,6 @@
         const response = await fetch(`/api/mainline/status?prefer_cuda=${apiPreferCuda}`);
         if (!response.ok) throw new Error(`status ${response.status}`);
         mainlineStatus = await response.json();
-        renderRecommendOptions();
         if (els.readoutCatalog) {
           els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
         }
@@ -3288,6 +3043,7 @@
       if (!activeSnapshot.length) return;
       const snapshot = {
         version: 1,
+        measurementSchemaVersion: 2,
         savedAt: new Date().toISOString(),
         primaryTrack: compactTrackSnapshot(primaryTrack),
         currentTrack: compactTrackSnapshot(currentTrack),
@@ -3299,6 +3055,7 @@
         mapStatusKey: els.mapStatus?.dataset.statusKey || "",
         mapModeKey: els.mapMode?.dataset.statusKey || "",
         uploadedAudioMeta,
+        rerankWeights,
         aiConversationMessages: aiConversationMessages.slice(-12).map((message) => ({
           role: message.role,
           content: message.content,
@@ -3369,17 +3126,7 @@
         label: genre,
         style: metadata.style || t("music.local.waitingAnalysis"),
         note: metadata.note || t("music.local.loadedNote"),
-        metrics: {
-          ...defaultMetrics,
-          serendipity: 0.5,
-          calibrationKl: 2.18,
-          targetAffinity: 0.15,
-          minorityExposure: 0.25,
-          palUncertainty: 0.88,
-          score: 0.42,
-          relevance: 0.5,
-          unexpectedness: 0.5
-        },
+        metrics: { ...defaultMetrics },
         durationSeconds: 0,
         coverArtUrl: metadata.coverArtUrl || metadata.cover_art_url || "",
         fileObjectUrl: URL.createObjectURL(file)
@@ -3516,10 +3263,17 @@
     }
 
     function activeMetrics() {
-      if (!activeRecommendations.length) {
-        return emptyMetrics;
-      }
-      return currentTrack.metrics || defaultMetrics;
+      if (!activeRecommendations.length) return emptyMetrics;
+      const selected = activeRecommendations.find(item => isSameTrack(item, currentTrack));
+      return selected ? metricsFromApiItem(selected) : window.EchoRecommendationMetrics.average(activeRecommendations);
+    }
+
+    function activeMetricScope() {
+      return activeRecommendations.some(item => isSameTrack(item, currentTrack)) ? "selected" : "mean";
+    }
+
+    function metricPct(value) {
+      return window.EchoRecommendationMetrics.value(value) === null ? "—" : formatPct(value);
     }
 
     function formatPct(value) {
@@ -3528,44 +3282,44 @@
 
     function renderParameterMetrics() {
       const metrics = activeMetrics();
-      const isWaitingForRecommendation = !activeRecommendations.length;
+      const scope = t(activeMetricScope() === "selected" ? "music.param.selectedScope" : "music.param.meanScope");
       const cards = [
         {
           label: t("music.param.serendipity"),
           code: "01",
-          value: isWaitingForRecommendation ? "0%" : Number(metrics.serendipity).toFixed(3),
+          value: metrics.serendipity == null ? "—" : Number(metrics.serendipity).toFixed(3),
           sub: t("music.param.serendipityDesc")
         },
         {
-          label: t("music.param.calibrationKl"),
-          code: "02",
-          value: isWaitingForRecommendation ? "0%" : Number(metrics.calibrationKl).toFixed(2),
-          sub: t("music.param.calibrationKlDesc")
+          label: t("music.param.styleNovelty"),
+          code: "02", metric: "styleNovelty", scope,
+          value: metricPct(metrics.styleNovelty),
+          sub: t("music.param.styleNoveltyDesc")
         },
         {
-          label: t("music.param.targetAffinity"),
-          code: "03",
-          value: formatPct(metrics.targetAffinity),
-          sub: t("music.param.targetAffinityDesc")
+          label: t("music.param.listeningRelevance"),
+          code: "03", metric: "listeningRelevance", scope,
+          value: metricPct(metrics.listeningRelevance),
+          sub: t("music.param.listeningRelevanceDesc")
         },
         {
           label: t("music.param.minorityExposure"),
           code: "04",
-          value: formatPct(metrics.minorityExposure),
+          value: metricPct(metrics.minorityExposure),
           sub: t("music.param.minorityExposureDesc"),
           dark: true
         }
       ];
 
       els.parameterMetrics.innerHTML = cards.map((card) => `
-        <article class="parameter-metric${card.dark ? " is-dark" : ""}">
+        <article class="parameter-metric${card.dark ? " is-dark" : ""}" data-metric="${card.metric || card.code}" data-scope="${activeMetricScope()}">
           <div class="parameter-metric-head">
             <span class="meta-label">${card.label}</span>
             <span class="meta-label">${card.code}</span>
           </div>
           <div>
             <div class="parameter-value">${card.value}</div>
-            <div class="parameter-sub">${card.sub}</div>
+            <div class="parameter-sub">${card.sub}${card.scope ? `<br><span>${card.scope}</span>` : ""}</div>
           </div>
         </article>
       `).join("");
@@ -3754,7 +3508,7 @@
         source: displaySource(track),
         description: track.why || track.note || "",
         coordinates: { lat: loc.lat, lng: loc.lng, precision: loc.precision },
-        metrics: track.metrics || defaultMetrics
+        metrics: metricsFromApiItem(track)
       };
     }
 
@@ -3773,21 +3527,18 @@
           ...summarizeTrack(item)
         })),
         parameters: {
-          serendipity: Number(metrics.serendipity),
-          calibrationKl: Number(metrics.calibrationKl),
-          targetAffinity: Number(metrics.targetAffinity),
-          minorityExposure: Number(metrics.minorityExposure),
-          dcasScore: Number(metrics.score),
-          relevance: Number(metrics.relevance),
-          unexpectedness: Number(metrics.unexpectedness),
-          palUncertainty: Number(metrics.palUncertainty),
-          userAlignmentKl: Number(metrics.userAlignmentKl)
+          serendipity: metrics.serendipity,
+          styleNovelty: metrics.styleNovelty,
+          listeningRelevance: metrics.listeningRelevance,
+          scope: activeMetricScope(),
+          normalization: "candidate_minmax",
+          minorityExposure: metrics.minorityExposure,
+          dcasScore: metrics.score,
+          relevance: metrics.relevance,
+          unexpectedness: metrics.unexpectedness,
+          measured: metrics.styleNovelty !== null && metrics.listeningRelevance !== null
         },
-        rerankWeights: rerankWeights.map((item) => ({
-          name: item.label,
-          weight: item.value,
-          signal: item.signal
-        })),
+        rerankWeights,
         mapState: {
           centerLng,
           centerLat,
@@ -4337,6 +4088,7 @@ ${t("music.readout.source")}：${item.sourceDataset || item.platform || ""}`;
         {
           role: "system",
           content: `You are a friend who loves world music, helping the user understand the playlist Echo recommended. Your style is warm, natural, conversational — like a music-savvy friend chatting. Respond in ${aiResponseLanguageName()}.
+The displayed parameters come from model-relative scores, not calibrated probabilities. Only describe available values in parameters; null means unmeasured. Do not invent numerical readings.
 
 Guidelines:
 - Explain in everyday language, avoid academic jargon or paper-like tone.
@@ -4753,140 +4505,6 @@ Guidelines:
       });
     }
 
-    function availableRecommendationCultures() {
-      const keys = new Set(Object.keys(culturePlaces));
-      Object.keys(mainlineStatus?.cultures || {}).forEach((key) => {
-        const clean = cleanMetaText(key);
-        if (clean) keys.add(clean);
-      });
-      return [...keys]
-        .filter((key) => key && key.toLowerCase() !== "nan")
-        .sort((a, b) => (cultureLabel(a) || a).localeCompare(cultureLabel(b) || b, window.EchoI18n?.currentLanguage || "zh-CN"));
-    }
-
-    function recommendationRegionLabel(key) {
-      if (key === "random") return t("music.recommend.randomRegion");
-      return t("music.region." + key);
-    }
-
-    function setSelectOptions(select, options, selectedValue) {
-      if (!select) return;
-      select.innerHTML = "";
-      options.forEach((option) => {
-        select.appendChild(new Option(option.label, option.value));
-      });
-      const values = new Set(options.map((option) => option.value));
-      select.value = values.has(selectedValue) ? selectedValue : "random";
-    }
-
-    function describeRecommendationPreference(options = recommendPreferences) {
-      const culture = cleanMetaText(options.culture || "random");
-      const region = cleanMetaText(options.region || "random");
-      if (culture && culture !== "random") {
-        return cultureLabel(culture) || culture;
-      }
-      if (region && region !== "random") {
-        return t("music.recommend.randomInRegion", { region: recommendationRegionLabel(region) });
-      }
-      return t("music.recommend.randomTarget");
-    }
-
-    function syncRecommendStatus() {
-      if (!els.recommendStatus) return;
-      recommendPreferences = {
-        culture: els.recommendCultureSelect?.value || "random",
-        region: els.recommendRegionSelect?.value || "random"
-      };
-      els.recommendStatus.textContent = t("music.recommend.currentTarget", {
-        target: describeRecommendationPreference(recommendPreferences)
-      });
-    }
-
-    function renderRecommendOptions() {
-      const selectedCulture = els.recommendCultureSelect?.value || recommendPreferences.culture || "random";
-      const selectedRegion = els.recommendRegionSelect?.value || recommendPreferences.region || "random";
-      const availableCultures = new Set(availableRecommendationCultures());
-      const cultureKeys = selectedRegion && selectedRegion !== "random"
-        ? (recommendRegionGroups[selectedRegion] || []).filter((culture) => availableCultures.has(culture))
-        : [...availableCultures];
-      const cultureOptions = [
-        { value: "random", label: t("music.recommend.randomCulture") },
-        ...cultureKeys.map((culture) => ({
-          value: culture,
-          label: cultureLabel(culture) || culture
-        }))
-      ];
-      const regionOptions = recommendRegionKeys.map((region) => ({
-        value: region,
-        label: recommendationRegionLabel(region)
-      }));
-      setSelectOptions(els.recommendCultureSelect, cultureOptions, selectedCulture);
-      setSelectOptions(els.recommendRegionSelect, regionOptions, selectedRegion);
-      syncRecommendStatus();
-    }
-
-    function readRecommendationOptions() {
-      return {
-        culture: els.recommendCultureSelect?.value || "random",
-        region: els.recommendRegionSelect?.value || "random"
-      };
-    }
-
-    function currentSeedCulture() {
-      return cleanMetaText(primaryTrack?.culture || currentTrack?.culture || initialSeedCulture || "");
-    }
-
-    function randomCultureFromPool(pool = []) {
-      const available = new Set(availableRecommendationCultures());
-      let candidates = pool.filter((culture) => available.has(culture));
-      if (!candidates.length) {
-        candidates = [...available];
-      }
-      const seedCulture = currentSeedCulture();
-      const crossCultureCandidates = candidates.filter((culture) => culture !== seedCulture);
-      if (crossCultureCandidates.length) {
-        candidates = crossCultureCandidates;
-      }
-      if (!candidates.length) return "";
-      return candidates[Math.floor(Math.random() * candidates.length)];
-    }
-
-    function resolveRecommendationTarget(options = recommendPreferences) {
-      const culture = cleanMetaText(options.culture || "random");
-      const region = cleanMetaText(options.region || "random");
-      if (culture && culture !== "random") {
-        return { culture, label: cultureLabel(culture) || culture, region };
-      }
-      const pool = region && region !== "random"
-        ? (recommendRegionGroups[region] || [])
-        : availableRecommendationCultures();
-      const targetCulture = randomCultureFromPool(pool);
-      return {
-        culture: targetCulture,
-        label: targetCulture ? (cultureLabel(targetCulture) || targetCulture) : t("music.recommend.randomTarget"),
-        region
-      };
-    }
-
-    function openRecommendPicker() {
-      if (recommendBusy) return;
-      renderRecommendOptions();
-      els.recommendPicker.hidden = false;
-      document.body.classList.add("is-recommend-picker-open");
-      window.setTimeout(() => els.recommendConfirmButton?.focus(), 40);
-    }
-
-    function closeRecommendPicker() {
-      els.recommendPicker.hidden = true;
-      document.body.classList.remove("is-recommend-picker-open");
-      els.recommendButton.focus();
-    }
-
-    function submitRecommendationOptions(options) {
-      recommendPreferences = options || readRecommendationOptions();
-      closeRecommendPicker();
-      startRecommendations(recommendPreferences);
-    }
     function openLibraryPicker() {
       els.libraryPicker.hidden = false;
       document.body.classList.add("is-library-open");
@@ -5077,16 +4695,15 @@ Guidelines:
     }
 
     let recommendBusy = false;
-    async function startRecommendations(options = recommendPreferences) {
+    async function startRecommendations() {
       if (recommendBusy) return;
-      const targetChoice = resolveRecommendationTarget(options);
-      const targetCulture = targetChoice.culture || "";
+      const runSeed = window.crypto?.getRandomValues ? window.crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() % 4294967296;
       recommendBusy = true;
       document.getElementById("library-picker-button").disabled = true;
       els.recommendButton.classList.add("is-running");
       els.recommendButton.classList.add("is-disabled");
       els.recommendButton.textContent = t("music.recommend.running");
-      setMapStatus(targetCulture ? "music.recommend.targetStatus" : "music.status.generatingPath", null, null, targetCulture);
+      setMapStatus("music.status.generatingPath");
       recommendationsPersistable = false;
       activeRecommendations = [];
       clearMusicStationState();
@@ -5105,11 +4722,10 @@ Guidelines:
           if (currentTrack.culture) {
             form.append("seed_culture", currentTrack.culture);
           }
-          if (targetCulture) form.append("target_culture", targetCulture);
           form.append("mode", "open");
           form.append("k", String(getRecommendCount()));
           form.append("recall_k", "900");
-          form.append("random_seed", String(Date.now() % 100000));
+          form.append("random_seed", String(runSeed));
           form.append("prefer_cuda", String(apiPreferCuda));
           form.append("exclude_same_artist", "false");
           form.append("exclude_low_signal", "true");
@@ -5128,11 +4744,10 @@ Guidelines:
           const body = {
             seed_track_id: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId || null,
             seed_culture: primaryTrack.trackId || currentTrack.trackId || initialSeedTrackId ? null : (initialSeedCulture || null),
-            target_culture: targetCulture || null,
             mode: "open",
             k: getRecommendCount(),
             recall_k: 900,
-            random_seed: Date.now() % 100000,
+            random_seed: runSeed,
             prefer_cuda: apiPreferCuda,
             exclude_same_artist: false,
             exclude_low_signal: true
@@ -5197,6 +4812,7 @@ Guidelines:
             replaceCurrentTrack(primaryTrack);
           }
         }
+        rerankWeights = data.algorithm?.weights || null;
         recommendations = (data.recommendations || []).map((item, index) => trackFromApiItem(item, index));
         activeRecommendations = recommendations.map(localizeDefaultRec);
         recommendationsPersistable = true;
@@ -5217,7 +4833,9 @@ Guidelines:
         persistMusicStationState();
       } catch (error) {
         console.error(error);
-        activeRecommendations = recommendations.map(localizeDefaultRec);
+        activeRecommendations = [];
+        recommendations = [];
+        rerankWeights = null;
         recommendationsPersistable = false;
         applyCachedDescriptions(activeRecommendations);
         els.recommendButton.classList.remove("is-running");
@@ -5308,18 +4926,23 @@ Guidelines:
         const response = await fetch(`/api/mainline/tracks/${encodeURIComponent(id)}`);
         if (!response.ok) return;
         const item = trackFromApiItem(await response.json());
-        tracks.filter(track => (track.trackId || track.track_id) === id).forEach(track => Object.assign(track, item));
+        tracks.filter(track => (track.trackId || track.track_id) === id).forEach(track => {
+          const metrics = metricsFromApiItem(track);
+          const scoring = Object.fromEntries(["score", "score_components", "recommendation_metrics"].filter(k => track.raw?.[k] !== undefined).map(k => [k, track.raw[k]]));
+          Object.assign(track, item, { metrics, raw: { ...item.raw, ...scoring } });
+        });
       }));
       if (!mapUserMoved) { centerLng = locateTrack(currentTrack).lng; centerLat = locateTrack(currentTrack).lat; }
       if (["music.status.connectionsActive", "music.status.connectionsRestored"].includes(els.mapStatus.dataset.statusKey)) setMapStatus(els.mapStatus.dataset.statusKey, verifiedRecommendationCount());
-      syncTrackReadouts(); renderRecommendations(); drawMap(); persistMusicStationState();
+      syncTrackReadouts(); renderRecommendations(); renderParameterPanel(); drawMap(); persistMusicStationState();
     }
 
     function restoreMusicStationState() {
       const saved = readMusicStationState();
       if (!saved) return false;
+      rerankWeights = saved.rerankWeights || null;
       const restoredRecommendations = saved.activeRecommendations
-        .map((item, index) => localizeTrack({ ...item, metrics: item.metrics || metricsFromApiItem(item, index) }))
+        .map(item => localizeTrack({ ...item, metrics: metricsFromApiItem(item) }))
         .filter((item) => item.title);
       if (!restoredRecommendations.length) return false;
 
@@ -5332,7 +4955,7 @@ Guidelines:
       };
       uploadedAudioMeta = saved.uploadedAudioMeta || null;
       uploadedAudioFile = null;
-      if (Array.isArray(saved.aiConversationMessages)) {
+      if (saved.measurementSchemaVersion === 2 && Array.isArray(saved.aiConversationMessages)) {
         aiConversationMessages = saved.aiConversationMessages
           .filter((message) => message && (message.role === "system" || message.role === "user" || message.role === "assistant"))
           .map((message) => ({
@@ -5641,22 +5264,7 @@ Guidelines:
 
     document.addEventListener("wheel", routeGutterWheelToWholeStation, { passive: false });
 
-    els.recommendButton.addEventListener("click", openRecommendPicker);
-    els.recommendClose.addEventListener("click", closeRecommendPicker);
-    els.recommendPicker.addEventListener("click", (event) => {
-      if (event.target === els.recommendPicker) closeRecommendPicker();
-    });
-    els.recommendCultureSelect.addEventListener("change", syncRecommendStatus);
-    els.recommendRegionSelect.addEventListener("change", renderRecommendOptions);
-    els.recommendOptionsForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      submitRecommendationOptions(readRecommendationOptions());
-    });
-    els.recommendRandomButton.addEventListener("click", () => {
-      submitRecommendationOptions({ culture: "random", region: "random" });
-    });
-
-
+    els.recommendButton.addEventListener("click", () => startRecommendations());
 
     els.aiRunButton.addEventListener("click", () => runAiAnalysis());
     els.aiSendButton.addEventListener("click", sendAiFollowup);
@@ -5781,12 +5389,11 @@ Guidelines:
       if (mainlineStatus) els.readoutCatalog.textContent = catalogCoverageLabel(mainlineStatus);
       if (els.mapStatus.dataset.statusKey) setMapStatus(els.mapStatus.dataset.statusKey,
         els.mapStatus.dataset.count === "" ? null : Number(els.mapStatus.dataset.count),
-        els.mapStatus.dataset.embeddingSeconds === "" ? null : Number(els.mapStatus.dataset.embeddingSeconds),
-        els.mapStatus.dataset.targetCulture || "");
+        els.mapStatus.dataset.embeddingSeconds === "" ? null : Number(els.mapStatus.dataset.embeddingSeconds));
       setMapMode(els.mapMode.dataset.statusKey || "music.map.currentCenter");
       els.recommendButton.textContent = t(recommendBusy ? "music.recommend.running" : activeRecommendations.length ? "music.recommend.regenerate" : "music.recommend.start");
       renderAiMessages(); setAiBusy(aiBusy);
-      renderLibraryResults(); updateLibraryStatus(); renderRecommendOptions();
+      renderLibraryResults(); updateLibraryStatus();
       if (descriptionLanguageChanged) hydrateRecommendationDescriptions(activeRecommendations);
     });
     window.addEventListener("pagehide", () => {
@@ -5810,7 +5417,6 @@ Guidelines:
     });
     els.libraryResults.addEventListener("scroll", maybeLoadMoreLibraryResults, { passive: true });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !els.recommendPicker.hidden) closeRecommendPicker();
       if (event.key === "Escape" && !els.libraryPicker.hidden) {
         closeLibraryPicker();
       }

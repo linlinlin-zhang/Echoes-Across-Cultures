@@ -1,0 +1,12 @@
+const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const context={window:{}};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/recommendation-metrics.js'),'utf8'),context);
+const m=context.window.EchoRecommendationMetrics;
+assert.equal(m.read({score_components:{novelty:0,relevance:1}}).styleNovelty,0);
+assert.equal(m.read({score_components:{novelty:0,relevance:1}}).listeningRelevance,1);
+assert.equal(m.read({metrics:{calibrationKl:2.2,targetAffinity:.9,unexpectedness:.9,relevance:.9},score:.99}).styleNovelty,null);
+for(const invalid of [null,undefined,'',true,NaN,Infinity,-1,2])assert.equal(m.value(invalid),null);
+assert.equal(m.read({metrics:{schemaVersion:2,styleNovelty:.2,listeningRelevance:.8}}).styleNovelty,.2);
+assert.equal(m.read({raw:{score_components:{novelty:.3,relevance:.7}}}).styleNovelty,.3);
+assert.equal(m.average([{score_components:{novelty:.2,relevance:.8}},{score_components:{novelty:.8,relevance:.6}}]).styleNovelty,.5);
+assert.equal(m.average([{},{}]).listeningRelevance,null);
+console.log('PASS measured scores, real zeros, invalid values, versioned cache, legacy rejection and aggregation');

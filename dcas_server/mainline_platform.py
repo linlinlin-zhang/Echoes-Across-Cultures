@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import math
+import random
 import re
 import time
 import threading
@@ -465,9 +466,11 @@ class MainlineRecommendationPlatform:
 
         emb, zs_seed, za_seed = self._encode_external_embedding(embedding)
         inferred = self._infer_culture(zs_seed)
-        effective_target = _clean(target_culture) or _clean(seed_culture) or str(inferred["culture"])
-        if effective_target not in self.culture_counts:
-            raise ValueError(f"unknown target_culture={effective_target}")
+        effective_target = self._choose_target_culture(
+            target_culture=target_culture,
+            seed_cultures=[_clean(seed_culture) or str(inferred["culture"])],
+            random_seed=random_seed,
+        )
 
         candidate_idx = self._candidate_indices(
             seed_idx=np.array([], dtype=np.int64),
@@ -493,7 +496,8 @@ class MainlineRecommendationPlatform:
             relevance = relevance_all
 
         zs_cand = self.zs_all[torch.from_numpy(candidate_idx).to(self.device)]
-        novelty = _minmax(torch.cdist(zs_cand, zs_seed).mean(dim=1).detach().cpu().numpy())
+        style_distance_raw = torch.cdist(zs_cand, zs_seed).mean(dim=1).detach().cpu().numpy()
+        novelty = _minmax(style_distance_raw)
         target_affinity = _minmax(self._target_affinity(zs_cand=zs_cand, target_culture=effective_target))
         minority = self._minority_scores(candidate_idx)
         source = self._source_scores(candidate_idx)
@@ -527,6 +531,9 @@ class MainlineRecommendationPlatform:
                     score_components={
                         "relevance": float(relevance[int(local_idx)]),
                         "novelty": float(novelty[int(local_idx)]),
+                        "style_novelty": float(novelty[int(local_idx)]),
+                        "listening_relevance": float(relevance[int(local_idx)]),
+                        "style_distance_raw": float(style_distance_raw[int(local_idx)]),
                         "target_affinity": float(target_affinity[int(local_idx)]),
                         "minority": float(minority[int(local_idx)]),
                         "source": float(source[int(local_idx)]),
@@ -589,6 +596,7 @@ class MainlineRecommendationPlatform:
                 "seed_culture": seed_culture,
                 "target_culture": target_culture,
                 "effective_target_culture": effective_target,
+                "target_selection": "explicit" if _clean(target_culture) else "random_cross_culture",
                 "mode": mode,
                 "k": k,
                 "recall_k": recall_k,
@@ -649,11 +657,9 @@ class MainlineRecommendationPlatform:
         )
         seed_track_ids = [str(self.tracks.track_id[i]) for i in seed_idx.tolist()]
         seed_cultures = [str(self.tracks.culture[i]) for i in seed_idx.tolist()]
-        effective_target = _clean(target_culture) or (seed_cultures[0] if seed_cultures else "")
-        if not effective_target:
-            raise ValueError("target_culture could not be inferred")
-        if effective_target not in self.culture_counts:
-            raise ValueError(f"unknown target_culture={effective_target}")
+        effective_target = self._choose_target_culture(
+            target_culture=target_culture, seed_cultures=seed_cultures, random_seed=random_seed
+        )
 
         candidate_idx = self._candidate_indices(
             seed_idx=seed_idx,
@@ -678,7 +684,8 @@ class MainlineRecommendationPlatform:
 
         zs_seed = self.zs_all[torch.from_numpy(seed_idx).to(self.device)]
         zs_cand = self.zs_all[torch.from_numpy(candidate_idx).to(self.device)]
-        novelty = _minmax(torch.cdist(zs_cand, zs_seed).mean(dim=1).detach().cpu().numpy())
+        style_distance_raw = torch.cdist(zs_cand, zs_seed).mean(dim=1).detach().cpu().numpy()
+        novelty = _minmax(style_distance_raw)
         target_affinity = _minmax(self._target_affinity(zs_cand=zs_cand, target_culture=effective_target))
         minority = self._minority_scores(candidate_idx)
         source = self._source_scores(candidate_idx)
@@ -712,6 +719,9 @@ class MainlineRecommendationPlatform:
                     score_components={
                         "relevance": float(relevance[int(local_idx)]),
                         "novelty": float(novelty[int(local_idx)]),
+                        "style_novelty": float(novelty[int(local_idx)]),
+                        "listening_relevance": float(relevance[int(local_idx)]),
+                        "style_distance_raw": float(style_distance_raw[int(local_idx)]),
                         "target_affinity": float(target_affinity[int(local_idx)]),
                         "minority": float(minority[int(local_idx)]),
                         "source": float(source[int(local_idx)]),
@@ -743,6 +753,7 @@ class MainlineRecommendationPlatform:
                 "seed_culture": seed_culture,
                 "target_culture": target_culture,
                 "effective_target_culture": effective_target,
+                "target_selection": "explicit" if _clean(target_culture) else "random_cross_culture",
                 "mode": mode,
                 "k": k,
                 "recall_k": recall_k,
@@ -1083,10 +1094,32 @@ class MainlineRecommendationPlatform:
             payload["score"] = float(score)
         if score_components is not None:
             payload["score_components"] = {k: float(v) for k, v in score_components.items()}
+            payload["recommendation_metrics"] = {
+                "schema_version": 2,
+                "style_novelty": float(score_components["novelty"]),
+                "listening_relevance": float(score_components["relevance"]),
+                "style_distance_raw": float(score_components["style_distance_raw"]),
+                "audio_transport_cost_raw": -float(score_components["ot_relevance_raw"]),
+                "normalization": "candidate_minmax",
+            }
         payload["artist_id"] = _clean(row.get("artist_id"))
         payload.update(location_fields(row))
         apply_artist_location(payload, self.storage.root)
         return apply_genre_metadata(apply_description_translations(payload, self.storage.root))
+
+    def _choose_target_culture(
+        self, *, target_culture: str | None, seed_cultures: list[str], random_seed: int | None
+    ) -> str:
+        explicit = _clean(target_culture)
+        if explicit:
+            if explicit not in self.culture_counts:
+                raise ValueError(f"unknown target_culture={explicit}")
+            return explicit
+        available = sorted(str(c) for c, count in self.culture_counts.items() if c and count > 0)
+        if not available:
+            raise ValueError("no available target cultures")
+        cross_culture = [c for c in available if c not in seed_cultures]
+        return random.Random(random_seed).choice(cross_culture or available)
 
     def _result_metrics(self, *, recommendations: list[dict[str, Any]]) -> dict[str, Any]:
         cultures = Counter(_clean(item.get("culture")) for item in recommendations)
@@ -1096,7 +1129,15 @@ class MainlineRecommendationPlatform:
             for item in recommendations
             if item.get("score") is not None
         ]
+        measured = [item["recommendation_metrics"] for item in recommendations if item.get("recommendation_metrics")]
         return {
+            "style_novelty_mean": float(np.mean([item["style_novelty"] for item in measured])) if measured else None,
+            "listening_relevance_mean": float(np.mean([item["listening_relevance"] for item in measured]))
+            if measured
+            else None,
+            "measured_recommendations": len(measured),
+            "metric_schema_version": 2,
+            "metric_normalization": "candidate_minmax",
             "n": int(len(recommendations)),
             "culture_counts": dict(sorted(cultures.items())),
             "source_counts": dict(sorted(sources.items())),

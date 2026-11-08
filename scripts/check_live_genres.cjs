@@ -30,7 +30,7 @@ async function main(){
   await page.goto(base+'/music.html?seed=itunes_691546555',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#readout-style').textContent==='摇滚');
   assert.equal(await page.locator('[data-ai-mode]').count(),0);
-  await page.locator('#recommend-button').click();assert(await page.locator('#recommend-picker').isVisible());await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#recommend-picker').count(),0);
   await page.screenshot({path:`${out}/reported-song-zh.png`,fullPage:true});
   for(const [language,label] of [['en','Rock'],['ja','ロック'],['ko','록'],['zh-CN','摇滚']]){
    await page.evaluate(language=>EchoI18n.setLanguage(language),language);
